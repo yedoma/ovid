@@ -1,0 +1,6 @@
+file,what,value,source
+TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,rows,56,"raw file lines 5-60 (60 lines, 4 header lines)"
+TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,first_time,2023-09-21 00:00:00,"raw file line 5 (logger time, kept as written)"
+TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,last_time,2023-11-15 00:00:00,raw file line 60
+TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,col:PTemp_C_Avg@1,14.67,raw file line 5
+TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,col:Rain_tip_co_Tot@5,8.6,raw file line 9

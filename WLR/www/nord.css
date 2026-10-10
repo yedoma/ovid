@@ -1,0 +1,18 @@
+
+.step{display:flex;gap:14px;margin-bottom:16px} .step>.n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--bg2);color:var(--acc);font-weight:600;display:flex;align-items:center;justify-content:center} .step>.body{flex:1;min-width:0}
+.todo{list-style:none;padding:0;margin:0} .todo li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--bg2)} .todo li:first-child{border-top:0}
+.todo .k{flex:0 0 64px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:var(--yellow)} .todo .ok{color:var(--green)} .todo a{margin-left:auto;white-space:nowrap}
+.check{font-size:13.5px;margin:-6px 0 12px} .check.good{color:var(--green)} .check.bad{color:var(--red)}
+.brushbox{background:var(--bg1);border-left:3px solid var(--acc);border-radius:8px;padding:14px 16px;margin:12px 0}
+.scrollbox{max-height:560px;overflow-y:auto;border:1px solid var(--bg2);border-radius:8px} .scrollbox .shiny-plot-output img{border:0;border-radius:0}
+details.setup{margin:22px 0 6px;border:1px solid var(--bg2);border-radius:10px;padding:12px 16px} details.setup>summary{font-weight:600;color:var(--fg)} details.setup[open]>summary{margin-bottom:14px} details.setup .panel-x{margin-bottom:0}
+.modebadge{font-size:13px;color:var(--bgh);background:var(--acc);border-radius:10px;padding:2px 10px;font-weight:600}
+.explain{border-left:3px solid var(--acc);padding:2px 0 2px 12px;margin:10px 0;color:var(--fg);max-width:90ch}
+.formula{font-family:'JetBrains Mono',Menlo,Consolas,monospace;background:var(--bgh);border:1px solid var(--bg2);border-radius:6px;padding:10px 14px;color:var(--fg);margin:8px 0;white-space:pre;overflow-x:auto;font-size:13px}
+.grp{border:1px solid var(--bg2);border-radius:8px;padding:12px 14px 2px;margin-bottom:10px} .grp h3{color:var(--acc)} .grp .members{color:var(--fg4);font-size:13px;margin:-4px 0 8px}
+table.dataTable thead th:first-child{position:sticky;left:0;z-index:3;background:var(--bg1) !important}
+table.dataTable tbody td:first-child{position:sticky;left:0;z-index:2;background:var(--bg) !important;box-shadow:inset -1px 0 0 var(--bg2) !important;font-weight:600}
+table.dataTable tbody tr.selected>td:first-child{background:var(--bg2) !important}
+.wrapcell{display:inline-block;min-width:300px;max-width:520px;white-space:normal}
+.dataTables_scrollHead{background:var(--bg1)} .dataTables_scrollBody thead th,.dataTables_scrollBody thead td{padding-top:0 !important;padding-bottom:0 !important;height:0 !important;line-height:0 !important;border:0 !important}
+

@@ -1,0 +1,6 @@
+file,expected_md5,checked_by,checked_on,note
+fg2_csv__E00001_20240927165437.csv,2703f9c5cc3e749df96c19223d202cdd,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+fg2_f2b__E00002_20240921120719.f2b,cafcc46bd8cf474a4755c733094c70bf,neutralized copy of an accepted sample,2026-10-09,"binary; no FG2-Shell export exists for this logger, so its values are unverified"
+hobo_csv__1000004_SiteA20240921.csv,b05d880e7ca3b0f539bd36179d93fb55,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+rbr_hex__000123_20240926_1542.hex,908fd8f02f3dd6ca1ae1da7a4b68abf0,neutralized copy of an accepted sample,2026-10-09,"binary; checked against the Ruskin export, see reference.csv"
+rbr_txt__000123_20240926_1542.txt,f3522f60ade0d9e8fe4d6379f6b45b8c,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv

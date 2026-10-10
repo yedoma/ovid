@@ -1,0 +1,6 @@
+
+.d-groupby,.wb-groupby{margin:4px 0 8px}.gb-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.gb-head .shiny-input-container{margin:0}
+.gb-head select,.gb-head .selectize-input{font-size:12px;min-height:26px;padding:2px 6px}
+.gb-list{max-height:260px;overflow:auto;margin-top:4px}.gb-row{display:flex;justify-content:space-between;gap:8px;padding:3px 6px;font-size:12px;text-decoration:none;color:inherit;border-radius:4px}
+.gb-row:hover{background:color-mix(in srgb,currentColor 8%,transparent)}.gb-row .n{opacity:.65;white-space:nowrap}.gb-row .l{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+

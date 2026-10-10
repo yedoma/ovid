@@ -1,0 +1,3 @@
+file,expected_md5,checked_by,checked_on,note
+agi_stg__SCH-INV.stg,ce6ba6038199c71f045442577585c8e8,existing sample (accepted before reference checks),2026-10-09,text: raw-file values in reference.csv
+agi_stg_earthimager__MC7WEN_trial11_1.stg,8042447be8b60fe28383e2c05ca63684,existing sample (accepted before reference checks),2026-10-09,text: raw-file values in reference.csv

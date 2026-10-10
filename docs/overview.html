@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ovid System Overview</title>
+<style>
+:root{color-scheme:dark;--bg:#1d1f21;--fg:#e0e0e0;--muted:#b4b7b4;--rule:#4b4e55;--panel:#282a2e;--accent:#e0e0e0;--code:#373b41;--amber:#f0c674;--cs:#BCCD80;--wlr:#88c0d0;--gt:#E36A5B;--ert:#7E9CD8;--rs:#e5c07b}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+h2.cs,h3.cs{border-color:var(--cs);color:var(--cs)}h2.wlr,h3.wlr{border-color:var(--wlr);color:var(--wlr)}h2.gt,h3.gt{border-color:var(--gt);color:var(--gt)}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--wlr)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.badge{display:inline-block;padding:0 7px;border-radius:4px;font-weight:600;font-size:13px;color:#1d1f21}
+.b-cs{background:var(--cs)}.b-wlr{background:var(--wlr)}.b-gt{background:var(--gt)}
+.app{border:1px solid var(--rule);border-left:5px solid var(--rule);border-radius:8px;padding:6px 14px 10px;margin:12px 0;background:var(--panel)}
+.app.cs{border-left-color:var(--cs)}.app.wlr{border-left-color:var(--wlr)}.app.gt{border-left-color:var(--gt)}
+.app h3{margin-top:8px}
+.note{border-left:4px solid var(--amber);padding:6px 12px;background:var(--panel);margin:8px 0}
+.where{color:var(--muted);font-size:13.5px}
+figure{margin:12px 0}figure svg{width:100%;height:auto;display:block;border-radius:8px}
+figcaption{color:var(--muted);font-size:13.5px;margin-top:4px}
+.shot img{width:100%;border:1px solid var(--rule);border-radius:6px;display:block}
+@media print{body{font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:14mm 14mm}h2,h3{break-after:avoid}table,.app,figure{break-inside:avoid}}
+@page{size:A4;margin:0}
+
+
+.b-ert{background:var(--ert)}.b-rs{background:var(--rs)}.app.ert{border-left-color:var(--ert)}.app.rs{border-left-color:var(--rs)}h2.ert,h3.ert{color:var(--ert)}
+.app.cs h3{color:var(--cs)}.app.wlr h3{color:var(--wlr)}.app.gt h3{color:var(--gt)}.app.ert h3{color:var(--ert)}.app.rs h3{color:var(--rs)}
+main>div>ol{background:var(--panel);padding:12px 16px 12px 36px;border-radius:8px;columns:2;column-gap:32px}
+.b-ert{background:var(--ert)}.b-rs{background:var(--rs)}.app.ert{border-left-color:var(--ert)}.app.rs{border-left-color:var(--rs)}h2.ert,h3.ert{color:var(--ert)}
+.app.cs h3{color:var(--cs)}.app.wlr h3{color:var(--wlr)}.app.gt h3{color:var(--gt)}.app.ert h3{color:var(--ert)}.app.rs h3{color:var(--rs)}
+main>div>ol{background:var(--panel);padding:12px 16px 12px 36px;border-radius:8px;columns:2;column-gap:32px}
+.b-ert{background:var(--ert)}.b-rs{background:var(--rs)}.app.ert{border-left-color:var(--ert)}.app.rs{border-left-color:var(--rs)}h2.ert,h3.ert{color:var(--ert)}
+.app.cs h3{color:var(--cs)}.app.wlr h3{color:var(--wlr)}.app.gt h3{color:var(--gt)}.app.ert h3{color:var(--ert)}.app.rs h3{color:var(--rs)}
+main>div>ol{background:var(--panel);padding:12px 16px 12px 36px;border-radius:8px;columns:2;column-gap:32px}
+</style></head><body><main>
+<div role="main">
+<h1>ovid System Overview</h1>
+<p>ovid Core with the five apps <span class="badge b-cs">CS</span></p>
+<span class="badge b-wlr">WLR</span> <span class="badge b-gt">GT</span>
+<span class="badge b-ert">ERT</span> <span class="badge b-rs">RS</span>:
+<p>what they share, what each does, and where the detailed guides are. Core 1.14.0, shell 1.1.0; CS 1.10.0, WLR 0.11.0, GT 1.7.0, ERT 0.4.0, RS 0.5.0 (6 October 2026), with unreleased changes since: the Workbench interface (preview), the optional logger list and Paste and Import in every set-up table. What changed: <code>CHANGELOG.md</code> in Ovid_Apps and in each app.</p>
+<ol><li><a href="#what">What ovid is</a></li><li><a href="#core">The shared core</a></li><li><a href="#diagram">System diagram</a></li><li><a href="#apps">The five apps</a></li><li><a href="#compare">Comparison</a></li><li><a href="#workflow">Common workflow</a></li><li><a href="#glossary">Glossary</a></li><li><a href="#refs">References</a></li></ol>
+<h2 id="what">What ovid is</h2>
+<p>ovid is a set of five R/Shiny apps that turn raw environmental logger downloads, geophysical surveys and drone archives into clean, documented, analysis-ready records. Each app handles one kind of monitoring; all five share one core of code for the work that does not depend on the data type. Every app is named "ovid // &lt;app&gt;", has its own icon and its own dark colour theme from vimcolorschemes, so it is recognisable at a glance.</p>
+<ul><li><span class="badge b-cs">CS</span> Campbell Scientific climate stations (theme olive-crt).</li><li><span class="badge b-wlr">WLR</span> water level loggers with barometric compensation (theme Nord).</li><li><span class="badge b-gt">GT</span> ground temperature cables and soil sensors (theme soviet.nvim).</li><li><span class="badge b-ert">ERT</span> electrical resistivity surveys (AGI SuperSting, IRIS Instruments): a catalogue, metadata, QC and viewing tool, not an inversion package (theme kanagawa.nvim).</li><li><span class="badge b-rs">RS</span> remote sensing: a catalogue, provenance and positioning-status tool for archived drone flights, satellite and aerial imagery, LiDAR, GIS layers and GNSS surveys; it does not process imagery (theme accent.vim).</li></ul>
+<p>It is for the people who download loggers in the field and the people who use the data: the field staff get a check list of what went wrong (clock faults, missing exports, overlapping files), and the data users get records in which every removed or changed value is explained. Raw files are never changed. Colleagues can open a project read-only in viewer mode.</p>
+<h2 id="core">The shared core</h2>
+<p>ovid Core is one folder of R files that every app sources before its own <code>R/</code> folder; a fix made there reaches all five apps. The apps find it through the <code>OVID_CORE</code> environment variable, a <code>core/</code> folder inside the app (portable copies), <code>../core</code> beside the app (the Ovid_Apps bundle), or <code>~/Desktop/Ovid</code>.</p>
+<table><thead><tr><th>Part</th><th>What it does</th></tr></thead><tbody>
+<tr><td>Audit trail and reconciliation</td><td>Every removal and change is logged with its rule and reason. For each raw file and logger, <strong>records read = records in the output + records dropped</strong>; a run stops if that does not hold. <code>output/audit/file_audit.csv</code> accounts for every raw file.</td></tr>
+<tr><td>Configuration and history</td><td>Set-up tables live in the project's <code>config/</code> folder as CSV. Every change made in the app is backed up in <code>config/history/</code>; a whole configuration can be exported and imported. Dates in set-up tables can be a date alone, and an end date then covers that whole day.</td></tr>
+<tr><td>Run cache and Rescan</td><td>Results are kept in <code>&lt;project&gt;/cache/</code>, keyed by file contents, settings and code version. A run only rebuilds what changed, and an edit to a set-up table redoes only the loggers, sites, surveys or flights it can apply to; the message after a run says how many were redone. <strong>Rescan</strong> on the Raw files page reads chosen files again. A code update makes the next run a full one, and so does deleting the cache.</td></tr>
+<tr><td>Time-zone table</td><td><code>config/timezones.csv</code> says which zone a logger's or camera's clock was in (by serial, model, path pattern and date span; first matching row wins). Logger times are moved to one base: UTC−7, no daylight saving.</td></tr>
+<tr><td>Corrupt timestamps</td><td>A failing logger memory or clock can write records stamped at random times among good ones. A record that is both off the time grid and out of the order its file was written in is left out and audited (<code>timestamps.R</code>, used by CS, WLR and GT).</td></tr>
+<tr><td>Between-site comparison</td><td>Each site's daily means against the median of the others, allowing for a seasonal offset (<code>neighbours.R</code>, used by GT).</td></tr>
+<tr><td>Quality checks and WMO codes</td><td><code>qc.R</code> holds the mechanics shared by CS, WLR and GT (runs, spikes, flat lines, steps as a rate per hour, conditions that last), and the WMO quality control codes of BUFR table 0 33 020 (0 good, 1 inconsistent, 2 doubtful, 3 wrong, 4 not checked, 5 changed, 6 estimated, 7 missing). Exports of CS, WLR and GT give every value its code by default; each app decides what its own checks mean.</td></tr>
+<tr><td>Reports</td><td>Reports are written once from blocks (headings, text, cards, tables, plots) and rendered as HTML, PDF or both, in the app's theme.</td></tr>
+<tr><td>Set-up check</td><td>A pre-flight check of folders, set-up tables (bad patterns, numbers, dates) and the time-zone table, with red items to fix before running.</td></tr>
+<tr><td>Set-up tables in the app</td><td>Every set-up table has an editor (<code>editor.R</code>): edit cells, add, duplicate and delete rows, <strong>Paste</strong> rows copied from Excel and <strong>Import</strong> a CSV or Excel file with its columns matched to the table's by heading. The same table open in two windows stays one table: a copy with unsaved edits asks before it overwrites a newer save. </td></tr>
+<tr><td>Logger list (optional metadata)</td><td>No app needs a metadata file. WLR and GT have a <strong>logger list</strong> (<code>config/metadata.csv</code>, <code>metasheet.R</code>) for what people know: only the serial is required, and a name, site, year, depths, hang length and so on are used when given. It can start from the loggers found, take pasted or imported rows, and each project can rename, hide or add columns. A value that cannot be read is left blank and noted, never an error. </td></tr>
+<tr><td>Workbench (preview)</td><td>A second interface on the same project (<code>workbench.R</code>): every Standard page around a spreadsheet of one record (a station, deployment, site, survey or flight) with its chart above it; select cells, rows, columns or a stretch of the chart, see where a value came from and what changed it, and correct it through the same set-up tables. Open it with <strong>Workbench</strong> in the title bar or <code>?ui=workbench</code>. </td></tr>
+<tr><td>Standards and exports</td><td><code>standards.R</code>: one scale of processing levels for the suite (L0 raw, L1 quality controlled, L2 corrected, L3 gap-filled, L4 derived), the WMO codes as CF flag attributes, and a NetCDF writer in base R for CF-1.10 / ACDD-1.3 exports (CS, WLR and GT).</td></tr>
+<tr><td>Run manifest</td><td>Each run writes <code>run_manifest.csv</code> and <code>run_history.csv</code> with app and core versions and file checksums.</td></tr>
+<tr><td>App shell</td><td><code>shell.R</code> gives every app the same frame: a compact top bar with the app's icon and name, a context bar, run state and main action; a narrow navigation rail that collapses to icons; controls with an Options popover; focus (fullscreen) and optional split views; one QA/QC look for statuses and flags.</td></tr>
+<tr><td>Import and export</td><td><code>files.R</code>: every folder field has a <strong>Browse…</strong> button that opens Finder or Explorer, or an in-app folder browser. Export buttons say their format ("Export data (CSV)"), and exported files are named <code>ovid_&lt;app&gt;_&lt;what&gt;_&lt;YYYY-MM-DD&gt;.&lt;ext&gt;</code>.</td></tr>
+<tr><td>Themes and colour</td><td><code>theme.R</code> holds each app's vim colour scheme. Parameters use intuitive colours (temperature red, humidity green, water and precipitation blue, wind purple, sunlight yellow, battery grey); colours shown together are kept apart for colour-blind eyes, and contrast helpers keep text at 4.5:1 and plot lines at 3:1.</td></tr>
+<tr><td>Launchers and the bundle</td><td>Mac launchers (<code>Open CS (Mac).command</code> and so on) and Windows launchers (<code>Ovid_CS.bat</code> and so on) use a private package library and install what is missing on first start. <code>Make_Portable.bat</code> makes a copy that runs on computers without R. The one-folder bundle <strong>Ovid_Apps</strong> (also the GitHub repository yedoma/ovid) carries the five apps and the core and holds no data.</td></tr></tbody></table>
+<p>What stays in each app: readers, stitching, quality rules, flags, date styles, palette, set-up tables and app-specific checks.</p>
+<h2 id="diagram">System diagram</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-size="12.5" role="img" aria-label="ovid system diagram: five apps on one core">
+<rect width="960" height="560" rx="10" fill="#232528"/>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9a9ea3"/></marker></defs>
+<text x="24" y="34" fill="#9a9ea3" font-size="12">RAW INPUTS (never changed) → APP → OUTPUTS in each project folder (config/, cache/, output/)</text>
+<rect x="10.0" y="46" width="180" height="92" rx="7" fill="#2c2f33" stroke="#4b4e55"/>
+<text x="100.0" y="68" fill="#d6d8da" font-size="12.5" text-anchor="middle">Campbell TOA5, TOB3</text>
+<text x="100.0" y="85" fill="#d6d8da" font-size="12.5" text-anchor="middle">CR10X + .FSL</text>
+<text x="100.0" y="102" fill="#d6d8da" font-size="12.5" text-anchor="middle">logger programs</text>
+<text x="100.0" y="119" fill="#d6d8da" font-size="12.5" text-anchor="middle">field log</text>
+<line x1="100.0" y1="140" x2="100.0" y2="170" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="10.0" y="174" width="180" height="74" rx="9" fill="#BCCD80"/>
+<text x="100.0" y="203" fill="#1b1c1e" font-size="17" font-weight="700" text-anchor="middle">ovid // CS</text>
+<text x="100.0" y="226" fill="#1b1c1e" font-size="11.5" text-anchor="middle">readers, rules, app pages</text>
+<line x1="100.0" y1="250" x2="100.0" y2="280" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="10.0" y="284" width="180" height="92" rx="7" fill="#2c2f33" stroke="#BCCD80"/>
+<text x="100.0" y="306" fill="#d6d8da" font-size="12.5" text-anchor="middle">stations with flags</text>
+<text x="100.0" y="323" fill="#d6d8da" font-size="12.5" text-anchor="middle">summaries, precip</text>
+<text x="100.0" y="340" fill="#d6d8da" font-size="12.5" text-anchor="middle">sensor health</text>
+<text x="100.0" y="357" fill="#d6d8da" font-size="12.5" text-anchor="middle">reports</text>
+<line x1="100.0" y1="412" x2="100.0" y2="380" stroke="#BCCD80" stroke-width="1.2" stroke-dasharray="3 4"/>
+<rect x="200.0" y="46" width="180" height="92" rx="7" fill="#2c2f33" stroke="#4b4e55"/>
+<text x="290.0" y="68" fill="#d6d8da" font-size="12.5" text-anchor="middle">HOBO .hobo + CSV</text>
+<text x="290.0" y="85" fill="#d6d8da" font-size="12.5" text-anchor="middle">Solinst .xle + CSV</text>
+<text x="290.0" y="102" fill="#d6d8da" font-size="12.5" text-anchor="middle">barologgers</text>
+<text x="290.0" y="119" fill="#d6d8da" font-size="12.5" text-anchor="middle">workbook, dGPS</text>
+<line x1="290.0" y1="140" x2="290.0" y2="170" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="200.0" y="174" width="180" height="74" rx="9" fill="#88c0d0"/>
+<text x="290.0" y="203" fill="#1b1c1e" font-size="17" font-weight="700" text-anchor="middle">ovid // WLR</text>
+<text x="290.0" y="226" fill="#1b1c1e" font-size="11.5" text-anchor="middle">readers, rules, app pages</text>
+<line x1="290.0" y1="250" x2="290.0" y2="280" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="200.0" y="284" width="180" height="92" rx="7" fill="#2c2f33" stroke="#88c0d0"/>
+<text x="290.0" y="306" fill="#d6d8da" font-size="12.5" text-anchor="middle">depth, DTW, elevation</text>
+<text x="290.0" y="323" fill="#d6d8da" font-size="12.5" text-anchor="middle">per deployment</text>
+<text x="290.0" y="340" fill="#d6d8da" font-size="12.5" text-anchor="middle">summaries</text>
+<text x="290.0" y="357" fill="#d6d8da" font-size="12.5" text-anchor="middle">reports</text>
+<line x1="290.0" y1="412" x2="290.0" y2="380" stroke="#88c0d0" stroke-width="1.2" stroke-dasharray="3 4"/>
+<rect x="390.0" y="46" width="180" height="92" rx="7" fill="#2c2f33" stroke="#4b4e55"/>
+<text x="480.0" y="68" fill="#d6d8da" font-size="12.5" text-anchor="middle">RBR .hex, Ruskin</text>
+<text x="480.0" y="85" fill="#d6d8da" font-size="12.5" text-anchor="middle">GeoPrecision CSV</text>
+<text x="480.0" y="102" fill="#d6d8da" font-size="12.5" text-anchor="middle">HOBO, EM50</text>
+<text x="480.0" y="119" fill="#d6d8da" font-size="12.5" text-anchor="middle">Campbell, registry</text>
+<line x1="480.0" y1="140" x2="480.0" y2="170" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="390.0" y="174" width="180" height="74" rx="9" fill="#E36A5B"/>
+<text x="480.0" y="203" fill="#1b1c1e" font-size="17" font-weight="700" text-anchor="middle">ovid // GT</text>
+<text x="480.0" y="226" fill="#1b1c1e" font-size="11.5" text-anchor="middle">readers, rules, app pages</text>
+<line x1="480.0" y1="250" x2="480.0" y2="280" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="390.0" y="284" width="180" height="92" rx="7" fill="#2c2f33" stroke="#E36A5B"/>
+<text x="480.0" y="306" fill="#d6d8da" font-size="12.5" text-anchor="middle">site x depth records</text>
+<text x="480.0" y="323" fill="#d6d8da" font-size="12.5" text-anchor="middle">MAGT, trumpets</text>
+<text x="480.0" y="340" fill="#d6d8da" font-size="12.5" text-anchor="middle">ALT, freeze/thaw</text>
+<text x="480.0" y="357" fill="#d6d8da" font-size="12.5" text-anchor="middle">reports</text>
+<line x1="480.0" y1="412" x2="480.0" y2="380" stroke="#E36A5B" stroke-width="1.2" stroke-dasharray="3 4"/>
+<rect x="580.0" y="46" width="180" height="92" rx="7" fill="#2c2f33" stroke="#4b4e55"/>
+<text x="670.0" y="68" fill="#d6d8da" font-size="12.5" text-anchor="middle">AGI .stg .crs .cmd</text>
+<text x="670.0" y="85" fill="#d6d8da" font-size="12.5" text-anchor="middle">IRIS Prosys</text>
+<text x="670.0" y="102" fill="#d6d8da" font-size="12.5" text-anchor="middle">Res2DInv .dat</text>
+<text x="670.0" y="119" fill="#d6d8da" font-size="12.5" text-anchor="middle">zips</text>
+<line x1="670.0" y1="140" x2="670.0" y2="170" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="580.0" y="174" width="180" height="74" rx="9" fill="#7E9CD8"/>
+<text x="670.0" y="203" fill="#1b1c1e" font-size="17" font-weight="700" text-anchor="middle">ovid // ERT</text>
+<text x="670.0" y="226" fill="#1b1c1e" font-size="11.5" text-anchor="middle">readers, rules, app pages</text>
+<line x1="670.0" y1="250" x2="670.0" y2="280" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="580.0" y="284" width="180" height="92" rx="7" fill="#2c2f33" stroke="#7E9CD8"/>
+<text x="670.0" y="306" fill="#d6d8da" font-size="12.5" text-anchor="middle">survey catalogue</text>
+<text x="670.0" y="323" fill="#d6d8da" font-size="12.5" text-anchor="middle">QC flags</text>
+<text x="670.0" y="340" fill="#d6d8da" font-size="12.5" text-anchor="middle">pseudosections</text>
+<text x="670.0" y="357" fill="#d6d8da" font-size="12.5" text-anchor="middle">catalogue zip</text>
+<line x1="670.0" y1="412" x2="670.0" y2="380" stroke="#7E9CD8" stroke-width="1.2" stroke-dasharray="3 4"/>
+<rect x="770.0" y="46" width="180" height="92" rx="7" fill="#2c2f33" stroke="#4b4e55"/>
+<text x="860.0" y="68" fill="#d6d8da" font-size="12.5" text-anchor="middle">drone images (EXIF)</text>
+<text x="860.0" y="85" fill="#d6d8da" font-size="12.5" text-anchor="middle">MRK, RPT, KML</text>
+<text x="860.0" y="102" fill="#d6d8da" font-size="12.5" text-anchor="middle">RINEX, imagery</text>
+<text x="860.0" y="119" fill="#d6d8da" font-size="12.5" text-anchor="middle">GIS, GNSS CSV</text>
+<line x1="860.0" y1="140" x2="860.0" y2="170" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="770.0" y="174" width="180" height="74" rx="9" fill="#e5c07b"/>
+<text x="860.0" y="203" fill="#1b1c1e" font-size="17" font-weight="700" text-anchor="middle">ovid // RS</text>
+<text x="860.0" y="226" fill="#1b1c1e" font-size="11.5" text-anchor="middle">readers, rules, app pages</text>
+<line x1="860.0" y1="250" x2="860.0" y2="280" stroke="#9a9ea3" stroke-width="1.6" marker-end="url(#ar)"/>
+<rect x="770.0" y="284" width="180" height="92" rx="7" fill="#2c2f33" stroke="#e5c07b"/>
+<text x="860.0" y="306" fill="#d6d8da" font-size="12.5" text-anchor="middle">flight catalogue</text>
+<text x="860.0" y="323" fill="#d6d8da" font-size="12.5" text-anchor="middle">positioning status</text>
+<text x="860.0" y="340" fill="#d6d8da" font-size="12.5" text-anchor="middle">map + PNG</text>
+<text x="860.0" y="357" fill="#d6d8da" font-size="12.5" text-anchor="middle">viewer zip</text>
+<line x1="860.0" y1="412" x2="860.0" y2="380" stroke="#e5c07b" stroke-width="1.2" stroke-dasharray="3 4"/>
+<text x="24" y="400" fill="#9a9ea3" font-size="11" opacity="0">.</text>
+<rect x="24" y="414" width="912" height="122" rx="9" fill="#2c2f33" stroke="#9a9ea3"/>
+<text x="480" y="440" fill="#eceff1" font-size="16" font-weight="700" text-anchor="middle">ovid Core 1.14.0 (sourced first by every app)</text>
+<text x="480" y="464" fill="#c9ccd0" font-size="12.5" text-anchor="middle">audit trail + reconciliation · file audit · run cache + Rescan · time-zone table · corrupt timestamps</text>
+<text x="480" y="483" fill="#c9ccd0" font-size="12.5" text-anchor="middle">set-up tables + history · set-up check · run manifest · reports (HTML / PDF) · between-site comparison</text>
+<text x="480" y="502" fill="#c9ccd0" font-size="12.5" text-anchor="middle">app shell (top bar, rail, focus, split) · Browse… + ovid_&lt;app&gt;_ exports · vim themes + colour-blind-safe colours</text>
+<text x="480" y="521" fill="#c9ccd0" font-size="12.5" text-anchor="middle">Mac .command and Windows .bat launchers · portable copies · Ovid_Apps bundle</text>
+</svg><figcaption>Figure 1. Raw inputs flow through each app to its outputs; all five apps run on the same ovid Core.</figcaption></figure>
+<h2 id="apps">The five apps</h2>
+<div class="app cs">
+<h3>CS: climate stations</h3>
+<p><strong>Reads</strong> Campbell TOA5 <code>.dat</code> files (LoggerNet, PC400, CardConvert), TOB3 binary <code>.dat</code> files (10 Hz <code>ts_data</code> tables are listed with their time span, not loaded) and CR10X mixed-array files with their Edlog <code>.FSL</code>; logger programs; a field log and gauge set-up for weighing precipitation gauges.</p>
+<p><strong>Steps</strong> find files (loggers set aside on the Stations page are not read), read records and time stamps, clock corrections and the time-zone table, corrupt timestamps, text to numbers, stitch each logger table, map raw columns to common parameter names (paired sensors kept apart, sensor swaps joined), assign records to stations, calibrations, quality rules and removals, flags and sensor health, derived values and summaries, weighing-gauge precipitation.</p>
+<p><strong>Outputs</strong> one record per station with flag columns, daily/monthly/annual summaries, precipitation by year and water year, sensor health, station reports.</p>
+<p><strong>Key checks</strong> clock checks, gaps, overlap conflicts between files and loggers, sensor health, between-station checks, gauge servicing and bucket cycles.</p>
+<p><strong>New in 1.9.0</strong> BSRN radiation limits, humidity above 103 %, a frozen-anemometer check and rain below freezing (all flag only); wind direction averaged on the circle with Yamartino spread and resultant wind; dew point; a step test as a rate; gauge correction with the 10 m coefficients and its ±0.2 uncertainty.</p>
+<p><strong>Unreleased</strong> FAO-56 and Priestley-Taylor evapotranspiration; frozen-soil water marked liquid only; missing daily means estimated from neighbouring stations and breakpoints against them (reported, never adjusted); short gaps filled on export (code 6); NetCDF export.</p>
+<p>Detail: <a href="../CS/docs/CS_reference_guide.html">ovid CS Reference Guide</a>.</p>
+</div>
+<div class="app wlr">
+<h3>WLR: water level loggers</h3>
+<p><strong>Reads</strong> HOBO <code>.hobo</code> and Solinst <code>.xle</code> files with their CSV exports (Latin-1 <code>.xle</code> from older Levelogger software too), barologger files, the metadata workbook (a run without one still completes, but builds no deployments) and dGPS survey exports.</p>
+<p><strong>Steps</strong> find and pair files, time stamps and time zones, units to kPa and °C (Solinst Barologger offset added back), stitch each logger, barometric stations (primary, secondary, fill-in), deployments, compensation (pressure to depth), depth to water and elevation, specific conductance, quality checks and flags (readings in the air, readings below air pressure), tape checks and manual measurements, summaries.</p>
+<p><strong>Outputs</strong> per-deployment records with <code>depth_m</code>, <code>dtw_m</code>, <code>elev_m</code> and flags; daily, monthly and water-year summaries; run and site reports.</p>
+<p><strong>Key checks</strong> logger against tape at each field visit, barologger agreement, survey history, Problems list.</p>
+<p><strong>New in 0.9.0</strong> drift and offset correction between tape checks, off by default (tape offsets prorated linearly, or an offset typed in), keeping the logger's values beside the corrected ones; a bulk export of every site.</p>
+<p><strong>Unreleased</strong> an uncertainty budget per deployment; barometric efficiency; casing movement between visits; reference elevations that follow their surveys in time; the water table against the ground, hydroperiod, gradients between wells and recharge; approvals; NetCDF export.</p>
+<p>Detail: <a href="../WLR/docs/WLR_reference_guide.html">ovid WLR Reference Guide</a>.</p>
+</div>
+<div class="app gt">
+<h3>GT: ground temperature</h3>
+<p><strong>Reads</strong> RBR <code>.hex</code> (with Ruskin exports), GeoPrecision FG2_Shell CSV exports of <code>.f2b</code> files, HOBOware CSV exports of <code>.hobo</code> files, EM50 and Campbell files; a sensor registry, borehole metadata and field notes.</p>
+<p><strong>Steps</strong> find files and bundles, read and calibrate (RBR counts to °C), time stamps and time zones, corrupt timestamps, clock faults and drift, stitch each logger, sensors to sites and depths, quality rules and flags, site records, daily means, annual statistics, thaw depth and active-layer thickness, freeze/thaw dates and zero curtain, between-site check, soil moisture and EC.</p>
+<p><strong>Outputs</strong> site and depth records, daily means, MAGT and trumpet curves, active-layer thickness, freeze/thaw tables, soil moisture and EC, run and site reports.</p>
+<p><strong>Key checks</strong> clock resets and drift, stuck sensors and zero curtain, between-site comparison, sensor health, bundles that need export.</p>
+<p><strong>New in 1.6.0</strong> WMO quality codes in exports; a daily or monthly mean takes the worst code of its values.</p>
+<p><strong>Unreleased</strong> degree days, n-factors and TTOP; taliks; zero-curtain sensor offsets; trends; estimated daily means; thermal diffusivity and gradient; ground-surface changes; NetCDF export for GTN-P and PermafrostNet.</p>
+<p>Detail: <a href="../GT/docs/GT_reference_guide.html">ovid GT Reference Guide</a>.</p>
+</div>
+<div class="app ert">
+<h3>ERT: electrical resistivity surveys</h3>
+<p><strong>Reads</strong> AGI SuperSting <code>.stg</code> with <code>.crs</code> contact resistance and <code>.cmd</code> command files (also inside zips), EarthImager sets, IRIS Prosys exports (three header styles) and Res2DInv <code>.dat</code>; every other file in the archive is listed.</p>
+<p><strong>Steps</strong> find and identify files, read into one model for both makers, link copies, merges and processed sets, geometry (electrodes, array, pseudo-depth, elevations), QC profiles that flag but never delete (limits from the EarthImager and SuperSting manuals; a frozen-ground profile by default), statistics.</p>
+<p><strong>Outputs</strong> a catalogue of surveys and files, one folder per survey, pseudosection previews, survey exports with provenance, a transect map (legend toggle, 250 ppi PNG export) and a shareable catalogue zip with an <code>index.html</code> viewer.</p>
+<p><strong>Key checks</strong> repeat error, current, voltage, contact resistance, negative and extreme apparent resistivity, repeats, geometry, outliers; survey quality and transects are set by people, with a satellite map.</p>
+<p><strong>New in 0.3.0</strong> moving-median and bad-electrode rules (for new projects; Herring et al. 2023, CPERS), electrodes turned off, and limits that differ by site, transect or season.</p>
+<p><strong>Unreleased</strong> reporting fields and checklist (Herring et al. 2023, CPERS); negative chargeability; a reciprocal error model; inversion files for pyGIMLi, R2/ResIPy and Res2DInv; electrode heights from a GNSS file.</p>
+<p>Detail: <a href="../ERT/docs/ERT_reference_guide.html">ovid ERT Reference Guide</a>.</p>
+</div>
+<div class="app rs">
+<h3>RS: remote sensing</h3>
+<p><strong>Reads</strong> drone images (DJI Matrice 350 RTK, Phantom 3/4/4 RTK, senseFly eBee and eBee Plus) through their EXIF and XMP headers, MRK, RPT, eMotion geotags, KML/KMZ plans and tracks, RINEX headers; satellite and aerial scene metadata, LiDAR headers, shapefiles, GeoJSON and GPX; GNSS survey CSVs. Google Earth tile KMLs are listed as map tiles, not read. Only headers and sidecars are read; nothing is written inside a source.</p>
+<p><strong>Steps</strong> scan sources (drives or folders, one after another, with a per-folder cache), group images into flights, link logs and other files to flights with a score and evidence, work out each flight's positioning status (RTK, PPK, standalone), build map geometry (planned, observed, derived), list datasets and GIS layers, stitch GNSS survey points.</p>
+<p><strong>Outputs</strong> flight, link, image, file and dataset catalogues; a map of every flight and layer (legend toggle, 250 ppi PNG export); stitched GNSS points; a shareable viewer zip that opens in any browser.</p>
+<p><strong>Key checks</strong> positioning status by year, missing metadata, QA flags, files tied to no flight; people confirm or reject links and statuses.</p>
+<p><strong>New in 0.5.0</strong> flight quality from the image headers (ground sample distance, speed, motion blur, forward and side overlap, sun elevation) and GNSS position quality (satellites, DOP, samples, age of corrections, baseline). Missions group the sorties of one survey (battery swaps, two flights on one battery). GNSS formats read: Emlid Flow CSV and zip, Reach .LLH, Emlid Studio .pos, NMEA, DJI point CSVs and MRK, Leica Viva ASCII, GSI-8/16 and LandXML.</p>
+<p><strong>Unreleased</strong> checkpoint accuracy (ASPRS 2023); LiDAR density and classes; multispectral panels; frames and datum status; product records with processing levels; coverage by site and year; a STAC catalogue.</p>
+<p>Detail: <a href="../RS/docs/RS_reference_guide.html">ovid RS Reference Guide</a>.</p>
+</div>
+<h2 id="compare">Comparison across apps</h2>
+<p>The three logger apps:</p>
+<table><thead><tr><th></th><th><span class="badge b-cs">CS</span></th><th><span class="badge b-wlr">WLR</span></th><th><span class="badge b-gt">GT</span></th></tr></thead><tbody>
+<tr><td>Loggers</td><td>Campbell (TOA5, CR10X)</td><td>HOBO, Solinst, barologgers</td><td>RBR, GeoPrecision, HOBO, EM50, Campbell</td></tr>
+<tr><td>Parameters</td><td>air temperature, humidity, precipitation, snow depth, <strong>wind</strong>, <strong>radiation</strong>, battery</td><td>pressure, water depth, depth to water, elevation, water temperature, conductivity</td><td>ground temperature by depth, soil moisture, EC, battery</td></tr>
+<tr><td>Record shape</td><td>wide (one column per parameter)</td><td>wide per deployment</td><td>long (site, depth, value)</td></tr>
+<tr><td>Time base</td><td>UTC−7 for all, through the shared time-zone table</td><td></td><td></td></tr>
+<tr><td>QC</td><td>limits, spikes, flat lines, corrupt timestamps, manual removals, calibrations</td><td>limits, corrupt timestamps, readings in the air, below air pressure, manual removals, tape checks</td><td>limits, spikes, stuck sensor, air-like, pre-install, corrupt timestamps, between-site check</td></tr>
+<tr><td>Summaries</td><td>daily, monthly, annual; precipitation by water year</td><td>daily, monthly, water year</td><td>daily means, annual statistics, ALT, freeze/thaw</td></tr>
+<tr><td>Reports</td><td>HTML, PDF or both, from Reports and export; a run report each run</td><td></td><td></td></tr></tbody></table>
+<p>ERT and RS are catalogues rather than logger time series: ERT's records are one row per quadrupole measurement, its QC adds flags only, and its summaries are per-survey distributions; RS's records are one row per flight, image, linked file or dataset, and its status is decided from evidence that people can confirm. Both share the core's audit, cache, time-zone table, set-up history, shell and file import and export, and both write shareable zips that open without R.</p>
+<h2 id="workflow">Common workflow</h2>
+<ol><li>Put raw downloads in the raw folder(s), keeping every download and its exports. <code>.hobo</code> and <code>.f2b</code> files cannot be read on their own: export them first with HOBOware Pro's <strong>Bulk Export</strong> and FG2_Shell, which write a CSV beside each file; a metadata workbook is optional (WLR and GT read one from the metadata folder; the logger list can stand in for it) (RS: add each drive or folder as a source).</li><li>Start the app (<code>Open &lt;app&gt; (Mac).command</code>, its <code>.bat</code> launcher on Windows, or <code>shiny::runApp()</code>) and set the folders and project folder with <strong>Browse…</strong>.</li><li>Run the <strong>Set-up check</strong> and fix anything in red.</li><li>Press <strong>Run</strong>. The first run writes the set-up tables with defaults.</li><li>Complete the app's set-up pages (stations, deployments and barometric groups, sensors and depths, survey details, or flight details).</li><li>Read the clock checks, Problems and Sensor health; add clock fixes and manual removals; run again (only changes are rebuilt, or use <strong>Rescan</strong>).</li><li>Look at the data in <strong>Plot and explore</strong> (or the Map), then export data and reports from <strong>Reports and export</strong>.</li></ol>
+<h2 id="glossary">Glossary</h2>
+<table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>Audit trail</td><td>The log of every removal and change, with rule, reason and file.</td></tr>
+<tr><td>Reconciliation</td><td>The check that records read equal records kept plus records dropped, per file and logger.</td></tr>
+<tr><td>Bundle</td><td>One logger download: the logger's own file and its exports.</td></tr>
+<tr><td>Stitching</td><td>Joining a logger's downloads into one continuous record, dropping repeats; the newest file wins a disagreement.</td></tr>
+<tr><td>Corrupt timestamp</td><td>A record off the time grid and out of written order among good records; left out and audited.</td></tr>
+<tr><td>Flag</td><td>A mark on a doubtful value that is kept; removed values are blanked and logged.</td></tr>
+<tr><td>Manual removal</td><td>A period you mark as bad, often by dragging across a plot.</td></tr>
+<tr><td>Rescan</td><td>Read chosen files again; everything else is reused from the cache.</td></tr>
+<tr><td>Set aside</td><td>A logger whose files are not read at all (CS station <code>ignore</code>).</td></tr>
+<tr><td>Set-up check</td><td>Pre-flight check of folders and set-up tables.</td></tr>
+<tr><td>Base time</td><td>UTC−7, the single time zone of every logger output.</td></tr>
+<tr><td>Water year</td><td>1 October to 30 September, named for the year it ends in.</td></tr>
+<tr><td>Viewer mode</td><td>A read-only copy of a project for colleagues.</td></tr>
+<tr><td>Ovid_Apps</td><td>The one-folder portable bundle with all five apps and the core (GitHub: yedoma/ovid).</td></tr></tbody></table>
+<h2 id="refs">References</h2>
+<p>Each app has a reference guide as .md, .html and .pdf (the PDF in dark mode, in the app's colours):</p>
+<ul><li><span class="badge b-cs">CS</span> <a href="../CS/docs/CS_reference_guide.html">ovid CS Reference Guide</a> (CS/docs/CS_reference_guide.html, .md, .pdf)</li><li><span class="badge b-wlr">WLR</span> <a href="../WLR/docs/WLR_reference_guide.html">ovid WLR Reference Guide</a> (WLR/docs/WLR_reference_guide.html, .md, .pdf)</li><li><span class="badge b-gt">GT</span> <a href="../GT/docs/GT_reference_guide.html">ovid GT Reference Guide</a> (GT/docs/GT_reference_guide.html, .md, .pdf)</li><li><span class="badge b-ert">ERT</span> <a href="../ERT/docs/ERT_reference_guide.html">ovid ERT Reference Guide</a> (ERT/docs/ERT_reference_guide.html, .md, .pdf)</li><li><span class="badge b-rs">RS</span> <a href="../RS/docs/RS_reference_guide.html">ovid RS Reference Guide</a> (RS/docs/RS_reference_guide.html, .md, .pdf)</li><li>ovid Core README (<code>core/README.md</code>) and each app's README.</li></ul>
+</div>
+</main></body></html>

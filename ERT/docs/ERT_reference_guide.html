@@ -1,0 +1,438 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>ovid ERT Reference Guide</title><style>
+:root{color-scheme:dark}body{background:#1F1F28;color:#DCD7BA;font:14.5px/1.55 Inter,'Avenir Next','Segoe UI',-apple-system,Helvetica,Arial,sans-serif;max-width:1040px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:26px;font-weight:600;color:#DCD7BA}h1:after{content:'';display:block;width:64px;height:3px;background:#7fb4ca;margin-top:10px}
+h2{font-size:19px;font-weight:600;margin-top:40px;border-bottom:1px solid #363646;padding-bottom:6px}a{color:#7fb4ca}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0}th,td{border-bottom:1px solid #363646;padding:6px 10px;text-align:left;vertical-align:top}th{color:#C8C093}
+code,pre{background:#2A2A37;border-radius:6px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:12.5px}code{padding:1px 5px}pre{padding:12px;overflow:auto}
+img{max-width:100%;border:1px solid #363646;border-radius:8px;margin:6px 0 18px}em{color:#C8C093}
+</style></head><body>
+<h1>ovid ERT Reference Guide</h1>
+<p>Electrical resistivity tomography surveys: what the app does to every file and measurement, why, and how to check it.
+For ERT 0.4.0 (ovid Core 1.14.0). ovid ERT is a catalogue, metadata, QC and viewing tool; it does not invert.
+Settings are quoted with their defaults; change them in the app or in <code>CFG</code> at the top of <code>ert_pipeline.R</code>.</p>
+<p><strong>Contents</strong></p>
+<ol>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#a-typical-session">A typical session</a></li>
+<li><a href="#what-happens-to-the-data-in-order">What happens to the data, in order</a></li>
+<li><a href="#1-finding-files">1. Finding files</a></li>
+<li><a href="#2-reading-instrument-files">2. Reading instrument files</a></li>
+<li><a href="#3-surveys-copies-and-processed-sets">3. Surveys, copies and processed sets</a></li>
+<li><a href="#4-geometry-arrays-and-pseudo-depth">4. Geometry, arrays and pseudo-depth</a></li>
+<li><a href="#5-quality-control">5. Quality control</a></li>
+<li><a href="#6-statistics">6. Statistics</a></li>
+<li><a href="#7-metadata-projects-and-transects">7. Metadata, projects and transects</a></li>
+<li><a href="#8-exports-sharing-and-opening-a-catalogue">8. Exports, sharing and opening a catalogue</a></li>
+<li><a href="#set-up-check-time-zones-and-file-audit">Set-up check, time zones and file audit</a></li>
+<li><a href="#reading-the-outputs">Reading the outputs</a></li>
+<li><a href="#electrode-arrays">Electrode arrays</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#glossary">Glossary</a></li>
+<li><a href="#references">References</a></li>
+</ol>
+<h2 id='quick-start'>Quick start</h2>
+<ul>
+<li><strong>Mac:</strong> double-click <code>Open ERT (Mac).command</code> in the Ovid_Apps folder. <strong>Windows:</strong> double-click <code>ERT/Ovid_ERT.bat</code>
+(<code>Make_Portable.bat</code> makes a copy that runs on computers without R). From R: <code>shiny::runApp(&quot;ERT&quot;)</code>.</li>
+<li>On the <strong>Settings</strong> page give the raw archive (one or more folders, read only) and a project folder (catalogue, metadata
+and settings are kept there; never inside the raw archive), then <strong>Save and rebuild the catalogue</strong>.</li>
+<li>Without the app: <code>Rscript ert_pipeline.R</code> (folders from <code>CFG</code>, or <code>ERT_RAW_DIRS</code> separated by <code>;</code> and <code>ERT_PROJECT_DIR</code>).</li>
+<li>Tests: <code>Rscript tests/run_tests.R</code> builds a small synthetic archive and checks the results.</li>
+</ul>
+<p>Raw files are never changed. Quality control only adds flags; nothing is deleted. Failed, partial and unreadable surveys
+stay in the catalogue.</p>
+<h2 id='a-typical-session'>A typical session</h2>
+<p><strong>1. Archive.</strong> Every survey with its date, project, transect, instrument, array, number of measurements, share passing QC
+and quality. Filter by year, project, transect, folder, instrument or quality, or search. Select several rows and add them to
+a project or a transect in one step; double-click a row to open it. <strong>Export catalogue</strong> writes a zip others can browse.</p>
+<p><strong>2. Survey: pseudosection.</strong> Apparent resistivity on a log scale from 1 to 10,000 ohm-m (Display options: log or linear,
+any range). Flagged measurements are drawn on top as crosses, one colour per reason, with their counts in the legend.
+Hover a point for its values. On the right, the details people enter.</p>
+<p><strong>3. Survey: about.</strong> Everything read from the files, grouped by instrument, acquisition, geometry, signal and record.
+Other tabs: distributions, contact resistance by electrode, error against current, geometry (with elevations), and a
+filterable table of every measurement.</p>
+<p><strong>4. QC.</strong> Start from a profile and move any limit; the survey is re-flagged at once. Each limit has an (i) note saying what
+it measures and where the value comes from. <strong>Save profile</strong> keeps the settings; <strong>Export survey with these limits</strong> writes them
+with the data.</p>
+<p><strong>5. Map.</strong> Transects on satellite imagery (or streets), one layer per survey year; click a year in the legend to hide it, or
+filter by year and project above the map. Enter each transect's start and end points and its surveys on the right; the table
+below lists all transects, by year or by project. The <b>Legend</b> box shows or hides the legend, and <b>Export view with legend (PNG)</b> or <b>without legend (PNG)</b> saves the map as it is on screen at 250 ppi (<code>ovid_ert_map_&lt;date&gt;.png</code>). <em>The three lines in this screenshot are illustrative examples, not surveyed
+positions.</em></p>
+<p><strong>6. Reference.</strong> How the app works, the QC profiles and rules, every statistic, the electrode arrays with diagrams, and the
+sources.</p>
+<h2 id='what-happens-to-the-data-in-order'>What happens to the data, in order</h2>
+<ol>
+<li><strong>Find</strong> every file under the raw folders (zip files are opened, not changed) and tell what each one is.</li>
+<li><strong>Read</strong> each instrument file once into the common ovid ERT model; keep the instrument's own fields beside it.</li>
+<li><strong>Join</strong> companions: contact resistance (<code>.crs</code>) to each measurement, the command file (<code>.cmd</code>) to the survey.</li>
+<li><strong>Link</strong> copies, merged files and processed sets (EarthImager, Res2DInv) to the surveys they came from.</li>
+<li><strong>Summarise</strong> geometry: electrodes, spacing, line length, gaps, array, elevation range.</li>
+<li><strong>Flag</strong> measurements with each QC profile and compute the statistics.</li>
+<li><strong>Write</strong> the catalogue, one folder per survey, and a pseudosection preview for every original survey.</li>
+</ol>
+<p>Measurements are written as read. People's metadata, elevations, manual flags and QC profiles live in <code>config/</code> and are
+applied on top.</p>
+<h2 id='1-finding-files'>1. Finding files</h2>
+<p>Every file is listed in <code>catalogue/files.csv</code> with its format, role and status, readable or not. Content is checked first,
+the extension second.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Formats</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>data</td>
+<td>AGI SuperSting <code>.stg</code>; IRIS Prosys exports (<code>.csv</code>/<code>.txt</code>); IRIS binary <code>.bin</code> (listed, no reader yet)</td>
+</tr>
+<tr>
+<td>processed</td>
+<td>EarthImager sub-sets and trimmed sets (<code>.stg</code>); Res2DInv input (<code>.dat</code>)</td>
+</tr>
+<tr>
+<td>companion</td>
+<td><code>.crs</code> contact resistance, <code>.cmd</code> command file, <code>.trn</code>, GPS, <code>.xyz</code>, SuperSting memory dumps (<code>*.stg.bin</code>, <code>CmdDir.bin</code> ...)</td>
+</tr>
+<tr>
+<td>result</td>
+<td>EarthImager inversion output (<code>.out</code>, <code>.ini</code>), inverted models (x, z, resistivity <code>.dat</code>), zip archives, Matlab files</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>photos, PDFs, documents</td>
+</tr>
+</tbody>
+</table>
+<p>A zip is opened once into <code>&lt;project&gt;/cache/zip/</code> and its members are listed as <code>&lt;zip&gt;!/&lt;member&gt;</code>, so a SuperSting download
+kept as a zip is read like a loose one. A file that is the same as a loose file (same bytes) is one survey with two paths;
+the loose file is the primary copy.</p>
+<h2 id='2-reading-instrument-files'>2. Reading instrument files</h2>
+<p><strong>AGI SuperSting <code>.stg</code>.</strong> Three header lines (instrument, serial, firmware, survey date, record count), then one line per
+measurement: V/I (ohm), repeat error in tenths of a percent, current in mA, apparent resistivity, the survey name typed on the
+instrument, and the x, y, z of A, B, M and N. Settings follow as <code>Cmd=</code>, <code>HV=</code>, <code>Cyk=</code>, <code>MTime=</code>, <code>Gain=</code>, <code>Ch=</code>, and on IP
+firmware further <code>IP:</code> fields. ovid converts error to percent, current to A, and computes voltage = V/I x I.</p>
+<p><strong>AGI <code>.crs</code>.</strong> One line per current injection: the A-B pair resistance (ohm) and current (A). Each measurement takes the
+reading for its A and B taken at or just before it.</p>
+<p><strong>IRIS Prosys exports.</strong> Three header styles are read: old (<code>Spa.1..4</code>, <code>Rho</code>, <code>Dev.</code>, <code>M</code>, <code>Sp</code>, <code>Vp</code>, <code>In</code>, <code>Stack</code>),
+Prosys II (<code>xA(m)</code>, <code>VMN (mV)</code>, <code>IAB (mA)</code>) and Prosys III (<code>xA (m)</code>, <code>Dev. Rho (%)</code>, <code>Dev. M</code>, y and z columns). V/I = Vp / In.
+The exports name no model or serial, so the instrument is recorded as <em>IRIS Instruments (model unknown)</em>; correct it on the Survey page if you know the model. Every column is kept.</p>
+<p><strong>Res2DInv <code>.dat</code></strong> (general array). Read as a processed set; its first line often names the original instrument file
+(for example <code>FG72_3917.bin</code>), which is kept as provenance.</p>
+<p><strong>Remote electrodes.</strong> Coordinates of 9,999 or more (either maker) mark an electrode at infinity; it is electrode 0, and the
+geometric factor treats its distance as infinite.</p>
+<h2 id='3-surveys-copies-and-processed-sets'>3. Surveys, copies and processed sets</h2>
+<p>A survey is one instrument data file. Its id is <code>ERT-</code> and the first ten characters of the file's MD5 checksum, so renaming or
+moving a file keeps the id. Measurements are matched by time stamp and V/I to earlier surveys:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Original</td>
+<td>Not found in any earlier survey</td>
+</tr>
+<tr>
+<td>Copy</td>
+<td>Same measurements as one survey, different bytes</td>
+</tr>
+<tr>
+<td>Subset</td>
+<td>Part of one survey (or a survey with records added)</td>
+</tr>
+<tr>
+<td>Merged</td>
+<td>Measurements from two or more surveys</td>
+</tr>
+<tr>
+<td>Processed set</td>
+<td>EarthImager or Res2DInv file made from a survey</td>
+</tr>
+</tbody>
+</table>
+<p>Records read are compared with the count in the header: fewer means <strong>incomplete</strong>; more is noted (records added later).</p>
+<h2 id='4-geometry-arrays-and-pseudo-depth'>4. Geometry, arrays and pseudo-depth</h2>
+<ul>
+<li><strong>Electrodes</strong> are numbered from their distance along the line when positions sit on a regular spacing, so unused positions
+keep their numbers (and are counted as <em>unused positions</em>).</li>
+<li><strong>Geometric factor</strong> k = 2 pi / (1/AM - 1/BM - 1/AN + 1/BN), from the 3-D distances; apparent resistivity = k x V/I.</li>
+<li><strong>Array</strong> of each measurement from its electrode numbers: Wenner, Schlumberger, dipole-dipole, pole-dipole, pole-pole or
+mixed. A survey is named after the array of at least 80 % of its measurements, else <em>mixed, mostly ...</em>.</li>
+<li><strong>Pseudo-depth</strong> = 0.19 x the distance between the outermost electrodes, below the centre of the four electrodes: close to the
+median depth of investigation (Edwards 1977; Loke 1999, Table 2). It is a plotting convention, not an image of the ground.</li>
+<li><strong>Elevations</strong> can be added per survey on the Geometry tab (CSV with electrode and elevation, or distance and elevation,
+interpolated). They change only the z of the electrodes; the instrument's apparent resistivity is kept as read.</li>
+</ul>
+<h2 id='5-quality-control'>5. Quality control</h2>
+<p>A profile is a set of limits. A measurement that breaks a limit is flagged with a reason; every profile is computed and none
+deletes anything. The catalogue and previews use the first profile in <code>CFG$qc_profiles</code> (default <strong>frozen_ground</strong>).</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Exploratory</th>
+<th>Frozen ground</th>
+<th>Standard</th>
+<th>Strict</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeat error, max (%)</td>
+<td>10</td>
+<td>5</td>
+<td>5</td>
+<td>3</td>
+<td>EarthImager 3.5, 4.1.3</td>
+</tr>
+<tr>
+<td>Current, min (mA)</td>
+<td>-</td>
+<td>-</td>
+<td>20</td>
+<td>20</td>
+<td>EarthImager 3.5</td>
+</tr>
+<tr>
+<td>Voltage, min (mV)</td>
+<td>-</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>EarthImager 4.1.1</td>
+</tr>
+<tr>
+<td>abs(V/I), min (ohm)</td>
+<td>0.0001</td>
+<td>0.0002</td>
+<td>0.0002</td>
+<td>0.0005</td>
+<td>EarthImager 4.1.2</td>
+</tr>
+<tr>
+<td>Apparent resistivity (ohm-m)</td>
+<td>0.1-100,000</td>
+<td>1-100,000</td>
+<td>1-100,000</td>
+<td>1-100,000</td>
+<td>EarthImager 4.1.4-4.1.5</td>
+</tr>
+<tr>
+<td>Negative apparent resistivity</td>
+<td>flag</td>
+<td>flag</td>
+<td>flag</td>
+<td>flag</td>
+<td>EarthImager 4.1.7</td>
+</tr>
+<tr>
+<td>Contact resistance, max (ohm, A-B pair)</td>
+<td>-</td>
+<td>50,000</td>
+<td>10,000</td>
+<td>5,000</td>
+<td>EarthImager 3.5.9</td>
+</tr>
+<tr>
+<td>Repeated quadrupoles, geometry</td>
+<td>geometry</td>
+<td>both</td>
+<td>both</td>
+<td>both</td>
+<td></td>
+</tr>
+<tr>
+<td>Outlier (robust z of log rhoa)</td>
+<td>-</td>
+<td>6</td>
+<td>6</td>
+<td>4</td>
+<td></td>
+</tr>
+<tr>
+<td>Reciprocal error, max (%)</td>
+<td>-</td>
+<td>-</td>
+<td>5</td>
+<td>3</td>
+<td>EarthImager 4.1.6</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Frozen ground</strong> keeps the manual limits but drops the 20 mA current rule and allows 50,000 ohm contact, because winter and
+permafrost surveys routinely read 20-35 kohm A-B contact and drive less current. <strong>Exploratory</strong> flags only
+clearly impossible values. Profiles <code>supersting_r8</code> and <code>iris_syscal</code> apply to AGI or IRIS data only. Edit any profile on the QC
+page and save it; profiles live in <code>config/qc_profiles.csv</code>. Manual flags (by measurement or electrode) go in
+<code>config/manual_flags.csv</code> and can be switched off with <code>active = FALSE</code>. The <code>moving_median</code> and <code>bad_electrode</code>
+rules are in the defaults of new projects; in any project they can be switched on or off and tuned on the QC page, then saved as
+a profile. Every row of <code>qc_profiles.csv</code> has a <code>rule_id</code> (Q-01, Q-02 ...), and each survey's <code>flags.csv</code> (measurement, rule, flag,
+value) ends with <code>rule_id</code> (the row behind the flag, or the rule's name for electrodes turned off and manual flags), <code>app</code> and
+<code>run_id</code>, as in the other ovid apps (ERT has no WMO code).</p>
+<p>The <strong>survey quality</strong> (Good, Usable, Usable with caution, Poor, Unusable, Incomplete, Unknown) and its reasons are set by people
+on the Survey page and are separate from the measurement flags.</p>
+<h3>Added in October 2026: moving median, bad electrodes, electrodes turned off, limits by site and season</h3>
+<p>All of these flag and never remove, like the rest of ERT's quality control.</p>
+<ul>
+<li><strong><code>magnitude_sd</code></strong> (value <code>k</code> or <code>k;1</code>; the <code>cpers</code> profile sets it to 9). A measurement is flagged when its apparent resistivity is more than <code>k</code> standard deviations from the survey mean (<code>k;1</code> works on log10 apparent resistivity). Herring et al. (2023) remove values more than 9 SD away. One huge value inflates the SD, so this catches only gross spikes, and no value can lie more than (n − 1)/√n SD from the mean: 9 SD can flag nothing in a survey of fewer than about 83 measurements (it is not applied below 10 positive values). Use <code>outlier_mad</code> for smaller surveys.</li>
+<li><strong><code>moving_median</code></strong> (value <code>window;percent</code>, default <code>5;7</code>). Measurements are grouped into depth levels (one pseudo-depth with the same pair of dipole lengths, so different arrays are not mixed) and ordered along the line. A measurement is flagged when its log10 apparent resistivity departs from the moving median of the window around it by more than that percentage of the median. Herring et al. (2023) describe a 5-point moving median of log apparent resistivity per depth level with a 7 % departure, as an example to test per survey; the paper does not say whether the 7 % applies to the log value or to the resistivity, and ERT reads it as the log value. The CPERS processing notebook uses the same filter.</li>
+<li><strong><code>bad_electrode</code></strong> (value <code>percent;minimum</code>, default <code>25;10</code>). After the other rules, an electrode used in at least <code>minimum</code> measurements is bad when more than <code>percent</code> of them are flagged, as in the CPERS processing notebook; every measurement that uses it is then flagged and the electrode is named in the flag. Repeats, bad geometry and electrodes turned off are not counted.</li>
+<li><strong>Electrodes turned off</strong> (<code>config/electrode_status.csv</code>, <em>Electrodes turned off</em>): one row per electrode or range (<code>12</code>, <code>5-8</code>, <code>3;9</code>) with <code>status</code> = off, either for one <code>survey_id</code>, or for a <code>transect_id</code> between <code>from</code> and <code>to</code>. Every measurement using it is flagged &quot;electrode turned off&quot;, and the survey's <code>electrodes.csv</code> gains a <code>status</code> column marking it off.</li>
+<li><strong>Limits by site and season.</strong> In <code>qc_profiles.csv</code>, <code>applies_to</code> can also be <code>site:&lt;site&gt;</code>, <code>transect:&lt;transect_id&gt;</code> or <code>months:&lt;list&gt;</code> (for example <code>months:11-4</code> for November to April). When a rule has rows at several levels the most specific wins: survey, then transect, then site, then months, then instrument, then all. This is how a contact-resistance limit can be set per substrate and season: Herring et al. (2023) give below 5 kΩ for unfrozen fine-grained or wet deposits and 50 to 200 kΩ for coarse or frozen ground.</li>
+</ul>
+<p><strong>Not switched on in an existing project.</strong> New projects get <code>moving_median</code> and <code>bad_electrode</code> rows in the <code>standard</code>, <code>strict</code> and <code>frozen_ground</code> profiles; an existing <code>qc_profiles.csv</code> is left as it is. Run on a test archive (413 surveys, 297,725 measurements) with both added to <code>frozen_ground</code>, the existing rules flagged 15.7 % of measurements, the moving median added 6.6 % and the bad-electrode rule 11.8 %, and the median survey kept 90 % instead of 99.5 %. Look at the flagged measurements on the QC page before turning them on.</p>
+<h2 id='6-statistics'>6. Statistics</h2>
+<p><code>catalogue/survey_stats.csv</code> holds, for each survey and profile, the distribution of apparent resistivity, V/I, current, voltage,
+repeat error, contact resistance and IP: n, minimum, 5th, 25th, 50th, 75th and 95th percentiles, maximum, mean and standard
+deviation, for all measurements and for those passing QC. Statistics work on empty and partial surveys. The Reference page in the
+app explains every statistic shown.</p>
+<h2 id='7-metadata-projects-and-transects'>7. Metadata, projects and transects</h2>
+<p>People's metadata is kept in <code>config/</code> as CSV, independent of the raw files; only values that differ from the files are stored.</p>
+<ul>
+<li><strong>Survey:</strong> name, date acquired, instrument (if the files are wrong), operator, project, site, transect, weather and ground conditions, quality and reasons, notes.</li>
+<li><strong>Transect:</strong> id, name, site, start and end point (latitude, longitude; length and bearing are computed), notes. A transect is
+the physical line; its surveys from different years are linked to it.</li>
+<li><strong>Project</strong> and <strong>site</strong> tables (<code>projects.csv</code>, <code>sites.csv</code>). Projects are first guessed from the top folder; a project set by
+people wins.</li>
+</ul>
+<h2 id='8-exports-sharing-and-opening-a-catalogue'>8. Exports, sharing and opening a catalogue</h2>
+<ul>
+<li><strong>Export survey</strong> (Survey or QC page): <code>measurements_all.csv</code> (every measurement with <code>qc_pass</code> and <code>qc_flags</code>),
+<code>measurements_passed.csv</code>, <code>instrument_fields.csv</code>, <code>electrodes.csv</code> (with elevations), <code>contact.csv</code>, <code>metadata.json</code>,
+<code>pseudosection.png</code> and <code>provenance.json</code> (source files, format, instrument, ovid version, QC profile and limits, manual flags,
+elevations, export time, survey and transect ids).</li>
+<li><strong>Export catalogue</strong> (Archive page): a zip with <code>index.html</code> (opens in any browser: a searchable, sortable list with
+pseudosection previews), the catalogue tables, metadata and QC profiles; measurements optionally.</li>
+<li><strong>Open a catalogue</strong> (Archive page): loads such a zip into <code>ERT_imports/&lt;name&gt;</code> beside your project. A banner shows that you are
+viewing an imported catalogue, with a link back to your own. Without measurements, the Survey page shows the preview and details.</li>
+</ul>
+<h2 id='set-up-check-time-zones-and-file-audit'>Set-up check, time zones and file audit</h2>
+<p>These three checks are shared with the other ovid apps and come from the core. Each run writes them to <code>output/audit/</code>;
+the Settings page shows them in the <strong>Set-up check and file audit</strong> card, with a button to run the check again and one to export the file audit.</p>
+<h3>Set-up check (setup_check.csv)</h3>
+<p>Before any file is read, the set-up is checked: raw and project folders exist, every file rule is a valid pattern, survey ids are not repeated,
+acquired dates parse, transects and projects point at things that exist, site latitude and longitude are in range, electrode elevation tables
+have <code>electrode</code>, <code>distance_m</code> and <code>elevation_m</code>, and QC profiles name known checks. Each row has a level
+(<code>error</code>, <code>warn</code> or <code>info</code>). Any error is also written to <code>problems.csv</code>, but the run still goes on.</p>
+<h3>Time zones (config/timezones.csv)</h3>
+<p>Instrument clocks are often left on local time. The shared table has one row per rule: <code>serial</code>, <code>model</code>, <code>file_pattern</code>,
+<code>start</code>, <code>end</code>, <code>offset_hours</code> and <code>reason</code>. Blank columns match anything, and the first matching row wins.
+Each survey gets <code>utc_offset_h</code> and <code>zone_source</code> (the rule that matched, or <code>none</code>), so the catalogue says which zone its times are in.</p>
+<div class="ex"><p><strong>Worked example.</strong> A row with model <code>Terrameter</code>, start <code>2024-04-01</code>, end <code>2024-10-31</code>, offset <code>-6</code> and reason
+"summer field clock". A survey acquired at 2024-07-12 14:30 on that instrument gets <code>utc_offset_h = -6</code>, so in UTC it is 2024-07-12 20:30.
+A survey from November matches no row and keeps <code>zone_source = none</code>.</p></div>
+<h3>File audit (file_audit.csv)</h3>
+<p>One row per raw file found: its path, size, which survey it became, how many measurements it gave, and <code>what_happened</code>
+(read, skipped by a rule, duplicate copy, unreadable and why). The run then checks that every file found is accounted for; a gap is written to <code>problems.csv</code>.</p>
+<h2 id='reading-the-outputs'>Reading the outputs</h2>
+<pre><code>&lt;project&gt;/config/                 what people decide (CSV; every change backed up in config/history/)
+&lt;project&gt;/output/catalogue/       surveys.csv, files.csv, survey_stats.csv, projects/sites/transects.csv, previews/
+&lt;project&gt;/output/surveys/&lt;id&gt;/    measurements.csv, extra.csv, electrodes.csv, contact.csv, cmd_geometry.csv, flags.csv
+&lt;project&gt;/output/audit/           run_manifest.csv, run_history.csv, problems.csv, setup_check.csv, file_audit.csv
+&lt;project&gt;/cache/                  read files and opened zips (safe to delete)
+</code></pre>
+<h2 id='electrode-arrays'>Electrode arrays</h2>
+<p>Summarised from Loke (1999), section 2.5. Diagrams of each layout are on the app's Reference page.</p>
+<table>
+<thead>
+<tr>
+<th>Array</th>
+<th>Strengths</th>
+<th>Weaknesses</th>
+<th>Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wenner</td>
+<td>Strongest signal; good for horizontal layers</td>
+<td>Poor for narrow vertical features; coverage shrinks with depth</td>
+<td>Noisy sites, layered ground</td>
+</tr>
+<tr>
+<td>Dipole-dipole</td>
+<td>Good for vertical features; good coverage; low EM coupling (IP)</td>
+<td>Signal falls with n cubed; shallower; needs good contact</td>
+<td>Horizontal resolution with a sensitive meter</td>
+</tr>
+<tr>
+<td>Wenner-Schlumberger</td>
+<td>Balanced vertical and horizontal sensitivity</td>
+<td>Weaker signal than Wenner</td>
+<td>When unsure; overlapping levels</td>
+</tr>
+<tr>
+<td>Pole-dipole</td>
+<td>Good coverage; stronger than dipole-dipole</td>
+<td>Asymmetric; needs a remote electrode</td>
+<td>Few electrodes, forward and reverse</td>
+</tr>
+<tr>
+<td>Pole-pole</td>
+<td>Widest coverage, deepest</td>
+<td>Poorest resolution; telluric noise; two remote electrodes</td>
+<td>Small spacings</td>
+</tr>
+</tbody>
+</table>
+<h2 id='troubleshooting'>Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Why, and what to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A survey is <em>Incomplete</em></td>
+<td>Fewer records than the header states: the download was cut. The survey stays in the catalogue.</td>
+</tr>
+<tr>
+<td>Many <em>poor contact</em> flags</td>
+<td>Frozen or dry ground. Compare profiles on the QC page; frozen_ground allows 50 kohm A-B.</td>
+</tr>
+<tr>
+<td>About half of a 3-D IRIS export flagged <em>duplicate</em> and <em>bad geometry</em></td>
+<td>The export lost the cross-line offsets; the positions repeat along the line.</td>
+</tr>
+<tr>
+<td>A <code>.bin</code> file has <em>No reader yet</em></td>
+<td>Export it from Prosys as text, or wait for the IRIS binary reader.</td>
+</tr>
+<tr>
+<td>The map is blank</td>
+<td>Imagery needs an internet connection; transects need start and end points.</td>
+</tr>
+<tr>
+<td>A change made outside the app does not show</td>
+<td>Restart the app; config is read at start. Rebuild the catalogue after adding raw files.</td>
+</tr>
+</tbody>
+</table>
+<h2 id='glossary'>Glossary</h2>
+<p><strong>Apparent resistivity</strong> the resistivity of a uniform ground that would give the measured V/I with this layout (ohm-m).
+<strong>A, B / M, N</strong> current electrodes / potential electrodes. <strong>Geometric factor (k)</strong> converts V/I to apparent resistivity.
+<strong>Pseudosection</strong> measurements plotted under their electrodes at a depth set by the array length. <strong>Repeat error</strong> scatter of
+the stacked readings. <strong>Reciprocal</strong> the same measurement with current and potential electrodes swapped. <strong>Transect</strong> the
+physical line; <strong>survey</strong> one acquisition on it. <strong>Flag</strong> a QC mark on a measurement; nothing is removed.</p>
+<h2 id='references'>References</h2>
+<ul>
+<li>Loke, M.H. (1999). <em>Electrical imaging surveys for environmental and engineering studies.</em> (ref_manuals/Lokenote.pdf)</li>
+<li>Advanced Geosciences Inc. (2014). <em>Instruction manual for EarthImager 2D.</em> (ref_manuals/EarthImager2DManual.pdf)</li>
+<li>Advanced Geosciences Inc. <em>SuperSting instruction manual.</em> (ref_manuals/SuperSting Manual.pdf)</li>
+<li>Edwards, L.S. (1977). A modified pseudosection for resistivity and IP. <em>Geophysics</em> 42, 1020-1036.</li>
+<li>ResIPy (gitlab.com/hkex/resipy), <code>parsers.py</code>: Prosys header styles, remote electrodes, Syscal binary layout.</li>
+<li>Herring, T., et al. (2023). Best practices for using electrical resistivity tomography to investigate permafrost. <em>Permafrost and Periglacial Processes</em> 34(4), 494–512. <a href="https://doi.org/10.1002/ppp.2207">doi:10.1002/ppp.2207</a></li>
+<li>Canadian Permafrost Electrical Resistivity Survey (CPERS), NSERC PermafrostNet. Data processing notebook. <a href="https://data.permafrostnet.ca/cpers/data_processing.html">data.permafrostnet.ca/cpers/data_processing.html</a></li>
+</ul>
+
+<h2 id="wrong">When something goes wrong</h2>
+<ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
+</body></html>

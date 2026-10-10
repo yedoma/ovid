@@ -1,0 +1,16 @@
+file,what,value,source
+fg2_csv__E00001_20240927165437.csv,first_time,2020-07-24 07:57:48,"raw file line 11 (24.07.2020 07:57:48, logger time, not shifted by the reader)"
+fg2_csv__E00001_20240927165437.csv,last_time,2020-07-26 07:00:00,raw file line 60
+fg2_csv__E00001_20240927165437.csv,col:value@1,21,"raw file line 11, #1 (T1)"
+fg2_csv__E00001_20240927165437.csv,col:value@2,22.05,"raw file line 13, #1 (T1)"
+hobo_csv__1000004_SiteA20240921.csv,first_time,2023-09-27 15:00:00,"raw file line 3 (09/27/23 03:00:00 PM, GMT-07:00; the reader keeps the clock time when the file's zone is the base UTC-7)"
+hobo_csv__1000004_SiteA20240921.csv,col:value@1,7.745,"raw file line 3, first Temp column (T1)"
+hobo_csv__1000004_SiteA20240921.csv,col:value@2,7.770,"raw file line 4, first Temp column (T1)"
+rbr_txt__000123_20240926_1542.txt,first_time,2021-04-16 05:00:00,raw file line 14 (UTC as written by Ruskin; the reader keeps UTC and marks offset 0)
+rbr_txt__000123_20240926_1542.txt,last_time,2021-04-17 04:00:00,raw file line 60
+rbr_txt__000123_20240926_1542.txt,col:value@1,-0.3919342,"raw file line 14, first temperature (tab field 8: data rows have no Depth value, so the 8 values sit one column left of the 8 Temp headers)"
+rbr_hex__000123_20240926_1542.hex,rows,64,"raw file data section: 48-byte header, one 4-word time-stamp event, then 8 full samples of 8 channels (3-byte counts); 8 x 8 = 64 values in the long table"
+rbr_hex__000123_20240926_1542.hex,first_time,2021-04-15 22:00:00,"raw file 'Timestamp 2021/04/15 22:00:00 at sample 1' (logger time, kept as written; Ruskin 2.4.6 export 014040_20240926_1542.txt row 1 shows it as 2021-04-16T05:00 UTC)"
+rbr_hex__000123_20240926_1542.hex,last_time,2021-04-16 01:30:00,"sample 8 at the 00:30:00 sample period (Ruskin export row 8, 2021-04-16T08:30 UTC)"
+rbr_hex__000123_20240926_1542.hex,col:value@1,-0.3919342,"Ruskin 2.4.6 export 014040_20240926_1542.txt row 1, first temperature (T1)"
+rbr_hex__000123_20240926_1542.hex,col:value@8,-0.3896876,"Ruskin 2.4.6 export 014040_20240926_1542.txt row 8, first temperature (T1)"

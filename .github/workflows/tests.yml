@@ -1,0 +1,39 @@
+# Runs every test suite (run_all_tests.R) on each push and pull request, with the package versions pinned in
+# renv.lock (build/renv.lock until that moves to the top folder), so a change that breaks another app is caught before
+# anyone installs it. callr is installed too: without it the apps run pipelines in their own process, and the tests of
+# runs in the background would not run.
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Cache packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-${{ runner.os }}-${{ hashFiles('renv.lock', 'build/renv.lock') }}
+
+      - name: Install the pinned packages
+        run: |
+          install.packages("renv")
+          lock <- if (file.exists("renv.lock")) "renv.lock" else "build/renv.lock"
+          renv::restore(lockfile = lock, library = .libPaths()[1], prompt = FALSE)
+          for (p in c("V8", "chromote", "processx", "callr")) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
+        shell: Rscript {0}
+
+      - name: Run all tests
+        run: Rscript run_all_tests.R

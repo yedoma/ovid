@@ -1,0 +1,9 @@
+file,what,value,source
+hobo_csv__10000005_SiteA_2024.csv,rows,58,raw file lines 3-60
+hobo_csv__10000005_SiteA_2024.csv,first_time,2024-09-20 15:30:00,"raw file line 3 (09/20/24 03:30:00 PM, GMT-07:00; the reader keeps the clock time when the file's zone is the base UTC-7)"
+hobo_csv__10000005_SiteA_2024.csv,col:pres@1,108.277,"raw file line 3, Abs Pres kPa (kept in kPa)"
+hobo_csv__10000005_SiteA_2024.csv,col:temp@2,8.680,"raw file line 4, Temp C"
+solinst_csv__1000002_ST01_20250920.csv,rows,48,raw file lines 13-60
+solinst_csv__1000002_ST01_20250920.csv,first_time,2024-09-20 16:30:00,"raw file line 13 (9/20/2024 04:30:00 pm; no zone in the file, not shifted by the reader)"
+solinst_csv__1000002_ST01_20250920.csv,last_time,2024-10-02 10:30:00,raw file line 60
+solinst_csv__1000002_ST01_20250920.csv,col:pres@1,0,"raw file line 13, LEVEL 0.0 m (kept in m; the unit is in the reader's meta)"

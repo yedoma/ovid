@@ -1,0 +1,8 @@
+Serial number,Site,Station,Latitude,Longitude,From,To,Notes
+10000001,Example Site,Outlet,60.1031,-120.1082,,,Never moved: dates left blank cover its whole record
+1000002,Example Site,Transect 1,60.1075,-120.1021,,2023-09-21,Moved to Transect 2 at the 2023 visit
+1000002,Example Site,Transect 2,60.1069,-120.1044,2023-09-22,,Redeployed: same serial on a new row
+1000003,Example Site,Upland Shallow,60.1049,-120.0998,2019,2021-09-09,A year alone is fine when the exact day is not known; failed in 2021
+1000004,Example Site,Upland Shallow,60.1049,-120.0998,2021-09-10,,Swapped in for 1000003: the station carries on with a new serial
+E00001,Example Site,Borehole 3,,,,,No coordinates yet: fill them in later
+000123,,,,,,,Serial only: shown under its serial until a station is given

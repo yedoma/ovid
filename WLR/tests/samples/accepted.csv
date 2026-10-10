@@ -1,0 +1,3 @@
+file,expected_md5,checked_by,checked_on,note
+hobo_csv__10000005_SiteA_2024.csv,8abdf5bd0bedc05edbc6b78074447a7a,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+solinst_csv__1000002_ST01_20250920.csv,3003697fb8a6a47d9523164ff8409c8b,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv

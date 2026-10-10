@@ -1,0 +1,43 @@
+/* core/www/parts.css  --  Styles of small shared parts, loaded on every page (Standard and Workbench).
+   Part of Ovid Core (shared). */
+
+/* the sides of one app (shell.R ovid_areas_ui) */
+.d-areas{margin-left:10px;display:inline-flex}
+.d-area .d-area-n{margin-left:6px;opacity:.75;font-variant-numeric:tabular-nums}
+.d-area.d-area-dim{opacity:.5}
+.d-area-off{display:none!important}
+
+/* colour schemes (shell.R colours_ui) */
+.d-sch{display:flex;align-items:center;gap:12px;width:100%}
+.d-sch-nm{flex:1}
+.d-sch-tag{margin-left:8px;font-size:11px;opacity:.7}
+.d-sch-sw{display:inline-flex;gap:2px}
+.d-sch-sw span{width:12px;height:16px;border-radius:2px;display:inline-block}
+.d-sch-sw span:first-child{width:18px;outline:1px solid rgba(127,127,127,.5)}
+.d-colours .radio label,.d-colours .form-check-label{width:100%}
+
+/* matching columns on Import (metasheet_ui.R) */
+.meta-map{max-height:34vh;overflow:auto}
+.meta-map-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(127,127,127,.25)}
+.meta-map-row .form-group{margin:0}
+.imp-box{padding:7px 10px;margin:8px 0;border-left:3px solid rgba(127,127,127,.6);background:rgba(127,127,127,.12);font-size:12.5px}
+.imp-err{border-color:#d9534f}
+.imp-warn{border-color:#e0a030}
+.imp-note{opacity:.85}
+.imp-tag{font-size:10.5px;padding:0 6px;margin-left:6px;border-radius:3px;border:1px solid rgba(127,127,127,.5)}
+.imp-tag.chk{border-color:#e0a030;color:#e0a030}
+.imp-tag.ok{opacity:.8}
+.imp-line{padding:2px 0;font-size:12.5px}
+.imp-line.e{color:#e0605c}
+.imp-line.w{color:#e0a030}
+.imp-line.n{opacity:.8}
+.imp-hdr{margin:6px 0}
+.imp-hdr-body{display:flex;gap:12px;align-items:flex-end;padding:6px 0}
+.imp-prev{overflow:auto;max-height:150px;font-size:12px}
+.imp-prev table{border-collapse:collapse}
+.imp-prev th,.imp-prev td{padding:2px 8px;border-bottom:1px solid rgba(127,127,127,.25);white-space:nowrap}
+
+/* what a run changes on its own (corrections.R corrections_ui) */
+.d-corr td{vertical-align:top;padding:4px 8px}
+.d-corr .st-on{color:var(--green,#5a5)}
+.d-corr .st-off{color:var(--fg4,#999)}

@@ -1,0 +1,232 @@
+# Ovid RS changelog
+
+Newest first. Each entry gives the date, what was added, changed and fixed, and **Output changes**: whether results a user already
+has would come out differently, and why. Entries before October 2026 are taken from the git history and are shorter.
+
+## Unreleased
+
+**Changed (one review list, project menu, time zone, 2026-10-09)**
+- The project menu is in the top bar and in the Workbench; Settings lists the projects (moved from Sources); opening a project loads all its settings.
+- The Workbench grouping reads "Group flights by" and "No flights yet".
+
+**Changed (screens made simpler, 2026-10-09)**
+- Checkpoint accuracy shows once, on the Workbench's Positioning tab; the GNSS page no longer repeats it.
+- QA drops its four count boxes and the flagged-flights table (Needs you and the Map's summary cards show them); Sources drops its Group loggers by list (the Workbench keeps one).
+- Each QA summary moved to the page that acts on it: coverage by site, year and sensor to the Timeline, positioning status by year to Positioning, missing metadata to Needs you.
+- The Flight page's free-text Mission box is gone; missions are set with Confirm this grouping and Split this sortie off.
+- The shareable viewer has one Export viewer (ZIP) button that saves the title, writes the viewer and downloads it; the title is saved with the project.
+- The Flight page and the Workbench's Edit flight use one flight edit form.
+- The Map filter "Only flights with QA flags" is now "Only flights with checks to look at", as counted in the summary and Needs you.
+- The Workbench tabs no longer include Reference (it stays under Pages and the ? button), and Import data no longer repeats the header's Rebuild button.
+
+**Fixed (GNSS bases, 2026-10-09)**
+- A base whose method is "network (NTRIP / CORS)" is now matched whatever its case, so it is ok instead of always "needs you".
+
+**Fixed (review decisions and set-up notice, 2026-10-09)**
+- "Set-up changed since the last build" no longer follows review_decisions.csv (Accept as is), which a build does not read.
+- Needs you reads and writes its decisions through the core review helpers.
+
+**Fixed (Workbench, checks, eMotion logs and saves, 2026-10-09)**
+- Workbench: Products and STAC export are tabs of their own, showing only the products table, and the STAC catalogue with the viewer; they no longer open the whole QA page.
+- Clock check: a time from a decoded flight log counts as a checked clock (ok), not as unusable.
+- Placed counts the photo tags of decoded .bbx/.bb3 logs; placed_from has one meaning in flights.csv and in the app ("photo geotags", "flight log" or "none"; `placed_counts()`). **Output changes:** placed_from no longer says "flight log" for a flight whose log places nothing, and such a flight gets its track from its photo geotags.
+- A scan builds the .bb3 key by itself when a source holds eMotion missions (.mis3) with their .bb3 logs and the project has no key yet (kept in the project's config folder). Needs you says when a log waits for the key, and what to scan.
+- problems.csv is removed after a clean run, so the Workbench no longer shows old problems; the Sources page lists the last run's problems under the set-up check.
+- Rebuild and Create viewer run in the background with Cancel, after the set-up check, like scans.
+- Checks accepted as is in Needs you count as ok in "Checks to look at" and the Map's Checks column.
+- Needs you Fix: the clock item opens the Time zones set-up table and the accuracy item the Positioning tab; Fix opens the flight in the Workbench too.
+- flights.csv is written only through its Set-up tables editor (Flight page, Set site, missions, Workbench Edit flight), so unsaved editor edits are not overwritten. Edit flight has the Flight page's Mission and calibration panel fields, and neither form requires a reason. Set site no longer briefly reverts a hand-set positioning status.
+- Group by on the Sources page opens a flight in place in the Workbench instead of reloading the page.
+- Settings is reachable from the Workbench (Pages).
+- The viewer title is saved in the app's settings and titles the STAC catalogue of every rebuild.
+- Copies of eMotion flight logs are counted in "duplicates counted once" and in the run message.
+- The set-up check looks at gnss_bases.csv (method, post_processed) and drone_cameras.csv (drone yes or no).
+- The Workbench's inspector and its first tab agree (Needs you); the Workbench export is named like every other download (ovid_rs_<flight>_<date>.csv).
+- README lists the Timeline page and the Workbench tabs; comments name calibration_options.csv.
+
+## 0.6.0 (2026-10-10), needs core 1.15.0
+
+**Changed (drone photos, every photo read, sources, 2026-10-09)**
+- Only drone photos make flights: a drone tag (DJI drone-dji, senseFly, Camera: XMP) or a camera in the new Set-up table `config/drone_cameras.csv` (seeded with the cameras RS knew; a row with drone "no", seeded with DJI's handheld Osmo and Pocket cameras, wins over a drone tag). Other photos are listed in `catalogue/other_photos.csv` with why; raw photos are tested the same way when their EXIF can be read.
+- Every photo is read, not 30 per folder; the result is cached per file (`cache/sources/<source>/exif.rds`, by path, size and time), so a rescan reads only new or changed photos.
+- A flight with no log takes its times, extent and a track from its photos' geotags (`placed_from` "photo geotags" in flights.csv).
+- Copies of a photo are counted once and listed in `catalogue/duplicates.csv` (kind, key, kept_path, dup_path, why; shared with the eMotion logs). A source inside another counts each file once, under the innermost source; the Sources page says so before scanning.
+- Satellite scenes stay rasters, never photos or flights; a year in a folder name is no longer a flight number.
+- Sources page: each source with its status, drone photos and flights, and Remove (with a confirm; `remove_source()`, files never touched); a Last scan summary with "Why left out" and "Duplicates".
+- Fixed: the Workbench no longer disconnects on a flight with blank times, nor errs with no colour variable; the map's photo points no longer fail when no photo has a position.
+- **Output changes:** yes. Non-drone photos and the flights they made leave the catalogue; flights gain positions, extents and times from every photo instead of a sample; the first scan after this update reads every photo again.
+
+**Added (senseFly logs and eMotion missions, 2026-10-09)**
+- RS reads eBee logs (.bbx, and the encrypted .bb3 once the project has its key) and eMotion missions (.mis3, .syn3, .rtk3) without eMotion (R/read_emotion.R, R/emotion_catalogue.R). A flight linked to a log gains the log's time span, a flown track, its photo tags and the mission block and waypoints it flew. The .bb3 key is built once per project from the user's own .mis3 and .bb3 files (build_bb3_ring) and kept in the project's config folder, never in the code. **Output changes:** flights.csv gains log_* and plan_* columns and two QA notes; geometry.csv gains flown tracks, mission areas and routes; a flight with no camera time or image positions takes them from its log.
+- read_bb3() also gives each track point its height, roll, pitch, heading, course, airspeed and ground speed, and returns battery (voltage, current, mAh used and remaining) and wind tables. **Output changes:** none in the catalogue; more columns from read_bb3().
+
+**Added (Convert page, 2026-10-09)**
+- Convert page in the tool rail: units, decimal degrees and DMS, UTM (shared core conversions). **Output changes:** none.
+
+**Changed (time zone, 2026-10-09)**
+- Settings has a Time zone. Flight and workbench labels show it in place of a fixed UTC-7. UTM and XYZ conversions go through core convert.R.
+
+**Output changes:** none unless a different zone is chosen.
+
+**Changed (errors reported, 2026-10-09)**
+- If the set-up tables cannot be read for the GNSS base check, this is listed as a problem.
+
+**Output changes:** none.
+
+**Added (map and timeline, 2026-10-09)**
+- Map page: summary cards (flights, images, placed, RTK/PPK corrected, checks to look at) and a Checks column with five checks per flight; placed counts the geotag log apart from RTK/PPK; check limits in the shared calibration table (pages/mod_flight_summary.R, pages/fct_checks.R).
+- Timeline view and a strip under the map: a row per site, a square per flight, empty years kept; Set site writes only the chosen flights to flights.csv (pages/mod_timeline.R, pages/fct_timeline.R).
+- Checkpoint page moved onto the shared import: columns matched by heading, missing columns and non-numbers reported before anything is computed (pages/mod_checkpoint.R, pages/fct_checkpoint.R). **Output changes:** none; checkpoint accuracy unchanged.
+
+**Changed (packages, 2026-10-08)**
+- The app and its pipeline no longer install packages when they start: a missing one is named, with how to get it (the launcher installs the versions in renv.lock). **Output changes:** none.
+
+**Changed (code layout, 2026-10-08)**
+- app.R from 227 to 157 lines: its helpers moved to pages/fct_outputs.R (reading the outputs), pages/utils_tables.R (theme and table style) and pages/utils_setup.R (set-up table editors), sourced in the same place. Code unchanged line for line. **Output changes:** none.
+- app.R split from 569 to 226 lines: each server section is its own file in pages/ (sourced inside the server, same order),
+  and the interface is pages/ui.R. Code unchanged line for line. **Output changes:** none.
+
+**Changed (2026-10-08)**
+- Errors under their field in the Workbench dialogs; correction buttons say why they are greyed; a Columns picker on every wide table. **Output changes:** none.
+
+**Added (2026-10-08)**
+- Group the logger list by serial number, deployment, download or raw file (Sources (by aircraft) and the Workbench tree); moves found in the records in Needs you;
+  Rename and Duplicate in the projects menu. **Output changes:** none.
+
+**Changed (2026-10-08)**
+- Only the raw folder is needed: with no project folder the app uses ~/Desktop/Ovid_Projects/RS/Untitled; no metadata is needed
+  (loggers go by serial). Test: `tests/test_no_metadata.R`. **Output changes:** none.
+
+**Added (2026-10-08)**
+- Reference page from the guide (core reference.R). **Output changes:** none.
+
+**Added (core workbench 0.9.0, 2026-10-08)**
+- Workbench: every set-up table is a spreadsheet with a formula bar (edit in place, ranges with totals, copy and paste, sort, Find,
+  Undo, Redo, Apply). **Output changes:** none.
+
+**Fixed (core, 2026-10-08)**
+- With the shared core: an error in a handler shows a notice instead of greying out the app; damaged set-up tables are shown with
+  their columns restored; plain messages for a read-only project folder; cache files about ten times smaller.
+  **Output changes:** none.
+
+
+**Added (projects, renames, report layout)**
+- Projects list on Sources (core `projects.R`).
+
+**Output changes:** none.
+
+**Added**
+- Needs assessment, second batch (medium items), in `R/stac.R`:
+  - Frames and datums: every dataset in `datasets.csv` gains `frame` (WGS 84, NAD83, NAD83(CSRS), from the EPSG code or the
+    coordinate system's name) and `crs_status`; a file that states no coordinate system is "datum unknown" (QA page).
+  - Products (new set-up table `products.csv`): orthomosaics, surface models, point clouds and maps made from the flights,
+    with their flights, software and settings, control and check points, accuracy, coordinate system (frame, epoch, height
+    type, geoid) and processing level (L1 calibrated, L2 orthomosaic / DSM / DTM / point cloud, L4 index, classification or
+    change map; after the FAIR framework for UAV data). `catalogue/products.csv` checks the flights and the file.
+  - Coverage (`catalogue/coverage.csv`, QA page): flights by site, year and sensor (RGB, multispectral, LiDAR) with the finest
+    ground sample distance and the share positioned with RTK or PPK, and the satellite, aerial and LiDAR list by year.
+  - STAC catalogue (`output/stac/`, a download on the QA page): STAC 1.0 with a collection per project of flights, one for
+    the imagery and LiDAR list and one for products, an item for each with its box, time, platform, ground sample distance,
+    sun elevation, positioning and level (projection, electro-optical and view extensions). Checked with pystac against the
+    published schemas.
+- Checkpoint accuracy (GNSS page): a product checked against surveyed checkpoints from a CSV or Excel file (columns matched by
+  heading), reported as ASPRS Edition 2 (2023) asks: RMSE_H, RMSE_V and RMSE_3D only, the checkpoints' own survey error added,
+  a statement, a note with fewer than 30 points, and a check that the checkpoints are twice as accurate as the product.
+- LiDAR: each LAS tile's point format, points per m2 of its box, and the ASPRS classes in its first 20,000 points (not for
+  LAZ, which is compressed), on the Imagery page and in `datasets.csv`.
+- Multispectral flights (MicaSense, Sequoia, P4 Multispectral, Mavic 3M, or images with a band name): `multispectral` and
+  `irradiance_sensor` (a DLS or sunshine sensor wrote its readings) in `flights.csv`; the calibration panel and when it was
+  imaged can be entered on the Flight page (`panel_id`, `panel_capture`), and a multispectral flight without one gets a QA flag
+  (Assmann et al. 2019).
+- Paste and Import in every set-up table: rows copied from Excel, or a CSV or Excel file with its columns matched to the
+  table's by heading, added to the table or used instead of it.
+- Workbench interface (preview), `workbench/` on core `workbench.R`: an additional, more detailed view of the same archive with
+  every process of the Standard interface, in RS's accent colours.
+  - Every Standard page runs inside the Workbench on the Standard server (`server(embedded = TRUE)`): map, flight, imagery, GNSS,
+    QA, sources (scans included) and set-up tables. They are listed under Pages and open as tabs; the flight in view is the one
+    the Map and Flight pages show.
+  - Data: the tree lists every flight by year. A flight is a spreadsheet with a row per image (time in UTC-7, file, position,
+    altitude, height, RTK solution, geotag accuracy, GSD, speed, blur, overlap, sun elevation, exposure, size), its images drawn
+    above it at their positions in metres east and north of the flight's middle, to scale, coloured by minutes into the flight,
+    altitude, height, accuracy, speed or sun elevation. Motion blur over a pixel and an RTK solution that is not fixed are marked.
+    The inspector shows an image's file, camera, time, position and the flight's positioning evidence.
+  - Selecting works as in the other Workbenches; a click on the positions selects the nearest image and a shift-drag every one
+    in a box.
+  - Corrections, through the set-up tables: **Leave out** (`file_rules.csv`, an ignore rule naming the selected files; R or
+    Delete; it warns when the flight's first image, which names the flight, is among them) and **Edit flight** (`flights.csv`,
+    as the Flight page), and links to the flight's links, the map and the file rules.
+  - Import data shows the sources and the set-up check; Rebuild is the Standard rebuild.
+- Set-up tables page: every table in config/ (flights, links, sites, file rules, time zones, sources) with the editor shared by
+  all the apps (core `editor.R`). File rules, sites and time zones had no editor in the app before.
+- Choosing the interface: **Workbench** in the Standard title bar, `?ui=workbench` / `?ui=standard` in the address, else
+  `OVID_UI`, else the `ui` setting. Standard is the default.
+
+**Changed**
+- A scan asks first when the set-up check finds something that would be ignored or misapplied (Review, Scan anyway, Cancel);
+  a scan anyway is recorded in its log. Tables are checked as they are edited (core rules).
+- Guardrails (core `run_project()`): see core; a drive that is away is still allowed (its last scan is kept).
+- Scans run on the shared runner (core `runner.R`): the progress box at the bottom right and Cancel, which stops at the next
+  folder; Rebuild and Scan are turned off while a scan goes.
+- Every run leaves a log in `output/logs/`, and the lifebuoy in the top bar saves a troubleshooting zip (core). Tests now also click through every page in a browser.
+- Each cached step is keyed on the code it runs (core `code_fingerprint()`, `STEP_HASH`), not on every file: an edit elsewhere no longer redoes it. The first run after this redoes everything once. A rescan reads image headers again only when the image readers change.
+- An ignore rule in `file_rules.csv` applies on the next rebuild, from every source's last scan: its files are marked ignored and
+  their images and records left out, without reading the source again. Before, a rule applied only when its source was scanned
+  again (it still does for a role rule, or for a rule taken out).
+- A rebuild works out flight numbers once per folder instead of once per image: 0.65 s instead of 1.2 s for a catalogue of
+  10,002 images, with the same output. Scanning was already incremental (a folder's headers are read again only when a file in it
+  changed), and a rebuild reads no source.
+- The rebuild message says no source was read. The Standard pages are built by `std_pages()`, and both interfaces build their
+  editors from one list (`SETUP_TABLES`); the Standard interface looks and works as before.
+
+**Fixed**
+- `tests/test_app.R` failed at "saving a flight" since the Mission field was added (the test did not set it); Save now also
+  tolerates a field that is not there.
+- The STAC catalogue was not written ("! STAC catalogue: character string is not in a standard unambiguous format") when any
+  project had no satellite, aerial or LiDAR files. The empty dataset list was one blank row (`ensure_cols(data.table(), ...)`
+  makes a row when it adds a column to a table with none), and `as.POSIXct("")` stops rather than giving NA. The empty
+  datasets, products and GNSS tables are now empty (`[0]`, as ERT does), and a blank, missing or unreadable time leaves its
+  item out. ISO times with T and Z, fractional seconds, slashes, and a year or year-month alone are now read too; a year
+  alone (inferred from a folder or file name) gets the whole year as `start_datetime` and `end_datetime`.
+- A DJI flight folder scanned as a source of its own (Scan folder on the folder itself) had its RPT, LiDAR and GNSS files
+  left unlinked: files at a source's top level were never matched to a flight there. Without the RPT the DJI mission id was
+  missing, so the sorties of one survey were not grouped into a mission. Found on real flights (T9 sample: one LiDAR survey of
+  4 sorties, and two of 2 each), which now group as they do when the drive is scanned whole.
+- A project with no GIS files wrote empty `gis_layers.csv` and `gis_features.csv` (no header) and a warning to every run
+  log; those files are now left out.
+
+**Output changes**
+- New columns in `flights.csv`, `images.csv` and `datasets.csv`; the next scan of each source reads its image headers again (the reader changed).
+- None unless `file_rules.csv` has ignore rules that were added after their source was last scanned: those files are now left
+  out by a rebuild as a rescan would.
+- `output/stac/` is now written for projects with no satellite, aerial or LiDAR files (before, the export stopped and left
+  nothing), and gains items for datasets dated by a year or month alone. In such projects `datasets.csv` loses its blank row,
+  and so does `products.csv` when no products are recorded, and the stitched GNSS download when there are no points.
+- Sources that are a single DJI flight folder: its RPT, LiDAR and GNSS files are now linked, and `mission_id`, `has_rpt`,
+  `fly_time_s` and the mission columns change for those flights on the next rebuild (no rescan needed).
+
+
+
+## 0.5.0 (2026-10-06), needs core 1.13.0
+
+**Added**
+- Flight quality from the image headers: ground sample distance, speed, motion blur, forward and side overlap and sun elevation,
+  per image and per flight (Flight page, `flights.csv`, `images.csv`). Big folders read from a sample of headers get forward overlap
+  from speed x time between exposures and no side overlap.
+- GNSS quality fields: satellites, PDOP, HDOP, VDOP, samples, age of corrections, baseline, correction type; a quality table per
+  file on the GNSS page.
+- Sensor widths for cameras whose EXIF has none (including the Zenmuse L2).
+
+**Fixed**
+- Leica GSI files read from the command line no longer fail on a helper defined only in the app.
+
+**Output changes**
+- `flights.csv` and `images.csv` gain the new columns; stitched GNSS points gain the quality columns.
+
+- The test "LAS tile: bounds, points, date from the name" failed on computers not set to UTC: it compared a date read back as a
+  UTC date-time with text read in the local time zone. It now compares the day. The app itself was right.
+
+## 0.4.3 (2026-10-05)
+- A scan with no images no longer gains a phantom image row.
+
+## 0.4.2 (2026-10-05)
+- Sources with no images; map tiles counted apart; Google Earth tile KMLs skipped.

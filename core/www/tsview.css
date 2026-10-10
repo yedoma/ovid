@@ -1,0 +1,62 @@
+
+.tsv{position:relative;min-width:0}
+.tsv-ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px;font-size:12px}
+.tsv-ctl .btn{padding:1px 8px;height:24px;line-height:20px;font-size:13px;border-radius:3px}
+.tsv-ctl select{height:24px;padding:0 4px;font-size:12px;border-radius:3px;background:var(--bg1);color:var(--fg);border:1px solid var(--bg3)}
+.tsv-ctl .sp{flex:1}
+.tsv-plot{position:relative;cursor:crosshair}
+.tsv-plot.drag,.tsv-plot.drag canvas{cursor:grabbing!important}
+.tsv-act{position:absolute;top:4px;z-index:3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:100%;background:var(--bgh);border:1px solid var(--acc);border-radius:3px;padding:4px 8px;box-shadow:0 2px 8px rgba(0,0,0,.25);font-size:12px}
+.tsv-act[hidden]{display:none}
+.tsv-act .n{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;color:var(--fg)}
+.tsv-act .btn{padding:1px 8px;font-size:12px;border-radius:3px}
+.tsv-plot canvas,.tsv-nav{display:block;width:100%}
+.tsv-nav{cursor:pointer;margin-top:2px}
+.tsv-tip{position:absolute;display:none;pointer-events:none;background:var(--bgh);color:var(--fg);border:1px solid var(--bg3);border-radius:4px;padding:4px 8px;font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.tsv .tsv-tip b{display:inline;font-size:11.5px;font-weight:600;margin-left:10px;color:var(--fg)}
+.tsv-tip .h{color:var(--fg4);margin-bottom:2px}
+.tsv-note{font-size:11.5px;color:var(--fg4);margin-top:2px}
+.tsv-recs{margin-top:8px}
+.tsv-sel{margin-top:8px;border-left:3px solid var(--acc);padding:4px 0 4px 10px}
+.tsv-sel .row1{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 4px} .tsv-sel .row1 b{font-size:13px;font-weight:600;color:var(--fg)}
+.tsv-sel table{width:100%;font-size:12px;font-variant-numeric:tabular-nums;border-collapse:collapse}
+.tsv-sel th{color:var(--fg4);font-weight:500;text-align:right;border-bottom:1px solid var(--bg2);padding:2px 6px} .tsv-sel th:first-child,.tsv-sel td:first-child{text-align:left}
+.tsv-sel td{padding:2px 6px;border-bottom:1px solid var(--bg1);text-align:right}
+.tsv .tsv-recs .row1 b{display:inline;font-size:13px;font-weight:600;color:var(--fg)}
+.tsv-recs .row1{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+.tsv-recs table{width:100%;font-size:12px;font-variant-numeric:tabular-nums;border-collapse:collapse}
+.tsv-recs th{color:var(--fg4);font-weight:500;text-align:left;border-bottom:1px solid var(--bg2);padding:2px 6px}
+.tsv-recs td{padding:2px 6px;border-bottom:1px solid var(--bg1)}
+.tsv-recs td:first-child{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px}
+.tsv-recs .num{text-align:right}
+.tsv-recs tr.on td{background:color-mix(in srgb,var(--yellow) 16%,transparent)}
+.tsv-wait{padding:24px 0;text-align:center}
+.tsv-bar{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:0 0 12px;font-size:12.5px}
+.tsv-seg{display:inline-flex;border:1px solid var(--bg3);border-radius:4px;overflow:hidden}
+.tsv-seg button{border:0;border-left:1px solid var(--bg3);background:var(--bg1);color:var(--fg4);padding:3px 10px;font-size:12.5px;cursor:pointer}
+.tsv-seg button:first-child{border-left:0}
+.tsv-seg button.on{background:var(--acc);color:var(--onacc);font-weight:600}
+.tsv-sw input[type=checkbox]{accent-color:var(--acc);margin:0}
+.tsv-sw{display:inline-flex;align-items:center;gap:5px;margin:0;font-weight:500;color:var(--fg);font-size:12.5px;cursor:pointer}
+.tsv-sw input[type=color]{width:22px;height:18px;padding:0;border:1px solid var(--bg3);border-radius:3px;background:none}
+.tsv-agnote{font-size:11.5px}
+.tsv-closer{white-space:nowrap}
+
+.tsv-ctl{position:relative}
+.tsv-savem{position:absolute;z-index:6;display:flex;flex-direction:column;gap:4px;min-width:220px;background:var(--bgh);border:1px solid var(--bg3);border-radius:4px;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.tsv-savem button{text-align:left;border:1px solid var(--bg3);background:var(--bg1);color:var(--fg);border-radius:3px;padding:4px 8px;font-size:12.5px;cursor:pointer}
+.tsv-savem button:hover{border-color:var(--acc)} .tsv-savem small{display:block;color:var(--fg4);font-size:11px}
+.tsv-savem .dim{font-size:11px;max-width:230px;white-space:normal}
+.tsv-tip .ev{color:var(--fg4);border-top:1px solid var(--bg3);margin-top:2px;padding-top:2px}
+/* page actions on the selection bar (ts_view_send actions), the value band, the bar after an action with Undo */
+.tsv-act.wide{position:relative;top:0;left:0!important;flex-direction:column;align-items:stretch;margin-bottom:4px;box-shadow:none}
+.tsv-act .h,.tsv-act .f{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tsv-act .f[hidden]{display:none}
+.tsv-act .f input,.tsv-act .f select{font-size:12px;padding:1px 6px;height:24px;background:var(--bg1);color:var(--fg);border:1px solid var(--bg3);border-radius:3px}
+.tsv-act .f input.r{flex:1;min-width:180px} .tsv-act .f input.i{width:80px}
+.tsv-act .f input.need{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.tsv-act .f label{margin:0;font-weight:400;color:var(--fg4);display:flex;align-items:center;gap:4px}
+.tsv-act .tsv-a.bad{color:var(--red);border-color:var(--red)} .tsv-act .tsv-a.warn{color:var(--yellow);border-color:var(--yellow)}
+.tsv-done{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;background:var(--bgh);color:var(--fg);border:1px solid var(--bg3);border-radius:4px;padding:5px 10px;font-size:12.5px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.tsv-done[hidden]{display:none} .tsv-done .x{background:none;border:0;color:var(--fg4);font-size:15px;line-height:1;cursor:pointer;padding:0 2px}
+.tsv-tip i.sw{display:inline-block;width:9px;height:3px;margin-right:5px;vertical-align:middle}

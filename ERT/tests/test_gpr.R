@@ -1,0 +1,53 @@
+# tests/test_gpr.R  --  Rscript tests/test_gpr.R : builds a small MALA archive (files in different folders) and checks R/gpr.R.
+suppressPackageStartupMessages(library(data.table)); `%||%` <- function(a, b) if (is.null(a)) b else a
+here <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) dirname(dirname(normalizePath(sub("^--file=", "", a[1])))) else getwd() })
+source(file.path(here, "R", "gpr.R"))
+fails <- 0L; check <- function(ok, what) { if (!isTRUE(ok)) { fails <<- fails + 1L; cat("FAIL", what, "\n") } else cat("ok  ", what, "\n") }
+tmp <- file.path(tempdir(), "gpr_test"); unlink(tmp, TRUE); for (d in c("rad", "rd3", "cor", "other")) dir.create(file.path(tmp, d), recursive = TRUE)
+rad <- function(f, s, n) writeLines(c(paste0("SAMPLES:", s), "FREQUENCY:1000", "ANTENNAS:100 MHz shielded=0", "TIMEWINDOW:400", "STACKS:2", "TIME INTERVAL: 0.5",
+                                      "DISTANCE INTERVAL: 0", paste0("LAST TRACE:", n)), file.path(tmp, f))
+data3 <- function(f, s, n) writeBin(as.integer(round(1000 + 300 * sin(outer(seq_len(s), seq_len(n), function(i, j) i / 5 + j / 20)))), file.path(tmp, f), size = 2L)
+cor <- function(f, tr, lat, lon) writeLines(sprintf("%d\t2020-07-15\t13:27:%02d\t%.6f\tN\t%.6f\tW\t288.9\tM\t1.1", tr, seq_along(tr), lat, lon), file.path(tmp, f))
+rad("rad/DAT_0001.rad", 64, 200); data3("rd3/DAT_0001.rd3", 64, 203); cor("cor/DAT_0001.cor", c(1, 50, 100, 150, 200), 45.50 + (0:4) * 1e-4, rep(72.20, 5))
+rad("rad/DAT_0002.rad", 64, 100); data3("rd3/.DAT_0002.rd3.partial", 64, 100)                                                 # a whole copy that was never renamed
+rad("rad/DAT_0003.rad", 64, 150); data3("other/XYZ_0003.rd3", 64, 150)                                                          # the data file has another name: matched by size
+rad("rad/DAT_0004.rad", 64, 90)                                                                                                  # nothing at all
+rad("rad/DAT_0005.rad", 64, 120); data3("rd3/DAT_0005.rd3", 64, 50)                                                              # the name matches, the size does not
+writeLines(c("HEADER VERSION:100", "10\t30\t1", "60\t30\t1", "150\t30\t1"), file.path(tmp, "other", "DAT_0001.mrk"))
+x <- gpr_scan(tmp); st <- setNames(x$status, x$stem)
+check(nrow(x) == 5, "five lines found")
+check(st[["DAT_0001"]] == "ok" && x[stem == "DAT_0001"]$matched_by == "name" && x[stem == "DAT_0001"]$traces == 200, "name match, file three traces longer than the header")
+check(basename(x[stem == "DAT_0001"]$cor) == "DAT_0001.cor", "the .cor in another folder is matched")
+check(st[["DAT_0002"]] %in% c("truncated", "ok") && x[stem == "DAT_0002"]$partial, "a hidden .partial copy is read in place, and says so")
+check(grepl("partial", x[stem == "DAT_0002"]$note), "the note says it is the unrenamed .partial copy")
+check(st[["DAT_0003"]] == "ok" && x[stem == "DAT_0003"]$matched_by == "size" && basename(x[stem == "DAT_0003"]$data) == "XYZ_0003.rd3", "a differently named data file is matched by size")
+check(st[["DAT_0004"]] == "no data file", "no data file")
+check(st[["DAT_0005"]] == "truncated" && x[stem == "DAT_0005"]$file_traces == 50, "a named file with fewer traces than the header is shown as truncated")
+r <- x[stem == "DAT_0001"]; m <- read_gpr_data(r$data, r$samples); check(identical(dim(m), c(64L, 203L)) && max(m) <= 1300 && min(m) >= 700, "traces read as samples x traces")
+c0 <- read_cor(r$cor); check(nrow(c0) == 5, "five GPS fixes")
+d <- gpr_distance(c0, 200); check(abs(max(d) - 44.5) < 1 && all(diff(d) >= 0), "distance along the line from the fixes (4 x 0.0001 deg of latitude is about 44 m)")
+bad <- copy(c0)[3, lat := 5.5]; writeLines(sprintf("%d\t2020-07-15\t13:27:%02d\t%.6f\tN\t%.6f\tW\t288.9\tM\t1.1", bad$trace, seq_len(5), bad$lat, bad$lon), file.path(tmp, "cor", "bad.cor"))
+bc <- read_cor(file.path(tmp, "cor", "bad.cor")); check(nrow(bc) == 4 && identical(attr(bc, "dropped"), 1L) && identical(attr(c0, "dropped"), 0L), "a fix with a dropped digit is taken out, and counted")
+check(is.null(gpr_distance(c0[, `:=`(lat = lat[1], lon = lon[1])], 200)), "fixes that never move give no distance")
+dec <- gpr_decimate(matrix(rnorm(64 * 5000), 64), 2000L); check(ncol(dec$m) <= 2000 && length(dec$tr) == ncol(dec$m), "long lines are averaged down")
+h <- list(timewindow_ns = 64 * 0.9, antennas = "100 MHz shielded=0", samples = 64L)
+mm <- matrix(1000 + 5 * (1:64) + rnorm(64 * 40, 0, 20), 64)
+check(is.na(gpr_antenna_mhz("")) && gpr_antenna_mhz("500 MHz") == 500 && gpr_antenna_mhz("1.0 GHz") == 1000, "antenna frequency from the header text")
+dw <- gpr_dewow(mm, 1, 0.9, 100); check(abs(mean(dw[20:40, ])) < abs(mean(mm[20:40, ])) / 10, "dewow takes off the drift")
+tz <- local({ x <- matrix(0, 100, 5); x[11:13, ] <- c(-1, -3, -1); x[14:20, ] <- c(2, 6, 3, 0, -1, 0, 0); gpr_time_zero(x) }); check(tz >= 10 && tz <= 14, "time zero lands at the zero crossing before the first arrival")
+bp <- gpr_bandpass(matrix(sin(2 * pi * 100 * (0:255) * 0.9 / 1000) + 5, 256, 3), 0.9, c(25, 100, 200, 400)); check(abs(mean(bp)) < 0.05 && max(abs(bp)) > 0.7, "band-pass removes the constant and keeps a 100 MHz wave")
+ed <- gpr_energy_decay(mm * (64:1)); check(all(is.finite(ed)) && identical(dim(ed), dim(mm)), "energy decay keeps the shape")
+check(identical(gpr_gain_fn(mm, 0.9, 100, 0, 0), mm), "gain function with a' = b' = 0 changes nothing")
+bm <- gpr_background(mm, "mean"); check(max(abs(rowMeans(bm))) < 1e-8, "background removal leaves a zero-mean trace set")
+bv <- gpr_background(matrix(rep(1:10, each = 6), 6), "moving", 4); check(all(dim(bv) == c(6, 10)), "moving background removal keeps the shape")
+for (nm in names(GPR_PRESETS)) { R <- gpr_process(mm, h, c(GPR_PRESETS[[nm]], list(bp1 = 0.25, bp2 = 1, bp3 = 2, bp4 = 4))); check(all(is.finite(R$m)) && ncol(R$m) == 40, paste("preset runs:", nm)) }
+check(all(abs(GPR_GROUND - 0.3 / sqrt(c(4.5, 15, 59.2, 30.9, 44.4, 1))) < c(2e-3, 2e-3, 2e-3, 2e-3, 2e-3, 1e-9)), "velocities match the permittivities they are given with")
+mk <- read_mrk(file.path(tmp, "other", "DAT_0001.mrk")); check(identical(mk$trace, c(10L, 60L, 150L)) && identical(mk$marker, 1:3), "markers read (header line skipped)")
+check(!is.na(x[stem == "DAT_0001"]$mrk) && basename(x[stem == "DAT_0001"]$mrk) == "DAT_0001.mrk", "the .mrk in another folder is matched")
+md <- gpr_marker_distance(mk, 5, 200); check(md[10] == 0 && md[60] == 5 && md[150] == 10 && abs(md[35] - 2.5) < 1e-9 && md[1] < 0 && md[200] > 10, "distance from markers: spacing at each marker, interpolated between, continued beyond")
+check(is.null(gpr_marker_distance(mk[1], 5, 200)) && is.null(gpr_marker_distance(mk, NA, 200)), "no marker distance without two markers and a spacing")
+cz <- data.table(trace = c(1L, 100L, 200L), datetime = Sys.time(), lat = 45.5, lon = -72.2, elev_m = c(100, 110, 100), hdop = 1)
+el <- gpr_elevation(cz, 200, 1L); check(abs(el[100] - 110) < 1e-9 && abs(el[50] - 105) < 0.2 && length(el) == 200, "elevation interpolated along the traces")
+sm <- gpr_elevation(data.table(trace = 1:21, datetime = Sys.time(), lat = 45.5, lon = -72.2, elev_m = c(rep(100, 10), 130, rep(100, 10)), hdop = 1), 21, 5L); check(max(sm) == 100, "a one-fix height spike is smoothed away")
+tp <- gpr_topo(matrix(1:6, 3), c(0, 1, 2), c(10, 12)); check(max(tp$z) == 12 && min(tp$z) <= 8 && sum(!is.na(tp$m[, 2])) == 3 && is.na(tp$m[1, 1]) && tp$m[3, 1] == 1, "topography places each trace at its surface elevation less depth")
+quit(status = if (fails) 1L else 0L)

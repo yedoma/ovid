@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid RS Reference Guide</title>
+<style>
+:root{color-scheme:dark;--bg:#282c34;--fg:#bcbfc4;--muted:#999999;--rule:#484c54;--panel:#383c44;--accent:#e5c07b;--blue:#61afe7;--red:#e06c75;--green:#98c379;--amber:#ee9360;--code:#30343c;--purple:#c688cd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--amber);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+.chk li{list-style:"☐  "}
+@media print{body{font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:0}h2{break-after:avoid}h3{break-after:avoid}nav{break-after:page}.ex,.f,table{break-inside:avoid}}
+@page{size:A4;margin:0}
+@media print{main{padding:14mm 14mm}}
+html{background:var(--bg)}
+</style>
+</head>
+<body><main>
+<h1>ovid RS Reference Guide</h1>
+<p class="sub">Remote sensing archive: what the app does to every drone image, log
+and dataset it finds, why, and how to check it. For RS 0.5.0 (ovid
+Core 1.14.0). ovid RS is a catalogue, provenance and
+positioning-status tool; it does not process imagery. The archive is
+never changed: files are only read, and nothing is written inside a
+source. Settings are quoted with their defaults; change them in
+<code>CFG</code> at the top of <code>rs_pipeline.R</code> or in the
+files under <code>&lt;project&gt;/config/</code>.</p>
+<nav><strong>Contents</strong><ol>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#what-happens-to-the-files-in-order">What happens to the
+files, in order</a></li>
+<li><a href="#one-image-traced-through">One image traced
+through</a></li>
+<li><a href="#1-sources-and-scanning">1. Sources and scanning</a></li>
+<li><a href="#2-formats-and-roles">2. Formats and roles</a></li>
+<li><a href="#3-image-time-and-time-zones">3. Image time and time
+zones</a></li>
+<li><a href="#4-flights">4. Flights</a></li>
+<li><a href="#5-missions">5. Missions</a></li>
+<li><a href="#6-linking-files-to-flights">6. Linking files to
+flights</a></li>
+<li><a href="#7-positioning-status">7. Positioning status</a></li>
+<li><a href="#8-geometry-for-the-map">8. Geometry for the map</a></li>
+<li><a href="#9-datasets-satellite-aerial-and-lidar">9. Datasets:
+satellite, aerial and LiDAR</a></li>
+<li><a href="#10-gis-layers">10. GIS layers</a></li>
+<li><a href="#11-gnss-survey-points">11. GNSS survey points</a></li>
+<li><a href="#12-qa">12. QA</a></li>
+<li><a href="#set-up-check-time-zones-and-file-audit">Set-up check, time
+zones and file audit</a></li>
+<li><a href="#reading-the-outputs">Reading the outputs</a></li>
+<li><a href="#the-viewer">The viewer</a></li>
+<li><a href="#sensor-notes">Sensor notes</a></li>
+<li><a href="#reasonable-values">Reasonable values</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#glossary">Glossary</a></li>
+<li><a href="#references">References</a></li>
+</ol></nav>
+<h2 id="quick-start">Quick start</h2>
+<ol type="1">
+<li>Open the app: double-click <code>Open RS (Mac).command</code> in
+Ovid_Apps (or <code>Ovid_RS.bat</code> on Windows). Packages install
+themselves on the first start.</li>
+<li>On <strong>Sources</strong>, press <strong>Browse…</strong> to pick
+a drive or folder (for example an external disk with the flight
+archive), give it a short name and press <strong>Scan folder</strong>.
+The first scan opens every image once; later scans only read folders
+whose files changed.</li>
+<li>On <strong>Map</strong>, every flight appears on satellite imagery,
+coloured by positioning status. Click a flight on the map or in the
+table to see it beside the map.</li>
+<li>On <strong>Flight</strong>, give it a display name, project and
+site, and confirm or reject the files linked to it. Everything you type
+is saved to <code>config/</code> and backed up.</li>
+<li>On <strong>QA</strong>, work through the flights with flags and the
+files tied to no flight.</li>
+<li>On <strong>Sources</strong>, press <strong>Create viewer</strong>,
+then <strong>Export viewer (ZIP)</strong>, to send the catalogue to
+someone without R.</li>
+</ol>
+<p>From the command line:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Rscript rs_pipeline.R scan &lt;folder&gt; &lt;name&gt;</code></td>
+<td>adds the folder as a source (or rescans it) and rebuilds the
+catalogue</td>
+</tr>
+<tr class="even">
+<td><code>Rscript rs_pipeline.R</code></td>
+<td>rescans every source that is plugged in; the others keep their last
+scan</td>
+</tr>
+<tr class="odd">
+<td><code>Rscript rs_pipeline.R export</code></td>
+<td>writes the viewer:
+<code>&lt;project&gt;/output/viewer/Ovid_RS_viewer.zip</code></td>
+</tr>
+<tr class="even">
+<td><code>Rscript rs_pipeline.R gnss out.csv a.csv b.txt</code></td>
+<td>stitches GNSS survey files into one CSV</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-happens-to-the-files-in-order">What happens to the files,
+in order</h2>
+<figure style="margin:8px 0 14px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 390" role="img" aria-label="RS processing pipeline" style="width:100%;height:auto;font:13px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="960" height="390" fill="#282c34"/>
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#999999"/></marker></defs>
+<rect x="20" y="20" width="291" height="58" rx="8" fill="#383c44" stroke="#999999" stroke-width="1.5"/>
+<text x="32" y="43" fill="#999999" font-weight="600">0. Set-up check</text>
+<text x="32" y="64" fill="#bcbfc4" font-size="12">sources, rules, sites, links</text>
+<rect x="335" y="20" width="291" height="58" rx="8" fill="#383c44" stroke="#61afe7" stroke-width="1.5"/>
+<text x="347" y="43" fill="#61afe7" font-weight="600">1. Scan sources</text>
+<text x="347" y="64" fill="#bcbfc4" font-size="12">list files; reuse unchanged folders</text>
+<rect x="649" y="20" width="291" height="58" rx="8" fill="#383c44" stroke="#61afe7" stroke-width="1.5"/>
+<text x="661" y="43" fill="#61afe7" font-weight="600">2. Formats and roles</text>
+<text x="661" y="64" fill="#bcbfc4" font-size="12">image, record, track, dataset…</text>
+<rect x="649" y="110" width="291" height="58" rx="8" fill="#383c44" stroke="#56b6c2" stroke-width="1.5"/>
+<text x="661" y="133" fill="#56b6c2" font-weight="600">3. Read images</text>
+<text x="661" y="154" fill="#bcbfc4" font-size="12">first 64 kB: EXIF, XMP, RTK flag</text>
+<rect x="335" y="110" width="291" height="58" rx="8" fill="#383c44" stroke="#56b6c2" stroke-width="1.5"/>
+<text x="347" y="133" fill="#56b6c2" font-weight="600">4. Time zones</text>
+<text x="347" y="154" fill="#bcbfc4" font-size="12">local camera clocks to UTC</text>
+<rect x="20" y="110" width="291" height="58" rx="8" fill="#383c44" stroke="#e5c07b" stroke-width="1.5"/>
+<text x="32" y="133" fill="#e5c07b" font-weight="600">5. Flights</text>
+<text x="32" y="154" fill="#bcbfc4" font-size="12">split at gaps over 10 min; copies merged</text>
+<rect x="20" y="200" width="291" height="58" rx="8" fill="#383c44" stroke="#e5c07b" stroke-width="1.5"/>
+<text x="32" y="223" fill="#e5c07b" font-weight="600">6. Link files</text>
+<text x="32" y="244" fill="#bcbfc4" font-size="12">score: auto ≥ 0.8, probable ≥ 0.5</text>
+<rect x="335" y="200" width="291" height="58" rx="8" fill="#383c44" stroke="#98c379" stroke-width="1.5"/>
+<text x="347" y="223" fill="#98c379" font-weight="600">7. Positioning status</text>
+<text x="347" y="244" fill="#bcbfc4" font-size="12">RTK flag ≥ 95 % fixed; accuracy ≤ 0.1 m</text>
+<rect x="649" y="200" width="291" height="58" rx="8" fill="#383c44" stroke="#98c379" stroke-width="1.5"/>
+<text x="661" y="223" fill="#98c379" font-weight="600">8. Geometry</text>
+<text x="661" y="244" fill="#bcbfc4" font-size="12">planned, observed, derived</text>
+<rect x="649" y="290" width="291" height="58" rx="8" fill="#383c44" stroke="#c688cd" stroke-width="1.5"/>
+<text x="661" y="313" fill="#c688cd" font-weight="600">9. Datasets and GIS</text>
+<text x="661" y="334" fill="#bcbfc4" font-size="12">headers, footprints, layers</text>
+<rect x="335" y="290" width="291" height="58" rx="8" fill="#383c44" stroke="#ee9360" stroke-width="1.5"/>
+<text x="347" y="313" fill="#ee9360" font-weight="600">10. Your decisions</text>
+<text x="347" y="334" fill="#bcbfc4" font-size="12">config/flights, links, sites</text>
+<rect x="20" y="290" width="291" height="58" rx="8" fill="#383c44" stroke="#ee9360" stroke-width="1.5"/>
+<text x="32" y="313" fill="#ee9360" font-weight="600">11. Catalogue and audit</text>
+<text x="32" y="334" fill="#bcbfc4" font-size="12">flights.csv, links.csv, file_audit.csv</text>
+<line x1="311" y1="49.0" x2="331" y2="49.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="625" y1="49.0" x2="645" y2="49.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="795" y1="78" x2="795" y2="106" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="649" y1="139.0" x2="629" y2="139.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="335" y1="139.0" x2="315" y2="139.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="165" y1="168" x2="165" y2="196" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="311" y1="229.0" x2="331" y2="229.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="625" y1="229.0" x2="645" y2="229.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="795" y1="258" x2="795" y2="286" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="649" y1="319.0" x2="629" y2="319.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="335" y1="319.0" x2="315" y2="319.0" stroke="#999999" stroke-width="1.5" marker-end="url(#ar)"/>
+</svg></figure>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What happens</th>
+<th>Where to check it</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Set-up check: sources, file rules, sites, flights and links</td>
+<td><code>output/audit/setup_check.csv</code>, Sources page</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Scan each source that is plugged in; list every file with its size
+and time</td>
+<td><code>output/catalogue/files.csv</code></td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>Give each file a format and a role (image, log, plan, track,
+dataset, out of scope)</td>
+<td><code>files.csv</code> columns <code>format</code>,
+<code>role</code></td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>Read the first 64 kB of each image (EXIF and XMP): time, position,
+altitudes, camera, RTK flag</td>
+<td><code>output/catalogue/images.csv</code></td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>Apply the shared time-zone table to cameras whose clock was on local
+time</td>
+<td><code>images.csv</code> columns <code>time_utc</code>,
+<code>tz_rule</code></td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>Group images into flights, and copies of a flight into one
+flight</td>
+<td><code>output/catalogue/flights.csv</code></td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>Link logs, plans, tracks, RINEX and other files to flights, with a
+score</td>
+<td><code>output/catalogue/links.csv</code></td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>Work out each flight’s positioning status from its evidence</td>
+<td><code>flights.csv</code> columns <code>positioning_found</code>,
+<code>positioning_evidence</code></td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>Build lines and outlines for the map (planned, observed,
+derived)</td>
+<td><code>output/catalogue/geometry.csv</code></td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>Read satellite, aerial and LiDAR headers, and GIS layers</td>
+<td><code>output/catalogue/datasets.csv</code></td>
+</tr>
+<tr class="odd">
+<td>10</td>
+<td>Apply what people decided (<code>config/flights.csv</code>,
+<code>links.csv</code>, <code>sites.csv</code>)</td>
+<td><code>flights.csv</code> (<code>site</code> beside
+<code>site_found</code>)</td>
+</tr>
+<tr class="even">
+<td>11</td>
+<td>File audit: what became of every file</td>
+<td><code>output/audit/file_audit.csv</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="one-image-traced-through">One image traced through</h2>
+<p>A DJI Matrice 350 RTK image taken with a Zenmuse P1, in a mission
+folder named <code>DJI_202001011200_001_Site-A</code>.</p>
+<ol type="1">
+<li><strong>Found.</strong> The scan lists the file: <code>.JPG</code>,
+18 MB, in source <code>T7</code>. Format <code>jpg</code>, role
+<code>image</code>.</li>
+<li><strong>Read.</strong> Its first 64 kB give
+<code>DateTimeOriginal</code> 2024:07:12 10:42:07, latitude and
+longitude, <code>drone-dji:RelativeAltitude</code> +60.1 m,
+<code>RtkFlag</code> 50 and the camera serial.</li>
+<li><strong>Time.</strong> DJI cameras write UTC in the XMP
+(<code>UTCAtExposure</code>), so <code>time_utc</code> is used as
+written and no zone rule is needed.</li>
+<li><strong>Flight.</strong> The images from this camera in this folder
+are sorted by time. The gap to the image before is 2 s, so it belongs to
+the same flight; the next gap of 14 min starts a new flight. The
+flight’s id is built from the camera serial and the first exposure in
+UTC.</li>
+<li><strong>Site.</strong> From the folder name: <code>Bog</code>. The
+<code>-P1</code> suffix is not trusted for the sensor; that comes from
+the image metadata.</li>
+<li><strong>Links.</strong>
+<code>DJI_202001011200_001_Timestamp.MRK</code> in the same folder: same
+folder 0.5, time in the file name within the flight +0.4, so the score
+is 0.9 and the link is <code>auto</code>.</li>
+<li><strong>Status.</strong> 412 of the flight’s 420 images have
+<code>RtkFlag</code> 50 (fixed): 98.1 %, which is 95 % or more, so the
+flight is <strong>RTK corrected</strong>. The evidence column says so in
+words.</li>
+<li><strong>Map.</strong> The image positions draw the observed outline
+(solid) in the RTK colour.</li>
+</ol>
+<h2 id="1-sources-and-scanning">1. Sources and scanning</h2>
+<p>A source is one drive or folder with archived data. Sources are
+listed in <code>config/sources.csv</code> (id, path, label, added). The
+same flight on several sources is one flight with copies: copies are
+found by the flight id, not by the path.</p>
+<ul>
+<li>Every photo&rsquo;s header is read (the first 64 kB, where EXIF and XMP sit), once. The result is kept per file in
+<code>&lt;project&gt;/cache/sources/&lt;source&gt;/exif.rds</code>, by path, size and modified time, so a rescan reads only new or changed photos.</li>
+<li>Only drone photos make flights: a photo counts when it carries a drone tag (DJI drone-dji, senseFly or Camera: XMP) or its EXIF make
+and model match a row of <code>config/drone_cameras.csv</code> (Set-up tables; make in any case, model as a prefix, a blank model for any model
+of that make; a row with drone "no", such as DJI's handheld Osmo and Pocket cameras, wins over a drone tag). Other photos (phones, compact cameras, trail cameras, DSLRs, screenshots) are left out and listed in <code>catalogue/other_photos.csv</code> with why.</li>
+<li>The same photo in several folders or sources (by size, camera serial, exposure time and band; without an EXIF time, size and the md5 of
+the first 64 kB) is counted once; the copies are listed in <code>catalogue/duplicates.csv</code> (kind, key, kept_path, dup_path, why), which the
+eMotion logs share.</li>
+<li>A source inside another source (real paths compared) keeps its own files: each file is counted once, under the innermost source. The
+Sources page says so before such a folder is scanned, and marks the sources &ldquo;inside&rdquo; or &ldquo;contains&rdquo;.</li>
+<li>Satellite scenes (TIFF, JP2 or NITF beside .IMD, .TIL or DIMAP metadata, or with a satellite name) are rasters, never photos or flights.</li>
+<li>Remove (Sources page) takes a source out of <code>config/sources.csv</code> and its rows out of the catalogue. Its folder and files are never touched.</li>
+<li>A source that is not plugged in keeps its last scan. Its flights
+stay in the catalogue and the Sources page shows it as not
+connected.</li>
+<li><code>config/file_rules.csv</code> can ignore a path pattern (for
+example a recycle bin) or give it a role.</li>
+</ul>
+<h2 id="2-formats-and-roles">2. Formats and roles</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>Formats</th>
+<th>Read inside?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>image</td>
+<td>JPG, DNG, TIF from a drone camera</td>
+<td>first 64 kB (EXIF, XMP)</td>
+</tr>
+<tr class="even">
+<td>record</td>
+<td>DJI <code>Timestamp.MRK</code>, <code>.RPT</code>; eMotion
+<code>geoinfo.txt</code>; <code>.bb3/.bbx/.bbz</code> logs;
+<code>.mis3</code> plans</td>
+<td>MRK, RPT and geoinfo yes; logs and plans are encrypted, so listed
+only</td>
+</tr>
+<tr class="odd">
+<td>track or plan</td>
+<td>KML, KMZ, WPML</td>
+<td>yes</td>
+</tr>
+<tr><td>map tile</td><td>Google Earth tile KMLs (a super-overlay: thousands of small KMLs that each place one image tile)</td><td>checked, then listed and counted apart; never read as plans or tracks</td></tr>
+<tr class="even">
+<td>receiver</td>
+<td>RINEX observation files</td>
+<td>header only</td>
+</tr>
+<tr class="odd">
+<td>dataset</td>
+<td>satellite scenes (.IMD, DIMAP), aerial photos, LAS/LAZ, GeoTIFF</td>
+<td>header and sidecars only</td>
+</tr>
+<tr class="even">
+<td>GIS layer</td>
+<td>shapefile, GeoJSON, GPX</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td>out of scope</td>
+<td>orthomosaics, DSMs, Pix4D and DJI Terra outputs, point clouds</td>
+<td>listed, not read</td>
+</tr>
+<tr class="even">
+<td>other</td>
+<td>anything else</td>
+<td>listed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-image-time-and-time-zones">3. Image time and time zones</h2>
+<ul>
+<li>DJI writes UTC in the XMP; that wins. Other cameras write local time
+in <code>DateTimeOriginal</code> with no zone.</li>
+<li>For those, the shared time-zone table
+<code>config/timezones.csv</code> (ovid Core) gives the offset: one
+row per rule with <code>serial</code>, <code>model</code>,
+<code>file_pattern</code>, <code>start</code>, <code>end</code>,
+<code>offset_hours</code> and <code>reason</code>. Blank columns match
+anything; the first matching row wins.</li>
+<li><code>time_utc</code> = local time − offset. The rule used is kept
+in <code>tz_rule</code>.</li>
+</ul>
+<div class="ex">
+<b>Worked example.</b> A senseFly S.O.D.A. image says 2024-07-12
+09:15:00 with no zone. A row with model <code>S.O.D.A.</code>, offset
+<code>-7</code> and reason “camera on local summer time” matches, so
+<code>time_utc</code> = 09:15 − (−7 h) = 16:15 UTC.
+</div>
+<ul>
+<li>A camera with an unusable clock (the Canon S110 often reads 1980)
+takes its time from a linked flown track (KML), and the flight’s
+<code>time_source</code> says so.</li>
+</ul>
+<h2 id="4-flights">4. Flights</h2>
+<p>A flight is a run of images from one camera in one folder, split
+where exposures pause for more than <strong>10 minutes</strong>
+(<code>flight_gap_min</code>).</p>
+<div class="f">
+new flight where t(i) − t(i−1) &gt; flight_gap_min
+</div>
+<div class="ex">
+<b>Worked example.</b> Exposures at 10:30:02, 10:30:04 … 10:41:58, then
+10:56:10. The gap 10:41:58 → 10:56:10 is 14 min 12 s, more than 10 min,
+so the images from 10:56:10 on are a second flight.
+</div>
+<ul>
+<li>senseFly images are grouped by the flight number in their names
+(<code>&lt;serial&gt;_&lt;flight&gt;_&lt;image&gt;.JPG</code>) or
+folder. Images with no number take it from the one flight number among
+the logs in their folder or the two above.</li>
+<li>Sequoia writes four band images per capture; a flight counts both
+images and captures and is grouped by the camera’s FlightUUID.</li>
+<li>The flight id comes from the camera serial and the first exposure in
+UTC, or from the flight number when the clock is unusable, so the same
+flight in another folder or source is the same flight.</li>
+</ul>
+<h3>Flight quality from the image headers (added October 2026)</h3>
+<p>Each image gets, where its headers allow, and each flight gets the median (on the Flight page and in <code>flights.csv</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>How it is worked out</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ground sample distance (<code>gsd_cm</code>)</td>
+<td>sensor width × height above take-off ÷ (focal length × image width), in cm per pixel. The sensor width comes from the EXIF focal plane resolution, or from a table of the archive's cameras (1-inch sensors 13.2 mm, 1/2.3-inch 6.17 mm, 1/1.7-inch 7.44 mm, full frame 35.9 mm). The height is DJI's <code>RelativeAltitude</code>, above the take-off point and not the ground under the image, so over slopes or water it is approximate; eBee images have no such height and no GSD.</td>
+</tr>
+<tr>
+<td>Speed (<code>speed_ms</code>)</td>
+<td>DJI's <code>FlightXSpeed</code> and <code>FlightYSpeed</code> where written, otherwise the distance to the previous image over the time between them (images up to 30 s apart in one folder).</td>
+</tr>
+<tr>
+<td>Motion blur (<code>blur_px</code>)</td>
+<td>speed × exposure time ÷ GSD, in pixels. Under about 0.5 to 1 pixel is the usual aim for mapping; <code>blur_over_1px_pct</code> is the share of a flight's images above 1 pixel.</td>
+</tr>
+<tr>
+<td>Forward overlap (<code>fwd_overlap_pct</code>)</td>
+<td>1 − distance to the previous image on the same line ÷ footprint along the track, taking the short side of the image as along the track (the usual layout for mapping flights). In a big folder only a sample of headers is read (30 images), so neighbouring images rarely both have a position; the flight's value is then estimated from its median speed × the median time between exposures, and <code>fwd_overlap_source</code> says &quot;speed x interval&quot; instead of &quot;image pairs&quot;.</td>
+</tr>
+<tr>
+<td>Side overlap (<code>side_overlap_pct_median</code>)</td>
+<td>1 − spacing between neighbouring parallel lines ÷ footprint across the track. A line starts where the heading turns by more than 45° or images are more than 30 s apart. It needs the lines, so it is empty for big folders read from a sample of headers.</td>
+</tr>
+<tr>
+<td>Sun elevation (<code>sun_elev_deg</code>)</td>
+<td>from the image's position and UTC time, to about a degree.</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing here is written into the images or used to change a status; it describes the flight for anyone re-using it. On the Samsung USB drive (scanned 6 October 2026) the three Zenmuse L2 flights of 22 September 2024 came out at a GSD of 1.6 cm (60 m above take-off), forward overlap 77 to 84 % (speed x interval), motion blur 0.6 to 0.8 pixels and sun elevation 23 to 27°. The eBee Plus flights with the Canon S110 have no height above take-off and no position in their EXIF, so none of these values can be worked out for them.</p>
+<h2 id="5-missions">5. Missions</h2>
+<p>Sorties flown as one survey are grouped into a mission: the same
+aircraft flying again within an hour from the same plan or folder, or
+over the same area and site soon after (battery swaps, two flights on
+one battery). On the Flight page, <strong>Confirm this grouping</strong>
+or <strong>Split this sortie off</strong>; a mission name typed there
+groups sorties by hand.</p>
+<h2 id="6-linking-files-to-flights">6. Linking files to flights</h2>
+<p>Records are linked by what they say first: senseFly logs, eMotion
+geotags, plans and Pix4D projects by aircraft serial and flight number,
+or by the image names a geoinfo file or eMotion KML lists (score 0.95).
+Other files in the folder are scored:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Evidence</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>same folder as the flight</td>
+<td>+0.5</td>
+</tr>
+<tr class="even">
+<td>time in the file name within the flight</td>
+<td>+0.4</td>
+</tr>
+<tr class="odd">
+<td>named after the folder</td>
+<td>+0.4</td>
+</tr>
+<tr class="even">
+<td>only flight in the folder</td>
+<td>+0.3</td>
+</tr>
+<tr class="odd">
+<td>time in the file name outside the flight</td>
+<td>−0.3</td>
+</tr>
+</tbody>
+</table>
+<div class="f">
+state = auto if score ≥ 0.8 probable if 0.5 ≤ score &lt; 0.8 suggested
+if score &lt; 0.5
+</div>
+<div class="ex">
+<b>Worked example.</b> A flight log in the flight’s folder (0.5) whose
+name holds a time 3 min after take-off (+0.4): 0.9, <code>auto</code>. A
+PDF report in the same folder with no time in its name, while two
+flights share the folder: 0.5, <code>probable</code>.
+</div>
+<p>RINEX observations anywhere in the archive that span a flight are a
+probable link and never proof of correction. On the Flight page, each
+link can be confirmed or rejected with a reason
+(<code>config/links.csv</code>).</p>
+<h2 id="7-positioning-status">7. Positioning status</h2>
+<p>One of: RTK corrected, partly RTK corrected, PPK corrected,
+standalone GNSS / uncorrected, correction data available, not confirmed,
+unknown. A status typed on the Flight page (with a reason) wins; the
+found one stays beside it in <code>positioning_found</code>.</p>
+<p><strong>DJI</strong> (from each image’s RTK flag: 50 fixed, 34 float,
+16 single):</p>
+<div class="f">
+fixed share = images with RtkFlag 50 / images with a flag ≥ 95 % → RTK
+corrected &gt; 0 % → partly RTK corrected 0 % and onboard GNSS kept →
+correction data available, not confirmed 0 % → standalone GNSS /
+uncorrected no flag, Phantom 3 or 4 → standalone GNSS / uncorrected (no
+RTK on board)
+</div>
+<p><strong>senseFly</strong> (from geotag accuracy,
+<code>CORRECTED_M</code> = 0.1 m):</p>
+<div class="f">
+camera’s own geotag accuracy ≤ 0.1 m → RTK corrected metres in the
+camera, ≤ 0.1 m in eMotion’s geotags → PPK corrected metres everywhere →
+standalone GNSS / uncorrected (base or RINEX files alone never count as
+corrected)
+</div>
+<div class="ex">
+<b>Worked example.</b> An eBee Plus flight: the S.O.D.A. images say 3.2
+m horizontal accuracy; the eMotion geoinfo for the same images gives a
+median of 0.03 m. 3.2 m &gt; 0.1 m but 0.03 m ≤ 0.1 m, so the flight is
+<b>PPK corrected</b>.
+</div>
+<h2 id="8-geometry-for-the-map">8. Geometry for the map</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Kind</th>
+<th>Line style</th>
+<th>From</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>planned</td>
+<td>dashed</td>
+<td>KML/KMZ/WPML lines or areas without times</td>
+</tr>
+<tr class="even">
+<td>observed</td>
+<td>solid</td>
+<td>image positions, flown KML tracks, receiver positions</td>
+</tr>
+<tr class="odd">
+<td>derived</td>
+<td>dotted</td>
+<td>extents worked out by ovid</td>
+</tr>
+</tbody>
+</table>
+<p>Colour is the positioning status: RTK green, partly RTK cyan, PPK
+blue, uncorrected red, “available, not confirmed” orange, unknown grey
+(accent.vim).</p>
+<p>Every map (Map page, GNSS page and the shared viewer) has a small <b>Legend</b> / <b>PNG</b> bar. <b>Legend</b> shows or hides the legend (remembered per map); <b>PNG</b> saves the view as it is on screen, with or without the legend, redrawn at 250 ppi: imagery tiles are fetched at the matching finer zoom and every shape is redrawn, so lines stay sharp.</p>
+<h2 id="9-datasets-satellite-aerial-and-lidar">9. Datasets: satellite,
+aerial and LiDAR</h2>
+<p>The Imagery page lists satellite scenes (WorldView, QuickBird,
+GeoEye, IKONOS <code>.IMD</code>; SPOT DIMAP), aerial photos, airborne
+LiDAR tiles (LAS/LAZ headers) and other georeferenced rasters, with
+platform, product, date (marked inferred when it comes from a name),
+ground sample distance, cloud cover and footprint. Footprints are drawn
+solid from vendor scene corners and dashed from file headers (UTM
+converted for display only). Only headers and sidecars are read.
+Catalogue: <code>output/catalogue/datasets.csv</code>.</p>
+<h2 id="10-gis-layers">10. GIS layers</h2>
+<p>Shapefiles, GeoJSON and GPX are listed on the Imagery page and drawn
+on the Map by kind from their names: GCPs and checkpoints,
+plots/transects/grids, boundaries and extents, field sites and trails,
+other. A shapefile without a <code>.prj</code> borrows its folder
+neighbour’s (marked inferred). Folders with more than 20 layers keep
+only extents.</p>
+<h2 id="11-gnss-survey-points">11. GNSS survey points</h2>
+<p>On the GNSS page, upload survey files from Emlid Reach (point CSVs,
+.LLH, NMEA, Emlid Studio .pos, or the Emlid Flow zip), DJI RTK (point
+CSVs, <code>Timestamp.MRK</code>) or Leica (Viva / Captivate / LGO
+ASCII, GSI-8/16, LandXML). They are stitched into one table: exact
+repeats dropped, a point name reused with other coordinates flagged in
+<code>note</code>. Points with latitude and longitude are shown on the
+map; grid-only points need a UTM zone typed on the page. <strong>Export
+stitched points (CSV)</strong> writes
+<code>ovid_rs_gnss_stitched_&lt;date&gt;.csv</code> (also kept in
+<code>output/gnss/</code>). Coordinates are copied as found; nothing is
+converted.</p>
+<h3>Position quality (added October 2026)</h3>
+<p>Where a file gives them, each point also carries the number of satellites (<code>n_sat</code>; Emlid Flow's per-constellation counts are added up), <code>pdop</code>, <code>hdop</code> and <code>vdop</code>, the averaging <code>samples</code>, the age of the corrections in seconds (<code>age_s</code>), the <code>baseline_m</code> to the base and the <code>correction</code> type (NTRIP, LoRa and so on). Reach <code>.LLH</code> logs give satellites and age (the RTKLIB solution columns), and NMEA GGA sentences give satellites, HDOP and age. The GNSS page shows a table per file: points, share fixed, median horizontal and vertical RMS, median PDOP and HDOP, fewest satellites, oldest corrections and longest baseline. Values are copied as found; nothing is reprocessed.</p>
+<h2 id="12-qa">12. QA</h2>
+<p>The QA page shows positioning status by year, missing metadata (site,
+project, sensor), flights with QA flags (no georeferenced images,
+positions only in eMotion geotags, camera clock unusable, MRK or RPT
+counts that differ from the images found, mission grouping uncertain)
+and files tied to no flight (<code>unassigned.csv</code>, with why).</p>
+<h2 id="set-up-check-time-zones-and-file-audit">Set-up check, time zones
+and file audit</h2>
+<p>These are shared with the other ovid apps and come from the core.
+Each run writes them to <code>output/audit/</code>, and the Sources page
+shows them in the <strong>Set-up check and file audit</strong> card.</p>
+<ul>
+<li><strong>Set-up check</strong> (<code>setup_check.csv</code>):
+sources (a source that is not plugged in is <code>info</code>, not an
+error), duplicate source ids, file rules that are not valid patterns,
+sites without a project, positioning statuses that are not on the list,
+links to files that no longer exist, and the time-zone table.</li>
+<li><strong>Time zones</strong> (<code>config/timezones.csv</code>): see
+<a href="#3-image-time-and-time-zones">section 3</a>.</li>
+<li><strong>File audit</strong> (<code>file_audit.csv</code>): one row
+per file found with <code>what_happened</code>, either “in the
+catalogue: …” (as an image of a flight, a linked record, a dataset or a
+layer) or “not in the catalogue: …” with the reason (ignored by a rule,
+out of scope, not linked). Export it with <strong>Export file audit
+(CSV)</strong>.</li>
+</ul>
+<h2 id="reading-the-outputs">Reading the outputs</h2>
+<pre class="f"><code style="background:none;padding:0">&lt;project&gt;/config/               what people decide (sources, flights, sites, links, file_rules, timezones); every change backed up in config/history/
+&lt;project&gt;/cache/sources/&lt;id&gt;/   one scan per folder (safe to delete; the next scan reads everything again)
+&lt;project&gt;/output/catalogue/     flights.csv, images.csv, links.csv, geometry.csv, files.csv, datasets.csv, unassigned.csv
+&lt;project&gt;/output/audit/         setup_check.csv, file_audit.csv, run_manifest.csv, problems.csv
+&lt;project&gt;/output/gnss/          stitched GNSS points
+&lt;project&gt;/output/viewer/        the viewer folder and Ovid_RS_viewer.zip</code></pre>
+<p>Exports from the app are named
+<code>ovid_rs_&lt;what&gt;_&lt;YYYY-MM-DD&gt;.&lt;ext&gt;</code>.</p>
+<h2 id="the-viewer">The viewer</h2>
+<p>One folder (and its zip) with <code>index.html</code>, a map,
+filters, summary cards and the flight table, plus
+<code>flights.csv</code>, <code>links.csv</code> and
+<code>sources.csv</code>. The person receiving it unzips it and
+double-clicks <code>index.html</code>; no R and no archive are needed,
+only the internet for map tiles. Image positions are thinned to 150 per
+flight (<code>points_per_flight</code>); flights marked
+<code>exclude_from_archive</code> are left out.</p>
+<h2 id="sensor-notes">Sensor notes</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aircraft or camera</th>
+<th>How it is recognised</th>
+<th>Positioning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DJI Matrice 350 RTK (P1, L2, H30T)</td>
+<td>XMP <code>drone-dji</code>, camera model</td>
+<td>RTK flag per image</td>
+</tr>
+<tr class="even">
+<td>DJI Phantom 4 RTK (FC6310R)</td>
+<td>camera model</td>
+<td>RTK flag per image</td>
+</tr>
+<tr class="odd">
+<td>DJI Phantom 4 / 4 Pro (FC330, FC6310), Phantom 3 (FC300X)</td>
+<td>camera model</td>
+<td>standalone (no RTK)</td>
+</tr>
+<tr class="even">
+<td>senseFly eBee, eBee Plus (EP- serial prefix, inferred)</td>
+<td>XMP <code>sensefly</code>, file and folder names</td>
+<td>geotag accuracy</td>
+</tr>
+<tr class="odd">
+<td>S.O.D.A., Sequoia, Canon S110/S110R</td>
+<td>camera model; Sequoia FlightUUID</td>
+<td>from the aircraft’s geotags</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reasonable-values">Reasonable values</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Quantity</th>
+<th>Typical</th>
+<th>Look again if</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Geotag accuracy, RTK or PPK</td>
+<td>0.01 to 0.05 m</td>
+<td>over 0.1 m while the status says corrected</td>
+</tr>
+<tr class="even">
+<td>Geotag accuracy, standalone</td>
+<td>2 to 5 m</td>
+<td>under 0.1 m while the status says standalone</td>
+</tr>
+<tr class="odd">
+<td>DJI fixed share, RTK flight</td>
+<td>98 to 100 %</td>
+<td>between 1 and 95 % (partly corrected)</td>
+</tr>
+<tr class="even">
+<td>Relative altitude</td>
+<td>40 to 120 m</td>
+<td>negative, or over 500 m</td>
+</tr>
+<tr class="odd">
+<td>Gap between exposures</td>
+<td>1 to 5 s</td>
+<td>many gaps over 10 min within one folder</td>
+</tr>
+<tr class="even">
+<td>Images per flight</td>
+<td>100 to 2,000</td>
+<td>fewer than 10 (a test or an aborted flight)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="wrong">When something goes wrong</h2>
+<ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>What you see</th>
+<th>Why</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A flight dated 1980</td>
+<td>Canon S110 clock not set</td>
+<td>link the flown track (KML); its time is used</td>
+</tr>
+<tr class="even">
+<td>A mission flagged uncertain</td>
+<td>sorties close in time but from different plans or areas</td>
+<td><strong>Confirm this grouping</strong> or <strong>Split this sortie
+off</strong> on the Flight page</td>
+</tr>
+<tr class="odd">
+<td>Map is blank</td>
+<td>no internet for Leaflet and map tiles</td>
+<td>connect, then reload the page</td>
+</tr>
+<tr class="even">
+<td>Status “unknown”</td>
+<td>no RTK flag and no geotag accuracy</td>
+<td>type a status with a reason on the Flight page</td>
+</tr>
+<tr class="odd">
+<td>A source shows “not connected”</td>
+<td>the drive is not plugged in</td>
+<td>plug it in and press <strong>Rescan connected drives</strong>; its
+last scan is kept meanwhile</td>
+</tr>
+<tr class="even">
+<td>A file is missing from a flight</td>
+<td>its score was below 0.5</td>
+<td>find it in <code>links.csv</code> as suggested and confirm it</td>
+</tr>
+<tr class="odd">
+<td>GNSS points not on the map</td>
+<td>grid coordinates only</td>
+<td>type the UTM zone on the GNSS page</td>
+</tr>
+<tr><td>A scan ends with “No flights found”</td><td>the source holds no drone images (for example only satellite or GIS data)</td><td>the scan stops there; any satellite, aerial and LiDAR list it found is still written. Check the source path if it should hold flights</td></tr>
+</tbody>
+</table>
+<h2 id="glossary">Glossary</h2>
+<ul>
+<li><strong>Flight</strong>: a run of images from one camera, split at
+pauses over 10 minutes.</li>
+<li><strong>Mission</strong>: flights flown as one survey.</li>
+<li><strong>Source</strong>: a drive or folder in the archive.</li>
+<li><strong>RTK / PPK</strong>: real-time or post-processed kinematic
+GNSS correction (centimetre positions).</li>
+<li><strong>RTK flag</strong>: DJI’s per-image fix state (50 fixed, 34
+float, 16 single).</li>
+<li><strong>Geotag</strong>: the position written for an image, by the
+camera or later by software.</li>
+<li><strong>GSD</strong>: ground sample distance, the ground size of one
+pixel.</li>
+<li><strong>Footprint</strong>: the outline of a scene or flight on the
+ground.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>DJI, <em>Zenmuse P1 / L2 user manuals</em> and the DJI XMP tags
+(<code>drone-dji:*</code>).</li>
+<li>senseFly, <em>eMotion user manual</em>, geotag and log formats.</li>
+<li>Parrot, <em>Sequoia user guide</em>.</li>
+<li>Maxar, <em>IMD metadata</em>; Airbus, <em>DIMAP format</em>.</li>
+<li>ASPRS, <em>LAS specification 1.4</em>.</li>
+<li>RINEX 3 format description, IGS.</li>
+<li>National Marine Electronics Association, <em>NMEA 0183 standard</em>: the GGA sentence (fix quality, satellites in use, HDOP, age of differential data).</li>
+<li>Takasu, T., <em>RTKLIB manual</em>: the solution file format of <code>.pos</code> and Emlid <code>.LLH</code> logs (Q, ns, standard deviations, age, ratio).</li>
+<li>Emlid, <em>Emlid Flow</em> documentation: point CSV export columns (solution status, RMS, samples, PDOP, satellites per constellation, baseline, correction type). <a href="https://docs.emlid.com">docs.emlid.com</a></li>
+<li>CIPA DC-008, <em>Exchangeable image file format for digital still cameras (Exif)</em>: FocalLength, FocalPlaneXResolution, FocalPlaneResolutionUnit, PixelXDimension, PixelYDimension, ExposureTime.</li>
+</ul>
+
+</main></body></html>

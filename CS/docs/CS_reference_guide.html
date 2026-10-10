@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid CS Reference Guide</title>
+<style>
+:root{color-scheme:dark;--bg:#1D211A;--fg:#FBFCF6;--panel:#272C23;--rule:#4A5243;--muted:#B9C0B1;--accent:#BCCD80;--red:#EA938B;--green:#A5D6CB;--yellow:#F7C775;--blue:#90DDE4;--purple:#DAC3ED;--cyan:#90DDE4;--orange:#F7C775;--code:#2C3227;--grid:#353C30}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+h1{font-size:28px;margin:0 0 4px;color:#e0e2e0}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent);color:#e0e2e0}
+h3{font-size:16.5px;margin:24px 0 6px;color:var(--blue)}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+b,strong{color:#e0e2e0}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel);color:#e0e2e0}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px;background:#222427}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--yellow);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);color:#d6d8d6;padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+.p-air{color:var(--red)}.p-rh{color:var(--cyan)}.p-wind{color:var(--purple)}.p-rad{color:var(--yellow)}.p-rain{color:var(--blue)}.p-snow{color:#d6d8d6}.p-soil{color:var(--orange)}.p-pres{color:var(--green)}
+@media print{.f{white-space:pre-wrap;word-break:break-all;font-size:9pt}body{font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:14mm 14mm}h2,h3{break-after:avoid}nav{break-after:page}.ex,.f,figure,tr{break-inside:avoid}table{display:table;font-size:9pt}}
+@page{size:A4;margin:0}
+
+</style>
+</head>
+<body><main>
+<h1>ovid CS Reference Guide</h1>
+<p class="sub">Campbell Scientific loggers: what the app does to every record, why, and how to check it. For CS 1.10.0 (ovid Core 1.14.0). Settings are quoted with their defaults; change them in the app or at the top of <code>cs_pipeline.R</code>. Raw files are never changed.</p>
+
+<nav><b>Contents</b>
+<ol>
+<li><a href="#quick">Quick start</a></li>
+<li><a href="#what-it-looks-like">What it looks like</a></li>
+<li><a href="#order">What happens to the data, in order</a></li>
+<li><a href="#flow">The pipeline at a glance</a></li>
+<li><a href="#trace">One reading through the pipeline</a></li>
+<li><a href="#files">1. Finding files</a></li>
+<li><a href="#read">2. Reading records and time stamps</a></li>
+<li><a href="#clock">3. Clock corrections and impossible dates</a></li>
+<li><a href="#num">4. Text to numbers</a></li>
+<li><a href="#stitch">5. Stitching each logger table</a></li>
+<li><a href="#names">6. Common parameter names</a></li>
+<li><a href="#stations">7. Stations</a></li>
+<li><a href="#cal">8. Calibrations</a></li>
+<li><a href="#qc">9. Quality rules and removals</a></li>
+<li><a href="#flags">10. Flags and sensor health</a></li>
+<li><a href="#summ">11. Derived values and summaries</a></li>
+<li><a href="#precip">12. Weighing precipitation gauges</a></li>
+<li><a href="#wmo">13. Quality codes, added checks and wind statistics</a></li>
+<li><a href="#outputs">Reading the outputs</a></li>
+<li><a href="#sensors">Sensor notes</a></li>
+<li><a href="#values">Reasonable values</a></li>
+<li><a href="#trouble">Troubleshooting</a></li>
+<li><a href="#glossary">Glossary</a></li>
+<li><a href="#refs">References</a></li>
+</ol></nav>
+
+<h2 id="quick">Quick start</h2>
+<ol>
+<li>Collect the raw <code>.dat</code> files (TOA5 from LoggerNet, PC400 or CardConvert, TOB3 binary straight from a card or the logger's CPU, and CR10X mixed-array files) in one or more raw folders. Subfolders are searched. Keep every download, including overlapping ones: the app sorts them out.</li>
+<li>Open the app (<code>Open CS (Mac).command</code>, <code>Ovid_CS.bat</code> on Windows, or <code>shiny::runApp()</code>) and choose the raw folders and a project folder with <b>Browse…</b>. <code>config/</code> and <code>output/</code> are kept in the project folder.</li>
+<li>Run the <b>Set-up check</b>. Fix anything it lists in red first.</li>
+<li>Press <b>Run</b>. The first run writes the set-up tables in <code>config/</code> with the built-in defaults.</li>
+<li>For CR10X files, open <b>CR10X files</b> and give each file a logger id and its Edlog <code>.FSL</code> file, so the columns get names.</li>
+<li>On <b>Stations</b>, give each logger a station name. Split a logger by date if it moved, or set the station to <code>ignore</code> to set the logger aside: its files are then not read at all.</li>
+<li>On <b>Column names</b> (aliases), check that each raw column maps to the common name you want. Unmapped columns keep their raw name.</li>
+<li>Read <b>Clock checks</b>. Add a clock correction (shift or remove) where a logger's clock was wrong, and run again.</li>
+<li>Check <b>Quality rules</b> and <b>Sensor health</b>. Add manual removals for periods you know are bad (a sensor down for repair, a bucket being serviced).</li>
+<li>For weighing gauges, check <b>Gauge set-up</b> and enter servicing in the <b>Field log</b>. Then look at the data in <b>Plot and explore</b> and export from <b>Reports and export</b>.</li>
+</ol>
+<p>A run only rebuilds what changed (<code>incremental = TRUE</code>): a logger table whose files, clock corrections and settings are the same as last time is read back from <code>cache/</code>. Use <b>Rescan</b> on the Raw files page to make the app read particular files again.</p>
+
+<h2 id="what-it-looks-like">What it looks like</h2>
+<p>The three screens you will use most, from a run on example data.</p>
+<figure style="margin:10px 0 18px"><img src="img/cs_01_home.png" alt="Home page" style="max-width:100%"><figcaption style="font-size:13px;opacity:.8">1. Home: the field data hub with counts, shortcuts, the station list and the to-do list.</figcaption></figure>
+<figure style="margin:10px 0 18px"><img src="img/cs_02_viewer_plot.png" alt="Data viewer with a plot" style="max-width:100%"><figcaption style="font-size:13px;opacity:.8">2. Viewing data: Plot and explore for one station, battery voltage, air temperature and snow depth over the 12-year record, with low-battery shading and field-log marks.</figcaption></figure>
+<figure style="margin:10px 0 18px"><img src="img/cs_03_alt_plot_export.png" alt="Another plot and exporting" style="max-width:100%"><figcaption style="font-size:13px;opacity:.8">3. Another plot and exporting: month-by-month box plots of air and soil temperature, with Export plot (PNG), Export station report (PDF) and Export data (CSV).</figcaption></figure>
+<h2 id="order">What happens to the data, in order</h2>
+<table>
+<tr><th>#</th><th>Step</th><th>What changes</th><th>Logged in</th></tr>
+<tr><td>1</td><td>Find files</td><td>Chooses which files are read; byte-identical copies, skipped tables and unreadable files are left out</td><td><code>audit/file_manifest.csv</code>, <code>audit/file_audit.csv</code></td></tr>
+<tr><td>2</td><td>Read records</td><td>TOA5 header gives logger serial, model, program and table; spreadsheet dates rewritten as <code>YYYY-MM-DD HH:MM:SS</code>; CR10X arrays given time stamps and names</td><td><code>audit/file_manifest.csv</code>, <code>malformed_row</code> entries</td></tr>
+<tr><td>3</td><td>Clock fixes</td><td>Your shifts and removals applied; records before <code>min_year</code> (1995) or in the future dropped</td><td><code>audit/timestamp_checks.csv</code>, audit trail</td></tr>
+<tr><td>4</td><td>Numbers</td><td><code>NAN</code> and blanks become missing; text in a numeric column removed</td><td>rule <code>non_numeric</code></td></tr>
+<tr><td>5</td><td>Stitch</td><td>One record per logger table: identical copies dropped, overlapping records merged (newest file wins)</td><td><code>stitched/</code>, <code>audit/gaps.csv</code>, rules <code>duplicate_record</code>, <code>overlap_conflict</code></td></tr>
+<tr><td>6</td><td>Names</td><td>Raw columns renamed to common parameters (<code>AirTC_Avg</code> → <code>air_temp</code>)</td><td><code>audit/column_dictionary.csv</code></td></tr>
+<tr><td>7</td><td>Stations</td><td>Records sent to stations (by logger, header name, table and date); overlaps between loggers merged</td><td><code>audit/lineage.csv</code>, rule <code>station_overlap</code></td></tr>
+<tr><td>8</td><td>Calibrations</td><td><code>value × multiplier + offset</code>, in place or into a new parameter</td><td><code>audit/calibrations_applied.csv</code></td></tr>
+<tr><td>9</td><td>Removals</td><td>Overflow codes, values outside limits, spikes and your manual removals blanked</td><td><code>qc/*_removed.csv</code>, <code>audit/audit_index.csv</code></td></tr>
+<tr><td>10</td><td>Flags</td><td>Doubtful values marked, not changed; each parameter given a health verdict</td><td><code>audit/flags.csv</code>, <code>audit/sensor_health.csv</code></td></tr>
+<tr><td>11</td><td>Summaries</td><td>Adds VPD, albedo, net radiation, snow depth where possible; daily, monthly, water-year values</td><td><code>derived/</code>, <code>audit/derived_summary.csv</code></td></tr>
+<tr><td>12</td><td>Gauges</td><td>Weighing-gauge bucket content turned into precipitation per interval and per day</td><td><code>precip/</code>, <code>audit/precip_summary.csv</code></td></tr>
+</table>
+<p>Nothing is dropped or blanked except through two functions that write to the audit trail. The run stops if <b>records read = records kept + records dropped</b> fails for a logger table, or if <b>values before − values after = values audited</b> fails for a station. <code>audit/file_audit.csv</code> repeats the record count per raw file.</p>
+
+<h2 id="flow">The pipeline at a glance</h2>
+<p>Five stages, twelve steps. Inputs on the left enter at the step that uses them (all are tables in <code>config/</code> except the raw folders); files on the right are written at the step that makes them.</p>
+<figure style="margin:8px 0 14px"><!--FIG:cs_pipeline--><svg viewBox="0 0 960 820" role="img" aria-label="CS processing pipeline" style="width:100%;height:auto;font:13px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:var(--muted)"/></marker></defs>
+<text x="125" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">WHAT YOU PROVIDE</text>
+<text x="500" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">PROCESSING STEPS</text>
+<text x="815" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">WHAT IT WRITES (output/)</text>
+<rect x="326" y="40" width="312" height="118" rx="10" style="fill:var(--accent);opacity:.13"/>
+<text x="0" y="0" transform="translate(348 48) rotate(90)" style="fill:var(--accent);font-weight:700;font-size:11px;letter-spacing:.6px">READ</text>
+<rect x="380" y="50" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/>
+<circle cx="402" cy="72.0" r="13" style="fill:var(--accent)"/><text x="402" y="76.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">1</text>
+<text x="424" y="69.0" style="fill:var(--fg);font-weight:600">Find files</text>
+<text x="424" y="85.0" style="fill:var(--muted);font-size:11.5px">TOA5, copies, skipped tables</text>
+<rect x="8" y="59.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="76.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">raw .dat folders</text>
+<line x1="246" y1="72.0" x2="377" y2="72.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="72.0" x2="686" y2="72.0" style="stroke:var(--accent);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="52.0" width="262" height="40" rx="5" style="fill:var(--code);stroke:var(--accent)"/>
+<text x="700" y="69.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/file_manifest.csv</text>
+<text x="700" y="85.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/file_audit.csv</text>
+<line x1="500" y1="94" x2="500" y2="103" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="104" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/>
+<circle cx="402" cy="126.0" r="13" style="fill:var(--accent)"/><text x="402" y="130.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">2</text>
+<text x="424" y="123.0" style="fill:var(--fg);font-weight:600">Read records</text>
+<text x="424" y="139.0" style="fill:var(--muted);font-size:11.5px">headers, CR10X arrays, dates</text>
+<rect x="8" y="113.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="130.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">cr10x.csv + .FSL files</text>
+<line x1="246" y1="126.0" x2="377" y2="126.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<rect x="326" y="170" width="312" height="172" rx="10" style="fill:var(--blue);opacity:.13"/>
+<text x="0" y="0" transform="translate(348 178) rotate(90)" style="fill:var(--blue);font-weight:700;font-size:11px;letter-spacing:.6px">STITCH</text>
+<line x1="500" y1="148" x2="500" y2="179" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="180" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--blue);stroke-width:1.5"/>
+<circle cx="402" cy="202.0" r="13" style="fill:var(--blue)"/><text x="402" y="206.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">3</text>
+<text x="424" y="199.0" style="fill:var(--fg);font-weight:600">Clock fixes and bad dates</text>
+<text x="424" y="215.0" style="fill:var(--muted);font-size:11.5px">your shifts, years before 1995</text>
+<rect x="8" y="189.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="206.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">time_corrections.csv</text>
+<line x1="246" y1="202.0" x2="377" y2="202.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="500" y1="224" x2="500" y2="233" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="234" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--blue);stroke-width:1.5"/>
+<circle cx="402" cy="256.0" r="13" style="fill:var(--blue)"/><text x="402" y="260.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">4</text>
+<text x="424" y="253.0" style="fill:var(--fg);font-weight:600">Text to numbers</text>
+<text x="424" y="269.0" style="fill:var(--muted);font-size:11.5px">NAN to blank, stray text</text>
+<line x1="500" y1="278" x2="500" y2="287" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="288" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--blue);stroke-width:1.5"/>
+<circle cx="402" cy="310.0" r="13" style="fill:var(--blue)"/><text x="402" y="314.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">5</text>
+<text x="424" y="307.0" style="fill:var(--fg);font-weight:600">Stitch each logger table</text>
+<text x="424" y="323.0" style="fill:var(--muted);font-size:11.5px">copies, overlaps, gaps</text>
+<line x1="620" y1="310.0" x2="686" y2="310.0" style="stroke:var(--blue);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="282.0" width="262" height="56" rx="5" style="fill:var(--code);stroke:var(--blue)"/>
+<text x="700" y="299.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">stitched/</text>
+<text x="700" y="315.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/gaps.csv</text>
+<text x="700" y="331.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/timestamp_checks.csv</text>
+<rect x="326" y="354" width="312" height="172" rx="10" style="fill:var(--purple);opacity:.13"/>
+<text x="0" y="0" transform="translate(348 362) rotate(90)" style="fill:var(--purple);font-weight:700;font-size:11px;letter-spacing:.6px">STATION</text>
+<line x1="500" y1="332" x2="500" y2="363" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="364" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--purple);stroke-width:1.5"/>
+<circle cx="402" cy="386.0" r="13" style="fill:var(--purple)"/><text x="402" y="390.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">6</text>
+<text x="424" y="383.0" style="fill:var(--fg);font-weight:600">Common names</text>
+<text x="424" y="399.0" style="fill:var(--muted);font-size:11.5px">AirTC_Avg to air_temp</text>
+<rect x="8" y="373.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="390.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">aliases.csv</text>
+<line x1="246" y1="386.0" x2="377" y2="386.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="386.0" x2="686" y2="386.0" style="stroke:var(--purple);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="374.0" width="262" height="24" rx="5" style="fill:var(--code);stroke:var(--purple)"/>
+<text x="700" y="391.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/column_dictionary.csv</text>
+<line x1="500" y1="408" x2="500" y2="417" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="418" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--purple);stroke-width:1.5"/>
+<circle cx="402" cy="440.0" r="13" style="fill:var(--purple)"/><text x="402" y="444.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">7</text>
+<text x="424" y="437.0" style="fill:var(--fg);font-weight:600">Stations</text>
+<text x="424" y="453.0" style="fill:var(--muted);font-size:11.5px">logger to station, by date</text>
+<rect x="8" y="427.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="444.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">stations.csv, file_rules.csv</text>
+<line x1="246" y1="440.0" x2="377" y2="440.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="500" y1="462" x2="500" y2="471" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="472" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--purple);stroke-width:1.5"/>
+<circle cx="402" cy="494.0" r="13" style="fill:var(--purple)"/><text x="402" y="498.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">8</text>
+<text x="424" y="491.0" style="fill:var(--fg);font-weight:600">Calibrations</text>
+<text x="424" y="507.0" style="fill:var(--muted);font-size:11.5px">x multiplier + offset</text>
+<rect x="8" y="481.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="498.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">calibrations.csv</text>
+<line x1="246" y1="494.0" x2="377" y2="494.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="494.0" x2="686" y2="494.0" style="stroke:var(--purple);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="482.0" width="262" height="24" rx="5" style="fill:var(--code);stroke:var(--purple)"/>
+<text x="700" y="499.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/calibrations_applied.csv</text>
+<rect x="326" y="538" width="312" height="118" rx="10" style="fill:var(--orange);opacity:.13"/>
+<text x="0" y="0" transform="translate(348 546) rotate(90)" style="fill:var(--orange);font-weight:700;font-size:11px;letter-spacing:.6px">QUALITY</text>
+<line x1="500" y1="516" x2="500" y2="547" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="548" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--orange);stroke-width:1.5"/>
+<circle cx="402" cy="570.0" r="13" style="fill:var(--orange)"/><text x="402" y="574.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">9</text>
+<text x="424" y="567.0" style="fill:var(--fg);font-weight:600">Removals</text>
+<text x="424" y="583.0" style="fill:var(--muted);font-size:11.5px">codes, limits, spikes, by hand</text>
+<rect x="8" y="557.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="574.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">qc_rules.csv, manual_removals.csv</text>
+<line x1="246" y1="570.0" x2="377" y2="570.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="570.0" x2="686" y2="570.0" style="stroke:var(--orange);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="550.0" width="262" height="40" rx="5" style="fill:var(--code);stroke:var(--orange)"/>
+<text x="700" y="567.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">stations/</text>
+<text x="700" y="583.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">qc/*_removed.csv</text>
+<line x1="500" y1="592" x2="500" y2="601" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="602" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--orange);stroke-width:1.5"/>
+<circle cx="402" cy="624.0" r="13" style="fill:var(--orange)"/><text x="402" y="628.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">10</text>
+<text x="424" y="621.0" style="fill:var(--fg);font-weight:600">Flags and health</text>
+<text x="424" y="637.0" style="fill:var(--muted);font-size:11.5px">kept, but marked</text>
+<rect x="8" y="611.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="628.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">station_info.csv</text>
+<line x1="246" y1="624.0" x2="377" y2="624.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="624.0" x2="686" y2="624.0" style="stroke:var(--orange);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="604.0" width="262" height="40" rx="5" style="fill:var(--code);stroke:var(--orange)"/>
+<text x="700" y="621.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/flags.csv</text>
+<text x="700" y="637.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">audit/sensor_health.csv</text>
+<rect x="326" y="668" width="312" height="118" rx="10" style="fill:var(--green);opacity:.13"/>
+<text x="0" y="0" transform="translate(348 676) rotate(90)" style="fill:var(--green);font-weight:700;font-size:11px;letter-spacing:.6px">PRODUCTS</text>
+<line x1="500" y1="646" x2="500" y2="677" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="678" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--green);stroke-width:1.5"/>
+<circle cx="402" cy="700.0" r="13" style="fill:var(--green)"/><text x="402" y="704.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">11</text>
+<text x="424" y="697.0" style="fill:var(--fg);font-weight:600">Derived and summaries</text>
+<text x="424" y="713.0" style="fill:var(--muted);font-size:11.5px">VPD, day, month, water year</text>
+<line x1="620" y1="700.0" x2="686" y2="700.0" style="stroke:var(--green);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="680.0" width="262" height="40" rx="5" style="fill:var(--code);stroke:var(--green)"/>
+<text x="700" y="697.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">derived/*_daily, _monthly,</text>
+<text x="700" y="713.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">_water_year.csv</text>
+<line x1="500" y1="722" x2="500" y2="731" style="stroke:var(--muted);stroke-width:1.4" marker-end="url(#am)"/>
+<rect x="380" y="732" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--green);stroke-width:1.5"/>
+<circle cx="402" cy="754.0" r="13" style="fill:var(--green)"/><text x="402" y="758.5" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">12</text>
+<text x="424" y="751.0" style="fill:var(--fg);font-weight:600">Weighing gauges</text>
+<text x="424" y="767.0" style="fill:var(--muted);font-size:11.5px">bucket to precipitation</text>
+<rect x="8" y="741.0" width="236" height="26" rx="13" style="fill:var(--panel);stroke:var(--rule)"/>
+<text x="126.0" y="758.5" text-anchor="middle" style="fill:var(--fg);font-size:12px">precip_gauges.csv, field_log.csv</text>
+<line x1="246" y1="754.0" x2="377" y2="754.0" style="stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#am)"/>
+<line x1="620" y1="754.0" x2="686" y2="754.0" style="stroke:var(--green);stroke-width:1.2" marker-end="url(#am)"/>
+<rect x="690" y="742.0" width="262" height="24" rx="5" style="fill:var(--code);stroke:var(--green)"/>
+<text x="700" y="759.0" style="fill:var(--fg);font:12px ui-monospace,Menlo,Consolas,monospace">precip/</text>
+<text x="500" y="806" text-anchor="middle" style="fill:var(--muted);font-size:12px">Every step also writes to audit/audit_log.csv; report.html and plots/ are written at the end.</text>
+</svg><!--/FIG--></figure>
+
+<h2 id="trace">One reading through the pipeline</h2>
+<p>CS has no real data in this guide, so the example comes from the <b>synthetic test data</b> the app is benchmarked on: eight CR1000 loggers, a 10-minute table, two years, with each monthly download also holding the month before (as real cumulative downloads do). The values are made up and the weather is not real; the processing is. The reading is logger 20001 at 12:00 on 15 July 2022.</p>
+<h3>In the raw file</h3>
+<div class="f">"TOA5","Stn1","CR1000","20001","CR1000.Std.32","CPU:met.CR1","1234","Table10min"
+"TIMESTAMP","RECORD","BattV_Min","PTemp_C_Avg","AirTC_Avg","RH","WS_ms_Avg","WindDir","SlrW_Avg","BP_mbar_Avg","Rain_mm_Tot","SnowDepth_Avg"
+"TS","RN","","","","","","","","","",""
+"","","Avg","Avg","Avg","Avg","Avg","Avg","Avg","Avg","Avg","Avg"
+…
+"2022-07-15 12:00:00",28152,12.59,11.39,13.61,48.5,4.78,138,322.2,903.8,0,0</div>
+<p class="where">The same line is in two downloads: <code>…_2022-07.dat</code> and <code>…_2022-08.dat</code>.</p>
+<table>
+<tr><th>Step</th><th>What happens to this reading</th><th>Value after the step</th></tr>
+<tr><td>1 Files</td><td>Both files start with <code>TOA5</code>; they differ (different MD5), so both are read. Table <code>Table10min</code> is not in <code>skip_tables</code></td><td>2 copies of the record</td></tr>
+<tr><td>2 Read</td><td>Serial 20001 in the header becomes the logger id (<code>id_source</code> = header serial). The time stamp is already ISO; it is kept as logged, with no time zone</td><td>2022-07-15 12:00:00</td></tr>
+<tr><td>3 Clock</td><td>No clock correction for this logger; 2022 is between 1995 and today</td><td>kept</td></tr>
+<tr><td>4 Numbers</td><td>Every field parses as a number; no <code>NAN</code></td><td>AirTC_Avg = 13.61, RH = 48.5 …</td></tr>
+<tr><td>5 Stitch</td><td>Records sorted by time, newest file first. The <code>2022-07</code> copy is identical to the <code>2022-08</code> copy and is dropped (<code>duplicate_record</code>). Interval 10 min, no gaps</td><td>1 record, source <code>…_2022-08.dat</code></td></tr>
+<tr><td>6 Names</td><td><code>AirTC_Avg</code>→<code>air_temp</code>, <code>RH</code>→<code>rh</code>, <code>WS_ms_Avg</code>→<code>wind_speed</code>, <code>WindDir</code>→<code>wind_dir</code>, <code>Rain_mm_Tot</code>→<code>rain</code>, <code>SnowDepth_Avg</code>→<code>snow_depth</code>, <code>BattV_Min</code>→<code>battery_v_min</code>, <code>PTemp_C_Avg</code>→<code>panel_temp</code>. <code>SlrW_Avg</code> and <code>BP_mbar_Avg</code> have no built-in alias and keep their names</td><td>air_temp = 13.61, rh = 48.5</td></tr>
+<tr><td>7 Station</td><td>No row in <code>stations.csv</code>, so the station is the logger id and the stream is the table name</td><td>station 20001, stream Table10min</td></tr>
+<tr><td>8 Calibration</td><td>No calibration applies</td><td>unchanged</td></tr>
+<tr><td>9 Removals</td><td>No overflow code. air_temp inside −60 to 50, rh inside 0 to 105, wind_speed inside 0 to 75, wind_dir inside 0 to 360, battery inside 0 to 20. No flat run long enough</td><td>kept</td></tr>
+<tr><td>10 Flags</td><td>No second sensor to compare with; no <code>sw_in</code> (solar is still <code>SlrW_Avg</code>), so no night-sun check; the daily mean does not depart from the other 7 stations</td><td>no flag</td></tr>
+<tr><td>11 Summaries</td><td>VPD = 0.6108·e<sup>17.27·13.61/(13.61+237.3)</sup> × (1 − 0.485) = 1.5586 × 0.515. The day holds 144 of 144 records (needs 115.2): day mean air_temp 8.949 °C, rain 0.8 mm. July 2022: mean 8.751 °C, rain 18.6 mm</td><td>vpd_kpa = 0.8027</td></tr>
+<tr><td>12 Gauges</td><td>No weighing-gauge columns, so nothing to do</td><td>—</td></tr>
+</table>
+<h3>What the outputs look like</h3>
+<p><b>stations/20001__Table10min.csv</b> (the clean record; logger_id, battery_v_min and panel_temp left out, <code>source_file</code> shortened):</p>
+<table><tr><th>station</th><th>stream</th><th>TIMESTAMP</th><th>RECORD</th><th>air_temp</th><th>rh</th><th>wind_speed</th><th>wind_dir</th><th>SlrW_Avg</th><th>BP_mbar_Avg</th><th>rain</th><th>snow_depth</th><th>source_file</th></tr>
+<tr><td>20001</td><td>Table10min</td><td>2022-07-15 12:00:00</td><td>28152</td><td>13.61</td><td>48.5</td><td>4.78</td><td>138</td><td>322.2</td><td>903.8</td><td>0</td><td>0</td><td>…_2022-08.dat</td></tr></table>
+<p><b>derived/20001__Table10min_daily.csv</b>:</p>
+<table><tr><th>Date</th><th>records</th><th>air_temp</th><th>rh</th><th>wind_speed</th><th>wind_dir</th><th>SlrW_Avg</th><th>BP_mbar_Avg</th><th>rain</th><th>snow_depth</th><th>vpd_kpa</th></tr>
+<tr><td>2022-07-15</td><td>144</td><td>8.94924</td><td>69.2819</td><td>3.33097</td><td>171.958</td><td>101.967</td><td>899.892</td><td>0.8</td><td>0</td><td>0.35943</td></tr></table>
+<p><b>derived/20001__Table10min_water_year.csv</b> (some rows):</p>
+<table><tr><th>water_year</th><th>parameter</th><th>value</th><th>days_with_value</th><th>statistic</th><th>complete</th></tr>
+<tr><td>2022</td><td>air_temp</td><td>−3.30686</td><td>273</td><td>mean</td><td>FALSE</td></tr>
+<tr><td>2023</td><td>air_temp</td><td>−5.99654</td><td>365</td><td>mean</td><td>TRUE</td></tr>
+<tr><td>2022</td><td>rain</td><td>157.4</td><td>273</td><td>total</td><td>FALSE</td></tr>
+<tr><td>2023</td><td>rain</td><td>221.6</td><td>365</td><td>total</td><td>TRUE</td></tr></table>
+<p class="where">Water year 2022 runs 1 Oct 2021 to 30 Sep 2022; the data start on 1 Jan 2022, so it has 273 days and is incomplete (needs 0.8 × 365 = 292).</p>
+<p><b>audit/file_audit.csv</b> (the 2022-08 download): status ok, read 8,928, in output 4,464, dropped 4,464 (all <code>duplicate_record</code>: the July half was already in the July file), reconciles TRUE.</p>
+<p><b>audit/metadata.csv</b>: logger 20001, CR1000, program met.CR1, interval 10 min, 105,120 records from 2022-01-01 to 2023-12-31 23:50, 100% complete, 0 gaps, 24 files.</p>
+<h3>What the plots look like</h3>
+<figure style="margin:10px 0 16px"><!--FIG:cs_day--><svg viewBox="0 0 860 400" role="img" aria-label="Air temperature and solar radiation, one day of test data" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">One day of 10-minute records (test data, logger 20001, 15 July 2022)</text>
+<text x="60" y="40" style="fill:var(--red);font-weight:600">air_temp, °C</text>
+<line x1="60" x2="840" y1="190.0" y2="190.0" style="stroke:var(--grid)"/>
+<text x="54" y="194.0" text-anchor="end" style="fill:var(--muted)">0</text>
+<line x1="60" x2="840" y1="155.0" y2="155.0" style="stroke:var(--grid)"/>
+<text x="54" y="159.0" text-anchor="end" style="fill:var(--muted)">5</text>
+<line x1="60" x2="840" y1="120.0" y2="120.0" style="stroke:var(--grid)"/>
+<text x="54" y="124.0" text-anchor="end" style="fill:var(--muted)">10</text>
+<line x1="60" x2="840" y1="85.0" y2="85.0" style="stroke:var(--grid)"/>
+<text x="54" y="89.0" text-anchor="end" style="fill:var(--muted)">15</text>
+<line x1="60" x2="840" y1="50.0" y2="50.0" style="stroke:var(--grid)"/>
+<text x="54" y="54.0" text-anchor="end" style="fill:var(--muted)">20</text>
+<polyline points="60.0,155.2 65.4,161.2 70.8,150.6 76.2,157.8 81.7,152.0 87.1,144.9 92.5,148.3 97.9,168.4 103.3,151.7 108.8,154.2 114.2,157.0 119.6,152.8 125.0,161.9 130.4,150.2 135.8,138.4 141.2,145.6 146.7,159.8 152.1,164.0 157.5,144.0 162.9,157.1 168.3,151.6 173.8,152.2 179.2,167.0 184.6,156.1 190.0,143.6 195.4,142.8 200.8,150.8 206.2,155.3 211.7,154.2 217.1,149.1 222.5,142.6 227.9,148.2 233.3,142.1 238.8,149.4 244.2,139.6 249.6,151.4 255.0,141.8 260.4,152.5 265.8,136.2 271.2,140.0 276.7,124.8 282.1,144.2 287.5,130.0 292.9,132.2 298.3,146.5 303.8,135.1 309.2,119.9 314.6,120.4 320.0,132.7 325.4,135.6 330.8,128.8 336.2,119.6 341.7,129.8 347.1,125.5 352.5,124.5 357.9,129.2 363.3,129.4 368.8,120.7 374.2,111.0 379.6,118.3 385.0,116.1 390.4,117.1 395.8,116.9 401.2,99.2 406.7,127.4 412.1,112.4 417.5,104.2 422.9,107.0 428.3,105.2 433.8,114.8 439.2,113.2 444.6,107.8 450.0,94.7 455.4,98.6 460.8,99.4 466.3,100.8 471.7,96.5 477.1,100.9 482.5,99.4 487.9,106.0 493.3,89.5 498.8,87.8 504.2,99.6 509.6,89.5 515.0,88.9 520.4,108.3 525.8,99.4 531.2,103.5 536.7,94.7 542.1,91.9 547.5,96.1 552.9,98.7 558.3,103.8 563.8,100.0 569.2,101.9 574.6,96.2 580.0,106.1 585.4,97.8 590.8,102.6 596.2,112.9 601.7,110.1 607.1,93.8 612.5,121.2 617.9,105.4 623.3,116.6 628.8,119.6 634.2,117.9 639.6,107.8 645.0,117.4 650.4,120.6 655.8,120.6 661.2,112.0 666.7,120.0 672.1,105.9 677.5,109.7 682.9,110.1 688.3,125.5 693.8,105.9 699.2,111.0 704.6,126.8 710.0,133.1 715.4,115.6 720.8,128.6 726.2,132.4 731.7,121.2 737.1,123.4 742.5,134.6 747.9,141.1 753.3,142.8 758.8,138.7 764.2,142.9 769.6,134.4 775.0,155.0 780.4,133.3 785.8,148.2 791.2,140.2 796.7,144.2 802.1,138.8 807.5,137.6 812.9,150.7 818.3,156.3 823.8,154.5 829.2,157.5 834.6,149.8" style="fill:none;stroke:var(--red);stroke-width:2"/>
+<line x1="450.0" x2="450.0" y1="50" y2="360" style="stroke:var(--fg);stroke-dasharray:3 3;opacity:.6"/>
+<circle cx="450.0" cy="94.7" r="5" style="fill:var(--bg);stroke:var(--fg);stroke-width:2"/>
+<text x="460.0" y="86.7" style="fill:var(--fg)">12:00 → 13.61 °C (traced reading)</text>
+<line x1="60" x2="840" y1="127.4" y2="127.4" style="stroke:var(--red);stroke-dasharray:6 4;opacity:.8"/>
+<line x1="650" x2="670" y1="36" y2="36" style="stroke:var(--red);stroke-dasharray:6 4"/><text x="840" y="40" text-anchor="end" style="fill:var(--fg)">daily mean 8.95 °C</text>
+<text x="60" y="222" style="fill:var(--yellow);font-weight:600">SlrW_Avg (incoming solar, not renamed), W/m²</text>
+<line x1="60" x2="840" y1="360.0" y2="360.0" style="stroke:var(--grid)"/>
+<text x="54" y="364.0" text-anchor="end" style="fill:var(--muted)">0</text>
+<line x1="60" x2="840" y1="328.0" y2="328.0" style="stroke:var(--grid)"/>
+<text x="54" y="332.0" text-anchor="end" style="fill:var(--muted)">100</text>
+<line x1="60" x2="840" y1="296.0" y2="296.0" style="stroke:var(--grid)"/>
+<text x="54" y="300.0" text-anchor="end" style="fill:var(--muted)">200</text>
+<line x1="60" x2="840" y1="264.0" y2="264.0" style="stroke:var(--grid)"/>
+<text x="54" y="268.0" text-anchor="end" style="fill:var(--muted)">300</text>
+<line x1="60" x2="840" y1="232.0" y2="232.0" style="stroke:var(--grid)"/>
+<text x="54" y="236.0" text-anchor="end" style="fill:var(--muted)">400</text>
+<polyline points="60.0,360.0 65.4,360.0 70.8,360.0 76.2,360.0 81.7,360.0 87.1,360.0 92.5,360.0 97.9,360.0 103.3,360.0 108.8,360.0 114.2,360.0 119.6,360.0 125.0,360.0 130.4,360.0 135.8,360.0 141.2,360.0 146.7,360.0 152.1,360.0 157.5,360.0 162.9,360.0 168.3,360.0 173.8,360.0 179.2,360.0 184.6,360.0 190.0,360.0 195.4,360.0 200.8,360.0 206.2,360.0 211.7,360.0 217.1,360.0 222.5,360.0 227.9,360.0 233.3,360.0 238.8,360.0 244.2,360.0 249.6,360.0 255.0,360.0 260.4,360.0 265.8,360.0 271.2,360.0 276.7,360.0 282.1,360.0 287.5,333.3 292.9,333.3 298.3,333.3 303.8,333.3 309.2,333.3 314.6,333.3 320.0,308.4 325.4,308.4 330.8,308.4 336.2,308.4 341.7,308.4 347.1,308.4 352.5,287.1 357.9,287.1 363.3,287.1 368.8,287.1 374.2,287.1 379.6,287.1 385.0,270.7 390.4,270.7 395.8,270.7 401.2,270.7 406.7,270.7 412.1,270.7 417.5,260.4 422.9,260.4 428.3,260.4 433.8,260.4 439.2,260.4 444.6,260.4 450.0,256.9 455.4,256.9 460.8,256.9 466.3,256.9 471.7,256.9 477.1,256.9 482.5,260.4 487.9,260.4 493.3,260.4 498.8,260.4 504.2,260.4 509.6,260.4 515.0,270.7 520.4,270.7 525.8,270.7 531.2,270.7 536.7,270.7 542.1,270.7 547.5,287.1 552.9,287.1 558.3,287.1 563.8,287.1 569.2,287.1 574.6,287.1 580.0,308.4 585.4,308.4 590.8,308.4 596.2,308.4 601.7,308.4 607.1,308.4 612.5,333.3 617.9,333.3 623.3,333.3 628.8,333.3 634.2,333.3 639.6,333.3 645.0,360.0 650.4,360.0 655.8,360.0 661.2,360.0 666.7,360.0 672.1,360.0 677.5,360.0 682.9,360.0 688.3,360.0 693.8,360.0 699.2,360.0 704.6,360.0 710.0,360.0 715.4,360.0 720.8,360.0 726.2,360.0 731.7,360.0 737.1,360.0 742.5,360.0 747.9,360.0 753.3,360.0 758.8,360.0 764.2,360.0 769.6,360.0 775.0,360.0 780.4,360.0 785.8,360.0 791.2,360.0 796.7,360.0 802.1,360.0 807.5,360.0 812.9,360.0 818.3,360.0 823.8,360.0 829.2,360.0 834.6,360.0" style="fill:none;stroke:var(--yellow);stroke-width:2"/>
+<circle cx="450.0" cy="256.9" r="5" style="fill:var(--bg);stroke:var(--fg);stroke-width:2"/>
+<text x="460.0" y="250.9" style="fill:var(--fg)">322.2</text>
+<text x="60.0" y="378" text-anchor="middle" style="fill:var(--muted)">00:00</text>
+<text x="157.5" y="378" text-anchor="middle" style="fill:var(--muted)">03:00</text>
+<text x="255.0" y="378" text-anchor="middle" style="fill:var(--muted)">06:00</text>
+<text x="352.5" y="378" text-anchor="middle" style="fill:var(--muted)">09:00</text>
+<text x="450.0" y="378" text-anchor="middle" style="fill:var(--muted)">12:00</text>
+<text x="547.5" y="378" text-anchor="middle" style="fill:var(--muted)">15:00</text>
+<text x="645.0" y="378" text-anchor="middle" style="fill:var(--muted)">18:00</text>
+<text x="742.5" y="378" text-anchor="middle" style="fill:var(--muted)">21:00</text>
+<text x="840.0" y="378" text-anchor="middle" style="fill:var(--muted)">24:00</text>
+<text x="450" y="396" text-anchor="middle" style="fill:var(--muted)">logger time (no time zone; kept as logged)</text>
+</svg><!--/FIG--></figure>
+<p class="where">Top: the traced reading (13.61 °C) among the day's 144 air temperatures; the dashed line is the day's mean in the daily file. Bottom: the solar column, still under its raw name because there is no alias for <code>SlrW_Avg</code>.</p>
+<figure style="margin:10px 0 16px"><!--FIG:cs_air_temp_daily--><svg viewBox="0 0 860 300" role="img" aria-label="Daily and monthly mean air temperature, test data" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Air temperature, daily mean (derived/…_daily.csv)</text>
+<line x1="520" x2="538" y1="12" y2="12" style="stroke:var(--red);stroke-width:2"/><text x="544" y="16" style="fill:var(--fg)">daily mean</text>
+<circle cx="640" cy="12" r="4.5" style="fill:var(--fg)"/><text x="650" y="16" style="fill:var(--fg)">monthly mean</text>
+<line x1="60" x2="840" y1="250.0" y2="250.0" style="stroke:var(--grid)"/>
+<text x="54" y="254.0" text-anchor="end" style="fill:var(--muted)">-30</text>
+<line x1="60" x2="840" y1="206.8" y2="206.8" style="stroke:var(--grid)"/>
+<text x="54" y="210.8" text-anchor="end" style="fill:var(--muted)">-20</text>
+<line x1="60" x2="840" y1="163.6" y2="163.6" style="stroke:var(--grid)"/>
+<text x="54" y="167.6" text-anchor="end" style="fill:var(--muted)">-10</text>
+<line x1="60" x2="840" y1="120.4" y2="120.4" style="stroke:var(--grid)"/>
+<text x="54" y="124.4" text-anchor="end" style="fill:var(--muted)">0</text>
+<line x1="60" x2="840" y1="77.2" y2="77.2" style="stroke:var(--grid)"/>
+<text x="54" y="81.2" text-anchor="end" style="fill:var(--muted)">10</text>
+<line x1="60" x2="840" y1="34.0" y2="34.0" style="stroke:var(--grid)"/>
+<text x="54" y="38.0" text-anchor="end" style="fill:var(--muted)">20</text>
+<polyline points="60.0,210.0 61.1,210.8 62.1,210.7 63.2,210.4 64.3,211.5 65.3,210.9 66.4,211.3 67.5,210.1 68.6,211.3 69.6,210.9 70.7,211.1 71.8,211.3 72.8,210.8 73.9,210.5 75.0,210.9 76.0,211.2 77.1,209.9 78.2,211.0 79.3,210.5 80.3,210.0 81.4,210.2 82.5,209.9 83.5,209.3 84.6,208.8 85.7,208.7 86.7,208.6 87.8,207.8 88.9,208.3 90.0,206.6 91.0,207.1 92.1,205.8 93.2,205.8 94.2,205.3 95.3,205.5 96.4,204.6 97.4,204.2 98.5,203.1 99.6,203.1 100.7,202.5 101.7,202.2 102.8,201.2 103.9,201.3 104.9,200.4 106.0,199.5 107.1,198.6 108.1,198.4 109.2,197.8 110.3,197.6 111.4,195.9 112.4,196.0 113.5,195.3 114.6,193.9 115.6,193.5 116.7,192.4 117.8,191.5 118.8,191.2 119.9,190.6 121.0,188.6 122.1,188.6 123.1,186.9 124.2,186.5 125.3,185.8 126.3,184.9 127.4,184.2 128.5,183.1 129.5,182.0 130.6,180.6 131.7,180.2 132.8,179.8 133.8,178.3 134.9,177.6 136.0,176.4 137.0,175.3 138.1,174.1 139.2,173.5 140.2,172.3 141.3,171.4 142.4,170.7 143.5,169.2 144.5,168.0 145.6,166.7 146.7,166.4 147.7,165.0 148.8,164.2 149.9,163.3 150.9,161.7 152.0,160.7 153.1,159.8 154.2,158.6 155.2,157.3 156.3,156.5 157.4,155.7 158.4,154.2 159.5,153.2 160.6,151.3 161.6,151.1 162.7,150.0 163.8,148.9 164.9,146.8 165.9,145.8 167.0,145.7 168.1,144.2 169.1,143.0 170.2,142.1 171.3,140.6 172.3,139.9 173.4,138.2 174.5,137.0 175.6,136.2 176.6,135.6 177.7,134.2 178.8,133.2 179.8,132.2 180.9,130.4 182.0,130.3 183.0,128.2 184.1,127.8 185.2,126.7 186.3,125.7 187.3,124.9 188.4,124.2 189.5,122.2 190.5,121.1 191.6,120.5 192.7,118.8 193.7,118.7 194.8,117.9 195.9,116.6 197.0,115.0 198.0,114.0 199.1,113.1 200.2,112.4 201.2,111.4 202.3,111.0 203.4,109.1 204.4,108.4 205.5,108.3 206.6,107.4 207.7,106.2 208.7,105.4 209.8,104.6 210.9,103.0 211.9,101.9 213.0,101.7 214.1,100.8 215.1,100.5 216.2,99.1 217.3,97.7 218.4,97.1 219.4,97.5 220.5,97.5 221.6,95.4 222.6,95.4 223.7,94.4 224.8,93.5 225.8,93.6 226.9,92.6 228.0,91.9 229.1,91.1 230.1,90.6 231.2,90.6 232.3,89.3 233.3,89.7 234.4,88.8 235.5,88.3 236.5,87.1 237.6,87.2 238.7,86.0 239.8,86.5 240.8,86.2 241.9,85.3 243.0,84.7 244.0,84.0 245.1,84.6 246.2,84.2 247.2,84.0 248.3,83.5 249.4,82.6 250.5,82.8 251.5,82.8 252.6,83.0 253.7,82.4 254.7,82.2 255.8,82.1 256.9,81.6 257.9,82.2 259.0,81.6 260.1,81.0 261.2,81.9 262.2,81.9 263.3,81.6 264.4,82.1 265.4,81.7 266.5,81.4 267.6,81.7 268.6,81.7 269.7,81.7 270.8,81.8 271.9,81.7 272.9,82.2 274.0,82.3 275.1,82.7 276.1,83.1 277.2,83.1 278.3,83.3 279.3,83.5 280.4,83.7 281.5,84.0 282.6,84.4 283.6,84.6 284.7,85.0 285.8,86.2 286.8,86.2 287.9,86.8 289.0,87.8 290.0,87.4 291.1,88.3 292.2,88.3 293.3,88.7 294.3,89.0 295.4,90.2 296.5,90.9 297.5,91.1 298.6,91.9 299.7,91.7 300.7,92.5 301.8,93.2 302.9,94.1 304.0,95.3 305.0,95.5 306.1,95.8 307.2,96.7 308.2,97.9 309.3,98.3 310.4,99.6 311.4,99.7 312.5,100.6 313.6,102.0 314.7,102.3 315.7,102.7 316.8,104.3 317.9,105.2 318.9,106.0 320.0,107.1 321.1,107.4 322.1,108.5 323.2,109.3 324.3,110.1 325.3,111.0 326.4,111.9 327.5,112.8 328.6,114.1 329.6,114.4 330.7,115.2 331.8,115.9 332.8,118.0 333.9,119.0 335.0,120.2 336.0,120.6 337.1,121.9 338.2,122.9 339.3,124.3 340.3,125.1 341.4,126.3 342.5,126.9 343.5,127.8 344.6,129.2 345.7,130.0 346.7,130.8 347.8,132.2 348.9,133.2 350.0,134.6 351.0,135.9 352.1,136.9 353.2,137.8 354.2,139.4 355.3,141.0 356.4,141.5 357.4,142.7 358.5,144.1 359.6,143.8 360.7,145.5 361.7,146.7 362.8,147.6 363.9,149.1 364.9,150.0 366.0,150.9 367.1,152.7 368.1,153.4 369.2,154.9 370.3,155.8 371.4,157.6 372.4,158.0 373.5,159.3 374.6,160.1 375.6,161.6 376.7,162.0 377.8,162.9 378.8,164.4 379.9,165.5 381.0,167.1 382.1,167.6 383.1,168.1 384.2,170.2 385.3,170.9 386.3,171.3 387.4,172.6 388.5,174.2 389.5,175.7 390.6,175.9 391.7,176.8 392.8,177.9 393.8,178.4 394.9,179.8 396.0,180.8 397.0,181.5 398.1,182.6 399.2,183.4 400.2,184.1 401.3,185.7 402.4,186.1 403.5,187.4 404.5,187.6 405.6,188.5 406.7,190.0 407.7,190.0 408.8,192.0 409.9,192.2 410.9,193.0 412.0,193.6 413.1,194.4 414.2,195.0 415.2,196.0 416.3,196.1 417.4,197.8 418.4,198.1 419.5,198.8 420.6,199.4 421.6,199.8 422.7,200.7 423.8,201.3 424.9,201.9 425.9,202.2 427.0,202.8 428.1,202.9 429.1,203.5 430.2,203.8 431.3,205.1 432.3,205.5 433.4,205.8 434.5,206.6 435.6,207.1 436.6,207.4 437.7,207.2 438.8,208.5 439.8,208.6 440.9,208.8 442.0,208.3 443.0,208.1 444.1,209.4 445.2,209.3 446.3,210.1 447.3,209.3 448.4,209.5 449.5,210.6 450.5,210.1 451.6,210.4 452.7,210.9 453.7,210.7 454.8,210.9 455.9,211.5 457.0,211.2 458.0,211.2 459.1,210.7 460.2,211.1 461.2,211.7 462.3,210.3 463.4,210.4 464.4,210.1 465.5,210.4 466.6,211.6 467.7,209.6 468.7,210.2 469.8,210.1 470.9,210.0 471.9,208.9 473.0,208.8 474.1,208.9 475.1,208.8 476.2,208.3 477.3,208.2 478.4,207.4 479.4,207.5 480.5,207.2 481.6,206.7 482.6,205.9 483.7,206.8 484.8,205.7 485.8,204.6 486.9,204.2 488.0,204.2 489.1,204.0 490.1,203.2 491.2,202.9 492.3,201.8 493.3,201.5 494.4,200.3 495.5,200.2 496.5,199.2 497.6,199.0 498.7,197.9 499.8,198.1 500.8,196.8 501.9,195.7 503.0,195.7 504.0,194.8 505.1,193.6 506.2,192.7 507.2,192.6 508.3,191.5 509.4,191.0 510.5,190.0 511.5,189.0 512.6,188.7 513.7,187.8 514.7,186.7 515.8,185.5 516.9,184.3 517.9,183.6 519.0,182.7 520.1,182.3 521.2,180.9 522.2,179.9 523.3,179.5 524.4,178.1 525.4,176.7 526.5,176.0 527.6,175.6 528.6,174.3 529.7,172.8 530.8,171.7 531.9,170.8 532.9,170.5 534.0,169.2 535.1,167.6 536.1,167.4 537.2,166.1 538.3,165.3 539.3,164.2 540.4,162.4 541.5,162.1 542.6,161.0 543.6,159.4 544.7,158.5 545.8,157.1 546.8,156.6 547.9,155.4 549.0,154.5 550.0,152.4 551.1,152.5 552.2,150.5 553.3,150.1 554.3,148.6 555.4,147.6 556.5,146.9 557.5,145.1 558.6,144.3 559.7,142.5 560.7,141.6 561.8,140.9 562.9,139.5 564.0,138.2 565.0,137.2 566.1,136.3 567.2,135.1 568.2,134.1 569.3,133.7 570.4,131.9 571.4,131.2 572.5,130.0 573.6,129.0 574.7,127.1 575.7,126.1 576.8,125.5 577.9,124.5 578.9,124.6 580.0,122.3 581.1,121.3 582.1,119.7 583.2,119.3 584.3,117.5 585.3,117.1 586.4,116.0 587.5,115.2 588.6,114.7 589.6,113.8 590.7,112.6 591.8,111.7 592.8,110.4 593.9,109.6 595.0,108.8 596.0,107.5 597.1,106.9 598.2,105.9 599.3,105.2 600.3,104.7 601.4,104.4 602.5,102.7 603.5,102.0 604.6,101.3 605.7,100.6 606.7,99.2 607.8,98.8 608.9,97.9 610.0,97.2 611.0,96.5 612.1,95.4 613.2,95.8 614.2,94.5 615.3,93.5 616.4,92.8 617.4,93.1 618.5,92.0 619.6,91.4 620.7,91.0 621.7,90.7 622.8,89.7 623.9,89.6 624.9,89.0 626.0,87.3 627.1,88.4 628.1,87.0 629.2,86.3 630.3,86.6 631.4,86.0 632.4,85.1 633.5,85.4 634.6,84.7 635.6,85.0 636.7,83.9 637.8,84.5 638.8,82.9 639.9,83.4 641.0,82.5 642.1,83.0 643.1,82.9 644.2,82.6 645.3,82.0 646.3,82.3 647.4,81.6 648.5,81.5 649.5,81.7 650.6,81.2 651.7,81.9 652.8,81.9 653.8,81.2 654.9,81.6 656.0,81.7 657.0,82.1 658.1,82.1 659.2,82.0 660.2,81.2 661.3,81.8 662.4,82.0 663.5,82.1 664.5,82.5 665.6,83.5 666.7,82.4 667.7,82.5 668.8,83.5 669.9,83.5 670.9,84.3 672.0,84.5 673.1,84.6 674.2,84.7 675.2,85.0 676.3,85.9 677.4,86.1 678.4,86.6 679.5,86.8 680.6,87.5 681.6,87.2 682.7,88.2 683.8,89.1 684.9,89.1 685.9,88.9 687.0,90.4 688.1,91.4 689.1,90.9 690.2,91.7 691.3,92.9 692.3,93.8 693.4,94.2 694.5,95.2 695.6,95.8 696.6,96.1 697.7,96.2 698.8,97.3 699.8,98.8 700.9,98.7 702.0,99.6 703.0,100.7 704.1,101.1 705.2,102.0 706.3,102.5 707.3,103.3 708.4,104.1 709.5,105.5 710.5,106.1 711.6,107.6 712.7,108.7 713.7,109.0 714.8,110.3 715.9,110.6 717.0,111.5 718.0,112.4 719.1,114.2 720.2,114.2 721.2,115.5 722.3,117.0 723.4,117.2 724.4,118.4 725.5,120.3 726.6,120.5 727.7,121.1 728.7,123.5 729.8,123.6 730.9,125.2 731.9,126.0 733.0,126.9 734.1,128.3 735.1,129.4 736.2,130.3 737.3,131.3 738.4,131.9 739.4,134.0 740.5,134.9 741.6,135.6 742.6,136.9 743.7,137.9 744.8,138.6 745.8,139.8 746.9,141.2 748.0,142.8 749.1,143.5 750.1,144.5 751.2,146.1 752.3,146.6 753.3,148.2 754.4,148.8 755.5,150.7 756.5,151.6 757.6,152.2 758.7,153.9 759.8,155.0 760.8,155.4 761.9,156.8 763.0,158.1 764.0,158.8 765.1,160.4 766.2,161.5 767.2,162.1 768.3,163.6 769.4,164.6 770.5,165.6 771.5,166.8 772.6,168.0 773.7,168.9 774.7,170.0 775.8,171.0 776.9,171.3 777.9,173.7 779.0,174.0 780.1,175.8 781.2,176.4 782.2,176.9 783.3,177.2 784.4,178.4 785.4,180.1 786.5,180.7 787.6,181.7 788.6,182.2 789.7,183.3 790.8,184.7 791.9,185.5 792.9,185.6 794.0,187.1 795.1,188.3 796.1,188.5 797.2,189.7 798.3,189.3 799.3,191.7 800.4,191.4 801.5,193.1 802.6,193.5 803.6,194.6 804.7,195.5 805.8,195.6 806.8,195.9 807.9,196.9 809.0,197.9 810.0,197.9 811.1,199.8 812.2,199.8 813.3,200.0 814.3,201.3 815.4,202.1 816.5,202.3 817.5,202.7 818.6,203.2 819.7,204.1 820.7,204.0 821.8,205.3 822.9,205.2 824.0,206.0 825.0,206.3 826.1,206.3 827.2,207.4 828.2,207.6 829.3,207.5 830.4,208.4 831.4,208.4 832.5,208.1 833.6,209.2 834.7,209.4 835.7,209.4 836.8,209.4 837.9,209.5 838.9,210.2 840.0,210.0" style="fill:none;stroke:var(--red);stroke-width:1.4"/>
+<circle cx="76.6" cy="209.9" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="60.0" y="268" text-anchor="middle" style="fill:var(--muted)">Jan 2022</text>
+<circle cx="108.1" cy="198.2" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="139.7" cy="173.1" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="172.3" cy="140.3" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="156.3" y="268" text-anchor="middle" style="fill:var(--muted)">Apr 2022</text>
+<circle cx="205.0" cy="109.1" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="237.6" cy="88.0" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="270.2" cy="82.6" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="253.7" y="268" text-anchor="middle" style="fill:var(--muted)">Jul 2022</text>
+<circle cx="303.4" cy="94.8" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="336.0" cy="120.6" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="368.7" cy="153.5" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="352.1" y="268" text-anchor="middle" style="fill:var(--muted)">Oct 2022</text>
+<circle cx="401.3" cy="184.5" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="434.0" cy="205.1" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="467.1" cy="209.7" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="450.5" y="268" text-anchor="middle" style="fill:var(--muted)">Jan 2023</text>
+<circle cx="498.7" cy="198.1" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="530.2" cy="172.9" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="562.9" cy="140.3" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="546.8" y="268" text-anchor="middle" style="fill:var(--muted)">Apr 2023</text>
+<circle cx="595.5" cy="109.2" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="628.1" cy="88.1" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="660.8" cy="82.6" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="644.2" y="268" text-anchor="middle" style="fill:var(--muted)">Jul 2023</text>
+<circle cx="694.0" cy="94.6" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="726.6" cy="120.5" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="759.2" cy="153.5" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="742.6" y="268" text-anchor="middle" style="fill:var(--muted)">Oct 2023</text>
+<circle cx="791.9" cy="184.4" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<circle cx="824.5" cy="205.0" r="4" style="fill:var(--fg);stroke:var(--bg)"/>
+<text x="450" y="290" text-anchor="middle" style="fill:var(--muted)">every day has 144 of 144 records, so every daily value is given (needs 80%)</text>
+</svg><!--/FIG--></figure>
+<figure style="margin:10px 0 16px"><!--FIG:cs_rain_monthly--><svg viewBox="0 0 860 280" role="img" aria-label="Monthly rain totals, test data" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Rain, monthly total (derived/…_monthly.csv)</text>
+<rect x="560" y="5" width="14" height="10" style="fill:var(--blue)"/><text x="580" y="15" style="fill:var(--fg)">rain, mm (sum of daily totals)</text>
+<line x1="60" x2="840" y1="230.0" y2="230.0" style="stroke:var(--grid)"/>
+<text x="54" y="234.0" text-anchor="end" style="fill:var(--muted)">0</text>
+<line x1="60" x2="840" y1="190.8" y2="190.8" style="stroke:var(--grid)"/>
+<text x="54" y="194.8" text-anchor="end" style="fill:var(--muted)">5</text>
+<line x1="60" x2="840" y1="151.6" y2="151.6" style="stroke:var(--grid)"/>
+<text x="54" y="155.6" text-anchor="end" style="fill:var(--muted)">10</text>
+<line x1="60" x2="840" y1="112.4" y2="112.4" style="stroke:var(--grid)"/>
+<text x="54" y="116.4" text-anchor="end" style="fill:var(--muted)">15</text>
+<line x1="60" x2="840" y1="73.2" y2="73.2" style="stroke:var(--grid)"/>
+<text x="54" y="77.2" text-anchor="end" style="fill:var(--muted)">20</text>
+<line x1="60" x2="840" y1="34.0" y2="34.0" style="stroke:var(--grid)"/>
+<text x="54" y="38.0" text-anchor="end" style="fill:var(--muted)">25</text>
+<rect x="64.0" y="62.2" width="24.5" height="167.8" style="fill:var(--blue)"/>
+<text x="76.2" y="248" text-anchor="middle" style="fill:var(--muted)">Jan 2022</text>
+<rect x="96.5" y="135.9" width="24.5" height="94.1" style="fill:var(--blue)"/>
+<rect x="129.0" y="112.4" width="24.5" height="117.6" style="fill:var(--blue)"/>
+<rect x="161.5" y="103.0" width="24.5" height="127.0" style="fill:var(--blue)"/>
+<text x="173.8" y="248" text-anchor="middle" style="fill:var(--muted)">Apr 2022</text>
+<rect x="194.0" y="79.5" width="24.5" height="150.5" style="fill:var(--blue)"/>
+<rect x="226.5" y="104.6" width="24.5" height="125.4" style="fill:var(--blue)"/>
+<rect x="259.0" y="84.2" width="24.5" height="145.8" style="fill:var(--blue)"/>
+<text x="271.2" y="248" text-anchor="middle" style="fill:var(--muted)">Jul 2022</text>
+<rect x="291.5" y="54.4" width="24.5" height="175.6" style="fill:var(--blue)"/>
+<rect x="324.0" y="99.9" width="24.5" height="130.1" style="fill:var(--blue)"/>
+<rect x="356.5" y="76.3" width="24.5" height="153.7" style="fill:var(--blue)"/>
+<text x="368.8" y="248" text-anchor="middle" style="fill:var(--muted)">Oct 2022</text>
+<rect x="389.0" y="82.6" width="24.5" height="147.4" style="fill:var(--blue)"/>
+<rect x="421.5" y="109.3" width="24.5" height="120.7" style="fill:var(--blue)"/>
+<rect x="454.0" y="56.0" width="24.5" height="174.0" style="fill:var(--blue)"/>
+<text x="466.2" y="248" text-anchor="middle" style="fill:var(--muted)">Jan 2023</text>
+<rect x="486.5" y="93.6" width="24.5" height="136.4" style="fill:var(--blue)"/>
+<rect x="519.0" y="93.6" width="24.5" height="136.4" style="fill:var(--blue)"/>
+<rect x="551.5" y="88.9" width="24.5" height="141.1" style="fill:var(--blue)"/>
+<text x="563.8" y="248" text-anchor="middle" style="fill:var(--muted)">Apr 2023</text>
+<rect x="584.0" y="85.7" width="24.5" height="144.3" style="fill:var(--blue)"/>
+<rect x="616.5" y="106.1" width="24.5" height="123.9" style="fill:var(--blue)"/>
+<rect x="649.0" y="68.5" width="24.5" height="161.5" style="fill:var(--blue)"/>
+<text x="661.2" y="248" text-anchor="middle" style="fill:var(--muted)">Jul 2023</text>
+<rect x="681.5" y="98.3" width="24.5" height="131.7" style="fill:var(--blue)"/>
+<rect x="714.0" y="63.8" width="24.5" height="166.2" style="fill:var(--blue)"/>
+<rect x="746.5" y="88.9" width="24.5" height="141.1" style="fill:var(--blue)"/>
+<text x="758.8" y="248" text-anchor="middle" style="fill:var(--muted)">Oct 2023</text>
+<rect x="779.0" y="74.8" width="24.5" height="155.2" style="fill:var(--blue)"/>
+<rect x="811.5" y="106.1" width="24.5" height="123.9" style="fill:var(--blue)"/>
+<text x="271.2" y="78.2" text-anchor="middle" style="fill:var(--fg)">18.6</text>
+<text x="450" y="270" text-anchor="middle" style="fill:var(--muted)">rain matches ^(rain|precip), so it is summed, not averaged</text>
+</svg><!--/FIG--></figure>
+<p class="where">The synthetic air temperature follows a sine wave with noise; rain is 0.2 mm in about 2% of records. Real data will look less regular.</p>
+
+<h2 id="files">1. Finding files</h2>
+<p>Every file ending in <code>.dat</code> (any case) under the raw folders is listed; macOS <code>._</code> files are ignored. The first bytes decide the format.</p>
+<table>
+<tr><th>Status</th><th>Meaning</th><th>Read?</th></tr>
+<tr><td><code>ok</code></td><td>TOA5 (comma- or tab-separated), TOB3 binary, or a CR10X mixed-array file with <code>import_cr10x = TRUE</code></td><td>yes</td></tr>
+<tr><td><code>duplicate_file</code></td><td>Byte-identical (same MD5) to another file; the newest copy is read</td><td>no</td></tr>
+<tr><td><code>skipped_table</code></td><td>Table in <code>skip_tables</code>: Public, Status, DataTableInfo, ts_data</td><td>no</td></tr>
+<tr><td><code>unsupported_binary_TOB</code></td><td>Binary TOB1/TOB2 (TOB3 is read); convert to TOA5 with CardConvert</td><td>no</td></tr>
+<tr><td><code>unsupported_mixed_array</code></td><td>Header-less CR10X file with <code>import_cr10x = FALSE</code></td><td>no</td></tr>
+<tr><td><code>excluded_by_user</code></td><td>Left out by a row in <code>file_rules.csv</code> (Raw files page)</td><td>no</td></tr>
+<tr><td><code>empty_file</code>, <code>truncated_header</code>, <code>no_data_rows</code>, <code>unrecognised_format</code></td><td>Nothing usable</td><td>no</td></tr>
+</table>
+<p><b>TOB3 binary</b> (CR1000, CR3000, CR6 card and CPU tables) is read directly: its ASCII header gives the same identity as TOA5 (plus a line of data types), and the data come from fixed-size frames, each stamped with seconds since 1990 and the first record number. Frames whose validation stamp does not match the file's are old or never written and are skipped. Tables in <code>skip_tables</code> (such as 10 Hz <code>ts_data</code>) are not loaded, but their first and last record times are still read so the Raw files page shows their date range.</p>
+<h3>Which logger a file belongs to</h3>
+<p>The TOA5 first line is <code>"TOA5", station name, model, serial, OS, program, signature, table</code>. The logger id is:</p>
+<div class="f">serial                     if it is 2+ digits and not 16777215
+else  a 4–6 digit number in the station name (not a year, model tokens like CR1000 removed)
+else  NOSN_ + station name in capitals</div>
+<div class="ex"><b>Example.</b> Header <code>"TOA5","Met_45012","CR200X","No_SN",…</code> → no serial, number 45012 in the name → logger id <code>45012</code>, id_source "number in station name".</div>
+
+<h2 id="read">2. Reading records and time stamps</h2>
+<p>TOA5 has four header lines (environment, column names, units, processing); the data start on line 5. Every field is read as text first. Repeated column names get <code>_dup</code>; extra unnamed trailing columns that are empty are dropped.</p>
+<h3>Dates that went through a spreadsheet</h3>
+<p>If the first 50 time stamps are not <code>YYYY-MM-DD HH:MM:SS</code>, each is tried against ISO forms, then <code>d/m/y</code> or <code>m/d/y</code>. Day-first is chosen when the first number exceeds 12 somewhere and the second never does; otherwise month-first, with a note in the Problems list when it cannot tell.</p>
+<div class="ex"><b>Example.</b> <code>3/22/2010 16:00</code> → second number 22 &gt; 12, so month/day → <code>2010-03-22 16:00:00</code>.</div>
+<h3>Time zone</h3>
+<p>Logger clocks carry no time zone. Times are kept exactly as logged and stored as UTC so that R never applies a daylight-saving shift. Only the night-sun check (section 10) uses <code>utc_offset_hours</code> from <code>station_info.csv</code>.</p>
+<h3>CR10X mixed-array files</h3>
+<p>Each line starts with an array id (e.g. <code>101</code>). The most common field count per id makes table <code>A101</code>; another count seen 10 times or more makes <code>A101_12f</code>; other lines are logged as <code>malformed_row</code>. Names come from the <code>.FSL</code> given in <code>cr10x.csv</code> (same array id and field count); without one, columns are <code>F02</code>, <code>F03</code>… and the year, day and hhmm fields are guessed from their values.</p>
+<div class="f">TIMESTAMP = 1 Jan(year) + (day − 1) days + (hhmm div 100) h + (hhmm mod 100) min + seconds
+no year field:  year = start_year + number of times the day number went down</div>
+<div class="ex"><b>Example.</b> <code>101,2012,311,1430,-4.21,87.3</code> → year 2012, day 311, 14:30 → <code>2012-11-06 14:30:00</code>, values in F05, F06 (or the FSL names). Printable-ASCII lines (<code>01+0101. 02+2012. …</code>) are rewritten as commas first.</div>
+
+<h2 id="clock">3. Clock corrections and impossible dates</h2>
+<p>Your rows in <code>time_corrections.csv</code> run first, on the time stamps as they are in the raw file. <code>start</code>/<code>end</code> blank means open-ended; an end given as a date covers that whole day. <code>source_file</code> (part of a file name) narrows a row to one file.</p>
+<div class="f">action = shift :  TIMESTAMP_new = TIMESTAMP + shift_minutes × 60 s
+action = remove:  records dropped (rule clock_fix_removed)</div>
+<div class="ex"><b>Example (test data).</b> Shift +60 min on one file: <code>2020-01-01 01:00:00</code> → <code>2020-01-01 02:00:00</code>; the audit line reads "10 records from 2020-01-01 01:00:00 to 2020-01-01 10:00:00 moved by +60 minutes".</div>
+<p>Then any record whose time stamp is unreadable, before <code>min_year</code> (1995) or more than 2 days in the future is dropped (<code>bad_timestamp</code>) and listed as <code>impossible_date</code> in <code>timestamp_checks.csv</code>. A logger that lost power often restarts at a default date such as 1990.</p>
+
+<h3>Time zones (config/timezones.csv)</h3>
+<p>Each station keeps its times in its own zone, set as <code>utc_offset_hours</code> in the Station details table (<code>station_info.csv</code>). The time-zone table is the same in every ovid app. It says which zone a logger's clock was in, for a whole logger, model, folder or period at once. Its columns are <code>serial</code>, <code>model</code>, <code>file_pattern</code>, <code>start</code>, <code>end</code>, <code>offset_hours</code> and <code>reason</code>; a blank column matches anything and the first matching row wins.</p>
+<p>When a file's clock was in a different zone from its station, the file's records are moved into the station's zone. This is done as a clock correction, so it appears in the audit (rule <code>clock_fix_shifted</code>, reason starting "time zone table") and changes the cache key like any correction. A station without <code>utc_offset_hours</code> is never moved; a time-zone row that matches such a station's files is listed in <code>audit/problems.csv</code> so it is not silently ignored.</p>
+<div class="ex"><b>Worked example.</b> Station Bog is at UTC&minus;7. Its logger was left on daylight time (UTC&minus;6) for the files in its 2019 folder. One row with <code>file_pattern</code> 2019/ and <code>offset_hours</code> &minus;6 moves those records by (&minus;7 &minus; (&minus;6)) &times; 60 = &minus;60 minutes, so a record logged at 14:00 is kept as 13:00.</div>
+<h2 id="num">4. Text to numbers</h2>
+<p>A column becomes numeric when at least <code>numeric_min</code> (0.99) of its non-missing values parse as numbers. <code>NAN</code>, <code>-NAN</code>, <code>NA</code> and blanks become missing (counted as <code>logger_nan_values</code> in <code>metadata.csv</code>, not as removals). Other text in a numeric column is removed (<code>non_numeric</code>). Below 99% the column stays text.</p>
+<div class="ex"><b>Example (test data).</b> <code>"2020-01-01 09:00:00",9,-1.0,"NAN"</code> → rh missing at 09:00, air_temp −1.0.</div>
+
+<h2 id="stitch">5. Stitching each logger table</h2>
+<p>All files of one logger and table are joined, then sorted by time stamp with the newest file first (<code>prefer = "newest"</code>; "oldest" reverses it).</p>
+<ol>
+<li><b>Identical copies.</b> A record equal in every column to one already kept is dropped (<code>duplicate_record</code>). This is where overlapping downloads go.</li>
+<li><b>Overlaps.</b> Records that share a time stamp but differ are merged into one. For each column the first non-missing value wins; a logger overflow code only wins if no copy has a real value. Each value that differed is logged (<code>overlap_conflict</code>), with the kept value in the reason.</li>
+<li><b>Corrupt time stamps.</b> A logger whose memory or clock fails can write records stamped at random times between good ones. A record that is both off the time grid and out of the order its file was written in is dropped (<code>stray_record</code>, setting <code>drop_stray_records = TRUE</code>, shared core <code>timestamps.R</code>) and listed as <code>stray_records</code> in the clock checks. A record written in order but off the grid is real and is kept.</li>
+<li><b>Interval and gaps.</b> The interval is the most common step between records. A step above 1.5 × interval is a gap: <code>missing = round(step / interval) − 1</code>.</li>
+</ol>
+<div class="ex"><b>Example (test data, logger 20003, 2023-05-01 15:50).</b> The older file has BattV_Min = 12.6, the newer file 99.9. The newer wins: <b>kept 99.9</b>, and the 12.6 is logged as <code>overlap_conflict</code>. Section 9 then removes 99.9 (above the battery limit of 20), so the value ends up missing; both steps are in the audit trail.</div>
+<h3>Clock checks (nothing changed, listed in <code>timestamp_checks.csv</code>)</h3>
+<table>
+<tr><th>Check</th><th>Found when</th></tr>
+<tr><td><code>clock_went_backwards</code></td><td>Within one file, the next record is stamped earlier</td></tr>
+<tr><td><code>logger_restarted</code></td><td>The RECORD counter goes down (power loss or new program)</td></tr>
+<tr><td><code>off_the_time_grid</code></td><td>Fewer than half the records fall off the table's usual phase of the interval (interval ≥ 60 s)</td></tr>
+<tr><td><code>clock_differs_between_files</code></td><td>50+ conflicting values, and ≥ 90% of a file's values agree with the other files once shifted by 1–12, 24 or 48 intervals (and &lt; 60% agree unshifted). The shift is suggested in <code>suggest_shift_min</code></td></tr>
+<tr><td><code>files_disagree</code></td><td>Many conflicts that no shift up to a day explains: perhaps a different logger under the same id</td></tr>
+</table>
+<div class="ex"><b>Example (test data).</b> RECORD 1000 at 10:00, then 11 at 11:00 → <code>logger_restarted</code>: "record number went from 1000 to 11 at 2020-01-01 11:00:00".</div>
+
+<h2 id="names">6. Common parameter names</h2>
+<p>Each raw column is matched against <code>aliases.csv</code> (regular expressions, case-ignored, first match wins; logger-specific rows before general ones). The pattern can carry part of the name across, e.g. depth.</p>
+<table>
+<tr><th>Raw name (examples)</th><th>Parameter</th></tr>
+<tr><td><code>AirTC_Avg</code>, <code>AirTC_1_Avg</code>, <code>T_tmpr_rh</code></td><td class="p-air">air_temp</td></tr>
+<tr><td><code>RH</code>, <code>RH_1_Avg</code></td><td class="p-rh">rh</td></tr>
+<tr><td><code>WS_ms_Avg</code>, <code>WS_ms_S_WVT</code>, <code>wnd_spd_Avg</code> / <code>WS_ms_Max</code></td><td class="p-wind">wind_speed / wind_speed_max</td></tr>
+<tr><td><code>WindDir_D1_WVT</code>, <code>WindDir</code> / <code>WindDir_SD1_WVT</code></td><td class="p-wind">wind_dir / wind_dir_sd</td></tr>
+<tr><td><code>SWTop_Avg</code>, <code>CM3_up_Avg</code>, <code>SUp_Avg</code> / <code>SWBottom_Avg</code></td><td class="p-rad">sw_in / sw_out</td></tr>
+<tr><td><code>LWTopC_Avg</code>, <code>LUpCo_Avg</code> / <code>LWBottomC_Avg</code></td><td class="p-rad">lw_in / lw_out (temperature-corrected)</td></tr>
+<tr><td><code>Rn_Avg</code>, <code>NetTot_Avg</code></td><td class="p-rad">net_rad</td></tr>
+<tr><td><code>SnowDepth_Avg</code>, <code>SR50A_SnowDepth_Avg</code></td><td class="p-snow">snow_depth</td></tr>
+<tr><td><code>Rain_mm_Tot</code> / <code>TBRG_TOT</code>, <code>Rain_tip_Tot</code></td><td class="p-rain">rain (mm) / rain_tips (tips)</td></tr>
+<tr><td><code>VWC_10cm_Avg</code>, <code>TC_10cm_Avg</code>, <code>EC_10cm_Avg</code></td><td class="p-soil">vwc_10cm, soil_temp_10cm, soil_ec_10cm</td></tr>
+<tr><td><code>BattV_Min</code>, <code>PTemp_C_Avg</code></td><td>battery_v_min, panel_temp</td></tr>
+</table>
+<p>If two raw columns map to the same parameter there are two cases. <b>Sensor swap:</b> the columns take turns (a sensor was replaced and the program wrote it under a new name), so they are joined into one series; where both hold a value the newer sensor wins, the other value is logged (<code>alias_collision</code>) and the hand-over is a <code>sensor_change</code> line in the audit trail. <b>Paired sensors:</b> the columns were recorded at the same time (two sensors, or a sample beside its average), so they are kept apart; the average (or sensor 1, or the one with no number) gets the parameter name and the other keeps its own (<code>air_temp_2</code>, or <code>&lt;parameter&gt;_sample</code> for a plain sample), logged as <code>alias_kept_apart</code>. Columns with no match keep their raw name. Every mapping is listed in <code>audit/column_dictionary.csv</code>. New built-in aliases are offered, not added silently, to an existing project.</p>
+<div class="ex"><b>Example.</b> <code>AirTC_1_Max</code> matches <code>^AirTC_1_(Min|Max)$</code> → <code>air_temp_\L\1</code> → <code>air_temp_max</code>.</div>
+
+<h2 id="stations">7. Stations</h2>
+<p>By default a station is named after its logger id and its stream after the table. <code>stations.csv</code> changes that per logger, optionally per table and between <code>start</code> and <code>end</code> (an end date is inclusive). General rows are applied first, then table- and date-specific ones. A row with <code>header_name</code> applies only to files whose header carries that station name; those files are stitched separately. Station <code>ignore</code> sets a logger aside (a one-off experiment, a logger of no interest): when the row covers the whole logger, or a file rule assigns <code>ignore</code>, its files are not read at all, and each is listed in the audit as <code>set_aside</code>. An <code>ignore</code> row limited to a table, header name or period drops those records (<code>ignored_source</code>).</p>
+<p>When two loggers feed one station (a logger replaced), their records are merged the same way as overlaps in step 5 (rule <code>station_overlap</code>). <code>audit/lineage.csv</code> lists which logger fed which station when.</p>
+<div class="ex"><b>Example.</b> Logger 99001 with a row <code>station = OtherSite</code> for one header name → the records from that file go to <code>OtherSite / Table1</code>; the rest stay at <code>99001 / Table1</code> (test data).</div>
+
+<h2 id="cal">8. Calibrations</h2>
+<div class="f">new = value × multiplier + offset          (blank multiplier = 1, blank offset = 0)
+applies where station or logger is in applies_to, start ≤ time &lt; end</div>
+<p>A blank <code>output</code> changes the parameter in place; a name writes the result there and keeps the original. Typical use: a tipping bucket logged in tips.</p>
+<div class="ex"><b>Example.</b> <code>rain_tips</code> = 3 in one record, multiplier 0.254 (a TE525 tips at 0.254 mm), output <code>rain</code> → rain = 3 × 0.254 + 0 = 0.762 mm, rain_tips stays 3.</div>
+
+<h2 id="qc">9. Quality rules and removals</h2>
+<p>Removals blank a value (the record stays) and write it, with its old value, to <code>qc/&lt;station&gt;__&lt;stream&gt;_removed.csv</code> and the audit trail. In order:</p>
+<ol>
+<li><b>Overflow codes</b> (<code>sentinel</code>): values in <code>sentinels</code> (−7999, 7999, −6999, 6999) or infinite.</li>
+<li><b>Rules in <code>qc_rules.csv</code></b>, by parameter pattern. A rule with <code>applies_to</code> replaces the general rule for those stations or loggers. <code>action = flag</code> keeps the value and flags it instead.</li>
+<li><b>Manual removals</b> (<code>manual_removals.csv</code>): station, stream, parameter pattern (blank or <code>*</code> = all), start, end, reason, author.</li>
+</ol>
+<div class="f">range_min :  x &lt; min
+range_max :  x &gt; max
+spike     :  |x_i − x_(i−1)| &gt; max_spike  and  |x_i − x_(i+1)| &gt; max_spike, same sign
+flat_line :  same value for ≥ max_flat_hours (and ≥ 3 records)   → flagged unless action = remove</div>
+<table>
+<tr><th>Pattern</th><th>min</th><th>max</th><th>spike</th><th>step per hour</th><th>flat hours</th><th>Unit</th></tr>
+<tr><td class="p-air"><code>^air_temp.*</code></td><td>−60</td><td>50</td><td>10</td><td>10</td><td>12</td><td>°C</td></tr>
+<tr><td class="p-rh"><code>^rh(_.*)?$</code></td><td>0</td><td>105</td><td>40</td><td>50</td><td>72</td><td>%</td></tr>
+<tr><td class="p-wind"><code>^wind_speed.*</code></td><td>0</td><td>75</td><td></td><td></td><td>48</td><td>m/s</td></tr>
+<tr><td class="p-wind"><code>^wind_dir$</code></td><td>0</td><td>360</td><td></td><td></td><td></td><td>degrees</td></tr>
+<tr><td class="p-rad"><code>^sw_(in|out)$</code></td><td>−25</td><td>1500</td><td></td><td></td><td></td><td>W/m²</td></tr>
+<tr><td class="p-rad"><code>^lw_(in|out)$</code></td><td>50</td><td>700</td><td>150</td><td>200</td><td>12</td><td>W/m²</td></tr>
+<tr><td class="p-rad"><code>^net_rad$</code></td><td>−300</td><td>1200</td><td></td><td></td><td></td><td>W/m²</td></tr>
+<tr><td class="p-snow"><code>^snow_depth$</code></td><td>−0.25</td><td>5</td><td>0.2</td><td>0.3</td><td></td><td>m</td></tr>
+<tr><td class="p-soil"><code>^soil_temp_.*</code></td><td>−40</td><td>50</td><td>8</td><td>10</td><td></td><td>°C</td></tr>
+<tr><td class="p-soil"><code>^(surface_temp|snow_temp).*</code></td><td>−60</td><td>60</td><td>15</td><td>20</td><td></td><td>°C</td></tr>
+<tr><td class="p-soil"><code>^temp_above_ground.*</code></td><td>−60</td><td>50</td><td>10</td><td>10</td><td></td><td>°C</td></tr>
+<tr><td class="p-soil"><code>^(ground_temp|soil_probe_temp).*</code> / <code>^ground_temp_107.*</code></td><td>−50 / −35</td><td>50</td><td>5</td><td>5</td><td></td><td>°C</td></tr>
+<tr><td class="p-soil"><code>^vwc.*</code></td><td>0</td><td>1 (1.3 for CS615/616 in peat)</td><td>0.15</td><td>0.3</td><td></td><td>m³/m³</td></tr>
+<tr><td><code>^battery_v.*</code></td><td>0</td><td>20</td><td>3</td><td>3</td><td></td><td>V</td></tr>
+</table>
+<p class="where">The spike and step limits are starting values for new projects, set wide so they catch sensor glitches and not weather: a cold front, a passing cloud or a snowfall should pass. They follow the step and spike tests of Zahumenský (2004) and Estévez et al. (2011), widened for 30-minute and hourly records. A spike is removed (unless <code>action = flag</code>); a step (<code>step</code>, the change between two readings divided by the hours between them, never by less than one hour) is only flagged. A spike must also be more than the limit away from the median of the five readings around it, so a good reading between two sensor dropouts (snow depth 1.45, 4.22, 1.45, 4.22, 1.50 m) is kept. Both tests run only on tables recorded every 3 hours or more often (<code>spike_step_max_interval_h</code>, 0 = every table): in a daily table a maximum that jumps 10 °C and back is weather. A project made before CS 1.10.0 keeps its table as it is: <i>Fill in suggested spike and step limits</i> on Quality rules fills only the blank cells of these rows. There is no rule for <code>rain</code> or for columns left under raw names (e.g. <code>SlrW_Avg</code>, <code>BP_mbar_Avg</code>); add one where you need it.</p>
+<p class="where">Every row has a <code>rule_id</code> (Q-01, Q-02 ...), given once and kept when rows are added or reordered. <code>audit/flags.csv</code> names the row behind each flag.</p>
+<div class="ex"><b>Example.</b> Spike with <code>max_spike = 5</code> on air_temp: 2.1, <b>14.0</b>, 2.4 → differences +11.9 and +11.6, same sign, both &gt; 5 → 14.0 removed. A step 2.1, 14.0, 14.2 is not a spike (second difference −0.2), but at 30-minute records it is a change of 11.9 °C within an hour, above 10, so 14.0 is flagged <code>step</code>.</div>
+<div class="ex"><b>Example (test data).</b> <code>"2020-01-01 08:00:00",8,7999,58</code> → air_temp 7999 is an overflow code → removed (<code>sentinel</code>); rh 58 kept.</div>
+
+<h2 id="flags">10. Flags and sensor health</h2>
+<p>Flags never change data. They are listed as periods in <code>audit/flags.csv</code> and become <code>&lt;parameter&gt;_flag</code> columns in exports. <code>flags.csv</code> has the station, stream, parameter, period, records, check and detail, and ends with the columns every ovid app shares: <code>rule_id</code> (the row of <code>qc_rules.csv</code> that raised it, or the check's name for a built-in check), <code>qc_code</code> (its WMO code, section 13), <code>app</code> and <code>run_id</code>.</p>
+<table>
+<tr><th>Check</th><th>Condition</th></tr>
+<tr><td><code>outgoing_exceeds_incoming</code></td><td>sw_in &gt; 50 and sw_out &gt; sw_in + 10 W/m² (snow or frost on the upper sensor, tilted mount)</td></tr>
+<tr><td><code>sunlight_at_night</code></td><td>sw_in &gt; 20 W/m² with the sun more than 6° below the horizon (needs latitude and longitude in <code>station_info.csv</code>)</td></tr>
+<tr><td><code>sensors_disagree</code></td><td>air_temp vs air_temp_2 (or high vs low) differ by &gt; 5 °C; rh vs rh_2 by &gt; 25 %</td></tr>
+<tr><td><code>mean_outside_min_max</code></td><td>air_temp below air_temp_min − 0.05 or above air_temp_max + 0.05</td></tr>
+<tr><td><code>differs_from_other_stations</code></td><td>Daily mean of air_temp, rh, sw_in or lw_in departs from the median of the other stations (3 or more) by more than usual</td></tr>
+<tr><td><code>flat_line</code></td><td>Section 9, when the rule's action is not <code>remove</code></td></tr>
+</table>
+<div class="f">sun elevation:  δ = 23.44° · sin(2π (284 + doy) / 365)
+                h = ((UTC hours) + lon/15 − 12) · 15°
+                el = asin( sin φ sin δ + cos φ cos δ cos h )
+UTC = logger time − utc_offset_hours   (blank: round(lon / 15))
+
+between stations:  d = daily value − median(other stations that day)   (3 or more stations)
+                   expected = 31-day running median of d for that station
+                   departure = d − expected
+                   flag if |departure| &gt; max( 6 · MAD(departure), floor ) + allow
+                   allow = |others(day + 3) − others(day − 3)|, so a few days' difference in timing is
+                           tolerated while all stations warm or cool fast
+                   floor: air_temp 6 °C, rh 30 %, sw_in 80 W/m², lw_in 50 W/m²</div>
+<div class="ex"><b>Example.</b> A station runs 1.0 °C colder than the others on most days (expected d = −1.0, MAD of the departures 0.6). On one day d = −8.5: departure = −8.5 + 1.0 = −7.5, |−7.5| &gt; max(3.6, 6) = 6 (the others change little that week, so allow is about 0) → that day flagged. A constant offset alone is never flagged, and an offset that drifts slowly with the season is followed by the 31-day running median.</div>
+<h3>Sensor health (<code>audit/sensor_health.csv</code>)</h3>
+<p>One verdict per parameter, first that applies: <b>dead</b> (no values), <b>stopped</b> (nothing in the last 30 days of the table), <b>failing</b> (more than half removed), <b>dying</b> (over half missing in the last tenth, 3× more than before), <b>stuck</b> (unchanged for more than 7 days; rain totals and zero snow depth excepted), <b>intermittent</b> (&gt; 10% missing or &gt; 2% removed), <b>suspect</b> (&gt; 10% flagged), else <b>ok</b>.</p>
+<p><code>audit/duplicate_sources.csv</code> lists pairs of station tables that hold the same values (sampled at midnight every tenth day): the same logger filed twice under two names.</p>
+
+<h2 id="summ">11. Derived values and summaries</h2>
+<table>
+<tr><th>Added</th><th>Needs</th><th>Formula</th></tr>
+<tr><td><code>vpd_kpa</code></td><td>air_temp, rh</td><td>0.6108 · exp(17.27 T / (T + 237.3)) · (1 − RH/100), RH clipped to 0–100</td></tr>
+<tr><td><code>albedo_calc</code></td><td>sw_in, sw_out (no albedo column)</td><td>sw_out / sw_in when sw_in &gt; 50 and 0 ≤ sw_out ≤ sw_in</td></tr>
+<tr><td><code>net_rad_calc</code></td><td>sw_in, sw_out, lw_in, lw_out (no net_rad)</td><td>sw_in − sw_out + lw_in − lw_out</td></tr>
+<tr><td><code>snow_depth_calc</code></td><td>distance column and <code>snow_sensor_height_m</code></td><td>height − distance</td></tr>
+</table>
+<div class="ex"><b>Example.</b> sw_in = 600, sw_out = 480, lw_in = 250, lw_out = 310 → albedo_calc = 0.800, net_rad_calc = 600 − 480 + 250 − 310 = 60 W/m².</div>
+<p>A day is the calendar date of the logger time stamp. Totals (names matching <code>^(rain|precip)</code>, <code>_Tot$</code>, <code>_mm_Tot</code>) are summed; everything else is averaged.</p>
+<div class="f">daily   : value given if records ≥ min_complete × records per day     (0.8 × 86400 / interval)
+monthly : from daily values, if days ≥ 0.8 × days in the month
+water yr: from daily values, Oct–Sep (water_year_start_month = 10), named by the year it ends
+          complete = days_with_value ≥ 0.8 × 365</div>
+<div class="ex"><b>Example.</b> 10-minute data: 144 records a day, need 115.2. A day with 110 records gets no daily air_temp (blank), and that day does not count towards the month.</div>
+
+<h2 id="precip">12. Weighing precipitation gauges</h2>
+<p>A weighing gauge reports what is in its bucket, not what fell. Station tables with <code>acc_total</code> and <code>bucket_nr</code> are taken as an OTT Pluvio2; columns like <code>GN_mm…</code> as a Geonor T-200B. Each gets a row in <code>precip_gauges.csv</code> that you can edit.</p>
+<ol>
+<li>Records are put on the gauge's regular grid; off-grid records are left out, missing times stay blank. Readings with a non-zero status, below −5 mm or above <code>max_bucket_mm</code> (1500), and spikes more than <code>spike_mm</code> (50 Pluvio, 20 Geonor) from the 5-record median are not used.</li>
+<li><b>Servicing.</b> A drop of more than <code>service_step_mm</code> (50) is an emptying; a one-interval rise of more than 50 mm is a top-up (antifreeze, oil); servicing entered by hand also counts. Each starts a new bucket cycle and is never counted as precipitation.</li>
+<li><b>Bucket series.</b> Within a cycle, the running maximum of the bucket, differenced. Evaporation and weight oscillation cannot create precipitation.</li>
+<li><b>Geonor:</b> the bucket is first smoothed with a running median of <code>smooth_records</code> (5), and precipitation is booked only in whole steps of <code>noise_mm</code> (0.2).</li>
+<li><b>Pluvio2:</b> its own running total <code>acc_total</code> is differenced, allowing for the 500 mm rollover (when the previous value was ≥ 450) and power resets. Days where acc_total gives more than the bucket by &gt; <code>mismatch_mm</code> (2) are mismatches; runs of 3+ such days (bridging 3) are faulty, and the bucket is used there.</li>
+<li>After a gap longer than <code>long_gap_hours</code> (6 h) the gain across the gap is reported apart, not as one interval.</li>
+</ol>
+<div class="f">filled_t = max(bucket_1 … bucket_t)  within the cycle
+P_t      = filled_t − filled_(t−1)
+Geonor:  filled_t = b0 + floor((filled_t − b0) / noise_mm) × noise_mm
+Pluvio acc after rollover:  P = (500 − acc_prev) + acc</div>
+<div class="ex"><b>Example (Geonor, noise 0.2 mm).</b> Smoothed bucket 412.03, 412.11, 412.08, 412.27, 412.31 mm; b0 = 412.03. Running max 412.03, 412.11, 412.11, 412.27, 412.31 → stepped 412.03, 412.03, 412.03, 412.23, 412.23 → P = 0, 0, 0, 0.2, 0 mm. Then 412.31 → 85.40 (drop 326.9 &gt; 50): emptying, new cycle, 0 mm.</div>
+<div class="ex"><b>Example (Pluvio rollover).</b> acc_total 498.6 then 1.3 → previous ≥ 450, so P = (500 − 498.6) + 1.3 = 2.7 mm.</div>
+<p><b>Optional wind undercatch</b> (<code>undercatch</code> = <code>single_alter</code> or <code>unshielded</code>, with wind and temperature columns), after Kochendorfer et al. (2017):</p>
+<div class="f">CE = exp( −a · U · (1 − atan(b · T) + c) ),   U capped at u_max (7.2 m/s)
+single_alter: a 0.0348, b 1.366, c 0.779      unshielded: a 0.0785, b 0.729, c 0.407
+corrected = P / CE</div>
+<div class="note">The code itself says to check these coefficients against Table 2 of the paper before using the corrected series.</div>
+<p>Outputs per gauge in <code>precip/</code>: <code>_interval</code>, <code>_daily</code> (precip_mm, source, qc_flag: good, partial_day, missing, acc_bucket_mismatch, servicing_day, low_confidence…), <code>_events</code>, <code>_gaps</code>, <code>_servicing</code>, <code>_cycles</code>, <code>_yearly</code>, <code>_water_year</code>, <code>_faulty_periods</code>.</p>
+
+<h2 id="wmo">13. Quality codes, added checks and wind statistics</h2>
+<p><strong>WMO quality codes in exports.</strong> The export gives every parameter a
+<code>_qc</code> column with the code of WMO BUFR table 0 33 020, &quot;Quality control
+indication of following value&quot; [22]: 0 good, 1 inconsistent, 2
+doubtful, 3 wrong, 4 not checked, 5 has been changed, 6 estimated, 7
+missing value. The categories are those of the WMO guidelines for
+automatic weather stations [23]. Inside the app a flag still names
+the check that failed; the code says what that check found. Range
+limits, overflow codes and manual removals give 3; spikes, stuck values,
+steps and differences from other stations give 2; checks against another
+sensor or parameter give 1; a parameter with no quality rule gives 4,
+not 0; a calibrated value gives 5. When several checks apply the worst
+is given (wrong, inconsistent, doubtful, estimated, changed, good, not
+checked, missing). The older letters (S, R, M) remain a choice on the
+Export page.</p>
+<p><strong>Added checks (flag only, never removed).</strong></p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Parameter</th>
+<th>Rule</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sw_above_physical_limit</code></td>
+<td><code>sw_in</code></td>
+<td>above the BSRN physically possible limit S_a × 1.5 × μ0^1.2 + 100 W/m², with S_a the solar constant (1367 W/m²) corrected for the Earth–Sun distance and μ0 the cosine of the solar zenith angle [20]</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>lw_outside_physical_limit</code></td>
+<td><code>lw_in</code></td>
+<td>outside 40 to 700 W/m² (BSRN physically possible limits) [20]</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>rh_above_103</code></td>
+<td><code>rh</code></td>
+<td>relative humidity above 103 %</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>possible_icing</code></td>
+<td><code>wind_speed</code></td>
+<td>no wind (≤ 0.01 m/s) for 3 hours or more while the air is below 0 °C and the humidity above 90 %</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>tips_below_freezing</code></td>
+<td><code>rain</code>, <code>rain_tips</code></td>
+<td>a tipping bucket records while the air is below 0 °C</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>step</code></td>
+<td>any, from <code>max_step_per_hour</code> in the quality rules</td>
+<td>the change between two readings divided by the time between them is larger than the limit; readings more than three intervals apart are not compared</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>Only the BSRN physically possible limits for incoming sunlight and
+incoming longwave are used: they are the two that could be checked
+against the published tests [20]. The step test is written as a rate
+so that one limit means the same at 10-minute and 30-minute intervals;
+it has no default, because the WMO step limits [23] are defined for
+one-minute values.</p>
+<p><strong>Wind direction.</strong> A compass direction is averaged on the circle: the
+mean direction is that of the mean unit vector, so 359°, 0° and 1°
+average to 0°, not 120°. Daily, monthly and water-year means of
+<code>wind_dir</code> (and its high and low values) are taken this way. The daily
+table also gives <code>wind_dir_sd_calc</code>, the standard deviation of the
+direction by the Yamartino method, σθ = arcsin(ε)·(1 + 0.1547 ε³) with
+ε = √(1 − (s̄² + c̄²)) [18], and the resultant wind,
+<code>wind_speed_resultant_calc</code> and <code>wind_dir_resultant_calc</code>, from the mean
+of the wind vectors [19].</p>
+<p><strong>Dew point.</strong> <code>dew_point_calc</code> is derived from air temperature and
+relative humidity with the Magnus formula and the constants of Alduchov
+and Eskridge (a = 17.625, b = 243.04 °C) [21].</p>
+<p><strong>Weighing gauges.</strong> The undercatch coefficients are Table 2 (Eq. 3) of
+Kochendorfer et al. [17]. The gauge-height set is used by default;
+set <code>wind_height_m</code> on the gauge to 5 or more to use the 10 m set
+(single-Alter a 0.0281, b 1.628, c 0.837; unshielded a 0.0623, b 0.776,
+c 0.431; wind capped at 9 m/s). The paper gives 0.2 (in units of
+collection efficiency) as a representative uncertainty of the transfer
+functions, so each corrected value has <code>precip_corrected_low_mm</code> and
+<code>precip_corrected_high_mm</code> from CE + 0.2 and CE − 0.2. Sheltered sites
+can be over-corrected [24]; the uncorrected series is always kept
+beside the corrected one.</p>
+<p><strong>Times in UTC−6 on export (added October 2026).</strong> CS keeps each station's records in that station's own zone. The Export page
+has <em>Times in</em>: as stored (default), UTC−6 or UTC−7. A common zone moves each station's records from its <code>utc_offset_hours</code>
+(Station details) and adds a <code>time_zone</code> column. Stations with no offset are left as recorded unless a zone is chosen for them;
+when none of the chosen stations has one, the page asks which zone their loggers were set to. Summaries stay in each station's
+own days.</p>
+<h2 id="outputs">Reading the outputs</h2>
+<table>
+<tr><th>File (in output/)</th><th>What it holds</th></tr>
+<tr><td><code>stations/&lt;station&gt;__&lt;stream&gt;.csv</code></td><td>The clean record: station, stream, TIMESTAMP, logger_id, RECORD, one column per parameter, source_file. Removed values are blank. Parquet too with <code>station_format</code></td></tr>
+<tr><td><code>stitched/&lt;logger&gt;__&lt;table&gt;.csv</code></td><td>Each logger table after step 5, under raw names</td></tr>
+<tr><td><code>derived/…_daily.csv</code>, <code>_monthly.csv</code>, <code>_water_year.csv</code></td><td>Summaries (section 11)</td></tr>
+<tr><td><code>qc/…_removed.csv</code></td><td>Every value a quality rule removed, with its old value and reason</td></tr>
+<tr><td><code>audit/audit_log.csv</code> (or <code>audit/detail/</code>)</td><td>One line per change: stage, rule, station, logger, time, column, old value, reason, file. Combined only up to 1,000,000 entries</td></tr>
+<tr><td><code>audit/audit_summary.csv</code>, <code>audit_index.csv</code>, <code>audit_by_column.csv</code></td><td>Counts by rule, by column</td></tr>
+<tr><td><code>audit/file_audit.csv</code></td><td>Per raw file: read, in output, dropped and why, reconciles</td></tr>
+<tr><td><code>audit/metadata.csv</code>, <code>logger_registry.csv</code></td><td>Per logger table: model, program, OS, interval, span, completeness, gaps, conflicts</td></tr>
+<tr><td><code>audit/timestamp_checks.csv</code>, <code>gaps.csv</code></td><td>Clock findings and gaps</td></tr>
+<tr><td><code>audit/flags.csv</code>, <code>qc_summary.csv</code>, <code>sensor_health.csv</code>, <code>parameter_stats.csv</code></td><td>Flags; good / suspect / removed per parameter; health verdicts; min, 1%, median, 99%, max with an <code>outside_typical</code> marker</td></tr>
+<tr><td><code>audit/program_history.csv</code>, <code>lineage.csv</code>, <code>sources.csv</code></td><td>Program changes, which logger fed which station, header names seen</td></tr>
+<tr><td><code>audit/problems.csv</code>, <code>run_manifest.csv</code>, <code>run_history.csv</code></td><td>What did not stop the run; versions, settings and set-up table fingerprints</td></tr>
+<tr><td><code>precip/</code>, <code>plots/</code>, <code>report.html</code></td><td>Gauge outputs, PNG plots, the run report</td></tr>
+</table>
+<p>In exports, a <code>&lt;parameter&gt;_flag</code> column is <code>S</code> (suspect, kept), <code>R</code> (removed by a rule) or <code>M</code> (missing), only for parameters that have any. Exported files are named <code>ovid_cs_&lt;what&gt;_&lt;YYYY-MM-DD&gt;.&lt;ext&gt;</code>, and each export button says its format, e.g. <b>Export data (CSV)</b>.</p>
+
+<h2 id="sensors">Sensor notes</h2>
+<p>The sensors below are the ones the app's aliases, rules and parameter guide are written for. Specifications are the manufacturers'.</p>
+<table>
+<tr><th>Logger</th><th>Format</th><th>Analog accuracy</th><th>Operating range</th><th>Power</th><th>Clock</th></tr>
+<tr><td>CR1000X</td><td>TOA5 (TOB1 must be converted)</td><td>±(0.04% of reading + offset), 0–40 °C</td><td>−40 to +70 °C (ext. −55 to +85)</td><td>10–18 V</td><td>±3 min/yr</td></tr>
+<tr><td>CR1000 (retired)</td><td>TOA5</td><td>±(0.06% of reading + offset), 0–40 °C</td><td>−25 to +50 °C (ext. −55 to +85)</td><td>9.6–16 V</td><td>±3 min/yr</td></tr>
+<tr><td>CR10X, CR23X, 21X (retired)</td><td>Mixed-array, labelled from Edlog .FSL</td><td>—</td><td>—</td><td>stops below 9.6 V</td><td>—</td></tr>
+<tr><td>CR200X series</td><td>TOA5, often "No_SN"</td><td colspan="4">identified by a number in the station name</td></tr>
+</table>
+<table>
+<tr><th>Parameter</th><th>Sensor</th><th>Range</th><th>Accuracy / resolution</th></tr>
+<tr><td class="p-air">Air temperature</td><td>HMP45C</td><td>−39.2 to +60 °C</td><td>±0.2 °C at 20 °C, ±0.5 °C at −40 °C</td></tr>
+<tr><td class="p-air">Air temperature</td><td>HC2S3</td><td>−40 to +60 °C (to −50/+100)</td><td>±0.1 °C at 23 °C</td></tr>
+<tr><td class="p-rh">Relative humidity</td><td>HMP45C</td><td>0.8 to 100 %</td><td>±2 % (0–90 %), ±3 % (90–100 %)</td></tr>
+<tr><td class="p-rh">Relative humidity</td><td>HC2S3</td><td>0 to 100 %</td><td>±0.8 % at 23 °C</td></tr>
+<tr><td class="p-wind">Wind speed / direction</td><td>05103 Wind Monitor</td><td>0 to 100 m/s; 0–360° (gap near north)</td><td>±0.3 m/s or 1 %; starts at 1.0 m/s; ±3°</td></tr>
+<tr><td class="p-rad">Radiation, 4 components</td><td>CNR4 (CNR1 older)</td><td>pyranometer 305–2800 nm, pyrgeometer 4.5–42 µm</td><td>daily total &lt; 5 % (SW), &lt; 10 % (LW); −40 to +80 °C</td></tr>
+<tr><td class="p-rad">Incoming shortwave</td><td>CM3 pyranometer</td><td>305–2800 nm</td><td>daily totals within ±10 %</td></tr>
+<tr><td class="p-snow">Snow depth</td><td>SR50A sonic ranger</td><td>0.5 to 10 m</td><td>±1 cm or 0.4 % of distance; 0.25 mm; needs air temperature</td></tr>
+<tr><td class="p-rain">Rain</td><td>TE525 tipping bucket</td><td>0.254 mm (0.01 in) per tip; TE525MM 0.1 mm</td><td>±1 % up to 25 mm/h; 0 to 50 °C</td></tr>
+<tr><td class="p-rain">Precipitation</td><td>Geonor T-200B</td><td>600, 1000 or 1500 mm; 200 cm²</td><td>0.1 % of full scale; 0.05 mm (600 mm model); −40 to +60 °C</td></tr>
+<tr><td class="p-rain">Precipitation</td><td>OTT Pluvio2 (200 / 400)</td><td>1500 / 750 mm; 200 / 400 cm²</td><td>±0.1 mm or ±1 %; 0.01 mm (digital); −40 to +60 °C</td></tr>
+<tr><td class="p-pres">Barometric pressure</td><td>CS100</td><td>600 to 1100 hPa</td><td>±0.5 hPa at 20 °C, ±1.5 hPa −20 to +50 °C</td></tr>
+<tr><td class="p-soil">Soil / ground temperature</td><td>109 (107)</td><td>−50 to +70 °C (107: −35 to +50)</td><td>±0.1 °C 0–70 °C, to ±0.5 °C at −50 °C</td></tr>
+<tr><td class="p-soil">Soil water content, EC</td><td>CS655 / CS650 (CS616, CS615 older)</td><td>0 to 100 % VWC</td><td>±3 % VWC typical; EC ±(5 % + 0.05 dS/m); T ±0.1–0.5 °C</td></tr>
+</table>
+<h3>Known quirks</h3>
+<ul>
+<li><b>Columns without an alias keep their raw name</b>, and then no rule, cross-check or derived value finds them. In the test data <code>SlrW_Avg</code> (solar) and <code>BP_mbar_Avg</code> (pressure) stay raw: no sw_in limits, no night-sun check. Add an alias (e.g. <code>^SlrW_Avg$ → sw_in</code>).</li>
+<li><b>Tips or millimetres.</b> Some programs log tips under <code>Rain_mm_Tot</code>. Whole numbers only in a rain column usually mean tips; map it to <code>rain_tips</code> and add a calibration.</li>
+<li><b>Newest file wins</b> in overlaps. A newer file with a bad value (as in the 20003 example) replaces a good older one; the old value is in the audit trail.</li>
+<li><b>Daylight saving.</b> Times are never shifted. A logger set to local daylight time in summer shows up only through clock checks or a night-sun flag.</li>
+<li><b>CR10X years.</b> Files without a year field need <code>start_year</code> in <code>cr10x.csv</code>; the year then advances each time the day number goes down.</li>
+<li><b>Wind direction</b> is averaged on the circle in daily summaries (since CS 1.9.0; section 13), so a day mixing 350° and 10° averages near 0°. The logger's own unit-vector direction (<code>WindDir_D1_WVT</code>) remains the best value per record.</li>
+<li><b>SR50A</b> reads the distance; snow depth is right only if the logger corrected for air temperature and the height was set. <code>snow_depth_calc</code> uses the height in <code>station_info.csv</code>.</li>
+<li><b>Unheated tipping buckets</b> record snow as rain when it melts, often days later.</li>
+</ul>
+
+<h2 id="values">Reasonable values</h2>
+<p>Typical values from the app's parameter guide (written for a northern continental site). <code>parameter_stats.csv</code> marks a parameter <code>outside_typical</code> when its 1st or 99th percentile falls outside them.</p>
+<table>
+<tr><th>Parameter</th><th>Typical range</th><th>What to expect</th></tr>
+<tr><td class="p-air">air_temp</td><td>−50 to 35 °C</td><td>−45 in winter to 30+ in summer; daily range 5–15 °C, smaller under cloud</td></tr>
+<tr><td class="p-rh">rh</td><td>10 to 100 %</td><td>Near 100 at night, in fog and over snow; lowest on warm afternoons. Slightly above 100 happens; above 105 is removed</td></tr>
+<tr><td class="p-wind">wind_speed</td><td>0 to 30 m/s</td><td>0–10 at a sheltered site, gusts 20–30. Long runs of exactly 0 in winter: iced propeller</td></tr>
+<tr><td class="p-wind">wind_dir</td><td>0 to 360°</td><td>Meaningless near calm</td></tr>
+<tr><td class="p-rad">sw_in</td><td>−10 to 1200 W/m²</td><td>0 at night; up to ~1000 at summer noon; small negative values at night are normal offsets</td></tr>
+<tr><td class="p-rad">sw_out / albedo</td><td>−10 to 900 W/m²; 0–1</td><td>Albedo 0.1–0.2 forest/wet peat, 0.2–0.3 dry vegetation, 0.7–0.9 fresh snow</td></tr>
+<tr><td class="p-rad">lw_in, lw_out</td><td>100 to 550 W/m²</td><td>lw_in ~150 in clear arctic winter to 400+ in cloudy summer</td></tr>
+<tr><td class="p-rad">net_rad</td><td>−200 to 900 W/m²</td><td>−100 on clear nights to 600–800 at summer noon</td></tr>
+<tr><td class="p-snow">snow_depth</td><td>−0.05 to 2.5 m</td><td>0 to 1–1.5 m at boreal sites; a few cm of noise around 0 in summer</td></tr>
+<tr><td class="p-rain">rain</td><td>0 to 40 mm per record</td><td>0 most of the time; a few mm per half hour, 10–30 in a thunderstorm</td></tr>
+<tr><td class="p-rain">precip (weighing)</td><td>0 to 1500 mm in bucket</td><td>Steps up during precipitation, flat otherwise, drops at servicing</td></tr>
+<tr><td class="p-pres">pressure</td><td>930 to 1060 hPa</td><td>Within ~30 hPa of the site mean; ~12 hPa less per 100 m of elevation</td></tr>
+<tr><td class="p-soil">soil_temp</td><td>−30 to 35 °C</td><td>Deep probes change slowly; near 0 for weeks while soil freezes or thaws</td></tr>
+<tr><td class="p-soil">vwc</td><td>0 to 0.95 m³/m³</td><td>0.05–0.5 mineral soil, 0.2–0.9 peat; drops sharply on freezing</td></tr>
+<tr><td>battery_v</td><td>11.5 to 14.8 V</td><td>12–14 V with a small daily cycle; the logger stops below 9.6 V</td></tr>
+<tr><td>vpd_kpa</td><td>0 to ~4 kPa</td><td>0 at saturation; 1–3 on warm dry afternoons</td></tr>
+</table>
+
+<h2 id="using">Using the app: the set-up flow and the Workbench</h2>
+<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
+<h3>Check the data</h3>
+<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>Drag across a plot with the right mouse button (or shift-drag) to select a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
+<h3>The Workbench</h3>
+<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Right-drag on the chart (or drag in the grid) selects values; each further right-drag adds to the selection, Esc clears it. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
+<h3>When something goes wrong</h3>
+<ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
+<h2 id="trouble">Troubleshooting</h2>
+<table>
+<tr><th>You see</th><th>Likely cause</th><th>What to do</th></tr>
+<tr><td>"None of the … .dat files could be read"</td><td>TOB1/TOB2 binary files, or CR10X files with import off</td><td>Convert with CardConvert; set <code>import_cr10x = TRUE</code></td></tr>
+<tr><td>Two stations for one logger</td><td>Files with different header names, or a <code>header_name</code> row</td><td>Fix <code>stations.csv</code></td></tr>
+<tr><td>Logger id like <code>NOSN_MYSITE</code></td><td>No serial and no number in the station name</td><td>Fine; or give it a station name</td></tr>
+<tr><td>Many <code>overlap_conflict</code> for one file</td><td>Its clock was off, or it is another logger's file</td><td>Read <code>timestamp_checks.csv</code>; add a shift of <code>suggest_shift_min</code>, or a file rule</td></tr>
+<tr><td><code>impossible_date</code> records</td><td>Logger restarted at a default date</td><td>Add a clock correction (shift) for that file and range</td></tr>
+<tr><td>A parameter missing from summaries</td><td>Text column (&lt; 99% numbers) or all values removed</td><td>Check <code>column_dictionary.csv</code>, <code>qc_summary.csv</code></td></tr>
+<tr><td>Daily values blank</td><td>Fewer than 80% of the day's records</td><td>Expected; lower <code>min_complete</code> only knowingly</td></tr>
+<tr><td>"records do not reconcile" stops the run</td><td>A bug, not a data problem</td><td>Keep the files and the message and report it</td></tr>
+<tr><td>Gauge daily totals flagged <code>low_confidence</code></td><td>Pluvio running total disagreed with the bucket for days</td><td>Check the field log for service visits; bucket values are used there</td></tr>
+<tr><td>Station marked "stuck" in sensor health</td><td>Value unchanged for more than 7 days</td><td>Check the sensor; add a manual removal for the period</td></tr>
+</table>
+
+<h2 id="glossary">Glossary</h2>
+<table>
+<tr><td><b>TOA5</b></td><td>Campbell's ASCII table format: 4 header lines, then one row per record</td></tr>
+<tr><td><b>Mixed-array</b></td><td>Header-less output of older loggers (CR10X, CR23X, 21X); each line begins with an array id</td></tr>
+<tr><td><b>.FSL</b></td><td>Edlog file listing the labels of each output array</td></tr>
+<tr><td><b>Table / stream</b></td><td>One output table of a logger program (e.g. Table10min); a station's stream</td></tr>
+<tr><td><b>Logger table</b></td><td>All records of one logger and one table, stitched</td></tr>
+<tr><td><b>Station</b></td><td>The place the data describe; may be fed by several loggers over time</td></tr>
+<tr><td><b>Alias</b></td><td>A rule renaming a raw column to a common parameter</td></tr>
+<tr><td><b>Sentinel</b></td><td>A logger overflow code such as −7999 or 6999</td></tr>
+<tr><td><b>Removed / flagged</b></td><td>Blanked with an audit entry / kept and marked suspect</td></tr>
+<tr><td><b>VPD</b></td><td>Vapour pressure deficit: saturation minus actual vapour pressure, kPa</td></tr>
+<tr><td><b>Water year</b></td><td>1 October to 30 September, named by the year it ends</td></tr>
+<tr><td><b>Bucket cycle</b></td><td>Weighing-gauge period between two servicings</td></tr>
+<tr><td><b>Collection efficiency</b></td><td>Share of true precipitation a gauge catches in wind</td></tr>
+</table>
+
+<h2 id="refs">References</h2>
+<ol>
+<li>Campbell Scientific. CR1000X Measurement and Control Datalogger, specifications. <a href="https://www.campbellsci.com/cr1000x">campbellsci.com/cr1000x</a></li>
+<li>Campbell Scientific. CR1000 Datalogger (retired), specifications. <a href="https://www.campbellsci.com/cr1000">campbellsci.com/cr1000</a></li>
+<li>Campbell Scientific. CR10X Datalogger (retired). <a href="https://www.campbellsci.com/cr10x">campbellsci.com/cr10x</a></li>
+<li>Campbell Scientific. LoggerNet manual (TOA5 file format, CardConvert). <a href="https://s.campbellsci.com/documents/us/manuals/loggernet.pdf">s.campbellsci.com/documents/us/manuals/loggernet.pdf</a></li>
+<li>Campbell Scientific. HMP45C-L Temperature and Relative Humidity Probe. <a href="https://www.campbellsci.com/hmp45c-l">campbellsci.com/hmp45c-l</a></li>
+<li>Campbell Scientific. HC2S3-L Temperature and Relative Humidity Probe. <a href="https://www.campbellsci.com/hc2s3">campbellsci.com/hc2s3</a></li>
+<li>Campbell Scientific. 05103 Wind Monitor. <a href="https://www.campbellsci.com/05103">campbellsci.com/05103</a></li>
+<li>Campbell Scientific. CNR4 Net Radiometer. <a href="https://www.campbellsci.com/cnr4">campbellsci.com/cnr4</a></li>
+<li>Campbell Scientific. SR50A Sonic Ranging Sensor. <a href="https://www.campbellsci.com/sr50a">campbellsci.com/sr50a</a></li>
+<li>Campbell Scientific. TE525 Tipping Bucket Rain Gage. <a href="https://www.campbellsci.com/te525">campbellsci.com/te525</a></li>
+<li>Campbell Scientific Canada. T-200B Geonor precipitation gauge. <a href="https://www.campbellsci.ca/t-200b">campbellsci.ca/t-200b</a>; manual <a href="https://s.campbellsci.com/documents/ca/manuals/t-200b_man.pdf">t-200b_man.pdf</a></li>
+<li>OTT HydroMet. OTT Pluvio2 data sheet. <a href="https://stevenswater.com/resources/datasheets/Pluvio2_en.pdf">stevenswater.com/…/Pluvio2_en.pdf</a></li>
+<li>Campbell Scientific. CS100 Barometric Pressure Sensor. <a href="https://www.campbellsci.com/cs100">campbellsci.com/cs100</a></li>
+<li>Campbell Scientific. 109 Temperature Probe. <a href="https://www.campbellsci.com/109">campbellsci.com/109</a></li>
+<li>Campbell Scientific. CS655 Soil Water Content Reflectometer. <a href="https://www.campbellsci.com/cs655">campbellsci.com/cs655</a></li>
+<li>Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998). Crop evapotranspiration. FAO Irrigation and Drainage Paper 56 (saturation vapour pressure, eq. 11). <a href="https://www.fao.org/4/x0490e/x0490e00.htm">fao.org/4/x0490e</a></li>
+<li>Kochendorfer, J. et al. (2017). Analysis of single-Alter-shielded and unshielded measurements of mixed and solid precipitation from WMO-SPICE. Hydrology and Earth System Sciences 21, 3525–3542. <a href="https://doi.org/10.5194/hess-21-3525-2017">doi:10.5194/hess-21-3525-2017</a></li>
+<li>Yamartino, R.J. (1984). A comparison of several &quot;single-pass&quot;
+estimators of the standard deviation of wind direction. Journal of
+Climate and Applied Meteorology 23, 1362–1366.</li>
+<li>U.S. Environmental Protection Agency (2000). Meteorological
+Monitoring Guidance for Regulatory Modeling Applications.
+EPA-454/R-99-005.</li>
+<li>Long, C.N., Dutton, E.G. (2002). BSRN Global Network recommended
+QC tests, V2.0. Baseline Surface Radiation Network.
+<a href="https://epic.awi.de/30083/1/BSRN_recommended_QC_tests_V2.pdf">epic.awi.de/30083</a></li>
+<li>Alduchov, O.A., Eskridge, R.E. (1996). Improved Magnus form
+approximation of saturation vapor pressure. Journal of Applied
+Meteorology 35, 601–609.</li>
+<li>World Meteorological Organization. BUFR code table 0 33 020,
+Quality control indication of following value. WMO Codes Registry.
+<a href="https://codes.wmo.int/bufr4/codeflag/0-33-020">codes.wmo.int/bufr4/codeflag/0-33-020</a></li>
+<li>Zahumenský, I. (2004). Guidelines on Quality Control Procedures
+for Data from Automatic Weather Stations. World Meteorological
+Organization, Geneva.</li>
+<li>Smith, C.D. et al. (2020). Evaluation of the WMO Solid
+Precipitation Intercomparison Experiment (SPICE) transfer functions
+for adjusting the wind bias in solid precipitation measurements.
+Hydrology and Earth System Sciences 24, 4025–4043.
+<a href="https://doi.org/10.5194/hess-24-4025-2020">doi:10.5194/hess-24-4025-2020</a></li>
+<li>Estévez, J., Gavilán, P., Giráldez, J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. Journal of Hydrology 402, 144–154. <a href="https://doi.org/10.1016/j.jhydrol.2011.02.031">doi:10.1016/j.jhydrol.2011.02.031</a></li>
+</ol>
+
+</main></body>
+</html>

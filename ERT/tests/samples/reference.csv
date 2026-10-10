@@ -1,0 +1,11 @@
+file,what,value,source
+agi_stg__SCH-INV.stg,rows,21,raw file line 2 (Records: 21) and lines 4-24
+agi_stg__SCH-INV.stg,first_time,2018-03-23 13:29:59,"raw file line 4 (20180323,13:29:59)"
+agi_stg__SCH-INV.stg,last_time,2018-03-23 14:03:35,raw file line 24
+agi_stg__SCH-INV.stg,col:resistance_ohm@1,41.707,raw file line 4 (4.17070E+01)
+agi_stg__SCH-INV.stg,col:rhoa_ohmm@1,262.053,raw file line 4 (2.62053E+02)
+agi_stg_earthimager__MC7WEN_trial11_1.stg,rows,13,raw file line 2 (Records: 13) and lines 4-16
+agi_stg_earthimager__MC7WEN_trial11_1.stg,first_time,2019-08-16 14:32:32,"raw file line 4 (20190816, 14:32:32)"
+agi_stg_earthimager__MC7WEN_trial11_1.stg,last_time,2019-08-16 15:54:22,raw file line 16
+agi_stg_earthimager__MC7WEN_trial11_1.stg,col:rhoa_ohmm@1,971.938,raw file line 4 (9.71938E+02)
+agi_stg_earthimager__MC7WEN_trial11_1.stg,col:resistance_ohm@2,56.4361,raw file line 5 (5.64361E+01)

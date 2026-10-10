@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+
+# R session files
+.Rhistory
+.RData
+.Rproj.user/
+
+# R packages installed on first run
+*/library/
+
+# Local app settings
+*/app_settings.json
+*/app_settings.json.bak*
+*/app_settings.json.tmp
+*/app_settings.rds
+*/app_settings.rds.bak*
+/.*/
+!/.github/
+
+# Copies of core/ made by Make_Portable
+CS/core/
+GT/core/
+ERT/core/
+WLR/core/
+
+# Run outputs and caches (data never goes in the repo)
+*/output/
+*/cache/
+*/data/
+*.parquet
+
+# Portable copies made by Make_Portable.bat
+*/R-portable/
+*/launcher/packages/
+RS/core/
+
+# Finder aliases to the working folders on this Mac
+/Ovid CS
+/Ovid ERT
+/Ovid GT
+/Ovid WLR
+
+# Local leftovers
+/.git_old/
+Rplots.pdf
+
+# Downloaded source documents and datasets for research reports (large)
+research_notes/*/pdfs/
+research_notes/*/data_raw/
