@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (toggles, 2026-10-14)**
+- Plot layers (0 °C isotherm, sensor depths), One axis for every depth and Complete years only are toggles; export choices stay checkboxes. **Output changes:** none.
+
 **Added (corrections applied, 2026-10-10)**
 - Corrections applied: a chip and pop-up in the top bar list every correction in the last run with counts (core applied.R); output/audit/corrections_applied.csv, also in exports and reports. **Output changes:** new file; period removals name their row in the audit reason.
 

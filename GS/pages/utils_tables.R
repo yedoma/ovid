@@ -39,7 +39,7 @@ SLIDERS <- data.table(
 TOGGLES <- data.table(rule = c("negative_rhoa", "duplicates", "geometry", "negative_ip"), label = c("Flag negative apparent resistivity", "Flag repeated quadrupoles", "Flag bad geometry", "Flag negative chargeability (IP)"),
                       flag = c("negative apparent resistivity", "duplicate", "bad geometry", "negative chargeability"))
 slider_row <- function(i) div(class = "d-flex align-items-start gap-2",
-  div(style = "padding-top:28px", checkboxInput(paste0("on_", SLIDERS$rule[i]), NULL, FALSE)),
+  div(style = "padding-top:28px", ovid_switch(paste0("on_", SLIDERS$rule[i]), NULL, FALSE)),
   div(class = "flex-grow-1", sliderInput(paste0("v_", SLIDERS$rule[i]),
     tagList(SLIDERS$label[i], " ", tooltip(icon("circle-info"), RULE_HELP[rule == SLIDERS$rule[i]]$why, placement = "right")),
     SLIDERS$min[i], SLIDERS$max[i], SLIDERS$min[i], step = SLIDERS$step[i], width = "100%")))

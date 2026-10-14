@@ -47,7 +47,7 @@
                     textInput("ckf_real", "or: real time of the first record", placeholder = "YYYY-MM-DD HH:MM", width = "100%")),
           column(3, textInput("ckf_from", "From (as written in the file)", r$from, width = "100%"),
                     textInput("ckf_to", "To", r$to, width = "100%")),
-          column(3, checkboxInput("ckf_file", paste0("Only in ", sub("#A[0-9_f]+$", "", basename(r$source_file))), TRUE, width = "100%"),
+          column(3, ovid_switch("ckf_file", paste0("Only in ", sub("#A[0-9_f]+$", "", basename(r$source_file))), TRUE, width = "100%"),
                     textInput("ckf_reason", "Reason (goes in the audit trail)", width = "100%"),
                     textInput("ckf_author", "Your initials", isolate(who()), width = "100%"))),
         div(class = "btnrow", actionButton("ckf_add", "Add this correction", class = "btn-primary"),

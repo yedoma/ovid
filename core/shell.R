@@ -85,8 +85,8 @@ ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL,
   if (!is.null(ovid_font_dir())) shiny::addResourcePath("ovid-fonts", ovid_font_dir())
   views_ui <- if (isTRUE(views)) div(class = "d-views", title = "Two views of the same project, data and edits",
     tags$a(class = "on", href = "?ui=standard", "Standard"), tags$a(href = "?ui=workbench", class = "d-to-wb", "Workbench"))
-  explain_ui <- if (isTRUE(explain)) tags$label(class = "d-explain-sw", title = "Show or hide the longer explanations on each page",
-    tags$input(type = "checkbox", id = "d_explain", checked = NA), span("Explanations"))
+  explain_ui <- if (isTRUE(explain)) tags$label(class = "d-explain-sw ovid-sw", title = "Show or hide the longer explanations on each page",
+    tags$input(type = "checkbox", role = "switch", id = "d_explain", checked = NA), span("Explanations"))
   if (layout == "tabs") { k <- which(vapply(items, function(x) identical(x, "More"), NA))          # the pages after "More" go in its menu
     if (length(k)) { kk <- k[1]; rest <- rail[(kk + 1):length(rail)]; rail <- c(rail[seq_len(kk - 1)], list(tags$details(class = "d-pop d-pop-right d-tabs-more",
       tags$summary(class = "d-rail-link", "More \u25be"), div(class = "d-pop-body", rest)))) } }
@@ -183,6 +183,13 @@ ovid_pop <- function(label, ..., align = "left", class = NULL, open = FALSE)
 ovid_controls <- function(..., more = NULL, more_label = "Options")
   div(class = "d-controls", ...,
       if (!is.null(more)) ovid_pop(span(icon("sliders"), more_label), more, align = "right", class = "d-more"))
+
+# A toggle switch: one setting that takes effect at once and is kept (M 14 Oct; Plot_table_standards.md A12). A checkbox
+# input underneath (input value TRUE/FALSE, as before) with role="switch" and its state written as On or Off. Choices a
+# button acts on later stay checkboxes; a yes/no value in a set-up table stays a Yes/No pick.
+ovid_switch <- function(inputId, label = NULL, value = FALSE, width = NULL) {
+  x <- htmltools::tagQuery(checkboxInput(inputId, label, value, width))$find("input")$addAttrs(role = "switch")$allTags()
+  htmltools::tagAppendAttributes(x, class = "ovid-switch") }
 
 # A view that can fill the screen: a Focus button at its top right; Esc or the button again leaves.
 ovid_focus <- function(..., class = NULL)

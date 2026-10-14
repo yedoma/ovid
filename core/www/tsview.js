@@ -18,6 +18,13 @@
   function pad(n){ return (n < 10 ? '0' : '') + n; }
   function css(n, d){ var v = getComputedStyle(document.documentElement).getPropertyValue(n); return v && v.trim() ? v.trim() : d; }
   function arr(x){ return x == null ? [] : Array.isArray(x) ? x : [x]; }
+  // A stretch with no logger in place (span kind "absent", M 14 Oct): grey diagonal hatching, apart from the solid shading
+  // of removed and out-of-water stretches; labelled on the first panel when there is room. Same drawing as workbench_chart.js.
+  function hatch(c, x0, x1, y, h, col, label, font){ var a = x0, b = x1; if (b - a < 1) return; c.save(); c.beginPath(); c.rect(a, y, b - a, h); c.clip();
+    c.strokeStyle = col; c.globalAlpha = 0.45; c.lineWidth = 1.2; c.beginPath(); for (var k = Math.floor((a - h) / 7) * 7; k < b; k += 7) { c.moveTo(k, y + h); c.lineTo(k + h, y); } c.stroke();
+    if (label && b - a > 90) { c.globalAlpha = 0.95; c.fillStyle = col; c.font = font; c.textAlign = 'center'; c.textBaseline = 'top'; var w = c.measureText(label).width + 10, m = (a + b) / 2;
+      c.globalCompositeOperation = 'destination-out'; c.fillRect(m - w / 2, y + 4, w, 15); c.globalCompositeOperation = 'source-over'; c.fillText(label, m, y + 6); }
+    c.restore(); }
   function lower(a, x){ var lo = 0, hi = a.length; while (lo < hi) { var m = (lo + hi) >> 1; if (a[m] < x) lo = m + 1; else hi = m; } return lo; }
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
   function fd(t){ var d = new Date(t * 1000); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
@@ -230,8 +237,9 @@
       yt.ticks.forEach(function(y){ var yy = Math.round(Y(y)) + 0.5; c.beginPath(); c.moveTo(self.L, yy); c.lineTo(self.L + pw, yy); c.stroke(); });
       d.issues.forEach(function(q){ if (q.t1 < v0 || q.t0 > v1) return; c.globalAlpha = 0.18; c.fillStyle = q.level === 'error' ? C.err : C.warn;
         var a = X(q.t0 - self.step / 2), b = X(q.t1 + self.step / 2); c.fillRect(a, y0, Math.max(3, b - a), ph); c.globalAlpha = 1; });
-      d.spans.forEach(function(q){ if (q.t1 < v0 || q.t0 > v1) return; c.globalAlpha = 0.22; c.fillStyle = C.gh;     // spans the page shades: out of the water, removed by hand
-        var a = X(q.t0), b = X(q.t1); c.fillRect(a, y0, Math.max(2, b - a), ph); c.globalAlpha = 1; });
+      d.spans.forEach(function(q){ if (q.t1 < v0 || q.t0 > v1) return; var a = X(q.t0), b = X(q.t1);     // spans the page shades: out of the water, removed by hand; not deployed hatched
+        if (q.kind === 'absent') return hatch(c, a, b, y0, ph, C.gh, si === 0 ? 'not deployed' : null, '11px ' + C.font);
+        c.globalAlpha = 0.22; c.fillStyle = C.gh; c.fillRect(a, y0, Math.max(2, b - a), ph); c.globalAlpha = 1; });
       if (self.zb && !PR) { c.globalAlpha = 0.14; c.fillStyle = self.zb.out ? C.warn : C.line; var za = X(self.zb.t0), zz = X(self.zb.t1); c.fillRect(za, y0, Math.max(1, zz - za), ph); c.globalAlpha = 1;
         if (si === 0) { c.save(); c.fillStyle = C.line; c.font = '11px sans-serif'; c.fillText(self.zb.out ? 'zoom out' : 'zoom in', za + 4, y0 + 12); c.restore(); } }
       if (self.sel && !PR) { c.globalAlpha = 0.16; c.fillStyle = C.line; var sa = X(self.sel.t0), sb = X(self.sel.t1); c.fillRect(sa, y0, Math.max(1, sb - sa), ph); c.globalAlpha = 0.8; c.strokeStyle = C.line;
@@ -339,7 +347,7 @@
       for (i = a; i < b; i += Math.max(1, Math.floor((b - a) / 40))) if (s.v[i] != null) { sm += s.v[i]; cn++; } M.push(cn ? sm / cn : null); if (cn) { lo = Math.min(lo, sm / cn); hi = Math.max(hi, sm / cn); } }
     c.fillStyle = css('--bg1', '#222'); c.fillRect(0, 0, W, H); c.strokeStyle = C.gh; c.lineWidth = 1; c.beginPath(); var pen = false;
     M.forEach(function(m, k){ if (m == null) { pen = false; return; } var x = (k + 0.5) / n * W, y = H - 3 - (m - lo) / (hi - lo || 1) * (H - 6); if (!pen) { c.moveTo(x, y); pen = true; } else c.lineTo(x, y); }); c.stroke();
-    c.fillStyle = C.gh; c.globalAlpha = 0.5; this.d.spans.forEach(function(q){ c.fillRect(X(q.t0), 0, Math.max(2, X(q.t1) - X(q.t0)), H); }); c.globalAlpha = 1;
+    c.fillStyle = C.gh; c.globalAlpha = 0.5; this.d.spans.forEach(function(q){ if (q.kind === 'absent') hatch(c, X(q.t0), X(q.t1), 0, H, C.gh); else c.fillRect(X(q.t0), 0, Math.max(2, X(q.t1) - X(q.t0)), H); }); c.globalAlpha = 1;
     c.fillStyle = C.warn; this.d.issues.forEach(function(q){ c.fillRect(X(q.t0) - 1, 0, Math.max(2, X(q.t1) - X(q.t0) + 2), H); });
     c.fillStyle = C.fg4; (this.d.events || []).forEach(function(e){ c.fillRect(Math.round(X(e.t)), 0, 1, 6); });
     if (HOV && HOV.id !== this.id) { c.fillStyle = C.gh; c.fillRect(Math.round(X(HOV.t)), 0, 1.5, H); }

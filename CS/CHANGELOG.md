@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (toggles, 2026-10-14)**
+- Settings (CR10X files, reuse unchanged loggers), Same scale, Station names and the "Only ..." filters are toggles; export and dialog choices stay checkboxes. **Output changes:** none.
+
 **Added (corrections applied, 2026-10-10)**
 - Corrections applied: a chip and pop-up in the top bar list every correction in the last run with counts (core applied.R); output/audit/corrections_applied.csv, also in exports and reports. **Output changes:** new file; period removals name their row in the audit reason.
 

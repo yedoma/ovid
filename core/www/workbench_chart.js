@@ -18,6 +18,13 @@
   function cssv(n, d){ var v = getComputedStyle(document.documentElement).getPropertyValue(n); return v && v.trim() ? v.trim() : d; }
   function lower(a, x){ var lo = 0, hi = a.length; while (lo < hi) { var m = (lo + hi) >> 1; if (a[m] < x) lo = m + 1; else hi = m; } return lo; }
   function arr(x){ return x == null ? [] : (Array.isArray(x) ? x : [x]); }
+  // A stretch with no logger in place ("not deployed", M 14 Oct): grey diagonal hatching across the panel, kept apart from
+  // the solid shading of removed and out-of-water stretches; the label goes on the first panel when there is room.
+  function hatch(c, x0, x1, y, h, col, label, font){ var a = Math.max(x0, -10), b = x1; if (b - a < 1) return; c.save(); c.beginPath(); c.rect(a, y, b - a, h); c.clip();
+    c.strokeStyle = col; c.globalAlpha = 0.4; c.lineWidth = 1.2; c.beginPath(); for (var k = Math.floor((a - h) / 7) * 7; k < b; k += 7) { c.moveTo(k, y + h); c.lineTo(k + h, y); } c.stroke();
+    if (label && b - a > 90) { c.globalAlpha = 0.95; c.fillStyle = col; c.font = font; c.textAlign = 'center'; c.textBaseline = 'top'; var w = c.measureText(label).width + 10, m = (a + b) / 2;
+      c.globalCompositeOperation = 'destination-out'; c.fillRect(m - w / 2, y + 4, w, 15); c.globalCompositeOperation = 'source-over'; c.fillText(label, m, y + 6); }
+    c.restore(); }
   function niceY(lo, hi, n){ var span = hi - lo; if (!(span > 0)) { var a = Math.abs(lo) || 1; lo -= a / 2; hi += a / 2; span = hi - lo; }
     var raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag, s = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = [];
     for (var v = Math.ceil(lo / s) * s; v <= hi + s * 1e-9; v += s) out.push(Math.abs(v) < s * 1e-9 ? 0 : v);
@@ -63,7 +70,7 @@
   P.resize = function(){ var r = this.el.getBoundingClientRect(), d = window.devicePixelRatio || 1; if (r.width < 10 || r.height < 10) return;
     this.W = r.width; this.H = r.height; this.cv.width = Math.round(r.width * d); this.cv.height = Math.round(r.height * d);
     this.cv.style.width = r.width + 'px'; this.cv.style.height = r.height + 'px'; this.ctx.setTransform(d, 0, 0, d, 0, 0); this.draw(); };
-  P.setBase = function(m){ m.series = arr(m.series); m.rem = arr(m.rem); m.pend = arr(m.pend); m.flags = arr(m.flags); m.period = arr(m.period);
+  P.setBase = function(m){ m.spans = arr(m.spans); m.series = arr(m.series); m.rem = arr(m.rem); m.pend = arr(m.pend); m.flags = arr(m.flags); m.period = arr(m.period);
     var keep = !!(this.base && this.view && this.base.key === m.key && this.base.period[0] === m.period[0] && this.base.period[1] === m.period[1]);
     this.base = m; if (!keep) { this.view = m.period.slice(); this.detail = null; } else if (this.detail && this.detail.sig !== m.sig) this.detail = null;
     var g = this.go; if (g && m.series.length && g.t1 >= m.period[0] && g.t0 <= m.period[1]) { this.go = null; keep = false;
@@ -119,6 +126,7 @@
       c.strokeStyle = C.grid; c.lineWidth = 1;
       tk.ticks.forEach(function(t){ var x = Math.round(X(t)) + 0.5; c.beginPath(); c.moveTo(x, pn.y); c.lineTo(x, pn.y + pn.h); c.stroke(); });
       yt.ticks.forEach(function(y){ var yy = Math.round(Y(y)) + 0.5; c.beginPath(); c.moveTo(pn.x, yy); c.lineTo(pn.x + pn.w, yy); c.stroke(); });
+      self.base.spans.forEach(function(q){ if (q.kind !== 'absent' || q.t1 < v0 || q.t0 > v1) return; hatch(c, X(q.t0), X(q.t1), pn.y, pn.h, C.fg3, pn === ps[0] ? 'not deployed' : null, '11px ' + C.sans); });
       var f = self.data('flags', pn.p); if (f) { c.globalAlpha = 0.16; c.fillStyle = C.warn;
         for (var i = 0; i < f.s.length; i++) if (f.e[i] >= v0 && f.s[i] <= v1) c.fillRect(X(f.s[i]), pn.y, Math.max(1, X(f.e[i]) - X(f.s[i])), pn.h); c.globalAlpha = 1; }
       var mine = self.sel.filter(function(x){ return x.p === pn.p; }).sort(function(a, b){ return a.r - b.r; });
@@ -172,8 +180,10 @@
       if (i > 0 && (i >= d.t.length || Math.abs(d.t[i - 1] - t) < Math.abs(d.t[i] - t))) i--; if (tt === null) tt = d.t[i];
       var v = d.v[i], r = this.data('rem', pn.p), old = null; if (r) { var k = lower(r.t, d.t[i]); if (k < r.t.length && r.t[k] === d.t[i]) old = r.v[k]; }
       rows.push('<div><span>' + esc(pn.p) + '</span><b>' + (v == null && old != null ? '\u2715 ' + vtxt(old) : vtxt(v)) + '</b></div>'); }, this);
-    if (tt === null) { tip.style.display = 'none'; return; }
-    tip.innerHTML = '<div class="h">' + ttxt(tt) + (this.base.zone ? ' ' + esc(this.base.zone) : '') + '</div>' + rows.join('');
+    var gap = this.base.spans.filter(function(q){ return q.kind === 'absent' && t >= q.t0 && t <= q.t1; })[0];
+    if (gap) { tip.innerHTML = '<div class="h">' + esc(gap.label || 'Not deployed') + '</div>'; tt = undefined; }
+    else if (tt === null) { tip.style.display = 'none'; return; }
+    else tip.innerHTML = '<div class="h">' + ttxt(tt) + (this.base.zone ? ' ' + esc(this.base.zone) : '') + '</div>' + rows.join('');
     tip.style.display = 'block'; var x = this.hover.x + 14, w = tip.offsetWidth; if (x + w > this.W - 4) x = this.hover.x - w - 14;
     tip.style.left = Math.max(4, x) + 'px'; tip.style.top = Math.max(4, Math.min(this.hover.y - 10, this.H - tip.offsetHeight - 4)) + 'px'; };
   P.pos = function(e){ var r = this.cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };

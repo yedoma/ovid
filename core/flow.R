@@ -184,7 +184,7 @@ review_period_row <- function(r, action, value = "", note = "", author = "")
 
 review_list_ui <- function(id) { ns <- NS(id)
   tagList(div(class = "d-controls", style = "align-items:center",
-      tags$label(class = "tsv-sw", tags$input(type = "checkbox", id = ns("only"), checked = NA), span("Only what needs a look")),
+      tags$label(class = "tsv-sw ovid-sw", tags$input(type = "checkbox", role = "switch", id = ns("only"), checked = NA), span("Only what needs a look")),
       uiOutput(ns("summary"), inline = TRUE)),
     uiOutput(ns("list"))) }
 # items(): the items (above); file(): the path of config/review_decisions.csv. open(row): shows that record at that stretch;

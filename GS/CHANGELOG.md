@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (toggles, 2026-10-14)**
+- QC rules, GPR processing steps, Before / after, Topography, Markers, Legend and the list filters are toggles. **Output changes:** none.
+
 **Renamed (ERT is now GS, 2026-10-14)**
 
 - The app is GS (geophysical surveys), as it now covers GPR as well as resistivity: folder `GS/`, `gs_pipeline.R`,

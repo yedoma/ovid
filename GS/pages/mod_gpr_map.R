@@ -8,7 +8,7 @@ mod_gpr_map_ui <- function(id) {
   tagList(
     ovid_controls(selectInput(ns("ant"), "Antenna", c(All = ""), width = "200px"),
       selectInput(ns("year"), "Year", c(All = ""), width = "120px"),
-      checkboxInput(ns("mk"), "With markers only", FALSE),
+      ovid_switch(ns("mk"), "With markers only", FALSE),
       radioButtons(ns("base"), "Map", c(Satellite = "satellite", Streets = "streets"), inline = TRUE)),
     uiOutput(ns("head")),
     layout_columns(col_widths = c(7, 5),

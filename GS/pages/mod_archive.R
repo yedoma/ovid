@@ -20,7 +20,7 @@ mod_archive_ui <- function(id, sidebar_extra = NULL) {
         selectInput(ns("f_folder"), "Folder", choices = NULL, multiple = TRUE),
         checkboxGroupInput(ns("f_instr"), "Instrument", choices = NULL),
         checkboxGroupInput(ns("f_quality"), "Quality", choices = names(QUALITY_COL)),
-        checkboxInput(ns("f_derived"), "Show copies and processed sets", FALSE),
+        ovid_switch(ns("f_derived"), "Show copies and processed sets", FALSE),
         sidebar_extra),
       card(card_header("Surveys", span(class = "muted float-end", "click rows to select them; double-click a row to open it")),
         div(class = "viewbar",

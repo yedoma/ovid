@@ -5,6 +5,15 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (toggles and not deployed, 2026-10-14)**
+
+- shell.R `ovid_switch()`: a toggle switch (a checkbox input with role="switch", value TRUE/FALSE as before), its state
+  written On or Off (parts.css). Corrections list switches, Explanations, the Standard plot's Smoothing, Ghost and
+  Precipitation and Needs you's "Only what needs a look" are toggles (Plot_table_standards A12).
+- deployments.R `absent_spans()`: the time between a place's deployments; span kind "absent" is hatched grey and labelled
+  "not deployed" in tsview.js and workbench_chart.js (base message `spans`), with a tooltip giving dates, length and loggers.
+- **Output changes:** none.
+
 **Changed (shared items for every app, 2026-10-14)**
 
 - Plots (tsview.js, workbench_chart.js, workbench_xy.js): a drag left to right zooms to the dragged stretch, right to left

@@ -33,8 +33,9 @@
 #                                        A series may also give panel (series naming the same panel share it, each in
 #                                        its colour col, under the panel's label plab), dots = list(list(t, v, kind =
 #                                        "removed" or "flagged", label)): records drawn as grey crosses or gold rings, and
-#                                        marks$text: a label for each mark. spans = data frame t0, t1, label: shaded in
-#                                        grey (out of the water, removed by hand). height: each panel's height.
+#                                        marks$text: a label for each mark. spans = data frame t0, t1, label (and kind): shaded in
+#                                        grey (out of the water, removed by hand); kind "absent" is hatched (not deployed,
+#                                        deployments.R absent_spans()). height: each panel's height.
 #   input$<id>_sel                       the selected stretch, list(t0, t1, key, lo, hi) in seconds, or NULL when there is
 #                                        none; key, lo and hi are the value band's (dragged on a panel's value axis), else NULL
 #   ts_view_close(session, id, t0, t1)   Look closer from the server
@@ -60,14 +61,14 @@ ts_viewbar <- function(precip = FALSE, note = NULL)
     div(class = "tsv-seg", lapply(list(c("half", "half-hourly"), c("raw", "as recorded"), c("hourly", "hourly"), c("daily", "daily"),
                                        c("monthly", "monthly"), c("annual", "annual")),
       function(a) tags$button(type = "button", class = if (a[1] == "half") "on", `data-tsv-agg` = a[1], a[2]))),
-    tags$label(class = "tsv-sw", title = "Draw the line as a smooth spline through the records (display only; the data are not changed)",
-      tags$input(type = "checkbox", `data-tsv-opt` = "spline", checked = NA), span("Smoothing")),
-    tags$label(class = "tsv-sw", title = "Show the raw data faintly behind, where a correction or removal changed them",
-      tags$input(type = "checkbox", `data-tsv-opt` = "ghost", checked = NA), span("Ghost")),
+    tags$label(class = "tsv-sw ovid-sw", title = "Draw the line as a smooth spline through the records (display only; the data are not changed)",
+      tags$input(type = "checkbox", role = "switch", `data-tsv-opt` = "spline", checked = NA), span("Smoothing")),
+    tags$label(class = "tsv-sw ovid-sw", title = "Show the raw data faintly behind, where a correction or removal changed them",
+      tags$input(type = "checkbox", role = "switch", `data-tsv-opt` = "ghost", checked = NA), span("Ghost")),
     tags$label(class = "tsv-sw", title = "The colour of filled (interpolated) records",
       tags$input(type = "color", `data-tsv-opt` = "fill", value = "#5fb3b3"), span("Filled")),
-    if (precip) tags$label(class = "tsv-sw", title = "Precipitation as bars under each plot",
-      tags$input(type = "checkbox", `data-tsv-opt` = "bars", checked = NA), span("Precipitation")),
+    if (precip) tags$label(class = "tsv-sw ovid-sw", title = "Precipitation as bars under each plot",
+      tags$input(type = "checkbox", role = "switch", `data-tsv-opt` = "bars", checked = NA), span("Precipitation")),
     span(class = "dim tsv-agnote", note))
 
 # numbers for the browser: NA as null
@@ -106,7 +107,7 @@ ts_view_send <- function(session, id, t, series, step = NULL, zone = "", issues 
     list(t0 = as.numeric(issues$t0[i]), t1 = as.numeric(issues$t1[i]), label = as.character(issues$label[i] %||% ""), level = as.character(issues$level[i] %||% "warn")))
   bb <- if (!is.null(bars)) list(name = bars$name %||% "Precipitation", unit = bars$unit %||% "mm", t = as.numeric(bars$t), v = .tsv_num(bars$v), file = bars$file %||% "")
   ev <- if (NROW(events)) lapply(seq_len(NROW(events)), function(i) list(t = as.numeric(events$t[i]), label = as.character(events$label[i]), note = as.character(events$note[i] %||% "")))
-  sp <- if (NROW(spans)) lapply(seq_len(NROW(spans)), function(i) list(t0 = as.numeric(spans$t0[i]), t1 = as.numeric(spans$t1[i]), label = as.character(spans$label[i] %||% "")))
+  sp <- if (NROW(spans)) lapply(seq_len(NROW(spans)), function(i) list(t0 = as.numeric(spans$t0[i]), t1 = as.numeric(spans$t1[i]), label = as.character(spans$label[i] %||% ""), kind = as.character(spans$kind[i] %||% "")))
   src <- if (NROW(sources)) { o2 <- order(as.numeric(sources$from)); lapply(o2, function(i) list(from = as.numeric(sources$from[i]), label = as.character(sources$label[i]))) }
   session$sendCustomMessage("tsv", list(id = id, step = if (binned) 1800 else step, binned = binned, zone = zone, series = ser,
                                         issues = iss, wb = wb, bars = bb, focus = if (!is.null(focus)) as.numeric(focus), same = isTRUE(same_scale),

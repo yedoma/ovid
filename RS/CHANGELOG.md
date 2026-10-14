@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (toggles, 2026-10-14)**
+- The Map and Imagery filters and the Workbench's show-done switch are toggles; Leave out on the flight form stays a checkbox (saved with the form). **Output changes:** none.
+
 **Added and changed (RS backlog: list editing, joins, sites, eBee logs and times, photo sets, other geodata, 2026-10-14)**
 - Flights list under the map: select rows, then set site, project, name or positioning (dropdowns of known values, new ones typed), Join into one flight, Move to photo sets or Leave out. Changes wait in one Save bar (Undo, Discard, Save or Cmd/Ctrl+S) and are written to flights.csv at once; leaving with unsaved changes asks first (pages/list_edits.R, pages/fct_edits.R, www/rs_edits.js).
 - A flight joined by hand (flights.csv mission_set) is one row in the list and on the map; its sorties stay separate flights in the catalogue and exports.

@@ -75,7 +75,7 @@ corrections_server <- function(id, cfg_now, settings_file = get0("SETTINGS_FILE"
     t <- corrections_table(cfg, L)
     rows <- lapply(seq_len(nrow(t)), function(i) { x <- L[[i]]
       st <- if (isTRUE(x$panel) && length(x$choices)) selectInput(ns(x$setting), NULL, x$choices, cfg[[x$setting]] %||% x$default %||% x$choices[[1]], width = "100%")
-            else if (isTRUE(x$panel)) checkboxInput(ns(x$setting), "on", isTRUE(cfg[[x$setting]] %||% x$default %||% TRUE), width = "100%")
+            else if (isTRUE(x$panel)) ovid_switch(ns(x$setting), NULL, isTRUE(cfg[[x$setting]] %||% x$default %||% TRUE), width = "100%")
             else span(class = paste0("st-", gsub("[^a-z]", "", t$state[i])), t$state[i])
       tags$tr(tags$td(t$does[i]), tags$td(t$what[i]), tags$td(st), tags$td(class = "text-muted", if (isTRUE(x$panel)) "" else t$where[i])) })
     tags$table(class = "table table-sm d-corr", tags$thead(tags$tr(tags$th("Kind"), tags$th("What the run does"), tags$th("State"), tags$th("Where to change it"))), tags$tbody(rows))

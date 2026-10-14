@@ -295,3 +295,19 @@ dep_splits <- function(d) {
   x[, first := !is.na(t) & !any(is.na(t)) & t == min(t, na.rm = TRUE), by = s]       # a row with no From is the first
   x[!is.na(t) & !first][order(s, t), .(serial, at = format(t, "%Y-%m-%d", tz = "UTC"))]
 }
+
+# The stretches between a place's deployments, when no logger was in place (M 14 Oct: shaded "not deployed" on the plots,
+# never filled). start, end: each deployment's first and last record (POSIXct); who: what names each deployment (its serial);
+# zone: the zone the times are written in, as the plot names it (e.g. "UTC\u22127").
+# Returns t0, t1 (seconds), label (for the tooltip) and kind "absent", the span kind tsview.js and workbench_chart.js hatch.
+absent_spans <- function(start, end, who = NULL, zone = "") {
+  out <- data.table(t0 = numeric(), t1 = numeric(), label = character(), kind = character())
+  d <- data.table(s = as.numeric(start), e = as.numeric(end), w = as.character(who %||% rep("", length(start))))[is.finite(s) & is.finite(e)][order(s)]
+  if (nrow(d) < 2) return(out)
+  d[, last := cummax(e)]
+  g <- d[, .(t0 = shift(last), t1 = s, a = shift(w), b = w)][-1][t1 > t0]
+  if (!nrow(g)) return(out)
+  day <- function(x) format(as.POSIXct(x, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M")
+  len <- function(x) ifelse(x >= 86400, sprintf("%.0f days", x / 86400), sprintf("%.1f h", x / 3600))
+  g[, .(t0, t1, label = paste0("Not deployed: ", day(t0), " to ", day(t1), if (nzchar(zone %||% "")) paste0(" ", zone), " (", len(t1 - t0), ")",
+                               ifelse(nzchar(a) & nzchar(b), paste0(", between ", a, " and ", b), "")), kind = "absent")] }

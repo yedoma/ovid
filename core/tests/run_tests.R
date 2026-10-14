@@ -746,4 +746,11 @@ local({   # yes/no columns, the dataset card and NetCDF import (14 Oct)
           identical(x$qc[c(1, 3)], c(1L, 3L)) && x$units[1] == "degC" && identical(attr(x, "atts")$license, "CC-BY-4.0"))
   } })
 
+local({   # not deployed: the time between a place's deployments (deployments.R absent_spans)
+  t <- as.POSIXct(c("2024-06-01", "2024-09-14", "2024-10-02", "2025-09-10", "2025-08-01"), tz = "UTC")
+  g <- absent_spans(t[c(3, 1)], t[c(4, 2)], c("B", "A"))
+  check("the gap between two deployments is one absent span, in time order, named by both loggers",
+        nrow(g) == 1 && g$t0 == as.numeric(t[2]) && g$t1 == as.numeric(t[3]) && g$kind == "absent" && grepl("(18 days), between A and B", g$label, fixed = TRUE))
+  check("overlapping or single deployments leave no span", !nrow(absent_spans(t[c(1, 5)], t[c(4, 4)])) && !nrow(absent_spans(t[1], t[2]))) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

@@ -33,7 +33,7 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
                  p(class = "muted", "Takes off every flat, continuous reflector, which is what a frost table looks like (GroundVision manual, REFLEXW guide II.4); use the moving mean, or none, when the frost table is the target.")))
   on <- c(dc = isTRUE(d$dc), dewow = isTRUE(d$dewow > 0), t0 = !identical(d$t0, "none"), bp = isTRUE(d$bp), gain = !identical(d$gain, "none"), bg = !identical(d$bg, "none"))
   step <- function(k, i) div(id = ns(paste0("row_", k)), class = "gpr-step", style = sprintf("order:%d", i),
-    div(class = "gpr-step-h", checkboxInput(ns(paste0("on_", k)), NULL, on[[k]]), span(class = "gpr-step-n", GPR_STEPS[[k]]),
+    div(class = "gpr-step-h", ovid_switch(ns(paste0("on_", k)), NULL, on[[k]]), span(class = "gpr-step-n", GPR_STEPS[[k]]),
         span(class = "gpr-step-s", textOutput(ns(paste0("sum_", k)), inline = TRUE)),
         actionLink(ns(paste0("up_", k)), HTML("&#9650;"), class = "gpr-mv", title = "Run earlier"), actionLink(ns(paste0("dn_", k)), HTML("&#9660;"), class = "gpr-mv", title = "Run later")),
     tags$details(tags$summary("settings"), set[[k]]))
@@ -44,7 +44,7 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
       actionButton(ns("save"), "Save flow with this line", class = paste(b[["primary"]], "mb-2")),
       actionButton(ns("undo"), "Undo changes", class = paste(b[["btn"]], "mb-2"), title = "Back to the saved version picked"),
       actionButton(ns("all"), HTML("Apply to all lines&hellip;"), class = paste(b[["btn"]], "mb-2")),
-      checkboxInput(ns("before"), "Before / after", FALSE),
+      ovid_switch(ns("before"), "Before / after", FALSE),
       radioButtons(ns("v"), "Down", c(`Depth (m)` = "depth", `Time (ns)` = "time"), inline = TRUE),
       radioButtons(ns("tool"), "A click", c(Cursor = "cursor", Pick = "pick", `Add marker` = "marker"), inline = TRUE)),
     uiOutput(ns("head")),
@@ -63,7 +63,7 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
         div(class = "mt-2", span(class = "wb-eb", "Display"),
           radioButtons(ns("x"), "Across", c(`Distance (GPS)` = "distance", `Distance (markers)` = "markers", Trace = "trace"), inline = TRUE),
           num("mspace", "Distance between markers (m), for Distance (markers)", NA, 1, "260px"),
-          div(class = "d-flex gap-3", checkboxInput(ns("topo"), "Topography", FALSE), checkboxInput(ns("marks"), "Markers", TRUE)),
+          div(class = "d-flex gap-3", ovid_switch(ns("topo"), "Topography", FALSE), ovid_switch(ns("marks"), "Markers", TRUE)),
           num("zsmooth", "Elevation smoothing (GPS fixes, running median)", 11, 2, "260px", 1),
           sliderInput(ns("clip"), "Colour limit (percentile of amplitude)", min = 0.8, max = 1, value = 0.99, step = 0.005, width = "260px"),
           div(class = "d-flex gap-2", selectInput(ns("scale"), "Colours", names(GPR_SCALES), width = "170px"), num("maxd", "Deepest depth shown (m, 0 = all)", 0, 1, "170px")),

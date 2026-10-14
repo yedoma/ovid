@@ -225,7 +225,9 @@ wb_server <- function(input, output, session, std) {
     r[, .(timestamp = TIMESTAMP, parameter, old_value)] })
   chart_base <- reactive({ d <- per(); ps <- plot_params(); req(length(ps) > 0, nrow(d) > 0); pr <- as.numeric(period())
     x <- wb_chart_data(d, ps, chart_rem(), flagruns(), chart_pend(d, ps), WB_CHART_MAX, units = tryCatch(units(), error = function(e) NULL), limits = tryCatch(limits(), error = function(e) NULL))
-    c(list(type = "base", key = key(), sig = paste(key(), paste(ps, collapse = ","), pr[1], pr[2], x$n, sep = "|"), period = I(pr), zone = zone()), x) })
+    p0 <- part(); sp <- if (identical(p0$kind, "site") && nrow(p0$row)) absent_spans(p0$row$start, p0$row$end, p0$row$serial, zone()) else NULL   # the Whole record: the time between deployments hatched, never filled
+    c(list(type = "base", key = key(), sig = paste(key(), paste(ps, collapse = ","), pr[1], pr[2], x$n, sep = "|"), period = I(pr), zone = zone(),
+           spans = lapply(seq_len(NROW(sp)), function(i) as.list(sp[i]))), x) })
   view_d <- wb_chart_server(input, session, chart_base, function(a, z) { d <- per(); k <- as.numeric(d$TIMESTAMP)
     if (sum(k >= a & k <= z) > WB_DETAIL_MAX) return(NULL)
     dd <- d[k >= a & k <= z]; ps <- plot_params(); wb_chart_data(dd, ps, chart_rem(), flagruns(), chart_pend(dd, ps), Inf) })

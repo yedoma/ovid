@@ -283,7 +283,7 @@ A logger can be redeployed in a new role: a water logger in some years and a bar
 
 ### Whole record: a site across seasons
 
-In the Workbench, a site with more than one deployment has a **Whole record** first in its tree: every deployment there in time order, whichever logger it was, with a `serial` column. The time between deployments is left empty, never filled. A correction made on the Whole record goes to the logger of each row. The Site page opens it. It is the same series the run writes to `output/corrected/<site>.csv`.
+In the Workbench, a site with more than one deployment has a **Whole record** first in its tree: every deployment there in time order, whichever logger it was, with a `serial` column. The time between deployments is left empty, never filled; on the chart it is hatched grey and labelled not deployed (the solid grey stays for removed and out-of-water stretches). A correction made on the Whole record goes to the logger of each row. The Site page opens it. It is the same series the run writes to `output/corrected/<site>.csv`.
 
 ## 7. Compensation: pressure to depth
 
