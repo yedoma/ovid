@@ -18,6 +18,8 @@ has would come out differently, and why. Entries before October 2026 are taken f
 - Processing levels (standards.R): L0 raw, L1A filtered, L1B flagged, L2 QA/QC, L3 refined, L4 derived, from a file's WMO
   codes, review and approval. Dataset card (Settings > Dataset, config/dataset.json) written into NetCDF exports as ACDD
   attributes; `nc_import()` reads CF time series NetCDF (ncdf4, added to the launcher and renv.lock).
+- Fixed: clearing the project folder field no longer closes the open project or saves a blank folder (settings_autosave
+  `required`; CS, WLR, GT fall back on the open project); the field says to type or browse a folder.
 - Fixed: one Standard | Workbench switch in GS and RS (no second Workbench button); the Workbench overview strip waits for
   room instead of failing with "figure margins too large".
 - **Output changes:** NetCDF processing_level now uses the new codes (L1A, L1B ...) and carries the dataset card's

@@ -94,7 +94,7 @@ server <- function(input, output, session, embedded = FALSE) {
   # Browse: the system's folder picker (Finder, Explorer) or the in-app folder browser (Ovid/files.R)
   ovid_browse(input, output, session, c("raw_dirs", "metadata_dir", "dgps_dir", "project_dir"), add = "raw_dirs", places = function() c(Project = SETTINGS$project_dir))
   rv <- reactiveValues(tick = 0, log = character(), stale = FALSE, zoom = NULL, pf = 0, au_rule = NULL)
-  pd <- reactive(sub("[/\\\\]+$", "", path.expand(ovid_project_dir(input$project_dir %||% SETTINGS$project_dir))))   # none set: the default folder (core util.R)
+  pd <- reactive(sub("[/\\\\]+$", "", path.expand(ovid_project_dir(input$project_dir %|% SETTINGS$project_dir))))   # none set: the default folder (core util.R)
   dataset_card_server(input, output, pd)                                    # Settings > Dataset (core shell.R)
   cfgp <- function(what) reactive(cfg_path(pd(), what))
   tick <- reactive(rv$tick); mark <- function() rv$stale <- TRUE

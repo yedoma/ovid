@@ -64,8 +64,11 @@ live_touch <- function() { st <- live_store(); if (!is.null(st)) st$look(); invi
 # The other way too: a setting saved in another window is put into this window's field, so a run started here never writes
 # an old value back. keys: the saved setting each input holds, when its name differs (GS set_project = project_dir);
 # a list setting is shown joined by sep (raw folders one per line, others with commas).
+# required: inputs that are never saved blank (a project folder cleared while typing a new one): the setting and the open
+# project stay as they were, and the field says so, until a folder is typed or browsed to.
 settings_autosave <- function(ids, save, keys = stats::setNames(ids, ids), sep = c(raw_dirs = "\n"), wait = 800,
-                              settings_file = get0("SETTINGS_FILE"), session = shiny::getDefaultReactiveDomain()) {
+                              settings_file = get0("SETTINGS_FILE"), session = shiny::getDefaultReactiveDomain(),
+                              required = intersect(ids, c("project_dir", "set_project"))) {
   if (is.null(session) || isTRUE(get0("VIEWER", inherits = TRUE))) return(invisible())
   keys <- keys[ids]; keys[is.na(keys)] <- ids[is.na(keys)]; names(keys) <- ids
   now <- shiny::debounce(shiny::reactive(lapply(stats::setNames(ids, ids), function(i) session$input[[i]])), wait)
@@ -75,6 +78,9 @@ settings_autosave <- function(ids, save, keys = stats::setNames(ids, ids), sep =
     old <- seen; seen <<- utils::modifyList(seen %||% list(), x)
     if (is.null(old) || !length(x)) return()                           # the values the page opened with
     if (identical(old[names(x)], x)) return()
+    blank <- Filter(function(i) i %in% names(x) && !nzchar(trimws(paste(x[[i]], collapse = ""))), required)
+    if (length(blank)) { if (exists("ovid_field_error", mode = "function")) for (i in blank)
+        ovid_field_error(i, "Type or browse to a project folder. The open project stays as it is until then.", session); return() }
     tryCatch({ save(); if (!is.null(settings_file)) mine <<- settings_read(settings_file)[unname(keys)]; live_touch() },
              error = function(e) shiny::showNotification(paste("The setting was not saved:", conditionMessage(e)), type = "error", duration = NULL)) },
     ignoreInit = FALSE)
@@ -82,6 +88,7 @@ settings_autosave <- function(ids, save, keys = stats::setNames(ids, ids), sep =
     s <- live_settings(settings_file)
     for (i in ids) { k <- keys[[i]]; v <- s[[k]]
       if (is.null(v) || identical(v, mine[[k]]) || is.null(session$input[[i]])) next          # unchanged, or not on this page
+      if (i %in% required && !nzchar(trimws(paste(v, collapse = "")))) next                     # never blank a project folder in another window
       show <- if (is.logical(v) || (is.numeric(v) && length(v) == 1)) v else paste(as.character(v), collapse = if (k %in% names(sep)) sep[[k]] else ", ")
       session$sendInputMessage(i, list(value = show)); mine[k] <<- list(v) }
     }, ignoreInit = TRUE)
