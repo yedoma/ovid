@@ -38,6 +38,10 @@ flight_checks <- function(fl, cal = NULL) {
                 ". Positions: ", num_or(placed), " of ", num_or(n), " placed, from ", from, " (ok at ", ok_pct, " %, look at ", look_pct, " %)",
                 ". Accuracy: ", st, ifelse(is.finite(acc), paste0(", ", acc, " m"), ""), " (corrected = RTK or PPK; standalone worse than ", sa_max, " m is bad)",
                 ". Log: ", ifelse(c_log == "ok", "flight log, mission, MRK, RPT or geotag file found", "no flight log or mission file"), ".")
+  # a photo set (a short run of photos, not a mapping flight) is checked for its images only
+  ps <- if ("kind" %in% names(fl)) as.character(fl$kind) %in% "photo set" else rep(FALSE, nrow(fl))
+  c_clock[ps] <- "ok"; c_pos[ps] <- "ok"; c_acc[ps] <- "ok"; c_log[ps] <- "ok"
+  why[ps] <- paste0("Photo set: checked for its images only (clock, positions, accuracy and log apply to mapping flights). ", why[ps])
   data.table(flight_id = fl$flight_id, n_placed = placed, placed_from = from, placed_pct = round(pct, 1), n_corrected = corrected,
              chk_images = c_images, chk_clock = c_clock, chk_positions = c_pos, chk_accuracy = c_acc, chk_log = c_log, chk_why = why)
 }

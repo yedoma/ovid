@@ -25,9 +25,17 @@ std_pages <- function() list(
         card(card_body(padding = 0, ovid_focus(uiOutput("map_note"), div(id = "rsmap")))),
         card(card_header("Flight"), card_body(uiOutput("detail")))),
       mod_timeline_strip_ui("strip"),                                  # RS/pages/mod_timeline.R: flights by year under the map
-      card(card_header(textOutput("n_shown", inline = TRUE)), DTOutput("flights")))),
+      rs_list_ui())),                                                  # Flights, Photo sets and Other geodata, with the edit and Save bars (below)
   ovid_tool("Timeline", icon = "timeline",
     mod_timeline_ui("timeline"),                                       # RS/pages/mod_timeline.R: sites by year, Set site
+    card(card_header("Site names found in folder names"),               # pages/list_edits.R; saved with the Save bar
+      p(class = "muted", "Names read from folder names that are not known sites (sites.csv), with a suggested known site: the same name in another case, a name within it, or the site whose flights overlap these. Saved to site_names.csv; the next rebuild applies them. A name kept as a site is added to sites.csv."),
+      DTOutput("sn_table"),
+      div(class = "d-flex flex-wrap gap-2 align-items-end mt-2",
+        actionButton("sn_accept", "Use the suggestion", class = "btn-sm mb-3"),
+        div(style = "width:14em", selectizeInput("sn_to", NULL, NULL, options = list(create = TRUE, placeholder = "Known site"))),
+        actionButton("sn_map", "Map to this site", class = "btn-sm mb-3"), actionButton("sn_keep", "Keep as a site", class = "btn-sm mb-3"),
+        actionButton("sn_not", "Not a site", class = "btn-sm btn-outline-danger mb-3"))),
     card(card_header("Coverage by site, year and sensor"), p(class = "muted", "Flights by site, year and sensor (RGB, multispectral, LiDAR) with the finest ground sample distance and the share positioned with RTK or PPK, and the satellite, aerial and LiDAR list by year: where a comparison between years is missing."),
          DTOutput("coverage"))),
   ovid_tool("Flight", icon = "plane",
@@ -42,7 +50,10 @@ std_pages <- function() list(
         DTOutput("links"),
         layout_columns(col_widths = c(6, 3, 3), textInput("l_reason", NULL, placeholder = "Reason (optional)"),
           actionButton("l_confirm", "Confirm link", class = "btn-outline-primary w-100"), actionButton("l_reject", "Reject link", class = "btn-outline-danger w-100")),
-        p(class = "muted", "Confirmed and rejected links are kept in config/links.csv and win over what the scan finds.")))),
+        p(class = "muted", "Confirmed and rejected links are kept in config/links.csv and win over what the scan finds."),
+        h3(class = "mt-3", "Logs no flight has yet"),
+        p(class = "muted", "Flight logs not linked to any flight, from the same aircraft and within a day of this flight (any day when it has no time), the closest photo-tag count first."),
+        DTOutput("log_cands"), actionButton("lc_link", "Link this log", class = "btn-outline-primary btn-sm mt-2")))),
   ovid_tool("Imagery", icon = "satellite",
     layout_sidebar(fillable = FALSE,
       sidebar = sidebar(title = "Satellite, aerial and LiDAR", width = 250,
@@ -100,6 +111,34 @@ std_pages <- function() list(
     p(class = "muted mt-3", "Everything people decide about the archive is kept in tables in config/ in the project folder, and this page edits every one of them; the Flight and Sources pages write some of them too. A saved change applies on the next rebuild, and each save keeps the version before it in config/history."),
     do.call(navset_card_tab, c(list(id = "setup_tab"), lapply(seq_len(nrow(SETUP_TABLES)), function(i)
       nav_panel(SETUP_TABLES$file[i], value = SETUP_TABLES$id[i], p(class = "muted", SETUP_TABLES$help[i]), editUI(SETUP_TABLES$id[i])))))))
+# The lists under the map: Flights (edited in place: select rows, set values, Save once), Photo sets and Other geodata.
+# Every change waits in the Save bar until Save (or Cmd/Ctrl+S); the server is pages/list_edits.R.
+rs_list_ui <- function() tagList(
+  tags$style(HTML(sprintf(".rs-staged{outline:1px solid %s;outline-offset:1px;padding:0 2px}.rs-savebar{position:sticky;bottom:0;z-index:5;padding:8px 12px;margin-top:8px;border-top:2px solid %s;background:%s}.rs-editbar .form-group{margin-bottom:1rem}",
+                          PAL$accent, PAL$accent, PAL$bg1))),
+  tags$script(src = "rs_edits.js"),
+  navset_card_tab(id = "list_tab",
+    nav_panel(textOutput("n_shown", inline = TRUE), value = "flights",
+      div(class = "rs-editbar d-flex flex-wrap gap-2 align-items-end",
+        span(class = "muted", textOutput("ed_n", inline = TRUE)),
+        div(style = "width:11em", selectizeInput("ed_site", NULL, NULL, options = list(create = TRUE, placeholder = "Site"))),
+        div(style = "width:11em", selectizeInput("ed_project", NULL, NULL, options = list(create = TRUE, placeholder = "Project"))),
+        div(style = "width:11em", textInput("ed_name", NULL, placeholder = "Name")),
+        div(style = "width:13em", selectInput("ed_status", NULL, c("Positioning (no change)" = "", "(as found)" = "(as found)", POSITIONING))),
+        actionButton("ed_set", "Set on selected", class = "btn-sm mb-3"),
+        actionButton("ed_join", "Join into one flight", class = "btn-sm mb-3"),
+        actionButton("ed_photoset", "Move to photo sets", class = "btn-sm mb-3"),
+        actionButton("ed_out", "Leave out", class = "btn-sm btn-outline-danger mb-3")),
+      DTOutput("flights")),
+    nav_panel(textOutput("n_photosets", inline = TRUE), value = "photosets",
+      p(class = "muted", textOutput("ps_rule", inline = TRUE)),
+      DTOutput("photosets"), actionButton("ps_back", "Back to flights", class = "btn-sm mt-2")),
+    nav_panel(textOutput("n_geodata", inline = TRUE), value = "geodata",
+      p(class = "muted", "Satellite, aerial, LiDAR, raster and GIS files the scan found, by folder. Remove adds an ignore rule for the folder (file_rules.csv); the files stay where they are and stay in the file audit. Keep marks the folder as looked at."),
+      DTOutput("geodata"),
+      div(class = "d-flex gap-2 mt-2", actionButton("gd_keep", "Keep", class = "btn-sm"), actionButton("gd_remove", "Remove", class = "btn-sm btn-outline-danger"),
+          actionButton("gd_suggested", "Use the suggestion for all shown", class = "btn-sm")))),
+  uiOutput("save_bar"))
 # Parts shown on two pages: on the Standard pages and on the Workbench's Products and STAC export tabs (workbench/wb_project.R),
 # each with its own ids (an id may appear only once in a page); the server fills both (pages/qa.R, pages/set_up_check.R).
 rs_products_ui <- function(tbl) tagList(p(class = "muted", "Products recorded in Set-up tables > products.csv, with their level and how they were made."), DTOutput(tbl))

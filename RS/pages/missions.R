@@ -34,3 +34,14 @@
     x <- C(); x$links <- copy(x$links); x$links[flight_id == l$flight_id[i] & file == l$file[i], `:=`(state = state, evidence = paste0(state, " by ", WHO, if (nzchar(trim(input$l_reason))) paste0(": ", trim(input$l_reason)) else ""))]
     C(x); showNotification(paste("Link", state, "(statuses update on the next rebuild)"), type = "message") }
   observeEvent(input$l_confirm, set_link("confirmed")); observeEvent(input$l_reject, set_link("rejected"))
+
+  # logs no flight has that may be this one's (catalogue/logs.csv; pages/fct_edits.R log_candidates): Link writes links.csv as confirmed
+  lc_cur <- reactive({ f <- cur(); x <- C(); if (is.null(f) || !nrow(f) || is.null(x$logs)) data.table() else log_candidates(f, x$logs) })
+  output$log_cands <- renderDT({ l <- lc_cur(); if (!nrow(l)) return(ovid_dt(data.table(` ` = "None: no log without a flight from this aircraft near this time (rebuild if the catalogue predates the logs list)"), opts = list(dom = "t")))
+    ovid_dt(l[, .(Log = paste0(source_id, ":", rel), `Start (UTC)` = start_utc, `Photo tags` = photos, Decoded = log_decoded)], selection = "single", page = 8, opts = list(dom = "tip")) })
+  observeEvent(input$lc_link, { l <- lc_cur(); i <- input$log_cands_rows_selected; f <- cur(); if (!length(i) || !nrow(l)) return(showNotification("Select a log first", type = "warning"))
+    fref <- paste0(l$source_id[i], ":", l$rel[i]); lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == f$flight_id & file == fref)]
+    lc <- rbind(lc, data.table(flight_id = f$flight_id, file = fref, state = "confirmed", reason = "picked from the logs no flight has", author = WHO, date = format(Sys.Date())), fill = TRUE)
+    write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO)
+    x <- C(); x$logs <- copy(x$logs)[, flight_id := as.character(flight_id)]; x$logs[source_id == l$source_id[i] & rel == l$rel[i], flight_id := f$flight_id]; C(x)
+    showNotification("Log linked (the flight takes its time, track and photo tags on the next rebuild)", type = "message") })

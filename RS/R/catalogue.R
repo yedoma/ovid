@@ -400,6 +400,10 @@ positioning <- function(fl, links, recs, corrected_m = CORRECTED_M) {
   # a flight whose camera clock is unusable (the Canon S110) takes its time from the flown track eMotion exported, when linked
   for (v in c("kml_start_utc", "kml_end_utc")) if (!v %in% names(fl)) fl[, (v) := NA_character_]
   fl[, time_source := fifelse(is.na(start_utc), "", "camera")]
+  # a camera clock never set (a compact camera at its factory date) is further from the flown track's GNSS time than any time
+  # zone explains (CLOCK_LOG_TOL_H, R/emotion_catalogue.R): the track's time is used, and a decoded log's wins over both
+  off_k <- abs(as.numeric(difftime(fl$start_utc, as.POSIXct(fl$kml_start_utc, tz = "UTC"), units = "hours")))
+  fl[time_source == "camera" & is.finite(off_k) & off_k > CLOCK_LOG_TOL_H, `:=`(clock_ok = FALSE, start_utc = NA)]
   fl[is.na(start_utc) & !is.na(kml_start_utc), `:=`(start_utc = as.POSIXct(kml_start_utc, tz = "UTC"), end_utc = as.POSIXct(kml_end_utc, tz = "UTC"), time_source = "flown track (KML)")]
   # the linked senseFly log: its time span, track extent and photo tags, and the eMotion mission block (R/emotion_catalogue.R)
   fl <- emotion_flight_fields(fl, ok, recs$emotion %||% list())

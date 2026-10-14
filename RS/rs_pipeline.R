@@ -197,17 +197,29 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
 
   say("[5/5] Writing the catalogue", col = "accent")
   new <- setdiff(fl$flight_id, cfgs$flights$flight_id)
-  if (length(new)) { cfgs$flights <- rbind(cfgs$flights, ensure_cols(data.table(flight_id = new), FLIGHT_COLS)[, ..FLIGHT_COLS])
-    write_cfg(cfgs$flights, cfg$project_dir, "flights") }
+  fp <- cfg_path(cfg$project_dir, "flights"); old_cols <- if (file.exists(fp)) names(fread(fp, nrows = 0L)) else character()
+  if (length(new) || !all(FLIGHT_COLS %in% old_cols)) {                  # new flights, or columns added since the file was made (kind)
+    if (length(new)) cfgs$flights <- rbind(cfgs$flights, ensure_cols(data.table(flight_id = new), FLIGHT_COLS)[, ..FLIGHT_COLS])
+    write_cfg(cfgs$flights[, ..FLIGHT_COLS], cfg$project_dir, "flights") }
   base <- to_base(fl$start_utc, 0)                           # the project's base zone (Settings), as the other apps
   fl[, `:=`(year = as.integer(format(base, "%Y")), date = format(base, "%Y-%m-%d"), start = fmt_ts(base),
-            duration_min = round(as.numeric(difftime(end_utc, start_utc, units = "mins")), 1), site_found = site_of(folder))]
+            duration_min = round(as.numeric(difftime(end_utc, start_utc, units = "mins")), 1), site_folder = site_of(folder))]
+  fl[, site_found := site_apply_names(site_folder, cfgs$site_names)]   # names found in folders, mapped to known sites (config/site_names.csv)
   out <- merge(fl, cfgs$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
   out[, site := fifelse(!is.na(site) & nzchar(site), site, site_found)]
   out[, positioning_status := fifelse(!is.na(positioning_status) & nzchar(positioning_status), positioning_status, positioning_found)]
   out[cfgs$sites, project_site := i.project, on = "site"]
   out[, project := fifelse(!is.na(project) & nzchar(project), project, fifelse(is.na(project_site), "", project_site))][, project_site := NULL]
-  out <- group_missions(out, links)                          # sorties of one survey (battery swaps, two flights on one battery)
+  # a short run of photos (an oblique view, a site photo) is a photo set, not a mapping flight: kept out of missions and
+  # not checked as a flight (pages/fct_checks.R); people's choice (flights.csv kind) wins
+  ps_max <- lim("photoset_max_images", 20)
+  out[, kind_found := fifelse(suppressWarnings(as.numeric(n_images)) < ps_max, "photo set", "flight")]
+  if (!"kind" %in% names(out)) out[, kind := NA_character_]
+  out[, kind := fifelse(!is.na(kind) & tolower(trimws(kind)) %in% c("flight", "photo set"), tolower(trimws(kind)), kind_found)]
+  ps <- out[kind == "photo set"]
+  out <- group_missions(out[kind != "photo set"], links)     # sorties of one survey (battery swaps, two flights on one battery)
+  if (nrow(ps)) out <- rbind(out, ps[, `:=`(mission = paste0("MIS-", vapply(flight_id, function(x) substr(hash_of(list(x)), 1, 8), "")), mission_part = 1L, mission_parts = 1L,
+                                            mission_status = "single", mission_evidence = "photo set")], fill = TRUE)
   # multispectral flights: reflectance is comparable only with a calibration panel (and helped by an irradiance sensor)
   if ("multispectral" %in% names(out)) { for (k in c("panel_id", "panel_capture")) if (!k %in% names(out)) out[, (k) := ""]
     out[multispectral %in% TRUE & (is.na(panel_id) | !nzchar(panel_id)), qa_flags := fifelse(is.na(qa_flags) | !nzchar(qa_flags), "multispectral: no calibration panel recorded",
@@ -223,7 +235,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
              "has_log", "placed_from", "has_geotags", "has_mrk", "has_rpt", "has_gnss_obs", "has_lidar_raw", "has_mission", "copies", "qa_flags")
   setcolorder(out, intersect(first, names(out))); setorder(out, year, date, start, na.last = TRUE)
   out[, `:=`(start_utc = fmt_ts(start_utc), end_utc = fmt_ts(end_utc))]
-  fwrite(out, file.path(catd, "flights.csv")); fwrite(links, file.path(catd, "links.csv")); fwrite(A$scanned, file.path(catd, "sources.csv")); fwrite(geo, file.path(catd, "geometry.csv"))
+  fwrite(out, file.path(catd, "flights.csv")); fwrite(links, file.path(catd, "links.csv")); fwrite(log_table(A$records$emotion$logs, links), file.path(catd, "logs.csv")); fwrite(A$scanned, file.path(catd, "sources.csv")); fwrite(geo, file.path(catd, "geometry.csv"))
   fwrite(A$files[, .(source_id, rel, format, family, role, status, size, mtime = fmt_ts(mtime))], file.path(catd, "files.csv"))
   for (k in c("focal_mm", "exposure_s", "gsd_cm", "speed_ms", "blur_px", "fwd_overlap_pct", "sun_elev_deg")) if (!k %in% names(b$images)) set(b$images, j = k, value = NA_real_)
   fwrite(b$images[, .(source_id, rel, flight_id, primary, time_utc = fmt_ts(time_utc), lat, lon, alt, alt_rel, rtk_flag, acc_xy, sensor, camera_serial, size, focal_mm, exposure_s, gsd_cm, speed_ms, blur_px, fwd_overlap_pct, sun_elev_deg)], file.path(catd, "images.csv"))

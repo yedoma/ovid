@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added and changed (RS backlog: list editing, joins, sites, eBee logs and times, photo sets, other geodata, 2026-10-14)**
+- Flights list under the map: select rows, then set site, project, name or positioning (dropdowns of known values, new ones typed), Join into one flight, Move to photo sets or Leave out. Changes wait in one Save bar (Undo, Discard, Save or Cmd/Ctrl+S) and are written to flights.csv at once; leaving with unsaved changes asks first (pages/list_edits.R, pages/fct_edits.R, www/rs_edits.js).
+- A flight joined by hand (flights.csv mission_set) is one row in the list and on the map; its sorties stay separate flights in the catalogue and exports.
+- Photo sets: a run of fewer than photoset_max_images (calibration table, default 20, no published source) is a photo set, on its own tab, kept out of missions and checked for its images only; flights.csv kind wins.
+- Other geodata tab: satellite, aerial, LiDAR, raster and GIS files by folder, with Keep or Remove (an ignore rule in file_rules.csv; kept folders in review_decisions.csv). No position or far from the flights is suggested for removal.
+- Site names found card on the Timeline: names read from folder names, with a suggested known site (same name in another case, a name within it, a name several flights use, or a sites.csv site whose coordinates the flights cover). Saved to the new config/site_names.csv (blank site = not a site) and applied by the next rebuild; names kept as sites go into sites.csv.
+- Flight page lists the logs no flight has yet from the same aircraft near the flight's time, closest photo-tag count first, with Link this log; the catalogue writes catalogue/logs.csv. The detail panel shows the flight log and KML start times.
+- Times: a decoded flight log's GNSS time now wins over eMotion's KML; a camera clock more than 14 h from the log or the KML (the widest UTC offset) is treated as never set and the GNSS time is used.
+
+**Output changes:** in the current archive, 5 Canon S110 NIR flights (351-356) take the log's start time (about a minute earlier than the KML's); the two Sony WX220 flights at the factory date 2013-12-31 move to 2015-08-28 and 2015-08-29; 17 flights become photo sets and leave mission grouping (uncertain groupings fall from 13 to 6). flights.csv gains a kind column.
+
 **Changed (one review list, project menu, time zone, 2026-10-09)**
 - The project menu is in the top bar and in the Workbench; Settings lists the projects (moved from Sources); opening a project loads all its settings.
 - The Workbench grouping reads "Group flights by" and "No flights yet".

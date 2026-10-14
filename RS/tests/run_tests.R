@@ -506,6 +506,55 @@ local({                                                               # the set-
   sc <- setup_check(cf)
   check(sum(sc$area == "GNSS bases") == 2 && any(sc$area == "Drone cameras" & grepl("perhaps", sc$problem)), "the set-up check reads the GNSS bases' method and post_processed, and drone yes or no")
 })
+local({                                                               # an eBee flight's time: the decoded log wins over KML and an unset camera clock
+  t <- function(x) as.POSIXct(x, tz = "UTC")
+  fl <- data.table(flight_id = c("a", "b", "c", "d"), n_images = 10, clock_ok = c(TRUE, TRUE, FALSE, TRUE), lat_min = 1, lat_max = 1, lon_min = 1, lon_max = 1,
+                   start_utc = t(c("2013-12-31 17:00:00", "2026-09-07 04:30:00", "2026-09-07 10:26:00", NA)), end_utc = t(c("2013-12-31 17:20:00", "2026-09-07 04:50:00", "2026-09-07 10:41:00", NA)),
+                   time_source = c("camera", "camera", "flown track (KML)", ""))
+  lg <- data.table(source_id = "S", rel = paste0(c("a", "b", "c", "d"), ".bb3"), log_file = paste0(c("a", "b", "c", "d"), ".bb3"), log_kind = "bb3", log_decoded = TRUE, log_note = "",
+                   log_start_utc = t(c("2015-08-29 18:00:00", "2026-09-07 11:24:00", "2026-09-07 11:24:00", "2026-09-07 12:00:00")), log_end_utc = t(c("2015-08-29 18:20:00", "2026-09-07 11:44:00", "2026-09-07 11:52:00", "2026-09-07 12:20:00")),
+                   log_photos = 10L, log_track_points = 5L, log_size = 1, log_id = c("a", "b", "c", "d"))
+  ok <- data.table(flight_id = c("a", "b", "c", "d"), source_id = "S", rel = lg$rel, format = "sensefly_log")
+  r <- emotion_flight_fields(fl, ok, list(logs = lg))
+  check(r[flight_id == "a"]$time_source == "flight log" && !r[flight_id == "a"]$clock_ok && grepl("camera clock 606 days off the flight log", r[flight_id == "a"]$emo_qa) &&
+        r[flight_id == "a"]$start_utc == lg$log_start_utc[1], "a camera clock never set (factory date) gives way to the flight log's time")
+  check(r[flight_id == "b"]$time_source == "camera" && r[flight_id == "b"]$clock_ok, "a camera clock in local time (7 h off) is kept")
+  check(r[flight_id == "c"]$time_source == "flight log" && r[flight_id == "c"]$start_utc == lg$log_start_utc[3], "the flight log's time wins over the KML's")
+  check(r[flight_id == "d"]$time_source == "flight log", "a flight with no time takes the log's")
+})
+local({                                                               # editing from the Flights list (pages/fct_edits.R), without the app
+  source(file.path(here, "pages", "fct_checks.R"), local = TRUE); source(file.path(here, "pages", "fct_edits.R"), local = TRUE)
+  fl <- data.table(flight_id = c("f1", "f2", "f3", "f4"), name = c("a", "b", "c", "d"), site = c("PBOG", "Disher PBog", "msp", ""), site_folder = c("PBOG", "Disher PBog", "msp", ""),
+                   site_found = c("PBOG", "Disher PBog", "msp", ""), positioning_found = "unknown", positioning_status = "unknown", project = c("P1", "", "P2", ""),
+                   n_images = c(100, 7, 50, 3), size_gb = 1, start = c("2020-08-24 10:12", "2020-08-24 10:31", "2020-09-01 09:00", "2020-09-02 09:00"),
+                   lat_min = c(61, 61, 61.30, 50), lat_max = c(61.1, 61.1, 61.35, 50.1), lon_min = c(-121, -121, -121.2, -100), lon_max = c(-120.9, -120.9, -121.1, -99.9),
+                   mission_set = c("Summer 24 Aug", "Summer 24 Aug", "", ""), display_name = "")
+  st <- edit_stage(edit_empty(), c("f1", "f2"), "site", "Pbog"); st <- edit_stage(st, "f3", "project", "P9"); st <- edit_stage(st, "f1", "site", "GooseLake")
+  check(edit_count(st) == 3 && edit_final(st)[flight_id == "f1" & col == "site"]$value == "GooseLake" && edit_count(edit_undo(st)) == 3 &&
+        edit_final(edit_undo(st))[flight_id == "f1"]$value == "Pbog", "staged edits: the latest step wins a cell, Undo takes back the last step")
+  cf <- edit_apply(data.table(flight_id = "f1", site = "old"), st)
+  check(nrow(cf) == 3 && cf[flight_id == "f1"]$site == "GooseLake" && cf[flight_id == "f3"]$project == "P9" && all(FLIGHT_COLS %in% names(cf)), "staged edits saved to flights.csv in one write, rows added as needed")
+  v <- edit_view(fl, edit_stage(st, "f2", "site", ""))
+  check(v[flight_id == "f1"]$site == "GooseLake" && v[flight_id == "f2"]$site == "Disher PBog" && identical(edit_choices(fl, "site", data.table(site = "Zeta")), c("Zeta", "Disher PBog", "msp", "PBOG")),
+        "the list shows staged values (blank = as found); the site dropdown offers known sites first")
+  j <- fold_joined(fl)
+  check(nrow(j) == 3 && j[flight_id == "f1"]$n_images == 107 && j[flight_id == "f1"]$parts == 2 && j[flight_id == "f1"]$name == "Summer 24 Aug", "a joined flight is one row: images summed, named by the join")
+  sg <- site_suggest(fl, data.table(site = c("Pbog", "Lake"), latitude = c(NA, 61.32), longitude = c(NA, -121.15)), data.table(found = "msp", site = ""))
+  check(sg[found == "PBOG"]$suggested == "Pbog" && sg[found == "Disher PBog"]$suggested == "Pbog" && sg[found == "msp"]$mapped == "(not a site)" && sg[found == "msp"]$suggested == "Lake" && sg[found == ""]$flights == 1,
+        "site names found: the same name in another case or within the name is suggested; a name marked not a site says so")
+  check(identical(site_apply_names(c("PBOG", "msp", "Lake"), data.table(found = c("pbog", "MSP"), site = c("Pbog", ""))), c("Pbog", "", "Lake")), "site names found are mapped on the next scan (blank = not a site)")
+  check(nrow(sites_add(data.table(site = "Pbog"), c("pbog", "GooseLake"))) == 2 && nrow(site_names_set(data.table(found = "PBOG", site = "x", note = ""), "pbog", "Pbog")) == 1, "known sites and site names are added once")
+  lg <- data.table(source_id = "S", rel = c("a.bb3", "b.bb3", "c.bb3", "d.bb3"), serial = c("EP-1", "EP-1", "EP-2", "EP-1"), photos = c(110, 0, 111, 230),
+                   start_utc = c("2026-09-04 17:00:00", "2026-09-04 17:12:00", "2026-09-04 17:00:00", "2026-09-07 11:24:00"), flight_id = c(NA, NA, NA, "f9"))
+  lc <- log_candidates(data.table(aircraft_serial = "EP-1", start_utc = NA, n_images = 111), lg)
+  check(identical(lc$rel, c("a.bb3", "b.bb3")), "logs offered to an undated flight: no flight yet, same aircraft, closest photo count first")
+  ck <- flight_checks(data.table(flight_id = "p", n_images = 4, kind = "photo set", clock_ok = FALSE, positioning_status = "unknown"))
+  check(ck$chk_positions == "ok" && ck$chk_log == "ok" && grepl("Photo set", ck$chk_why), "a photo set is checked for its images only")
+  gd <- geodata_folders(data.table(source_id = "S", folder = c("CT", "CT", "Sat"), kind = "raster", lat_min = c(NA, NA, 61), lat_max = c(NA, NA, 61.1), lon_min = c(NA, NA, -121), lon_max = c(NA, NA, -120.9)),
+                        data.table(source_id = "S", folder = "far", lat_min = 10, lat_max = 11, lon_min = 10, lon_max = 11), fl)
+  check(gd[folder == "CT"]$files == 2 && gd[folder == "CT"]$suggest == "remove" && gd[folder == "Sat"]$suggest == "keep" && gd[folder == "far"]$where == "far from the flights" &&
+        grepl("CT/", geodata_rule("CT")$pattern), "other geodata by folder: no position or far from the flights suggested for removal, as an ignore rule")
+})
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(RS_PROJECT_DIR = proj, RS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))

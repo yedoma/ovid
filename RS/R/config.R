@@ -26,8 +26,12 @@ PAL <- app_palette(APP_SCHEME)
 # source_id is a short name used in cache and catalogue paths; path is where the source is mounted on this computer.
 SOURCE_COLS    <- c("source_id", "path", "label", "notes")
 FLIGHT_COLS    <- c("flight_id", "display_name", "project", "site", "positioning_status", "status_note", "notes", "exclude_from_archive", "mission_set",
-                    "panel_id", "panel_capture")      # multispectral: the calibration panel (serial or ID) and when it was imaged
+                    "panel_id", "panel_capture",      # multispectral: the calibration panel (serial or ID) and when it was imaged
+                    "kind")                           # flight or photo set (blank: as found, by photoset_max_images)
 SITE_COLS      <- c("site", "project", "latitude", "longitude", "region", "notes")
+# Site names found in folder names (found) and the known site each means (site); a blank site says the name is not a site
+# (a band folder such as msp, a person's name). The scan applies them (site_apply_names); the Timeline's Site names card writes them.
+SITE_NAME_COLS <- c("found", "site", "note")
 FILE_RULE_COLS <- c("pattern", "action", "reason")     # action: ignore (the file stays listed) or a role from FORMATS
 LINK_COLS      <- c("flight_id", "file", "state", "reason", "author", "date")   # state: confirmed or rejected; file = source_id:rel
 PRODUCT_COLS   <- c("product_id", "kind", "file", "flights", "software", "version", "parameters", "gcps", "checkpoints", "rmse_h_m", "rmse_v_m",
@@ -82,6 +86,7 @@ RS_CALIBRATION <- rbindlist(list(
   list("min_sun_elev_deg", "Lowest sun elevation", "deg", "", "no well-cited fixed minimum; shadow lowers NIR in boreal peatland (Chasmer et al. 2011)", "", ""),
   list("check_placed_ok_pct", "Positions check: placed for ok", "%", "95", "Ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
   list("check_placed_look_pct", "Positions check: placed for look (below: bad)", "%", "50", "Ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
+  list("photoset_max_images", "Photo set: a run of fewer images than this", "images", "20", "Ovid default; no published threshold; set your own. A photo set is kept apart from mapping flights and is not checked as one", "", ""),
   list("check_standalone_max_m", "Accuracy check: worst standalone accuracy for look (above: bad)", "m", "5", "standalone GNSS geotags are good to 2-5 m (see geotag_corrected_m); worse suggests a bad fix", "", "")))
 setnames(RS_CALIBRATION, c("value", "label", "unit", "default_number", "default_source", "scotty_number", "scotty_source"))
 RS_CALIBRATION[, `:=`(app = "RS", allowed = "", notes = "")]; setcolorder(RS_CALIBRATION, CALIB_CATALOGUE_COLS)
@@ -90,6 +95,7 @@ CONFIG_FILES <- list(
   sources    = list(file = "sources.csv",    cols = SOURCE_COLS,    label = "Archive sources"),
   flights    = list(file = "flights.csv",    cols = FLIGHT_COLS,    label = "Flights"),
   sites      = list(file = "sites.csv",      cols = SITE_COLS,      label = "Sites"),
+  site_names = list(file = "site_names.csv", cols = SITE_NAME_COLS, label = "Site names found"),
   links      = list(file = "links.csv",      cols = LINK_COLS,      label = "Confirmed and rejected links"),
   file_rules = list(file = "file_rules.csv", cols = FILE_RULE_COLS, label = "File rules"),
   timezones  = list(file = "timezones.csv",  cols = TZ_COLS,        label = "Time zones"),
@@ -97,3 +103,12 @@ CONFIG_FILES <- list(
   gnss_bases = list(file = "gnss_bases.csv", cols = GNSS_BASE_COLS, label = "GNSS bases"),
   drone_cameras = list(file = "drone_cameras.csv", cols = DRONE_CAMERA_COLS, label = "Drone cameras", default = function() drone_cameras_default()),
   calibration = calibration_config(RS_CALIBRATION))   # Ovid/timezones.R: camera clocks
+
+# Site names found in folder names, mapped through config/site_names.csv (found -> site; any case): a blank site there means
+# the name is not a site. Names with no row are kept as found.
+site_apply_names <- function(found, names) {
+  if (is.null(names) || !nrow(names)) return(found)
+  k <- match(tolower(trimws(found)), tolower(trimws(as.character(names$found))))
+  to <- trimws(as.character(names$site))[k]; to[is.na(to)] <- ""
+  ifelse(is.na(k), found, to)
+}

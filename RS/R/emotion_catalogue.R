@@ -9,6 +9,10 @@
 # key, .bb3 logs are listed but not read, and the flight says so in its QA flags.
 
 EMO_TRACK_POINTS <- 300L                                       # track points kept per log for the map
+# A camera time further from its decoded flight log than any time zone can explain is a clock that was never set (the Canon
+# S110 NIR, a compact camera still at its factory date). Civil time zones run from UTC-12 to UTC+14 (IANA time zone
+# database), so a local camera clock is at most 14 h off the log's GNSS time.
+CLOCK_LOG_TOL_H <- 14
 
 emotion_thin <- function(d, n = EMO_TRACK_POINTS) if (nrow(d) > n) d[unique(round(seq(1, nrow(d), length.out = n)))] else d
 
@@ -167,7 +171,13 @@ emotion_flight_fields <- function(fl, ok, emo) {
   if ("c_lat" %in% names(fl)) fl[, c("c_lat", "c_lon") := NULL]
   if (!is.null(gt) && nrow(gt)) fl[gt[, .(n = .N), by = log_file], on = "log_file", plan_photos := i.n]
   fl[, time_source := if ("time_source" %in% names(fl)) time_source else fifelse(is.na(start_utc), "", "camera")]
-  fl[is.na(start_utc) & !is.na(log_start_utc), `:=`(start_utc = log_start_utc, end_utc = log_end_utc, time_source = "flight log")]
+  # the decoded log's GNSS time wins over eMotion's KML export and over a camera clock that was never set
+  off_h <- abs(as.numeric(difftime(fl$start_utc, fl$log_start_utc, units = "hours")))
+  unset <- which(fl$time_source == "camera" & is.finite(off_h) & off_h > CLOCK_LOG_TOL_H)
+  if (length(unset)) fl[unset, `:=`(clock_ok = FALSE, emo_qa = paste0(fifelse(nzchar(emo_qa), paste0(emo_qa, "; "), ""), "camera clock ",
+                                    fifelse(off_h[unset] >= 48, paste(round(off_h[unset] / 24), "days"), paste(round(off_h[unset]), "h")), " off the flight log"))]
+  fl[!is.na(log_start_utc) & (is.na(start_utc) | time_source == "flown track (KML)" | seq_len(.N) %in% unset),
+     `:=`(start_utc = log_start_utc, end_utc = log_end_utc, time_source = "flight log")]
   fl[!is.finite(lat_min) & is.finite(log_lat_min), `:=`(lat_min = log_lat_min, lat_max = log_lat_max, lon_min = log_lon_min, lon_max = log_lon_max)]
   # photo tags against the flight's captures (a multispectral capture is several images); small differences are test shots
   nc <- if ("n_captures" %in% names(fl)) fl$n_captures else if ("n_images" %in% names(fl)) fl$n_images else NULL
@@ -214,4 +224,16 @@ emotion_duplicates <- function(fl, emo) {
   v <- lg[ref == kept][, if (uniqueN(log_id) > 1L) { k <- ref[ref %in% used][1]; if (is.na(k)) k <- ref[which.max(log_size)]
          .(kind = "flight log", key = log_file, kept_path = k, dup_path = setdiff(ref, k), why = "same flight, other version") }, by = log_file]
   rbind(out, same, if (nrow(v)) v[, .(kind, key, kept_path, dup_path, why)], fill = TRUE)
+}
+
+# Every flight log with its time, photo tags and the flight it is linked to (catalogue/logs.csv), so the Flight page can offer
+# a flight the logs that no flight has yet.
+LOG_TABLE_COLS <- c("source_id", "rel", "log_file", "log_kind", "log_decoded", "start_utc", "end_utc", "photos", "serial", "flight_no", "flight_id")
+log_table <- function(lg, links) {
+  if (is.null(lg) || !nrow(lg)) return(ensure_cols(data.table(), LOG_TABLE_COLS)[0])
+  d <- lg[log_kind != "link", .(source_id, rel, log_file, log_kind, log_decoded, start_utc = fmt_ts(log_start_utc), end_utc = fmt_ts(log_end_utc), photos = log_photos)]
+  e <- ebee_flight_no(d$log_file); d[, `:=`(serial = e$serial, flight_no = e$no)]
+  ok <- if (!is.null(links) && nrow(links)) links[state %in% c("auto", "probable", "confirmed") & format == "sensefly_log", .(flight_id = flight_id[1]), by = .(source_id, rel)]
+  d <- if (!is.null(ok) && nrow(ok)) merge(d, ok, by = c("source_id", "rel"), all.x = TRUE) else d[, flight_id := NA_character_]
+  d[, LOG_TABLE_COLS, with = FALSE][order(serial, flight_no, rel)]
 }

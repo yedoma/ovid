@@ -3,11 +3,12 @@
 # Every table in config/ (CONFIG_FILES), each with the editor shared by all the apps (core/editor.R) on the Set-up tables
 # page. Both interfaces build their editors from this list, and the Workbench writes its corrections through them. A saved
 # change applies on the next rebuild (a rebuild reads no source: it uses each source's last scan).
-SETUP_TABLES <- data.table(id = c("flights", "links", "sites", "file_rules", "timezones", "sources", "products", "gnss_bases", "calibration", "drone_cameras"))
+SETUP_TABLES <- data.table(id = c("flights", "links", "sites", "site_names", "file_rules", "timezones", "sources", "products", "gnss_bases", "calibration", "drone_cameras"))
 SETUP_TABLES[, `:=`(file = vapply(id, function(k) CONFIG_FILES[[k]]$file, ""), label = vapply(id, function(k) CONFIG_FILES[[k]]$label, ""),
   help = c("What people decide about each flight: its name, project, site, positioning status (with the reason for changing it), notes, whether it is left out of the archive, and its mission. The Flight page writes these.",
            "Links between flights and files confirmed or rejected by hand (file is source_id:rel); they win over what the scan finds. The Flight page writes these.",
            "Sites: their project and where they are.",
+           "Site names found in folder names and the known site each means; a blank site says the name is not a site (a band folder, a person). The Timeline's Site names card writes these; the next rebuild applies them.",
            "File rules: a pattern of paths (relative to the source) and the action: ignore, or a role. An ignore rule applies on the next rebuild; a role, or a rule taken out, applies when the source is scanned again. The Workbench writes ignore rules.",
            "Camera clocks without a zone: the offset from UTC by camera serial, model, folder or file, and period (core/timezones.R).",
            "The drives and folders the archive is built from. The Sources page adds them when it scans one.",

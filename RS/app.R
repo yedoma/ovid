@@ -59,6 +59,7 @@ source(file.path(APP_DIR, "pages", "utils_tables.R"), local = TRUE)
 
 source(file.path(APP_DIR, "pages", "utils_setup.R"), local = TRUE)
 source(file.path(APP_DIR, "pages", "fct_checks.R"), local = TRUE)          # RS/pages/fct_checks.R: placed, corrected and the five checks
+source(file.path(APP_DIR, "pages", "fct_edits.R"), local = TRUE)           # RS/pages/fct_edits.R: list edits, joins, site names, logs, other geodata
 source(file.path(APP_DIR, "pages", "mod_flight_summary.R"), local = TRUE)  # RS/pages/mod_flight_summary.R: the summary cards (a module)
 source(file.path(APP_DIR, "pages", "fct_timeline.R"), local = TRUE)        # RS/pages/fct_timeline.R: flights by site and year, Set site
 source(file.path(APP_DIR, "pages", "mod_timeline.R"), local = TRUE)        # RS/pages/mod_timeline.R: the Timeline page and the strip (modules)
@@ -90,7 +91,9 @@ server <- function(input, output, session, embedded = FALSE) {
   # no catalogue yet (first start, nothing scanned): an empty table with the columns the pages use, so every page still draws
   NO_FLIGHTS <- data.table(flight_id = character(), date = character(), name = character(), aircraft = character(), sensor = character(), n_images = integer(),
                            n_copies = integer(), size_gb = numeric(), positioning_status = character(), qa_flags = character(), source_id = character(), folder = character(),
-                           year = character(), site = character(), lat_min = numeric(), lon_min = numeric(), lat_max = numeric(), lon_max = numeric())
+                           year = character(), site = character(), lat_min = numeric(), lon_min = numeric(), lat_max = numeric(), lon_max = numeric(),
+                           kind = character(), kind_found = character(), project = character(), start = character(), duration_min = numeric(), mission_set = character(),
+                           display_name = character(), notes = character())
   fl <- reactive({ x <- C(); if (is.null(x)) NO_FLIGHTS else x$flights })
 
   observe({ f <- fl(); if (!nrow(f)) return()
@@ -115,7 +118,6 @@ server <- function(input, output, session, embedded = FALSE) {
       if (!E$flights$mutate(function(d) as.data.frame(flights_set_site(as.data.table(d), id, site)))) stop("flights.csv was not saved: see the message about it.")
       show_edit(id, flight_row(id)) },                                         # the whole saved row, so a hand-set status stays
     open_flight = function(id) { sel(id); nav_select("nav", "Flight") })
-  output$n_shown <- renderText(sprintf("%s of %s flights", num(nrow(shown())), num(nrow(fl()))))
   output$made <- renderText({ x <- C(); if (is.null(x)) "no catalogue yet" else paste("catalogue", format(x$made, "%Y-%m-%d %H:%M"), "\u00b7", CFG$project_dir) })
 
   # the map: everything shown, plus plans and receivers tied to no flight
@@ -129,7 +131,7 @@ server <- function(input, output, session, embedded = FALSE) {
     div(class = "map-note", span(paste0("Not drawn yet: ", paste(num(h), names(h), collapse = ", "), ". Narrow the filters to draw them, or ")),
         actionLink("m_all", "draw everything"), span(" (slow with a large archive).")) })
   observeEvent(input$m_all, mall(TRUE))
-  observe({ f <- shown(); x <- isolate(C()); if (is.null(x)) return()
+  observe({ f <- fold_joined(le_view()); x <- isolate(C()); if (is.null(x)) return()      # a joined flight is one (pages/list_edits.R)
     if (over("flights", nrow(f))) f <- f[0]
     g <- if (nrow(x$geometry)) x$geometry[kind != "derived" & (is.na(flight_id) | flight_id == "" | flight_id %in% f$flight_id)] else data.table()
     p <- x$points[flight_id %in% f$flight_id]
@@ -140,21 +142,13 @@ server <- function(input, output, session, embedded = FALSE) {
       points = lapply(split(p[, .(lat, lon)], p$flight_id), function(d) unname(as.matrix(d))),
       geom = if (nrow(g)) g[, .(id = fifelse(is.na(flight_id), "", flight_id), kind, what, ref, line)] else list(), fit = FALSE)) })
   observeEvent(input$map_pick, sel(input$map_pick))
-  output$flights <- renderDT({ x <- shown(); k <- fchk()[match(x$flight_id, flight_id)]
-    f <- x[, .(Date = date, Name = name, Aircraft = aircraft, Sensor = sensor, Images = n_images, GB = size_gb,
-               Checks = if (nrow(x)) checks_html(k) else character(),
-               Placed = if (nrow(x)) sprintf("%s (%s %%) \u00b7 %s", num(k$n_placed), ifelse(is.na(k$placed_pct), "\u2013", round(k$placed_pct)), k$placed_from) else character(),
-               Positioning = positioning_status, QA = qa_flags, Folder = paste0(source_id, ":", folder))]
-    ovid_long_table(f, selection = "single", escape = setdiff(names(f), "Checks"), dom = "ti", height = "50vh", options = list(order = list(0, "desc"))) |>   # core longtable.R
-      formatStyle("Positioning", color = styleEqual(POSITIONING, unname(STATUS_COL))) })
-  observeEvent(input$flights_rows_selected, { i <- input$flights_rows_selected; if (length(i)) sel(shown()$flight_id[i]) })
   observeEvent(sel(), session$sendCustomMessage("rsmap_select", sel()))
   cur <- reactive({ id <- sel(); f <- fl(); if (is.null(id) || !nrow(f)) NULL else f[flight_id == id] })
 
   output$detail <- renderUI({ f <- cur(); if (is.null(f) || !nrow(f)) return(p(class = "muted", "Click a flight on the map or in the table."))
     lk <- C()$links[flight_id == f$flight_id & state != "suggested"]
     tagList(h3(f$name), div(class = "mb-2", badge(f$positioning_status)), p(class = "muted", f$positioning_evidence),
-      fact(paste0("Date (", zone_text(BASE_OFFSET), ")"), f$start), fact("Time from", f$time_source), fact("Duration (min)", f$duration_min), fact("Aircraft", f$aircraft), fact("Sensor", f$sensor),
+      fact(paste0("Date (", zone_text(BASE_OFFSET), ")"), f$start), fact("Time from", f$time_source), fact("Flight log start (UTC)", f$log_start_utc %||% NA), fact("Flown track (KML) start (UTC)", f$kml_start_utc %||% NA), fact("Duration (min)", f$duration_min), fact("Aircraft", f$aircraft), fact("Sensor", f$sensor),
       fact("Multispectral", if (isTRUE(f$multispectral)) paste0("yes; ", if (isTRUE(f$irradiance_sensor)) "irradiance sensor readings in the images" else "no irradiance sensor readings")),
       fact("Calibration panel", if (isTRUE(f$multispectral) || isTRUE(!is.na(f$panel_id[1]) & nzchar(f$panel_id[1]))) (f$panel_id %|na|% "not recorded")),
       fact("Aircraft serial", f$aircraft_serial), fact("Flight number", f$flight_no), fact("Images", num(f$n_images)),
@@ -170,6 +164,7 @@ server <- function(input, output, session, embedded = FALSE) {
   # Each page of the app, in this order (RS/pages/; they share this function's variables)
   source(file.path(APP_DIR, "pages", "flight.R"), local = TRUE)
   source(file.path(APP_DIR, "pages", "missions.R"), local = TRUE)
+  source(file.path(APP_DIR, "pages", "list_edits.R"), local = TRUE)   # the lists under the map, Site names and the Save bar
   source(file.path(APP_DIR, "pages", "qa.R"), local = TRUE)
   source(file.path(APP_DIR, "pages", "sources.R"), local = TRUE)
   source(file.path(APP_DIR, "pages", "imagery_datasets.R"), local = TRUE)
