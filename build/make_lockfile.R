@@ -5,7 +5,7 @@
 # The list comes from each app's launcher/run_app.R (APP$pkgs) plus what the shared core and launcher use, and the packages
 # the apps use only when present (parquet, Unicode clean-up, Excel writing in tests).
 here <- normalizePath(if (file.exists("build/make_lockfile.R")) "." else "..")
-apps <- c("CS", "WLR", "GT", "ERT", "RS")
+apps <- c("CS", "WLR", "GT", "GS", "RS")
 decl <- unlist(lapply(apps, function(a) { l <- grep("pkgs =", readLines(file.path(here, a, "launcher", "run_app.R")), value = TRUE)
   eval(parse(text = sub("\\)\\)\\s*$", ")", sub("^.*pkgs = ", "", l)))) }))
 need <- sort(unique(c(decl, "later", "httpuv", "readxl", "zip", "codetools")))

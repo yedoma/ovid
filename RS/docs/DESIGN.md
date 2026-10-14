@@ -5,7 +5,7 @@
 > and the [RS README](../README.md).
 
 The full design is the separate document "Ovid UAV: App Design",
-approved 2026-10-04. Built like ERT: `rs_pipeline.R` does the work, `R/` holds RS's own code, the shared `core/` is sourced first,
+approved 2026-10-04. Built like GS: `rs_pipeline.R` does the work, `R/` holds RS's own code, the shared `core/` is sourced first,
 and a Shiny `app.R` (milestone 2) shows the catalogue and edits the set-up tables.
 
 Changes from the design doc to fit Ovid Core:

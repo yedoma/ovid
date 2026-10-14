@@ -21,7 +21,7 @@
 # Copies of core/ made by Make_Portable
 CS/core/
 GT/core/
-ERT/core/
+GS/core/
 WLR/core/
 
 # Run outputs and caches (data never goes in the repo)
@@ -37,7 +37,7 @@ RS/core/
 
 # Finder aliases to the working folders on this Mac
 /Ovid CS
-/Ovid ERT
+/Ovid GS
 /Ovid GT
 /Ovid WLR
 

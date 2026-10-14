@@ -62,7 +62,7 @@ live_touch <- function() { st <- live_store(); if (!is.null(st)) st$look(); invi
 # A setting is saved when it is changed, not at the next run: save() (the app's own, which keeps every other saved setting)
 # is called a moment after the last change to any of the inputs `ids`. The values the page opens with are not saved again.
 # The other way too: a setting saved in another window is put into this window's field, so a run started here never writes
-# an old value back. keys: the saved setting each input holds, when its name differs (ERT set_project = project_dir);
+# an old value back. keys: the saved setting each input holds, when its name differs (GS set_project = project_dir);
 # a list setting is shown joined by sep (raw folders one per line, others with commas).
 settings_autosave <- function(ids, save, keys = stats::setNames(ids, ids), sep = c(raw_dirs = "\n"), wait = 800,
                               settings_file = get0("SETTINGS_FILE"), session = shiny::getDefaultReactiveDomain()) {

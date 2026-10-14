@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (ERT is now GS, 2026-10-14)**
+
+- `OVID_APP_RENAMED` (util.R): a project marked with a former app name (ERT) opens in the current app (GS), and
+  `ovid_projects_home()` keeps `~/Desktop/Ovid_Projects/ERT` as the GS projects folder until a `GS` one exists. The GS icon,
+  test lists and comments use the new name. **Output changes:** none.
+
 **Added (corrections applied, 2026-10-10)**
 - applied.R: Corrections applied. Each run writes output/audit/corrections_applied.csv, listing every correction in effect with the values it removed, changed, filled or flagged, plus totals; a chip and pop-up in the top bar (applied_ui/applied_server), copied into exports and added to reports. **Output changes:** one new file in output/audit; period-row removals name their row in the audit reason.
 

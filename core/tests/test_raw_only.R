@@ -4,9 +4,10 @@
 #   Rscript core/tests/test_raw_only.R [APP ...]        (exit status 1 if anything fails)
 # Raw data: OVID_TEST_RAW_<APP> if set, else ~/Desktop/Ovid_Projects/demo/<APP>/raw, else the first folder in that demo's
 # raw_dirs.txt; an app with none is skipped with a note, and the summary counts it as skipped, not passed.
-A <- commandArgs(TRUE); apps <- if (length(A)) A else c("CS", "WLR", "GT", "ERT", "RS")
+A <- commandArgs(TRUE); apps <- if (length(A)) A else c("CS", "WLR", "GT", "GS", "RS")
 here <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); dirname(dirname(dirname(normalizePath(sub("^--file=", "", a[1]))))) })
-demo <- function(app) file.path("~/Desktop/Ovid_Projects/demo", app, "raw")
+demo <- function(app) { d <- file.path("~/Desktop/Ovid_Projects/demo", c(app, if (app == "GS") "ERT"))   # GS demos made as ERT
+  file.path(c(d[dir.exists(path.expand(d))], d)[1], "raw") }
 `%||%` <- function(a, b) if (is.null(a) || !length(a) || is.na(a[1])) b else a
 ok <- 0L; fail <- character(); skipped <- character()
 check <- function(what, cond) if (isTRUE(cond)) { ok <<- ok + 1L; cat("  ok   ", what, "\n") } else { fail <<- c(fail, what); cat("  FAIL ", what, "\n") }

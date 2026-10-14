@@ -3,7 +3,7 @@
 #
 # Each app takes its colours from the dark variant of one vim colour scheme listed on vimcolorschemes.com (M, 2026-10-05):
 # CS = olive-crt (its full Neovim palette since 2026-10-06, olive_crt_palette() below), WLR = Nord (@nordtheme/vim, the same
-# 16 colours as the iTerm2 Nord below), GT = soviet.nvim, ERT = kanagawa.nvim (its default "wave" variant), RS = accent.vim
+# 16 colours as the iTerm2 Nord below), GT = soviet.nvim, GS = kanagawa.nvim (its default "wave" variant), RS = accent.vim
 # (its default yellow accent). Dark only. The earlier iTerm2-Color-Schemes palettes stay below for reference. Each app builds
 # its palette list (GB, NORD, MI, PAL) from its scheme, and its plots use theme_ovid(palette), so the five apps draw alike
 # and differ only in colour.
@@ -21,7 +21,7 @@ OVID_SCHEMES <- list(
   `Squirrelsong Dark` = list(bg = "#352a21", fg = "#ad9c8b", selection = "#574131", cursor = "#ad9c8b",
     ansi = c("#352a21", "#ac493e", "#558240", "#ceb250", "#5993c2", "#7f61b3", "#4f9593", "#cfbaa5",
              "#6b503c", "#ce574a", "#719955", "#e2c358", "#63a2d6", "#9672d4", "#72aaa8", "#edd5be")),
-  `Kanso Mist` = list(bg = "#22262d", fg = "#c5c9c7", selection = "#43464e", cursor = "#c5c9c7",      # used by ERT
+  `Kanso Mist` = list(bg = "#22262d", fg = "#c5c9c7", selection = "#43464e", cursor = "#c5c9c7",      # used by GS
     ansi = c("#22262d", "#c4746e", "#8a9a7b", "#c4b28a", "#8ba4b0", "#a292a3", "#8ea4a2", "#a4a7a4",
              "#5c6066", "#e46876", "#87a987", "#e6c384", "#7fb4ca", "#938aa9", "#7aa89f", "#c5c9c7")),
   `Petrified` = list(bg = "#3a3031", fg = "#fff0dc", selection = "#625456", cursor = "#f0b65c",      # used by RS
@@ -33,7 +33,7 @@ OVID_SCHEMES <- list(
   Earthsong = list(bg = "#292520", fg = "#e5c7a9", selection = "#121418", cursor = "#f6f7ec",               # used by GT
     ansi = c("#121418", "#c94234", "#85c54c", "#f5ae2e", "#1398b9", "#d0633d", "#509552", "#e5c6aa",
              "#675f54", "#ff645a", "#98e036", "#e0d561", "#5fdaff", "#ff9269", "#84f088", "#f6f7ec")),
-  Vague = list(bg = "#141415", fg = "#cdcdcd", selection = "#252530", cursor = "#cdcdcd",                   # used by ERT
+  Vague = list(bg = "#141415", fg = "#cdcdcd", selection = "#252530", cursor = "#cdcdcd",                   # used by GS
     ansi = c("#252530", "#d8647e", "#7fa563", "#f3be7c", "#6e94b2", "#bb9dbd", "#aeaed1", "#cdcdcd",
              "#606079", "#e08398", "#99b782", "#f5cb96", "#8ba9c1", "#c9b1ca", "#bebeda", "#d7d7d7")),
   # vimcolorschemes.com, dark variants (2026-10-05). ansi is the scheme's own terminal palette where it ships one; named holds
@@ -50,7 +50,7 @@ OVID_SCHEMES <- list(
               line = "#9aa393", fg = "#fbfcf6", fg_alt = "#edf0e6", fg_idle = "#d8dece", muted = "#c0c7b7", subtle = "#99a293", selection = "#616b5c",
               olive = "#bccd80", olive_bright = "#ecf6ae", amber = "#f7c775", sand = "#fbe09f", teal = "#a5d6cb", cyan = "#90dde4", rust = "#f5a764",
               red = "#ea938b", violet = "#dac3ed", error_bg = "#613330", warn_bg = "#61492f", info_bg = "#284d4b", hint_bg = "#345033")),
-  kanagawa = list(bg = "#1F1F28", fg = "#DCD7BA", selection = "#2D4F67", cursor = "#C8C093",                 # used by ERT (kanagawa.nvim, wave)
+  kanagawa = list(bg = "#1F1F28", fg = "#DCD7BA", selection = "#2D4F67", cursor = "#C8C093",                 # used by GS (kanagawa.nvim, wave)
     ansi = c("#16161D", "#C34043", "#76946A", "#C0A36E", "#7E9CD8", "#957FB8", "#6A9589", "#C8C093",
              "#727169", "#E82424", "#98BB6C", "#E6C384", "#7FB4CA", "#938AA9", "#7AA89F", "#DCD7BA"),
     named = c(sumiInk4 = "#2A2A37", sumiInk5 = "#363646", sumiInk6 = "#54546D", fujiGray = "#727169", oldWhite = "#C8C093",

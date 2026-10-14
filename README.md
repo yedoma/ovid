@@ -9,7 +9,7 @@ ovid is a set of five R/Shiny apps that turn raw environmental logger downloads 
 | <img src="docs/icons/pixel/ovid_cs.png" width="24" alt=""> **CS** | Campbell Scientific climate stations | [CS/README.md](CS/README.md) |
 | <img src="docs/icons/pixel/ovid_wlr.png" width="24" alt=""> **WLR** | Water level loggers with barometric compensation | [WLR/README.md](WLR/README.md) |
 | <img src="docs/icons/pixel/ovid_gt.png" width="24" alt=""> **GT** | Ground temperature cables and soil sensors | [GT/README.md](GT/README.md) |
-| <img src="docs/icons/pixel/ovid_ert.png" width="24" alt=""> **ERT** | Electrical resistivity surveys (AGI SuperSting, IRIS Instruments): catalogue, metadata, QC and viewing | [ERT/README.md](ERT/README.md) |
+| <img src="docs/icons/pixel/ovid_gs.png" width="24" alt=""> **GS** | Geophysical surveys: electrical resistivity (AGI SuperSting, IRIS Instruments) and ground-penetrating radar: catalogue, metadata, QC and viewing | [GS/README.md](GS/README.md) |
 | <img src="docs/icons/pixel/ovid_rs.png" width="24" alt=""> **RS** | Remote sensing: catalogue, provenance and positioning status for archived drone (UAV) flights | [RS/README.md](RS/README.md) |
 
 Raw files are never changed, and every removed or changed value is explained in an audit trail. See the [system overview](docs/overview.md) ([PDF](docs/overview.pdf)) for how the pieces fit together.
@@ -18,8 +18,8 @@ Raw files are never changed, and every removed or changed value is explained in 
 
 Needs R 4.x (<https://cran.r-project.org>). The first run installs the R packages it needs, which takes a few minutes.
 
-- **Mac:** double-click `Open CS (Mac).command` (or WLR, GT, ERT, RS). The first time, right-click > Open if macOS warns.
-- **Windows:** open the app's folder and double-click `Ovid_CS.bat` (or `Ovid_WLR.bat`, `Ovid_GT.bat`, `Ovid_ERT.bat`, `Ovid_RS.bat`).
+- **Mac:** double-click `Open CS (Mac).command` (or WLR, GT, GS, RS). The first time, right-click > Open if macOS warns.
+- **Windows:** open the app's folder and double-click `Ovid_CS.bat` (or `Ovid_WLR.bat`, `Ovid_GT.bat`, `Ovid_GS.bat`, `Ovid_RS.bat`).
 - **Computers without R:** run `Make_Portable.bat` in an app folder once on a Windows computer that has R; the folder can then be zipped and used anywhere.
 
 Your data stays outside this folder. Each app asks for your project folder (raw files, metadata, set-up tables, outputs), so this folder can be copied, backed up or shared without any data in it.
@@ -66,14 +66,14 @@ Ingests ground temperature logger files (RBR, GeoPrecision, HOBO, EM50, Campbell
 
 [GT README](GT/README.md) · [GT reference guide](GT/docs/GT_reference_guide.md)
 
-## <img src="docs/icons/pixel/ovid_ert.png" width="32" alt=""> ERT: electrical resistivity surveys
+## <img src="docs/icons/pixel/ovid_gs.png" width="32" alt=""> GS: geophysical surveys (ERT and GPR)
 
 Catalogues electrical resistivity survey files (AGI SuperSting, IRIS Syscal), reads them into one measurement model, links copies and derived sets to their original survey, and applies QC profiles that flag measurements without deleting them. It does not do inversion.
 
 **Goes in:** AGI SuperSting `.stg` files with `.crs` and `.cmd`, EarthImager sets, IRIS Prosys exports, Res2DInv `.dat`.<br>
 **Comes out:** a survey catalogue, a folder per survey, pseudosections, a shareable catalogue zip.
 
-[ERT README](ERT/README.md) · [ERT reference guide](ERT/docs/ERT_reference_guide.md)
+[GS README](GS/README.md) · [GS reference guide](GS/docs/GS_reference_guide.md)
 
 ## <img src="docs/icons/pixel/ovid_rs.png" width="32" alt=""> RS: remote sensing (drone flights and imagery)
 
@@ -86,7 +86,7 @@ Catalogues archived drone flights, imagery, LiDAR and GIS layers from file heade
 
 ## Versions and what changed
 
-Core 1.14.0, CS 1.10.0, WLR 0.10.0, GT 1.7.0, ERT 0.4.0, RS 0.5.0 (6 October 2026). `CHANGELOG.md` summarises each release across
+Core 1.14.0, CS 1.10.0, WLR 0.10.0, GT 1.7.0, GS 0.4.0, RS 0.5.0 (6 October 2026). `CHANGELOG.md` summarises each release across
 the bundle; each app folder and `core/` has its own `CHANGELOG.md` with the detail, including whether results already produced
 would come out differently. The system overview is in `docs/overview.md` (.html, .pdf).
 
@@ -94,11 +94,11 @@ would come out differently. The system overview is in `docs/overview.md` (.html,
 
 ```
 core/            shared ovid Core (used by all five apps)
-CS/  WLR/  GT/  ERT/  RS/   the apps: app.R, R/, launcher/, tests/, README.md
+CS/  WLR/  GT/  GS/  RS/   the apps: app.R, R/, launcher/, tests/, README.md
 docs/            banner, app icons, system overview, screenshots
 ```
 
-Reference material: the [system overview](docs/overview.md) and one reference guide per app, each as .md, .html and a dark-mode .pdf in the app's colours: [CS](CS/docs/CS_reference_guide.md), [WLR](WLR/docs/WLR_reference_guide.md), [GT](GT/docs/GT_reference_guide.md), [ERT](ERT/docs/ERT_reference_guide.md), [RS](RS/docs/RS_reference_guide.md). Also the [core notes](core/README.md) and the ERT and RS design notes (`docs/DESIGN.md` in each).
+Reference material: the [system overview](docs/overview.md) and one reference guide per app, each as .md, .html and a dark-mode .pdf in the app's colours: [CS](CS/docs/CS_reference_guide.md), [WLR](WLR/docs/WLR_reference_guide.md), [GT](GT/docs/GT_reference_guide.md), [ERT](GS/docs/GS_reference_guide.md), [RS](RS/docs/RS_reference_guide.md). Also the [core notes](core/README.md) and the ERT and RS design notes (`docs/DESIGN.md` in each).
 
 ## License
 

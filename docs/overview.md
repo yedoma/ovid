@@ -4,9 +4,9 @@
 
 ovid Core with the five apps <span class="badge b-cs">CS</span>
 <span class="badge b-wlr">WLR</span> <span class="badge b-gt">GT</span>
-<span class="badge b-ert">ERT</span> <span class="badge b-rs">RS</span>:
+<span class="badge b-gs">GS</span> <span class="badge b-rs">RS</span>:
 what they share, what each does, and where the detailed guides are.
-Core 1.14.0, shell 1.1.0; CS 1.10.0, WLR 0.11.0, GT 1.7.0, ERT 0.4.0, RS 0.5.0 (6 October 2026), with unreleased changes since: the Workbench interface (preview), the optional logger list and Paste and Import in every set-up table. What changed: `CHANGELOG.md` in Ovid_Apps and in each app.
+Core 1.14.0, shell 1.1.0; CS 1.10.0, WLR 0.11.0, GT 1.7.0, GS 0.4.0, RS 0.5.0 (6 October 2026), with unreleased changes since: the Workbench interface (preview), the optional logger list and Paste and Import in every set-up table. What changed: `CHANGELOG.md` in Ovid_Apps and in each app.
 
 1.  [What ovid is](#what)
 2.  [The shared core](#core)
@@ -32,7 +32,7 @@ colour theme from vimcolorschemes, so it is recognisable at a glance.
   barometric compensation (theme Nord).
 - <span class="badge b-gt">GT</span> ground temperature cables and soil
   sensors (theme soviet.nvim).
-- <span class="badge b-ert">ERT</span> electrical resistivity surveys
+- <span class="badge b-gs">GS</span> geophysical surveys: electrical resistivity (ERT) and ground-penetrating radar (GPR)
   (AGI SuperSting, IRIS Instruments): a catalogue, metadata, QC and
   viewing tool, not an inversion package (theme kanagawa.nvim).
 - <span class="badge b-rs">RS</span> remote sensing: a catalogue,
@@ -183,9 +183,9 @@ Detail: [ovid GT Reference Guide](../GT/docs/GT_reference_guide.md).
 
 </div>
 
-<div class="app ert">
+<div class="app gs">
 
-### ERT: electrical resistivity surveys
+### GS: geophysical surveys (ERT and GPR)
 
 **Reads** AGI SuperSting `.stg` with `.crs` contact resistance and `.cmd`
 command files (also inside zips), EarthImager sets, IRIS Prosys exports
@@ -211,7 +211,7 @@ survey quality and transects are set by people, with a satellite map.
 
 **Unreleased** reporting fields and checklist (Herring et al. 2023, CPERS); negative chargeability; a reciprocal error model; inversion files for pyGIMLi, R2/ResIPy and Res2DInv; electrode heights from a GNSS file.
 
-Detail: [ovid ERT Reference Guide](../ERT/docs/ERT_reference_guide.md).
+Detail: [ovid GS Reference Guide](../GS/docs/GS_reference_guide.md).
 
 </div>
 
@@ -320,8 +320,8 @@ mode, in the app's colours):
   Guide](../WLR/docs/WLR_reference_guide.md) (WLR/docs/WLR_reference_guide.html, .md, .pdf)
 - <span class="badge b-gt">GT</span> [ovid GT Reference
   Guide](../GT/docs/GT_reference_guide.md) (GT/docs/GT_reference_guide.html, .md, .pdf)
-- <span class="badge b-ert">ERT</span> [ovid ERT Reference
-  Guide](../ERT/docs/ERT_reference_guide.md) (ERT/docs/ERT_reference_guide.html, .md, .pdf)
+- <span class="badge b-gs">GS</span> [ovid GS Reference
+  Guide](../GS/docs/GS_reference_guide.md) (GS/docs/GS_reference_guide.html, .md, .pdf)
 - <span class="badge b-rs">RS</span> [ovid RS Reference
   Guide](../RS/docs/RS_reference_guide.md) (RS/docs/RS_reference_guide.html, .md, .pdf)
 - ovid Core README (`core/README.md`) and each app's README.

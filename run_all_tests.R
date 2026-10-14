@@ -14,7 +14,7 @@ repo <- local({
   a <- grep("^--file=", commandArgs(FALSE), value = TRUE)
   if (length(a)) dirname(normalizePath(sub("^--file=", "", a[1]))) else getwd()
 })
-all_apps <- c("CS", "WLR", "GT", "ERT", "RS")
+all_apps <- c("CS", "WLR", "GT", "GS", "RS")
 apps <- all_apps
 named <- toupper(setdiff(args, flags))
 if (length(named)) apps <- intersect(apps, named)
@@ -40,7 +40,7 @@ dir.create(log_dir, recursive = TRUE)
 # first.
 suite <- function(name, dir, script, arg = character()) list(name = name, dir = dir, script = script, arg = arg)
 suites <- list()
-for (a in intersect(c("GT", "CS", "WLR", "ERT"), apps)) {
+for (a in intersect(c("GT", "CS", "WLR", "GS"), apps)) {
   suites[[length(suites) + 1]] <- suite(a, file.path(repo, a), "tests/run_tests.R")
 }
 if ("RS" %in% apps) suites[[length(suites) + 1]] <- suite("RS (with app)", file.path(repo, "RS"), "tests/test_app.R")
@@ -48,7 +48,7 @@ if ("RS" %in% apps) suites[[length(suites) + 1]] <- suite("RS drone photos", fil
 for (a in apps) {
   suites[[length(suites) + 1]] <- suite(paste("raw folder only", a), repo, "core/tests/test_raw_only.R", a)
 }
-if ("ERT" %in% apps) suites[[length(suites) + 1]] <- suite("ERT gpr", file.path(repo, "ERT"), "tests/test_gpr.R")
+if ("GS" %in% apps) suites[[length(suites) + 1]] <- suite("GS gpr", file.path(repo, "GS"), "tests/test_gpr.R")
 suites[[length(suites) + 1]] <- suite("core", repo, "core/tests/run_tests.R")
 suites[[length(suites) + 1]] <- suite("core import", repo, "core/tests/test_import.R")
 suites[[length(suites) + 1]] <- suite("core areas", repo, "core/tests/test_areas.R")

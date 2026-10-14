@@ -13,8 +13,8 @@ line as each file is changed, not all at once.
    - `utils_<topic>.R` for small helpers.
 
    The data pipeline stays in `R/`.
-3. **Pages become Shiny modules** one at a time, each checked in the app (ERT's Archive is the first,
-   `ERT/pages/mod_archive.R`). Whatever a module needs from the rest of the app is passed in. Anything that acts on the
+3. **Pages become Shiny modules** one at a time, each checked in the app (GS's Archive is the first,
+   `GS/pages/mod_archive.R`). Whatever a module needs from the rest of the app is passed in. Anything that acts on the
    whole app from inside a module (switching page, updating another page's input) names the app's session.
 4. **Keep logic out of reactive code.** Calculations go in plain functions (`fct_` or `R/`) that a test can call without
    opening the app (for example `archive_filter()`).

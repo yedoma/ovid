@@ -1,5 +1,5 @@
 # Ovid/util.R  --  Small helpers shared by every Ovid Core app: console output, text clean-up, names, time.
-# Part of Ovid Core (shared). Sourced by cs_pipeline.R, wlr_pipeline.R, gt_pipeline.R, ert_pipeline.R and rs_pipeline.R (RS) before their own R/ files;
+# Part of Ovid Core (shared). Sourced by cs_pipeline.R, wlr_pipeline.R, gt_pipeline.R, gs_pipeline.R and rs_pipeline.R (RS) before their own R/ files;
 # not meant to be run on its own. A helper whose rules differ between apps (serial numbers, for example) stays in that app.
 
 # Where a record has a hole, a line must not be drawn across it: a new segment starts after any gap longer than tol steps.
@@ -279,7 +279,15 @@ norm_serial <- function(x, keep = SERIAL_KEEP) {
 # Only the raw data folder is needed. With no project (output) folder, or one that is "/", the home folder or inside the
 # app's own folder (its git repository), the app uses ~/Desktop/Ovid_Projects/<app>/Untitled, the folder every app's
 # projects go in; it is created on the first write. A folder the user sets always wins otherwise.
-ovid_default_project <- function(app = get0("OVID_APP", ifnotfound = "ovid"), name = "Untitled") file.path("~/Desktop/Ovid_Projects", app, name)
+ovid_default_project <- function(app = get0("OVID_APP", ifnotfound = "ovid"), name = "Untitled") file.path(ovid_projects_home(app), name)
+# Apps that were renamed: former name = current name (ERT became GS on 2026-10-14). A project marked with a former name
+# opens in the current app, and ~/Desktop/Ovid_Projects/<former> stays the projects folder until a <current> one exists.
+OVID_APP_RENAMED <- c(ERT = "GS")
+ovid_app_name <- function(app) { app <- as.character(app); i <- app %in% names(OVID_APP_RENAMED); app[i] <- OVID_APP_RENAMED[app[i]]; app }
+ovid_projects_home <- function(app, root = "~/Desktop/Ovid_Projects") {
+  d <- file.path(root, app); old <- file.path(root, names(OVID_APP_RENAMED)[OVID_APP_RENAMED == app])
+  old <- old[dir.exists(path.expand(old))]
+  if (!dir.exists(path.expand(d)) && length(old)) old[1] else d }
 # A path with its links resolved as far as it exists (/var and /private/var are the same folder on a Mac).
 norm_any <- function(p) { p <- path.expand(p); tail <- character()
   while (!file.exists(p) && !identical(p, dirname(p))) { tail <- c(basename(p), tail); p <- dirname(p) }

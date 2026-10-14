@@ -61,7 +61,7 @@ WB_CSS <- paste(readLines(file.path(CORE_DIR, "www", "workbench.css"), encoding 
 
 # A whole Workbench page. nav, main and aside are the three panes; actions sit at the right of the title bar; status is the
 # status bar. standard_href opens the Standard interface (the left half of the switch). theme: the app's bslib theme
-# (Bootstrap 5 apps: ERT, RS), so their own pages work inside the Workbench; NULL for plain Shiny.
+# (Bootstrap 5 apps: GS, RS), so their own pages work inside the Workbench; NULL for plain Shiny.
 wb_page <- function(app, pal, project = NULL, standard_href = "?ui=standard", actions = NULL, nav = NULL, main = NULL, aside = NULL,
                     status = NULL, head = NULL, theme = NULL, areas = NULL) {
   ic <- ovid_icon(app)

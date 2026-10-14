@@ -193,7 +193,7 @@ project_check <- function(cfg, app = sub("^.*// *", "", if (exists("APP_NAME")) 
   if (need_raw && length(gone)) project_stop("Raw folder not found: ", paste(tilde(gone), collapse = ", "), ". Is the drive plugged in? Nothing was changed; ",
                                  "plug it in and run again, or remove the folder from the data folders if it is no longer used.")
   p <- path.expand(pd); mk <- file.path(p, PROJECT_MARK)
-  if (file.exists(mk)) { owner <- sub("^app: *", "", grep("^app:", readLines(mk, warn = FALSE), value = TRUE)[1] %|% "")
+  if (file.exists(mk)) { owner <- ovid_app_name(sub("^app: *", "", grep("^app:", readLines(mk, warn = FALSE), value = TRUE)[1] %|% ""))
     if (nzchar(owner) && !identical(owner, app)) project_stop("The folder ", tilde(path_norm(pd)), " is the project of Ovid ", owner, ", not ", app,
                                                               ". Two apps in one project folder overwrite each other's files: choose a folder of its own.") }
   else if (dir.exists(p)) {

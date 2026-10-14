@@ -2,6 +2,11 @@
 
 The whole bundle at a glance, newest first. Each app and the core have their own `CHANGELOG.md` with the detail.
 
+## Unreleased
+
+**Renamed.** ERT is now GS (geophysical surveys), since it covers GPR as well as resistivity. Projects made as ERT open
+unchanged; ERT stays the name of the resistivity side of the app.
+
 ## 2026-10-10: first release, v1.0.0 (core 1.15.0, CS 1.11.0, WLR 0.12.0, GT 1.8.0, ERT 0.5.0, RS 0.6.0)
 
 **Renamed.** The bundle is now Ovid (it was Dorsal). Nothing works differently; every name changed with it: the folders `Ovid_Apps` and `~/Desktop/Ovid_Projects`, the launchers (`Ovid_<APP>.bat`), the `OVID_CORE` environment variable, the project marker `.ovid_project` and the log folder `~/.ovid`.

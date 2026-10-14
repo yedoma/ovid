@@ -114,7 +114,7 @@ Plot and explore (heatmap with interpolated contours or one band per sensor, ful
 
 The audit trail, small helpers, reading and backing up set-up tables, configuration import / export, the run cache, the time-zone
 table, corrupt-timestamp removal, the between-site comparison, reports, the app shell, file import and export, the run manifest,
-the set-up check's collector and the launcher are shared with the other ovid apps (CS, WLR, ERT, RS). They live in the ovid
+the set-up check's collector and the launcher are shared with the other ovid apps (CS, WLR, GS, RS). They live in the ovid
 Core (`../core` in the Ovid_Apps bundle; see core/README.md) and are sourced before `R/`. The folder can
 also be given with `OVID_CORE`; `Make_Portable.bat` copies it into `core/`.
 

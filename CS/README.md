@@ -95,7 +95,7 @@ The files in R/ are sourced by cs_pipeline.R in a fixed order; they are not a pa
 
 The audit trail, the small helpers, reading set-up tables, the run cache, the time-zone table, corrupt-timestamp removal,
 reports, the app shell, import and export, the run manifest and parts of the set-up check are shared with the other ovid
-apps (WLR, GT, ERT, RS). They live in the ovid Core (see core/README.md) and are sourced before R/. The apps find it
+apps (WLR, GT, GS, RS). They live in the ovid Core (see core/README.md) and are sourced before R/. The apps find it
 through the OVID_CORE environment variable, core/ inside the app folder, ../core beside it (the Ovid_Apps bundle) or
 ~/Desktop/Ovid.
 

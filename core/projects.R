@@ -20,7 +20,7 @@ project_name <- function(path) {                                   # the name in
   if (nzchar(n %|% "")) n else basename(path_norm(path))
 }
 project_owner <- function(path) { mk <- file.path(path.expand(path), PROJECT_MARK)
-  if (file.exists(mk)) sub("^app: *", "", grep("^app:", readLines(mk, warn = FALSE), value = TRUE)[1] %|% "") else "" }
+  if (file.exists(mk)) ovid_app_name(sub("^app: *", "", grep("^app:", readLines(mk, warn = FALSE), value = TRUE)[1] %|% "")) else "" }
 
 # What the list shows of each project.
 project_info <- function(paths) {
@@ -99,7 +99,7 @@ project_name_problem <- function(name, others = character(), path = NULL) { n <-
   "" }
 # The folder new projects go in (~/Desktop/Ovid_Projects/<app>), and whether a project lives there (then renaming renames
 # its folder too) or is the folder the app made itself when none was set (the automatic folder).
-projects_root <- function(app = project_app()) path_norm(file.path("~/Desktop/Ovid_Projects", app))
+projects_root <- function(app = project_app()) path_norm(ovid_projects_home(app))
 project_in_root <- function(path, app = project_app()) identical(path_norm(dirname(path.expand(path))), projects_root(app))
 project_automatic <- function(path) identical(path_norm(path), path_norm(ovid_project_dir("")))
 # Rename: under Ovid_Projects the folder is renamed with the project; elsewhere only the name it shows (in .ovid_project).

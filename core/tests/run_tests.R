@@ -377,6 +377,12 @@ local({ d <- ovid_default_project("CS"); repo <- tempfile("repo_"); dir.create(f
   check("a folder the user sets wins", identical(ovid_project_dir("~/elsewhere/my project", "CS", repo), "~/elsewhere/my project"))
   check("the repository is found from any folder inside it", identical(ovid_repo_root(file.path(repo, "a", "b")), norm_any(repo)))
   unlink(repo, recursive = TRUE) })
+local({ r <- tempfile("projects_"); dir.create(file.path(r, "ERT"), recursive = TRUE)
+  check("a renamed app: a former name reads as the current one (ERT is GS); others unchanged", identical(ovid_app_name(c("ERT", "GS", "CS")), c("GS", "GS", "CS")))
+  check("a renamed app keeps its former projects folder until one with the new name exists",
+        identical(ovid_projects_home("GS", r), file.path(r, "ERT")) && identical(ovid_projects_home("CS", r), file.path(r, "CS")) &&
+        { dir.create(file.path(r, "GS")); identical(ovid_projects_home("GS", r), file.path(r, "GS")) })
+  unlink(r, recursive = TRUE) })
 
 
 cat("numbers written as text (convert.R num_cells)\n")

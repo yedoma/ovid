@@ -1,0 +1,5 @@
+#!/bin/bash
+# Double-click to open Ovid GS. Needs R (cran.r-project.org); packages install themselves on first run.
+cd "$(dirname "$0")/GS" || exit 1
+R=$(command -v Rscript || echo /Library/Frameworks/R.framework/Resources/bin/Rscript)
+"$R" launcher/run_app.R

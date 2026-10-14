@@ -1,5 +1,5 @@
 # Ovid/neighbours.R  --  Comparing one site with the others that measure the same thing.
-# Part of Ovid Core (shared by CS, WLR, GT, ERT and RS). Sourced before each app's own R/ files.
+# Part of Ovid Core (shared by CS, WLR, GT, GS and RS). Sourced before each app's own R/ files.
 #
 # Works on daily means of one comparable set (one parameter, or one depth): a table of id (the site), date and
 # value. Each site is compared with the median of the other sites on the same day. Sites differ by a steady amount
