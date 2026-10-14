@@ -67,8 +67,8 @@
     le_staged(edit_stage(le_staged(), le_ps()$flight_id[i], "kind", "flight", le_step())) })
 
   # ---- Other geodata ----
-  le_geo_all <- reactive({ x <- C(); if (is.null(x)) return(geodata_folders(NULL, NULL, fl()))
-    g <- geodata_folders(x$datasets, x$gis_layers, fl()); if (!nrow(g)) return(g[, `:=`(id = character(), decision = character())])
+  le_geo_all <- reactive({ x <- C()                               # no catalogue yet: no folders, with the columns the tab uses
+    g <- if (is.null(x)) geodata_folders(NULL, NULL, fl()) else geodata_folders(x$datasets, x$gis_layers, fl()); if (!nrow(g)) return(g[, `:=`(id = character(), decision = character())])
     g[, id := geodata_id(source_id, folder, kind)]; d <- decisions(); g[, decision := fifelse(id %in% d$id, "kept", "")]
     s <- le_last(le_geo_st(), c("source_id", "folder", "kind")); if (nrow(s)) g[s, on = .(source_id, folder, kind), decision := paste0(i.decision, " (not saved)")]
     g })
