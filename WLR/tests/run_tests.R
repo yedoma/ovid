@@ -705,5 +705,22 @@ local({                                                               # the conf
   check("the raw files counted on Home, the Site page and the Workbench are the ones a run reads, without ._ copies", nrow(raw_files_found(rd)) == 4)
   check("the audit explains the air, drift and period-correction rules", all(c("launched_in_air", "drift_correction", paste0("period_", names(PERIOD_ACTIONS))) %in% app$RULE_INFO$rule))
 })
+local({                                                                         # values typed by hand, whole records (2026-10-14)
+  t <- as.POSIXct("2026-07-14 00:00", tz = "UTC") + 1800 * 0:3
+  d <- data.table(TIMESTAMP = t, site = "Moose", logger_id = "22055246", depth_m = c(0.40, NA, NA, 0.43))
+  rows <- period_read_rows(data.table(target = c("22055246", "99999999"), parameter = "depth_m", from = format(t[2], "%Y-%m-%d %H:%M"), to = format(t[2], "%Y-%m-%d %H:%M"),
+                                      action = "set_value", value = c("0.41", "0.5"), on = "on", note = "manual reading", author = "M", added = ""))$rows
+  got <- list(); fl <- function(dt, p, k, check, detail) got[[length(got) + 1L]] <<- list(p = p, k = k, check = check)
+  x <- suppressWarnings(wlr_set_values(copy(d), rows, c("22055246", "Moose"), "depth_m", fl))
+  check("a typed value fills only the missing value of its own logger and time, and is flagged as typed by hand",
+        isTRUE(all.equal(x$depth_m, c(0.40, 0.41, NA, 0.43))) && length(got) == 1 && got[[1]]$check == "hand_value" && got[[1]]$k == 2)
+  x2 <- suppressWarnings(wlr_set_values(copy(d), period_read_rows(data.table(target = "22055246", parameter = "depth_m", from = "", to = "", action = "set_value", value = "9",
+                                         on = "on", note = "", author = "", added = ""))$rows, "22055246", "depth_m", function(...) NULL))
+  check("a typed value never replaces a value that is there", x2$depth_m[1] == 0.40 && x2$depth_m[4] == 0.43)
+  check("set_value is one of the corrections over a period, not a drift choice", "set_value" %in% names(period_actions()) && !"set_value" %in% WLR_DRIFT_ACTIONS)
+  if (exists("tw")) check("the Workbench lists a whole record first for each site with more than one deployment, and none for a site with one",
+    { m <- tw[kind %in% c("dep", "site")]; n <- m[kind == "dep", .N, by = group]
+      setequal(m[kind == "site", group], n[N > 1, group]) && all(m[, kind[1] == "site" || .N == 1, by = group]$V1) })
+})
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

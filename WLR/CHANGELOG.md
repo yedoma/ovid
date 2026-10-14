@@ -5,6 +5,16 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (WLR backlog, 2026-10-14)**
+- Workbench: a site with more than one deployment has a Whole record first in the tree: every deployment there in time order, whichever logger it was, with a serial column; the time between deployments stays empty. Corrections made on it go to the logger of each row. The Site page opens it. **Output changes:** none (the run already wrote output/corrected/<site>.csv this way).
+- Workbench inspector: a missing value can be typed by hand with its reason (Corrections over a period, action set_value: fills missing values only, flagged hand_value, in the audit trail), or its run of missing values filled by linear interpolation through the period tool, only when asked. Values filled by interpolation are now flagged period_interpolate. **Output changes:** only where such rows are added; filled values now carry a flag.
+
+**Changed (sidebar, 2026-10-14)**
+- The Standard view's rail folds by stage: only the stage of the page shown is open, and a stage heading opens it (www/rail_stages.js). **Output changes:** none.
+
+**Fixed (startup notices, 2026-10-14)**
+- No "is missing column" notice at start for deployments.csv (measured_to), time_corrections.csv (mode) and datum_manual.csv (height_type, frame, epoch, geoid_model, geoid_N_m) written before those columns existed: a blank one means the default, so they are read as optional. **Output changes:** none.
+
 **Added (corrections applied, 2026-10-10)**
 - Corrections applied: a chip and pop-up in the top bar list every correction in the last run with counts (core applied.R); output/audit/corrections_applied.csv, also in exports and reports. **Output changes:** new file; summary.csv gains baro_bridged and values; period removals name their row in the audit reason.
 

@@ -21,13 +21,19 @@ WB_GRID_PARAMS <- 24L                                  # parameters in the grid
 WB_MAX_PARAMS <- 6L                                    # of those, charted
 
 
-# A record in the tree: a deployment ("dep:<deployment>") or a barologger's cleaned record ("baro:<serial>").
+# A record in the tree: a deployment ("dep:<deployment>"), a site's whole record ("site:<site>": every deployment there
+# joined in time order, whichever logger it was; the time between deployments stays empty) or a barologger's cleaned
+# record ("baro:<serial>").
 wb_split <- function(key) list(kind = sub(":.*$", "", key), id = sub("^[^:]*:", "", key))
 
 # The records the Workbench lists: every deployment of the last run, by site, and every barologger, by baro station.
 wb_tables <- function(o, pd) {
   d <- if (!is.null(o) && nrow(o$summary)) o$summary[order(site, year), .(key = paste0("dep:", deployment), group = site, label = paste(year, "\u00b7", serial),
                                                                          serial = as.character(serial), site, records, kind = "dep")] else data.table()
+  if (nrow(d)) d <- rbind(                 # a site with more than one deployment gets its whole record first
+                          d[, .(key = paste0("site:", site[1]), group = site[1], label = "Whole record", serial = paste(unique(serial), collapse = ", "),
+                                site = site[1], records = sum(records), kind = "site", n = .N), by = site][n > 1][, n := NULL][, site := NULL][, .(key, group, label, serial, site = group, records, kind)],
+                          d)[order(group, kind != "site")]
   st <- tryCatch(fread(out_dir(pd, "audit", "baro_stations.csv"), colClasses = "character"), error = function(e) data.table(serial = character(), station = character()))
   b <- if (!is.null(o) && nrow(o$loggers)) o$loggers[kind == "baro", .(serial = as.character(serial), records)] else data.table(serial = character(), records = integer())
   b <- b[vapply(serial, function(s) !is.null(wb_baro_file(pd, s)), NA)]
@@ -39,8 +45,9 @@ wb_baro_file <- function(pd, serial) { f <- list.files(out_dir(pd, "baro"), patt
   f <- f[!startsWith(basename(f), "station__")]; if (length(f)) f[1] else NULL }
 wb_load <- function(key, pd) { if (!length(key) || is.na(key[1]) || !nzchar(key[1])) return(NULL); k <- wb_split(key)   # nothing chosen yet
   if (!length(k$kind)) return(NULL)
-  d <- if (k$kind == "dep") load_deployment(k$id, pd) else { f <- wb_baro_file(pd, k$id); if (is.null(f)) NULL else fix_ts_cols(fread(f, na.strings = c("", "NA"))) }
+  d <- if (k$kind == "dep") load_deployment(k$id, pd) else if (k$kind == "site") load_site(k$id, pd) else { f <- wb_baro_file(pd, k$id); if (is.null(f)) NULL else fix_ts_cols(fread(f, na.strings = c("", "NA"))) }
   if (!is.null(d) && "logger_id" %in% names(d)) set(d, j = "logger_id", value = as.character(d$logger_id))
+  if (!is.null(d) && k$kind == "site") { sn <- suppressWarnings(as.numeric(d$logger_id)); if (!all(is.na(sn))) set(d, j = "serial", value = sn) }   # the grid's serial column
   d }
 
 # The parameters of a record: its numeric columns, the usual ones first.
@@ -125,13 +132,13 @@ wb_server <- function(input, output, session, std) {
   first_key <- function(want) { s <- tables(); if (!nrow(s)) return(NULL)
     if (!is.null(want) && want %in% s$key) return(want)
     if (!is.null(want) && paste0("dep:", want) %in% s$key) return(paste0("dep:", want))
-    if (!is.null(want) && want %in% s$site) return(s[site == want][order(kind != "dep", -records)]$key[1])   # a site (from the Standard view)
+    if (!is.null(want) && want %in% s$site) return(s[site == want][order(kind != "site", -records)]$key[1])   # a site (from the Standard view): its whole record
     d <- s[kind == "dep"]; if (nrow(d)) d[order(-records)]$key[1] else s$key[1] }
   key <- reactiveVal(NULL); jump <- wb_jump_new()                       # jump: a review-queue item to open (core workbench.R)
   observeEvent(tables(), { k <- isolate(key()); if (is.null(k) || !k %in% tables()$key) key(first_key(if (is.null(k)) q$deployment %||% q$site else NULL)) })
   observeEvent(input$wb_table, { key(input$wb_table); set_view("wb-data") })
   part <- reactive({ req(key()); k <- wb_split(key()); s <- tables()[key == key()]
-    o <- outs(); r <- if (k$kind == "dep" && !is.null(o)) o$summary[deployment == k$id] else data.table()
+    o <- outs(); r <- if (is.null(o)) data.table() else if (k$kind == "dep") o$summary[deployment == k$id] else if (k$kind == "site") o$summary[site == k$id][order(start)] else data.table()
     list(kind = k$kind, id = k$id, serial = if (nrow(s)) s$serial[1] else k$id, site = if (nrow(s)) s$site[1] else "", label = if (nrow(s)) paste(s$group[1], "\u00b7", s$label[1]) else k$id, row = r) })
   dat <- reactive({ outs(); d <- wb_load(key(), pd()); validate(need(!is.null(d) && nrow(d) > 0, "No records in this table.")); d })
   params_all <- reactive(wb_params(dat()))
@@ -152,18 +159,25 @@ wb_server <- function(input, output, session, std) {
     first_load(FALSE)
   })
   observeEvent(input$wb_whole, { r <- range(dat()$TIMESTAMP, na.rm = TRUE); updateDateRangeInput(session, "wb_period", start = as.Date(r[1]), end = as.Date(r[2])) })
-  sel_params <- reactive(head(intersect(input$wb_params, params_all()), WB_GRID_PARAMS))
-  plot_params <- reactive(head(sel_params(), WB_MAX_PARAMS))
+  sel_params <- reactive({ x <- head(intersect(input$wb_params, params_all()), WB_GRID_PARAMS)   # a whole record lists the serial of each row first
+    if (identical(part()$kind, "site") && "serial" %in% params_all()) c("serial", setdiff(x, "serial")) else x })
+  plot_params <- reactive(head(setdiff(sel_params(), "serial"), WB_MAX_PARAMS))
   period <- reactive({ p <- input$wb_period; req(length(p) == 2, !anyNA(p))
     c(as.POSIXct(paste(p[1], "00:00:00"), tz = "UTC"), as.POSIXct(paste(p[2], "23:59:59"), tz = "UTC")) })
   per <- reactive({ d <- dat(); pr <- period(); d[TIMESTAMP >= pr[1] & TIMESTAMP <= pr[2]] })
-  removed <- reactive({ outs(); p <- part(); r <- removed_values(p$serial, pd()); d <- dat()
-    if (nrow(r)) r[TIMESTAMP >= min(d$TIMESTAMP) & TIMESTAMP <= max(d$TIMESTAMP)] else r })
+  removed <- reactive({ outs(); p <- part(); d <- dat()
+    if (identical(p$kind, "site")) return(rbindlist(lapply(split(d, by = "logger_id"), function(x) { r <- removed_values(x$logger_id[1], pd())     # each logger over its own rows
+      if (nrow(r)) r[TIMESTAMP >= min(x$TIMESTAMP) & TIMESTAMP <= max(x$TIMESTAMP)] else r }), fill = TRUE))
+    r <- removed_values(p$serial, pd()); if (nrow(r)) r[TIMESTAMP >= min(d$TIMESTAMP) & TIMESTAMP <= max(d$TIMESTAMP)] else r })
+  # a whole record's rows by logger (its serial and row numbers), so saved removals are matched to the logger of each row
+  by_logger <- function(w) { p <- part(); if (identical(p$kind, "site") && "logger_id" %in% names(w)) split(seq_len(nrow(w)), as.character(w$logger_id)) else stats::setNames(list(seq_len(nrow(w))), p$serial) }
   flagruns <- reactive({ d <- per(); rbindlist(lapply(plot_params(), function(p) { fc <- paste0("flag_", p); if (fc %in% names(d)) wb_flag_runs(d$TIMESTAMP, as.character(d[[fc]]), p) }), fill = TRUE) })
   win <- reactive(per())                                         # the grid lists the period; the chart zooms within it
   grid <- reactive({ w <- win(); ps <- sel_params(); validate(need(length(ps) > 0, "Tick a parameter on the left."), need(nrow(w) > 0, "No records in this period."))
-    n <- nrow(w); w <- head(w, WB_MAX_ROWS); p <- part(); st <- wb_states(w, ps, removed(), E$manual$data(), E$oow$data(), p$serial, p$site)
-    list(w = w, n = n, params = ps, states = st, cells = wb_grid_cells(w, ps, st),
+    n <- nrow(w); w <- head(w, WB_MAX_ROWS); p <- part(); g <- by_logger(w)
+    st <- lapply(names(g), function(sn) wb_states(w[g[[sn]]], ps, removed(), E$manual$data(), E$oow$data(), sn, p$site))
+    st <- if (length(st) == 1) st[[1]] else { o <- order(unlist(g)); stats::setNames(lapply(ps, function(q) rbindlist(lapply(st, `[[`, q))[o]), ps) }
+    list(w = w, n = n, params = ps, states = st, cells = wb_grid_cells(w, ps, st, digits = c(serial = 0L)),
          sig = paste(key(), paste(ps, collapse = ","), format(w$TIMESTAMP[1], tz = "UTC"), nrow(w), sep = "|")) })
 
   # tree
@@ -192,19 +206,21 @@ wb_server <- function(input, output, session, std) {
   active <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); s <- input$wb_grid_sel
     a <- cc[r == as.integer(s$ar %||% 0) & c == as.integer(s$ac %||% 0)]; if (nrow(a)) a[1] else cc[1] })
   # the values the corrections act on: the selected cells (in the grid, or dragged or clicked on the chart)
-  sel <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); w <- grid()$w
+  sel <- reactive({ cc <- cells(); cc <- cc[cc$p != "serial"]; if (!nrow(cc)) return(NULL); w <- grid()$w   # the serial column is not corrected
     list(p = cc$p, t = w$TIMESTAMP[cc$r], serial = if ("logger_id" %in% names(w)) as.character(w$logger_id[cc$r]) else rep(part()$serial, nrow(cc))) })
   clear_sel <- function() session$sendCustomMessage("wb-grid-clear", list())
   cell_info <- function(r, p) { g <- grid(); s <- g$states[[p]]; w <- g$w; col <- function(k) if (k %in% names(w)) w[[k]][r] else NA
     list(t = w$TIMESTAMP[r], v = w[[p]][r], state = s$state[r], why = s$why[r], rule = s$rule[r], old = s$old[r], src = col("source_file") %|% "",
-         raw = col("pres_raw"), unit = col("unit_pres"), baro = col("baro_kpa"), bsrc = col("baro_source"), bname = col("baro_name"), bser = col("baro_serial"), bshift = col("baro_shift"),
+         ser = col("logger_id") %|% "", raw = col("pres_raw"), unit = col("unit_pres"), baro = col("baro_kpa"), bsrc = col("baro_source"), bname = col("baro_name"), bser = col("baro_serial"), bshift = col("baro_shift"),
          d = wb_digits(c(w[[p]], s$old))) }
 
   # the chart is drawn in the browser (WB_CHART_JS): it gets the period, thinned when long, and a zoomed-in window at full
   # resolution when it asks (input$wb_view); the grid's selection is highlighted there directly
   chart_pend <- function(d, ps) { if (!nrow(d)) return(data.table(p = character(), t = numeric(), v = numeric())); p0 <- part()
-    rbindlist(lapply(ps, function(p) { k <- wb_cover(E$manual$data(), E$oow$data(), p0$serial, p0$site, d, p) & !is.na(d[[p]])
-      data.table(p = p, t = as.numeric(d$TIMESTAMP[k]), v = d[[p]][k]) })) }
+    g <- by_logger(d)
+    rbindlist(lapply(names(g), function(sn) { x <- d[g[[sn]]]
+      rbindlist(lapply(ps, function(p) { k <- wb_cover(E$manual$data(), E$oow$data(), sn, p0$site, x, p) & !is.na(x[[p]])
+        data.table(p = p, t = as.numeric(x$TIMESTAMP[k]), v = x[[p]][k]) })) })) }
   chart_rem <- reactive({ r <- removed(); if (!nrow(r)) return(data.table(timestamp = as.POSIXct(character(), tz = "UTC"), parameter = character(), old_value = numeric()))
     r[, .(timestamp = TIMESTAMP, parameter, old_value)] })
   chart_base <- reactive({ d <- per(); ps <- plot_params(); req(length(ps) > 0, nrow(d) > 0); pr <- as.numeric(period())
@@ -251,6 +267,9 @@ wb_server <- function(input, output, session, std) {
     if (identical(p$kind, "baro")) return(div(class = "wb-hr", span(class = "wb-eb", paste("Barologger \u00b7", p$serial)), div(style = "margin-top:6px",
       p(class = "wb-p", style = "color:var(--wb-fg2)", "Its cleaned record, as it went into its baro station. A removal here changes the water levels it compensates on the next run."))))
     if (!nrow(r)) return(NULL)
+    if (identical(p$kind, "site")) return(div(class = "wb-hr", span(class = "wb-eb", paste("Whole record \u00b7", p$site)), div(style = "margin-top:6px",
+      p(class = "wb-p", style = "color:var(--wb-fg2)", "Every deployment here in time order, whichever logger it was. Between deployments there are no records; nothing is filled in."),
+      lapply(seq_len(nrow(r)), function(i) wb_kv(paste(r$year[i], "\u00b7", r$serial[i]), paste(substr(fmt_ts(r$start[i]), 1, 10), "\u2192", substr(fmt_ts(r$end[i]), 1, 10)))))))
     div(class = "wb-hr", span(class = "wb-eb", paste("Deployment \u00b7", r$site[1], r$year[1])), div(style = "margin-top:6px",
       wb_kv("serial", r$serial[1]), wb_kv("records", format(r$records[1], big.mark = ",")), wb_kv("span", paste(substr(fmt_ts(r$start[1]), 1, 10), "\u2192", substr(fmt_ts(r$end[1]), 1, 10))),
       wb_kv("T_ST", if (is.na(r$T_ST[1])) "not set" else paste(r$T_ST[1], "m", if (nzchar(r$reference[1] %|% "")) paste("from", r$reference[1]) else "")),
@@ -305,16 +324,42 @@ wb_server <- function(input, output, session, std) {
           if (ci$state %in% c("rem", "back")) "\u2014" else wb_fmt(ci$v, ci$d)), state_chip(ci)),
       div(span(class = "wb-eb", "Lineage"), div(style = "margin-top:6px",
         wb_step(paste("Read", read_v), basename(ci$src)),
-        wb_step(paste("Stitched into serial", p$serial), if (identical(p$kind, "dep")) "every year of this logger together, then split by the deployment dates" else "its cleaned barologger record"),
-        if (identical(p$kind, "dep") && a$p %in% c(WB_DERIVED, "baro_kpa"))
+        wb_step(paste("Stitched into serial", if (identical(p$kind, "site")) ci$ser else p$serial), if (p$kind %in% c("dep", "site")) "every year of this logger together, then split by the deployment dates" else "its cleaned barologger record"),
+        if (p$kind %in% c("dep", "site") && a$p %in% c(WB_DERIVED, "baro_kpa"))
           wb_step(paste("Compensated with", if (nzchar(ci$bname %|% "")) ci$bname else "no barologger"),
                   paste0(ci$bsrc %|% "", if (nzchar(ci$bser %|% "")) paste0(" \u00b7 serial ", ci$bser), if (!is.na(ci$baro)) paste0(" \u00b7 ", signif(ci$baro, 6), " kPa"),
                          if (!is.na(ci$bshift) && ci$bshift != 0) paste0(" \u00b7 shifted ", ci$bshift, " kPa"))),
         if (a$p %in% c("depth_m", "dtw_m", "elev_m")) wb_step("Converted", switch(a$p, depth_m = "water minus baro \u00d7 1000 / (\u03c1 g)", dtw_m = "T_ST \u2212 offset \u2212 water above the sensor",
                                                                                   elev_m = "reference elevation \u2212 T_ST + offset + water above the sensor")),
-        wb_period_steps(E$period$data(), c(p$serial, p$site, p$id), a$p, ci$t), qc_step)),
-      correct_box(ci), dep_box())
+        wb_period_steps(E$period$data(), c(row_serial(a$r), p$site, p$id), a$p, ci$t), qc_step)),
+      missing_box(a, ci), correct_box(ci), dep_box())
   })
+  # a missing value (none in the record): type one with its reason, or fill the run of missing values it is in by linear
+  # interpolation (only when asked; sources in the hub references file). Both are rows of the corrections over a period.
+  row_serial <- function(r) { p <- part(); w <- grid()$w; if (identical(p$kind, "site") && "logger_id" %in% names(w)) as.character(w$logger_id[r]) else p$serial }
+  gap_of <- function(r, q) { x <- is.na(grid()$w[[q]]); i0 <- r; i1 <- r
+    while (i0 > 1 && x[i0 - 1]) i0 <- i0 - 1; while (i1 < length(x) && x[i1 + 1]) i1 <- i1 + 1; c(i0, i1) }
+  missing_box <- function(a, ci) { if (VIEWER || !is.na(ci$v) || a$p == "serial") return(NULL)
+    u <- tryCatch(units()[[a$p]], error = function(e) "") %|% ""; g <- gap_of(a$r, a$p); n <- g[2] - g[1] + 1L; w <- grid()$w
+    div(class = "wb-hr", span(class = "wb-eb", "Missing value"), div(style = "margin-top:6px;display:flex;flex-direction:column;gap:6px",
+      div(class = "wb-p", style = "color:var(--wb-fg2)", if (n > 1) sprintf("%d missing values in a row here, %s to %s.", n, fmt_ts(w$TIMESTAMP[g[1]]), fmt_ts(w$TIMESTAMP[g[2]])) else "No value at this time."),
+      div(class = "wb-form2", numericInput("wb_mv_value", paste0("Value", if (nzchar(u)) paste0(" (", u, ")")), NA, width = "100%"), textInput("wb_mv_author", "By", "", width = "100%")),
+      textInput("wb_mv_reason", "Reason", "", width = "100%", placeholder = "manual reading at the visit"),
+      actionButton("wb_mv_save", "Type a value", class = "wb-btn sm", title = "Saved to the corrections over a period; the next run puts it in and flags it as typed by hand"),
+      actionButton("wb_mv_interp", HTML("Fill by linear interpolation&hellip;"), class = "wb-btn sm", title = "Opens the period tool for this run of missing values; nothing is filled until you add it"))) }
+  observeEvent(input$wb_mv_save, { cc <- cells(); req(nrow(cc) == 1); a <- cc[1]; w <- grid()$w
+    v <- input$wb_mv_value; why <- trim(input$wb_mv_reason %||% "")
+    if (is.null(v) || is.na(v)) return(ovid_field_error("wb_mv_value", "Type a number."))
+    if (!nzchar(why)) return(ovid_field_error("wb_mv_reason", "Give the reason: where the value comes from."))
+    t <- fmt_ts(w$TIMESTAMP[a$r])
+    r <- data.table(target = row_serial(a$r), parameter = a$p, from = t, to = t, action = "set_value", value = format(v, digits = 10), on = "on",
+                    note = why, author = trim(input$wb_mv_author %||% ""), added = format(Sys.time(), "%Y-%m-%d %H:%M"))
+    if (isTRUE(E$period$append(as.data.frame(r)))) showNotification("Typed value added to the corrections over a period (period_corrections.csv). Run to apply.", type = "message") })
+  observeEvent(input$wb_mv_interp, { cc <- cells(); req(nrow(cc) == 1); a <- cc[1]; w <- grid()$w; g <- gap_of(a$r, a$p); n <- g[2] - g[1] + 1L
+    qpreset(list(target = row_serial(a$r), parameter = a$p, from = fmt_ts(w$TIMESTAMP[g[1]]), to = fmt_ts(w$TIMESTAMP[g[2]]), action = "interpolate", note = "",
+                 nonce = as.numeric(Sys.time()),
+                 lead = paste0(n, " missing value", if (n > 1) "s", ", filled with a straight line in time between the last value before and the first after ",
+                               "(linear interpolation, for short gaps: see the references file). The filled values are flagged and listed in the audit trail."))) })
   observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc)); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })

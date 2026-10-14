@@ -42,6 +42,7 @@ period_offset|Values offset over a period|kept|A row of Corrections over a perio
 period_scale|Values scaled over a period|kept|A row of Corrections over a period multiplied the values of its period by its value.|Review under Quality rules, Corrections over a period.|Quality rules
 period_drift|Values drift-corrected over a period|kept|A row of Corrections over a period added a share of its value growing from none at the start of the period to all of it at the end (linear drift).|Review under Quality rules, Corrections over a period.|Quality rules
 period_interpolate|Values filled in over a period|kept|A row of Corrections over a period filled the period with a straight line between the last value before it and the first after it.|Review under Quality rules, Corrections over a period.|Quality rules
+hand_value|Values typed by hand|kept|A row of Corrections over a period (value typed by hand) gave a missing value; its reason is in the row and the audit trail.|Review under Quality rules, Corrections over a period.|Quality rules
 period_flag|Values flagged over a period|kept|A row of Corrections over a period flagged the values of its period; none was changed.|Review under Quality rules, Corrections over a period.|Quality rules
 ')
 rule_info <- function(r) { i <- match(r, RULE_INFO$rule); out <- RULE_INFO[i]; out[is.na(i), `:=`(rule = r[is.na(i)], title = r[is.na(i)], lost = "kept", meaning = "", action = "", page = "")]; out }

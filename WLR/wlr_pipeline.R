@@ -489,7 +489,11 @@ run_pipeline_steps <- function(cfg = CFG) {
       kind <- d$kind[1]
       d <- apply_limits(d, cfgs$qc[!parameter %in% c("depth_m", "elev_m")], kind)
       d <- apply_manual(d, cfgs$manual, cfgs$oow, kind)
-      pstep <- function(d, only) period_step(d, cfgs$period_rows, c(s, dep$site, dep$deployment), flag = add_flag, where = list(site = dep$site, logger_id = s), only = only)
+      pstep <- function(d, only) { keys <- c(s, dep$site, dep$deployment); was <- lapply(stats::setNames(nm = intersect(only, names(d))), function(p) is.na(d[[p]]))
+        d <- period_step(d, cfgs$period_rows, keys, flag = add_flag, where = list(site = dep$site, logger_id = s), only = only)
+        for (p in names(was)) { k <- which(was[[p]] & !is.na(d[[p]]))                  # filled by interpolation (the one core action that fills): flagged
+          if (length(k)) add_flag(d, p, k, "period_interpolate", paste("filled by linear interpolation, a row of", PERIOD_FILE)) }
+        wlr_set_values(d, cfgs$period_rows, keys, only, add_flag, where = list(site = dep$site, logger_id = s)) }
       d <- pstep(d, c("pres_kpa", "temp_c", "spc_uscm"))                               # corrections over a period on what the logger measured
       used <- list(); nbr <- 0
       if (kind == "water") {

@@ -137,3 +137,24 @@ detect_air_runs <- function(d, cfg) {
     out[[2]] <- data.table(where = "end", from = d$TIMESTAMP[n - z + 1], to = d$TIMESTAMP[n], records = z, first_in_water = d$TIMESTAMP[n - z])
   rbindlist(out)
 }
+
+# Values typed by hand (Corrections over a period, action set_value): a row's value goes into the missing values of its
+# parameter in its period, for the record answering to keys (serial, site, deployment), and only for the step's columns
+# (only), so a typed depth is used for the elevations worked out after it. A value that is there is never replaced. Each
+# is flagged hand_value and written to the audit trail with the row and its reason.
+wlr_set_values <- function(dt, rows, keys, only, flag, where = list()) {
+  if (is.null(rows) || !nrow(rows) || !nrow(dt)) return(dt)
+  rows <- rows[action == "set_value"]; if (!nrow(rows)) return(dt)
+  keys <- tolower(trim(as.character(keys[!is.na(keys)]))); t <- dt$TIMESTAMP
+  for (i in seq_len(nrow(rows))) { r <- rows[i]; tg <- tolower(period_parts(r$target))
+    if (length(tg) && !"*" %in% tg && !any(tg %in% keys)) next
+    if (is.na(r$value)) { problem(PERIOD_FILE, paste0("row ", r$row, ": a typed value needs a number in value; the row was not applied")); next }
+    cols <- intersect(intersect(trim(strsplit(r$parameter, "|", fixed = TRUE)[[1]]), names(dt)), only)
+    for (p in cols) { if (!is.double(dt[[p]])) set(dt, j = p, value = as.numeric(dt[[p]]))
+      k <- which(!is.na(t) & (is.na(r$t0) | t >= r$t0) & (is.na(r$t1) | t <= r$t1) & is.na(dt[[p]])); if (!length(k)) next
+      set(dt, k, p, r$value)
+      why <- paste0("typed by hand: ", r$value, " (row ", r$row, " of ", PERIOD_FILE, ")", if (nzchar(r$note)) paste0(": ", r$note))
+      flag(dt, p, k, "hand_value", why)
+      do.call(audit_add, c(list(stage = "period", rule = "period_set_value", level = "summary", n = length(k), reason = why), where, list(column = p))) } }
+  dt
+}

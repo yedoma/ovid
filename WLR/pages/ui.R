@@ -15,8 +15,13 @@ std_folders <- function() fluidRow(column(7, div(class = "panel-x", h3("Folders"
                     tags$li("baro/2025 holds that year's barologgers. A logger typed Baro in the workbook counts as one wherever it is."),
                     tags$li(".hobo files are paired with their HOBOware CSV exports; .xle files with their Solinst CSVs."),
                     tags$li("The same serial in several years is stitched into one record, then split into deployments by the workbook's visit dates.")))))
-std_css <- function() paste(nord_css, legible_css(good = "--aqua"))
-std_head <- function() tagList(if (exists("useBusyIndicators", asNamespace("shiny"))) shiny::useBusyIndicators(spinners = FALSE, pulse = TRUE),
+# The rail's stages fold, only the stage of the page shown open (www/rail_stages.js), so the rail fits the screen.
+wlr_rail_css <- paste(".wl-stage-head{cursor:pointer;user-select:none}.wl-stage-head:hover{color:var(--acc)}",
+  ".wl-stage-chev::after{content:'\\203A';display:inline-block;font-size:12px;line-height:1;transition:transform .15s}",
+  ".wl-stage-head[aria-expanded=true] .wl-stage-chev::after{transform:rotate(90deg)}.wl-stage-body.wl-shut{display:none}",
+  ".wl-stage-body{display:flex;flex-direction:column;gap:inherit}")
+std_css <- function() paste(nord_css, legible_css(good = "--aqua"), wlr_rail_css)
+std_head <- function() tagList(tags$script(src = "rail_stages.js"), if (exists("useBusyIndicators", asNamespace("shiny"))) shiny::useBusyIndicators(spinners = FALSE, pulse = TRUE),
                  if (VIEWER) tags$script(HTML("document.addEventListener('DOMContentLoaded',function(){document.documentElement.classList.add('viewer')});")))
 # The Standard pages: the tools and section labels for ovid_page(), in rail order. The Workbench shows the same pages in
 # its own frame (workbench/wb_wlr.R); there sources = FALSE leaves the folders off Home, as its Import view holds them.

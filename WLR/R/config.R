@@ -9,12 +9,17 @@
 WLR_SHEET_OWN <- setdiff(META_FIELDS$field, DEPLOY_COLS)
 WLR_PERIOD_EXTRA <- c("min_value", "max_value", "value_end", "year")
 PERIOD_APP_ACTIONS <- c(drift_tape = "drift from the tape checks", drift_manual = "drift typed in (value at the start, value_end at the end)",
-                        drift_none = "no drift correction", drift_keep = "tape offset kept as it is")
-WLR_DRIFT_ACTIONS <- names(PERIOD_APP_ACTIONS)
+                        drift_none = "no drift correction", drift_keep = "tape offset kept as it is",
+                        set_value = "value typed by hand (missing values only)")
+WLR_DRIFT_ACTIONS <- c("drift_tape", "drift_manual", "drift_none", "drift_keep")
+
+# Columns added after a table was first written; a blank one means the default (hang_measured_to, a plain shift, an
+# orthometric height), so a table without them is read with them empty and no notice.
+DATUM_NEWER_COLS <- c("height_type", "frame", "epoch", "geoid_model", "geoid_N_m")
 
 CONFIG_FILES <- list(
   file_rules   = list(file = "file_rules.csv",       cols = function() FILE_RULE_COLS),
-  deployments  = list(file = "deployments.csv",      cols = function() DEPLOY_OVERRIDE_COLS),
+  deployments  = list(file = "deployments.csv",      cols = function() DEPLOY_OVERRIDE_COLS, optional = "measured_to"),
   baro_groups  = list(file = "baro_groups.csv",      cols = function() BARO_GROUP_COLS),
   baro_members = list(file = "baro_members.csv",     cols = function() BARO_MEMBER_COLS),
   baro_stations = list(file = "baro_stations.csv",   cols = function() BARO_STATION_COLS),
@@ -23,11 +28,11 @@ CONFIG_FILES <- list(
   qc           = list(file = "qc_rules.csv",         cols = function() QC_COLS, default = function() default_qc(), rule_ids = "Q"),
   measurements = list(file = "manual_measurements.csv", cols = function() MEAS_COLS),
   oow          = list(file = "out_of_water.csv",     cols = function() OOW_COLS),
-  time         = list(file = "time_corrections.csv", cols = function() TIME_COLS,
+  time         = list(file = "time_corrections.csv", cols = function() TIME_COLS, optional = "mode",
                       rules = list(required = "serial", choices = list(mode = c("shift", "drift")), known = list(serial = known_from("output/audit/files.csv", "serial")))),
   timezones    = list(file = "timezones.csv",        cols = function() TZ_COLS),
   gps_points   = list(file = "gps_points.csv",       cols = function() GPS_POINT_COLS),
-  datum        = list(file = "datum_manual.csv",     cols = function() DATUM_COLS),
+  datum        = list(file = "datum_manual.csv",     cols = function() DATUM_COLS, optional = DATUM_NEWER_COLS),
   dgps_exclude = list(file = "dgps_exclude.csv",     cols = function() DGPS_EXCLUDE_COLS),
   offsets      = list(file = "logger_offsets.csv",   cols = function() OFFSET_COLS, default = function() default_offsets()),
   accuracy     = list(file = "logger_accuracy.csv",  cols = function() ACCURACY_COLS, default = function() default_accuracy()),
