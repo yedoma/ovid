@@ -21,6 +21,10 @@ jobs:
           r-version: release
           use-public-rspm: true
 
+      # ncdf4 comes as a binary that links to the system NetCDF library, which the runner does not have.
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev
+
       - name: Cache packages
         uses: actions/cache@v4
         with:
