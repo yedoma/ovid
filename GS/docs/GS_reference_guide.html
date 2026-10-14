@@ -9,7 +9,8 @@ img{max-width:100%;border:1px solid #363646;border-radius:8px;margin:6px 0 18px}
 </style></head><body>
 <h1>ovid GS Reference Guide</h1>
 <p>Geophysical surveys (electrical resistivity tomography and ground-penetrating radar): what the app does to every file and measurement, why, and how to check it.
-For GS 0.4.0 (ovid Core 1.14.0). ovid GS is a catalogue, metadata, QC and viewing tool; it does not invert.
+For GS 0.5.0 (ovid Core 1.15.0). ovid GS is a catalogue, metadata, QC and viewing tool; it does not invert.<br>
+GS was called ERT before October 2026; projects made as ERT open unchanged. The ERT | GPR switch in the header moves between resistivity surveys (sections 1 to 8) and GPR lines (section 9).
 Settings are quoted with their defaults; change them in the app or in <code>CFG</code> at the top of <code>gs_pipeline.R</code>.</p>
 <p><strong>Contents</strong></p>
 <ol>
@@ -24,9 +25,11 @@ Settings are quoted with their defaults; change them in the app or in <code>CFG<
 <li><a href="#6-statistics">6. Statistics</a></li>
 <li><a href="#7-metadata-projects-and-transects">7. Metadata, projects and transects</a></li>
 <li><a href="#8-exports-sharing-and-opening-a-catalogue">8. Exports, sharing and opening a catalogue</a></li>
+<li><a href="#9-gpr-lines">9. GPR lines</a></li>
 <li><a href="#set-up-check-time-zones-and-file-audit">Set-up check, time zones and file audit</a></li>
 <li><a href="#reading-the-outputs">Reading the outputs</a></li>
 <li><a href="#electrode-arrays">Electrode arrays</a></li>
+<li><a href="#plots-and-set-up-tables">Plots and set-up tables</a></li>
 <li><a href="#troubleshooting">Troubleshooting</a></li>
 <li><a href="#glossary">Glossary</a></li>
 <li><a href="#references">References</a></li>
@@ -312,6 +315,77 @@ pseudosection previews), the catalogue tables, metadata and QC profiles; measure
 <li><strong>Open a catalogue</strong> (Archive page): loads such a zip into <code>GS_imports/&lt;name&gt;</code> beside your project. A banner shows that you are
 viewing an imported catalogue, with a link back to your own. Without measurements, the Survey page shows the preview and details.</li>
 </ul>
+<h2 id="9-gpr-lines">9. GPR lines</h2>
+<p>MALA lines are read from their own files: <code>.rd3</code> (16-bit) or <code>.rd7</code> (32-bit) traces, the <code>.rad</code> header, <code>.cor</code> positions and heights, and <code>.mrk</code> markers. Raw files are never written; flows, picks and markers are kept in the project's <code>config/</code> folder.</p>
+<h3 id="gpr-map">GPR Map</h3>
+<p>Every line with GPS is a track on the map, with filters (antenna, year, with markers only) and the line table. Under the map, the selected line's radargram is shown read-only with a shared cursor: moving along the radargram moves a dot on the map, and moving along the track moves a line on the radargram. Lines without GPS are listed, not placed.</p>
+<h3 id="gpr-processing">GPR processing</h3>
+<p>One screen in both views. The flow is a list of steps run in order, each with a switch, a one-line summary and its settings folded under it; Up and Down reorder them. Presets, Undo, Before / after and Apply to all lines are on the flow. The flow is saved with the line as versions (<code>config/gpr_flows/&lt;line&gt;.json</code>); a line with no saved flow starts from the defaults.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Default</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Order</td>
+<td>DC / dewow, time zero, band-pass, gain, background removal</td>
+<td>REFLEXW manual; GroundVision manual</td>
+</tr>
+<tr>
+<td>Dewow</td>
+<td>window of 1 period of the antenna frequency (0 to 5)</td>
+<td>REFLEXW manual</td>
+</tr>
+<tr>
+<td>Time zero</td>
+<td>first zero crossing before the first strong extremum of the mean trace</td>
+<td>REFLEXW guide</td>
+</tr>
+<tr>
+<td>Band-pass</td>
+<td>Ormsby, corners 0.25 / 1 / 2 / 4 × antenna frequency</td>
+<td>Gusmeroli et al. 2015</td>
+</tr>
+<tr>
+<td>Gain</td>
+<td>energy decay; or (1 + a·t)·exp(b·t); or AGC (25 ns window, an ovid starting value)</td>
+<td>REFLEXW manual; GroundVision manual</td>
+</tr>
+<tr>
+<td>Background removal</td>
+<td>mean trace, or moving mean of 50 traces (an ovid starting value); off by default</td>
+<td>GroundVision manual</td>
+</tr>
+</tbody>
+</table>
+<h3 id="depth-picks-and-markers">Depth, picks and markers</h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Formula</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>velocity_m_ns</code></td>
+<td>v = 0.3 / √εr (m/ns); frozen ground 0.141, thawed wet sand or gravel 0.0775, peat 0.039, silt 0.054, whole active layer 0.045</td>
+<td>Wollschläger et al. 2010; Gusmeroli et al. 2015</td>
+</tr>
+<tr>
+<td><code>depth_m</code></td>
+<td>depth = two-way time × v / 2</td>
+<td>Davis and Annan 1989; REFLEXW manual</td>
+</tr>
+</tbody>
+</table>
+<p>The velocities are site values from the papers; measure one on site (hyperbola fit, CMP, or a probe depth to the frost table) where possible. A click on the radargram adds a pick (<code>config/gpr_picks.csv</code>: line, trace, distance, two-way time, depth, layer, velocity and the flow version used) or a marker (<code>config/gpr_markers.csv</code>; the <code>.mrk</code> file stays as it is). <strong>Export picks</strong> writes the picks as a CSV. Every setting and its source is listed in <code>GS/docs/GPR_references.md</code>.</p>
+
 <h2 id='set-up-check-time-zones-and-file-audit'>Set-up check, time zones and file audit</h2>
 <p>These three checks are shared with the other ovid apps and come from the core. Each run writes them to <code>output/audit/</code>;
 the Settings page shows them in the <strong>Set-up check and file audit</strong> card, with a button to run the check again and one to export the file audit.</p>
@@ -381,6 +455,18 @@ A survey from November matches no row and keeps <code>zone_source = none</code>.
 </tr>
 </tbody>
 </table>
+<h2 id="plots-and-set-up-tables">Plots and set-up tables</h2>
+<h3 id="plot-gestures">Plot gestures</h3>
+<p>The same on the Workbench point chart (pseudosection points); ERT sections and radargrams keep their own toolbar.</p>
+<ul>
+<li><strong>Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong>Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
+<li><strong>Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
+<li>The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.</li>
+<li>Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.</li>
+</ul>
+<h3 id="yesno-picks-in-set-up-tables">Yes/No picks in set-up tables</h3>
+<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong>Yes</strong> or <strong>No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
+
 <h2 id='troubleshooting'>Troubleshooting</h2>
 <table>
 <thead>
@@ -431,6 +517,11 @@ physical line; <strong>survey</strong> one acquisition on it. <strong>Flag</stro
 <li>ResIPy (gitlab.com/hkex/resipy), <code>parsers.py</code>: Prosys header styles, remote electrodes, Syscal binary layout.</li>
 <li>Herring, T., et al. (2023). Best practices for using electrical resistivity tomography to investigate permafrost. <em>Permafrost and Periglacial Processes</em> 34(4), 494–512. <a href="https://doi.org/10.1002/ppp.2207">doi:10.1002/ppp.2207</a></li>
 <li>Canadian Permafrost Electrical Resistivity Survey (CPERS), NSERC PermafrostNet. Data processing notebook. <a href="https://data.permafrostnet.ca/cpers/data_processing.html">data.permafrostnet.ca/cpers/data_processing.html</a></li>
+<li>Gusmeroli A., Liu L., Schaefer K.M., Zhang T., Schaefer T., Grosse G. (2015). Active layer stratigraphy and organic layer thickness at a thermokarst site in Arctic Alaska identified using ground penetrating radar. <em>Arctic, Antarctic, and Alpine Research</em> 47(2). doi:10.1657/AAAR00C-13-301</li>
+<li>Wollschläger U., Gerhards H., Yu Q., Roth K. (2010). Multi-channel ground-penetrating radar to explore spatial variations in thaw depth and moisture content in the active layer of a permafrost site. <em>The Cryosphere</em> 4, 269–283. doi:10.5194/tc-4-269-2010</li>
+<li>Davis J.L., Annan A.P. (1989). Ground-penetrating radar for high-resolution mapping of soil and rock stratigraphy. <em>Geophysical Prospecting</em> 37(5), 531–551.</li>
+<li>Sandmeier K.J. <em>REFLEXW manual</em>, version 10.3, and <em>Introduction to the processing of GPR data within REFLEXW</em>. sandmeier-geo.de</li>
+<li>MALA GeoScience (2009). <em>GroundVision Software Operating Manual</em>, v. 1.4.</li>
 </ul>
 
 <h2 id="wrong">When something goes wrong</h2>

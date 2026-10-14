@@ -32,7 +32,7 @@ code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
 </head>
 <body><main>
 <h1>ovid GT Reference Guide</h1>
-<p class="sub">Ground temperature loggers: what the app does to every reading, why, and how to check it. For GT 1.7.0 (ovid Core 1.14.0). Settings are quoted with their defaults; change them in the app (Settings, Quality rules) or in <code>CFG</code> at the top of <code>gt_pipeline.R</code>.</p>
+<p class="sub">Ground temperature loggers: what the app does to every reading, why, and how to check it. For GT 1.8.0 (ovid Core 1.15.0). Settings are quoted with their defaults; change them in the app (Settings, Quality rules) or in <code>CFG</code> at the top of <code>gt_pipeline.R</code>.</p>
 
 <nav><b>Contents</b>
 <ol>
@@ -57,8 +57,10 @@ code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
 <li><a href="#audit">15. Audit trail and reconciliation</a></li>
 <li><a href="#wmo">16. WMO quality codes in exports</a></li>
 <li><a href="#outputs">Reading the outputs</a></li>
+<li><a href="#processing-levels-and-the-dataset-card">Processing levels and the Dataset card</a></li>
 <li><a href="#sensors">Sensor notes</a></li>
 <li><a href="#values">Reasonable values</a></li>
+<li><a href="#plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</a></li>
 <li><a href="#trouble">Troubleshooting</a></li>
 <li><a href="#glossary">Glossary</a></li>
 <li><a href="#refs">References</a></li>
@@ -403,6 +405,55 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 <tr><td>report.html</td><td>The run report; site reports from Reports and export</td></tr>
 </table>
 
+<h2 id="processing-levels-and-the-dataset-card">Processing levels and the Dataset card</h2>
+<h3 id="processing-levels">Processing levels</h3>
+<p>Every export names its processing level, on one scale for every ovid app, by stage of correction:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Name</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L0</td>
+<td>raw</td>
+<td>as read from the logger's files; nothing checked or changed</td>
+</tr>
+<tr>
+<td>L1A</td>
+<td>filtered</td>
+<td>automatic basic checks run: record structure, clock and duplicates fixed, impossible values taken out; nothing else changed</td>
+</tr>
+<tr>
+<td>L1B</td>
+<td>flagged</td>
+<td>automatic checks mark suspect values with a WMO code (step, persistence, internal and between-station consistency); values unchanged</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>QA/QC</td>
+<td>a person has decided the flags (keep, remove, not a problem) and corrections are applied (calibration, clock, drift)</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>refined</td>
+<td>gaps filled or estimated (each flagged and cited) and the record approved: the dataset to publish</td>
+</tr>
+<tr>
+<td>L4</td>
+<td>derived</td>
+<td>computed from other values with a cited formula (daily and annual statistics, indices, degree days, thaw depth)</td>
+</tr>
+</tbody>
+</table>
+<p>A file's level follows from the WMO quality codes of its values, the review and the approval: computed values are L4; an approved record, or estimated values (code 6) in it, L3; every flag decided, or corrected values (code 5), L2; flagged values (codes 1, 2, 3) L1B; checked values (0, 7) L1A; otherwise L0. Every level above L0 is provisional until reviewed and approved, and the label says so, for example <code>L1B flagged (provisional)</code>. L3 is the refined record, not gridded data as in NASA's scheme. The level is the <code>processing_level</code> attribute of each NetCDF export and is listed in each export's README.</p>
+<p>Sources: NASA Earthdata data processing levels (L0, L1A, L1B); ARM data levels; Horsburgh et al. (2008) ODM quality control levels; Zahumenský (2004); Estévez et al. (2011).</p>
+<h3 id="dataset-card">Dataset card</h3>
+<p><strong>Settings &gt; Dataset</strong> holds who made the data and how it may be used: title, summary, creator, email, institution and license. It is kept in the project (<code>config/dataset.json</code>) and written into every NetCDF export as ACDD attributes (<code>title</code>, <code>summary</code>, <code>creator_name</code>, <code>creator_email</code>, <code>institution</code>, <code>license</code>); a blank field is left out. NetCDF exports follow CF 1.8 (timeSeries).</p>
+
 <h2 id="sensors">Sensor notes</h2>
 <p>From the makers' manuals and data sheets. The accuracy of a ground temperature record is usually limited by the thermistor and its depth, not the logger.</p>
 <table>
@@ -449,11 +500,52 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
 <p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
 <h3>Check the data</h3>
-<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>Drag across a plot with the right mouse button (or shift-drag) to select a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
+<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>
-<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Right-drag on the chart (or drag in the grid) selects values; each further right-drag adds to the selection, Esc clears it. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
+<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
 <h3>When something goes wrong</h3>
 <ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
+<h2 id="plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</h2>
+<h3 id="plot-gestures">Plot gestures</h3>
+<p>The same on every time plot in both views, the Workbench chart and its point charts.</p>
+<ul>
+<li><strong>Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong>Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
+<li><strong>Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
+<li>The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.</li>
+<li>Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.</li>
+</ul>
+<h3 id="yesno-picks-in-set-up-tables">Yes/No picks in set-up tables</h3>
+<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong>Yes</strong> or <strong>No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
+<h3 id="needs-you-by-site">Needs you by site</h3>
+<p>Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the logger serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>decide</td>
+<td>a flag to keep, remove or note</td>
+</tr>
+<tr>
+<td>fix in ovid</td>
+<td>a set-up change ovid can make</td>
+</tr>
+<tr>
+<td>raw data</td>
+<td>a problem in the files themselves, which ovid cannot fix</td>
+</tr>
+<tr>
+<td>add a file</td>
+<td>a file that is missing and may exist</td>
+</tr>
+</tbody>
+</table>
+<p>The pop-up can also be grouped by what to do.</p>
+
 <h2 id="trouble">Troubleshooting</h2>
 <table>
 <tr><th>Message or symptom</th><th>What it means</th><th>What to do</th></tr>
@@ -510,5 +602,9 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 <li>World Meteorological Organization. BUFR code table 0 33 020, <em>Quality
 control indication of following value</em>. WMO Codes Registry.
 <a href="https://codes.wmo.int/bufr4/codeflag/0-33-020">codes.wmo.int/bufr4/codeflag/0-33-020</a></li>
+<li>NASA Earthdata. <em>Data processing levels</em>. <a href="https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/data-processing-levels">earthdata.nasa.gov</a></li>
+<li>ARM (Atmospheric Radiation Measurement). <em>Data file formatting and naming protocols</em> (data levels 00, a0, a1, b1, c1). <a href="https://armgov.svcs.arm.gov/guidance/datause/formatting-and-file-naming-protocols">arm.gov</a></li>
+<li>Horsburgh J.S., Tarboton D.G., Maidment D.R., Zaslavsky I. (2008). A relational model for environmental and water resources data. <em>Water Resources Research</em> 44, W05406.</li>
+<li>Estévez J., Gavilán P., Giráldez J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. <em>Journal of Hydrology</em> 402, 144–154. doi:10.1016/j.jhydrol.2011.02.031</li>
 </ul>
 </main></body></html>

@@ -34,7 +34,7 @@ html{background:var(--bg)}
 </head>
 <body><main>
 <h1>ovid WLR Reference Guide</h1>
-<p class="sub">Water level loggers: what the app does to every reading, why, and how to check it. For WLR 0.10.0 (ovid Core 1.14.0). Settings are quoted with their defaults; change them in the app or in <code>wlr_pipeline.R</code>.</p>
+<p class="sub">Water level loggers: what the app does to every reading, why, and how to check it. For WLR 0.12.0 (ovid Core 1.15.0). Settings are quoted with their defaults; change them in the app or in <code>wlr_pipeline.R</code>.</p>
 
 <nav><b>Contents</b>
 <ol>
@@ -54,10 +54,13 @@ html{background:var(--bg)}
 <li><a href="#qc">10. Quality checks and flags</a></li>
 <li><a href="#manual">11. Tape checks and manual measurements</a></li>
 <li><a href="#drift">11b. Drift and offset correction (off by default)</a></li>
+<li><a href="#11c-missing-values-typed-by-hand-or-interpolated">11c. Missing values typed by hand or interpolated</a></li>
 <li><a href="#summ">12. Daily, monthly and water-year summaries</a></li>
 <li><a href="#outputs">Reading the outputs</a></li>
+<li><a href="#processing-levels-and-the-dataset-card">Processing levels and the Dataset card</a></li>
 <li><a href="#sensors">Sensor notes</a></li>
 <li><a href="#values">Reasonable values</a></li>
+<li><a href="#plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</a></li>
 <li><a href="#trouble">Troubleshooting</a></li>
 <li><a href="#glossary">Glossary</a></li>
 <li><a href="#refs">References</a></li>
@@ -234,6 +237,9 @@ season = calendar year       otherwise</div>
 <p>A year with no visit date ends on 15 September; the next year starts where it ended. Records outside every deployment are left out and listed (with counts and dates) under Problems, so you can add the missing deployment on the Deployment history page.</p>
 <p>A logger can be redeployed in a new role: a water logger in some years and a barologger in others (by the workbook's Type). It is then a water logger inside its WLR (or Piezo) deployments and a barologger the rest of the time (a barologger has no removal date), and its barologger records feed that baro station. A workbook row that names a different make from the logger's Baro rows (a Solinst WLR row for a HOBO barologger) is two loggers sharing a short serial, so that row is set aside and listed under Problems. A logger in a <code>baro/</code> folder is always a barologger.</p>
 
+<h3 id="whole-record-a-site-across-seasons">Whole record: a site across seasons</h3>
+<p>In the Workbench, a site with more than one deployment has a <strong>Whole record</strong> first in its tree: every deployment there in time order, whichever logger it was, with a <code>serial</code> column. The time between deployments is left empty, never filled. A correction made on the Whole record goes to the logger of each row. The Site page opens it. It is the same series the run writes to <code>output/corrected/&lt;site&gt;.csv</code>.</p>
+
 <h2 id="comp">7. Compensation: pressure to depth</h2>
 <p>A water level logger is not vented: it measures the water <i>plus</i> the air above it. Removing the air pressure leaves the water.</p>
 <div class="f">Δp (kPa)  = p_water − p_baro
@@ -396,6 +402,17 @@ codes of the depth and pressure they are computed from. On the Reports
 and export page, <em>Select all sites</em> and <em>Export one file per site (ZIP)</em>
 give every site at once: one corrected-data CSV per site, all sites in
 one file, and a readme.</p>
+<h2 id="11c-missing-values-typed-by-hand-or-interpolated">11c. Missing values typed by hand or interpolated</h2>
+<p>Missing values are never filled unless a person asks. In the Workbench inspector, a selected run of missing values can be:</p>
+<ul>
+<li><strong>typed by hand</strong>, with a reason: a Corrections over a period row with action <code>set_value</code>. It fills missing values only, never replaces a value, and is flagged <code>hand_value</code>.</li>
+<li><strong>filled by linear interpolation</strong>, through the period tool (action <code>interpolate</code>), flagged <code>period_interpolate</code>. The gap's length is shown before the row is added; no length limit is set.</li>
+</ul>
+<div class="f">
+<p>v(t) = v_b + (v_e − v_b) × (t − t_b) / (t_e − t_b)</p>
+</div>
+<p>where t_b is the last value before the gap and t_e the first after it. Both kinds are kept apart in the audit trail and counted in Corrections applied. Linear interpolation is sound for short gaps (hours to a day) and poor for long ones (Meggiorin et al. 2023; Niedzielski et al. 2023); estimated values are marked as estimated in the record (Wagner et al. 2006; WMO 2010).</p>
+
 <h2 id="summ">12. Daily, monthly and water-year summaries</h2>
 <div class="f">a day counts      if records that day ≥ 0.8 × usual records per day   (min_complete)
 usual per day     = 86400 / logging interval (s)
@@ -421,6 +438,55 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <tr><td>summaries/</td><td>Monthly and water-year summaries</td></tr>
 <tr><td>report.html</td><td>The run report; site reports from Reports and export</td></tr>
 </table>
+
+<h2 id="processing-levels-and-the-dataset-card">Processing levels and the Dataset card</h2>
+<h3 id="processing-levels">Processing levels</h3>
+<p>Every export names its processing level, on one scale for every ovid app, by stage of correction:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Name</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L0</td>
+<td>raw</td>
+<td>as read from the logger's files; nothing checked or changed</td>
+</tr>
+<tr>
+<td>L1A</td>
+<td>filtered</td>
+<td>automatic basic checks run: record structure, clock and duplicates fixed, impossible values taken out; nothing else changed</td>
+</tr>
+<tr>
+<td>L1B</td>
+<td>flagged</td>
+<td>automatic checks mark suspect values with a WMO code (step, persistence, internal and between-station consistency); values unchanged</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>QA/QC</td>
+<td>a person has decided the flags (keep, remove, not a problem) and corrections are applied (clock, barometric compensation, drift)</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>refined</td>
+<td>gaps filled or estimated (each flagged and cited) and the record approved: the dataset to publish</td>
+</tr>
+<tr>
+<td>L4</td>
+<td>derived</td>
+<td>computed from other values with a cited formula (daily and annual statistics, indices, degree days, water level)</td>
+</tr>
+</tbody>
+</table>
+<p>A file's level follows from the WMO quality codes of its values, the review and the approval: computed values are L4; an approved record, or estimated values (code 6) in it, L3; every flag decided, or corrected values (code 5), L2; flagged values (codes 1, 2, 3) L1B; checked values (0, 7) L1A; otherwise L0. WLR takes the approval from the export's approval setting. Every level above L0 is provisional until reviewed and approved, and the label says so, for example <code>L1B flagged (provisional)</code>. L3 is the refined record, not gridded data as in NASA's scheme. The level is the <code>processing_level</code> attribute of each NetCDF export and is listed in each export's README.</p>
+<p>Sources: NASA Earthdata data processing levels (L0, L1A, L1B); ARM data levels; Horsburgh et al. (2008) ODM quality control levels; Zahumenský (2004); Estévez et al. (2011).</p>
+<h3 id="dataset-card">Dataset card</h3>
+<p><strong>Settings &gt; Dataset</strong> holds who made the data and how it may be used: title, summary, creator, email, institution and license. It is kept in the project (<code>config/dataset.json</code>) and written into every NetCDF export as ACDD attributes (<code>title</code>, <code>summary</code>, <code>creator_name</code>, <code>creator_email</code>, <code>institution</code>, <code>license</code>); a blank field is left out. NetCDF exports follow CF 1.8 (timeSeries).</p>
 
 <h2 id="sensors">Sensor notes</h2>
 <p>From the makers' manuals. FS = full scale (the top of the logger's range). All are absolute (non-vented) pressure loggers, so all need barometric compensation.</p>
@@ -464,15 +530,56 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
 <p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
 <h3>Check the data</h3>
-<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>Drag across a plot with the right mouse button (or shift-drag) to select a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
+<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>
-<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Right-drag on the chart (or drag in the grid) selects values; each further right-drag adds to the selection, Esc clears it. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
+<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
 <h3>When something goes wrong</h3>
 <ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
 <h3>HOBO .hobo files</h3>
 <p>U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; the Raw files page says so for each file.</p>
 <h3>Configuration</h3>
 <p>Set up &gt; Configuration exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.</p>
+<h2 id="plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</h2>
+<h3 id="plot-gestures">Plot gestures</h3>
+<p>The same on every time plot in both views, the Workbench chart and its point charts.</p>
+<ul>
+<li><strong>Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong>Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
+<li><strong>Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
+<li>The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.</li>
+<li>Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.</li>
+</ul>
+<h3 id="yesno-picks-in-set-up-tables">Yes/No picks in set-up tables</h3>
+<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong>Yes</strong> or <strong>No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
+<h3 id="needs-you-by-site">Needs you by site</h3>
+<p>Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the logger serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>decide</td>
+<td>a flag to keep, remove or note</td>
+</tr>
+<tr>
+<td>fix in ovid</td>
+<td>a set-up change ovid can make</td>
+</tr>
+<tr>
+<td>raw data</td>
+<td>a problem in the files themselves, which ovid cannot fix</td>
+</tr>
+<tr>
+<td>add a file</td>
+<td>a file that is missing and may exist</td>
+</tr>
+</tbody>
+</table>
+<p>The pop-up can also be grouped by what to do.</p>
+
 <h2 id="trouble">Troubleshooting</h2>
 <table>
 <tr><th>Message or symptom</th><th>What it means</th><th>What to do</th></tr>
@@ -521,5 +628,14 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <li>Cunningham W.L., Schalk C.W., comps. (2011). <em>Groundwater technical procedures of the U.S. Geological Survey</em>. U.S. Geological Survey Techniques and Methods 1-A1; GWPD 16, Measuring water levels in wells and piezometers by use of a submersible pressure transducer. <a href="https://pubs.usgs.gov/tm/1a1/pdf/GWPD16.pdf">pubs.usgs.gov/tm/1a1/pdf/GWPD16.pdf</a></li>
 <li>World Meteorological Organization. BUFR code table 0 33 020, <em>Quality control indication of following value</em>. WMO Codes Registry. <a href="https://codes.wmo.int/bufr4/codeflag/0-33-020">codes.wmo.int/bufr4/codeflag/0-33-020</a></li>
 <li>Zahumenský I. (2004). <em>Guidelines on Quality Control Procedures for Data from Automatic Weather Stations</em>. World Meteorological Organization, Geneva.</li>
+<li>NASA Earthdata. <em>Data processing levels</em>. <a href="https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/data-processing-levels">earthdata.nasa.gov</a></li>
+<li>ARM (Atmospheric Radiation Measurement). <em>Data file formatting and naming protocols</em> (data levels 00, a0, a1, b1, c1). <a href="https://armgov.svcs.arm.gov/guidance/datause/formatting-and-file-naming-protocols">arm.gov</a></li>
+<li>Horsburgh J.S., Tarboton D.G., Maidment D.R., Zaslavsky I. (2008). A relational model for environmental and water resources data. <em>Water Resources Research</em> 44, W05406.</li>
+<li>Estévez J., Gavilán P., Giráldez J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. <em>Journal of Hydrology</em> 402, 144–154. doi:10.1016/j.jhydrol.2011.02.031</li>
+<li>Wagner R.J., Boulger R.W., Oblinger C.J., Smith B.A. (2006). <em>Guidelines and standard procedures for continuous water-quality monitors</em>. U.S. Geological Survey Techniques and Methods 1-D3 (estimated values in continuous records).</li>
+<li>World Meteorological Organization (2010). <em>Manual on Stream Gauging</em>. WMO-No. 1044 (estimating missing record from adjacent values).</li>
+<li>Meggiorin M., et al. (2023). Comparison of imputation methods for groundwater piezometric head time series. <em>Water</em>.</li>
+<li>Chalmers University / EGU23-2605 (2023). Assessing automated gap imputation of regional scale groundwater level data sets with typical gap patterns. <a href="https://research.chalmers.se/publication/535309">research.chalmers.se</a></li>
+<li>Niedzielski T., et al. (2023). EGU23-9962: gap filling of hourly water levels. <a href="https://meetingorganizer.copernicus.org/EGU23/EGU23-9962.html">meetingorganizer.copernicus.org</a></li>
 </ul>
 </main></body></html>

@@ -2,7 +2,7 @@
 # ovid CS Reference Guide
 
 Campbell Scientific loggers: what the app does to every record, why, and
-how to check it. For CS 1.10.0 (ovid Core 1.14.0). Settings are quoted
+how to check it. For CS 1.11.0 (ovid Core 1.15.0). Settings are quoted
 with their defaults; change them in the app or at the top of
 `cs_pipeline.R`. Raw files are never changed.
 
@@ -26,8 +26,10 @@ with their defaults; change them in the app or at the top of
 16. [11. Derived values and summaries](#summ)
 17. [12. Weighing precipitation gauges](#precip)
 18. [Reading the outputs](#outputs)
+19. [Processing levels and the Dataset card](#processing-levels-and-the-dataset-card)
 19. [Sensor notes](#sensors)
 20. [Reasonable values](#values)
+21. [Plots, set-up tables and Needs you](#plots-set-up-tables-and-needs-you)
 21. [Troubleshooting](#trouble)
 22. [Glossary](#glossary)
 23. [References](#refs)
@@ -857,6 +859,29 @@ In exports, a `<parameter>_flag` column is `S` (suspect, kept), `R`
 Exported files are named `ovid_cs_<what>_<YYYY-MM-DD>.<ext>`, and each
 export button says its format, e.g. **Export data (CSV)**.
 
+## Processing levels and the Dataset card
+
+### Processing levels
+
+Every export names its processing level, on one scale for every ovid app, by stage of correction:
+
+| Level | Name | Meaning |
+|---|---|---|
+| L0 | raw | as read from the logger's files; nothing checked or changed |
+| L1A | filtered | automatic basic checks run: record structure, clock and duplicates fixed, impossible values taken out; nothing else changed |
+| L1B | flagged | automatic checks mark suspect values with a WMO code (step, persistence, internal and between-station consistency); values unchanged |
+| L2 | QA/QC | a person has decided the flags (keep, remove, not a problem) and corrections are applied (calibration, clock, undercatch) |
+| L3 | refined | gaps filled or estimated (each flagged and cited) and the record approved: the dataset to publish |
+| L4 | derived | computed from other values with a cited formula (daily and annual statistics, indices, degree days) |
+
+A file's level follows from the WMO quality codes of its values, the review and the approval: computed values are L4; an approved record, or estimated values (code 6) in it, L3; every flag decided, or corrected values (code 5), L2; flagged values (codes 1, 2, 3) L1B; checked values (0, 7) L1A; otherwise L0. Every level above L0 is provisional until reviewed and approved, and the label says so, for example `L1B flagged (provisional)`. L3 is the refined record, not gridded data as in NASA's scheme. The level is the `processing_level` attribute of each NetCDF export and is listed in each export's README.
+
+Sources: NASA Earthdata data processing levels (L0, L1A, L1B); ARM data levels; Horsburgh et al. (2008) ODM quality control levels; Zahumenský (2004); Estévez et al. (2011).
+
+### Dataset card
+
+**Settings > Dataset** holds who made the data and how it may be used: title, summary, creator, email, institution and license. It is kept in the project (`config/dataset.json`) and written into every NetCDF export as ACDD attributes (`title`, `summary`, `creator_name`, `creator_email`, `institution`, `license`); a blank field is left out. NetCDF exports follow CF 1.8 (timeSeries).
+
 ## Sensor notes
 
 The sensors below are the ones the app's aliases, rules and parameter
@@ -946,14 +971,14 @@ The app has two views of the same project, data and edits: the **Standard** view
 ### Check the data
 
 - Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until **Apply**, then one run applies them.
-- Drag across a plot with the right mouse button (or shift-drag) to select a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. **Look closer** zooms to it and opens the Workbench there.
+- A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. **Look closer** zooms to it and opens the Workbench there.
 - The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.
 
 ### The Workbench
 
 - The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.
 - Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.
-- Right-drag on the chart (or drag in the grid) selects values; each further right-drag adds to the selection, Esc clears it. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.
+- Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.
 - **Remove**, **Flag** and **Restore** write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.
 
 ### When something goes wrong
@@ -963,6 +988,34 @@ The app has two views of the same project, data and edits: the **Standard** view
 - A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.
 - A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.
 
+
+## Plots, set-up tables and Needs you
+
+### Plot gestures
+
+The same on every time plot in both views, the Workbench chart and its point charts.
+
+- **Drag left to right** zooms in on the dragged stretch (a box on depth, scatter and section plots). **Drag right to left** zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.
+- **Shift + drag** (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.
+- The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.
+- Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.
+
+### Yes/No picks in set-up tables
+
+Columns that hold yes or no (`enabled`, `show`, `identifies`, `include`, `active`, `hidden`, and `bucket_only` for gauges) show **Yes** or **No** with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written `TRUE` or `FALSE`. Any other text is marked as an error, and the table cannot be applied until it is fixed.
+
+### Needs you by site
+
+Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the logger serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:
+
+| Label | What it means |
+|---|---|
+| decide | a flag to keep, remove or note |
+| fix in ovid | a set-up change ovid can make |
+| raw data | a problem in the files themselves, which ovid cannot fix |
+| add a file | a file that is missing and may exist |
+
+The pop-up can also be grouped by what to do.
 
 ## Troubleshooting
 
@@ -1086,3 +1139,7 @@ The app has two views of the same project, data and edits: the **Standard** view
 30. ASCE-EWRI (2005). The ASCE Standardized Reference
     Evapotranspiration Equation. Allen, R.G. et al. (eds.), American
     Society of Civil Engineers, Reston, VA.
+31.  NASA Earthdata. *Data processing levels*. [earthdata.nasa.gov](https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/data-processing-levels)
+32.  ARM (Atmospheric Radiation Measurement). *Data file formatting and naming protocols* (data levels 00, a0, a1, b1, c1). [arm.gov](https://armgov.svcs.arm.gov/guidance/datause/formatting-and-file-naming-protocols)
+33.  Horsburgh J.S., Tarboton D.G., Maidment D.R., Zaslavsky I. (2008). A relational model for environmental and water resources data. *Water Resources Research* 44, W05406.
+34.  Estévez J., Gavilán P., Giráldez J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. *Journal of Hydrology* 402, 144–154. doi:10.1016/j.jhydrol.2011.02.031

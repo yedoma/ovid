@@ -69,6 +69,7 @@ zones and file audit</a></li>
 <li><a href="#the-viewer">The viewer</a></li>
 <li><a href="#sensor-notes">Sensor notes</a></li>
 <li><a href="#reasonable-values">Reasonable values</a></li>
+<li><a href="#plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</a></li>
 <li><a href="#troubleshooting">Troubleshooting</a></li>
 <li><a href="#glossary">Glossary</a></li>
 <li><a href="#references">References</a></li>
@@ -408,10 +409,11 @@ in <code>tz_rule</code>.</li>
 <code>time_utc</code> = 09:15 − (−7 h) = 16:15 UTC.
 </div>
 <ul>
-<li>A camera with an unusable clock (the Canon S110 often reads 1980)
-takes its time from a linked flown track (KML), and the flight’s
-<code>time_source</code> says so.</li>
+<li>A camera with an unusable clock (the Canon S110 often reads 1980) takes its time from the flight log or a linked flown track (KML), and the flight's <code>time_source</code> says so (see below).</li>
 </ul>
+<h3 id="flight-log-time-first">Flight log time first</h3>
+<p>A decoded flight log's GNSS time wins over eMotion's KML and over the camera clock. A camera clock more than 14 h from the log or the KML (the widest UTC offset) is taken as never set, and the GNSS time is used. The KML's time is used when it is the only GNSS time. The flight's <code>time_source</code> says which was used, and the Flight page shows the log and KML start times.</p>
+
 <h2 id="4-flights">4. Flights</h2>
 <p>A flight is a run of images from one camera in one folder, split
 where exposures pause for more than <strong>10 minutes</strong>
@@ -472,13 +474,21 @@ flight in another folder or source is the same flight.</li>
 </tbody>
 </table>
 <p>Nothing here is written into the images or used to change a status; it describes the flight for anyone re-using it. On the Samsung USB drive (scanned 6 October 2026) the three Zenmuse L2 flights of 22 September 2024 came out at a GSD of 1.6 cm (60 m above take-off), forward overlap 77 to 84 % (speed x interval), motion blur 0.6 to 0.8 pixels and sun elevation 23 to 27°. The eBee Plus flights with the Canon S110 have no height above take-off and no position in their EXIF, so none of these values can be worked out for them.</p>
+<h3 id="editing-the-flights-list-and-joining-flights">Editing the Flights list and joining flights</h3>
+<p>In the Flights list under the map, select rows, then set site, project, name or positioning (dropdowns of known values; a new one can be typed), <strong>Join into one flight</strong>, <strong>Move to photo sets</strong> or <strong>Leave out</strong>. Changes wait in one Save bar (Undo, Discard, Save, or Cmd/Ctrl+S) and are written to <code>flights.csv</code> at once; leaving with unsaved changes asks first.</p>
+<p>A flight joined by hand (<code>mission_set</code> in <code>flights.csv</code>) is one row in the list and on the map; its sorties stay separate flights in the catalogue and exports.</p>
+<h3 id="site-names-found-in-folder-names">Site names found in folder names</h3>
+<p>The Timeline's <strong>Site names found</strong> card lists names read from folder names, each with a suggested known site: the same name in another case, a name within it, a name several flights use, or a <code>sites.csv</code> site whose coordinates the flights cover. The flights' bounding boxes are not used: they are too wide to tell sites apart. Choices are saved to <code>config/site_names.csv</code> (a blank site means &quot;not a site&quot;) and applied by the next rebuild; names kept as sites go into <code>sites.csv</code>.</p>
+
 <h2 id="5-missions">5. Missions</h2>
 <p>Sorties flown as one survey are grouped into a mission: the same
 aircraft flying again within an hour from the same plan or folder, or
 over the same area and site soon after (battery swaps, two flights on
-one battery). On the Flight page, <strong>Confirm this grouping</strong>
-or <strong>Split this sortie off</strong>; a mission name typed there
-groups sorties by hand.</p>
+one battery). On the Flight page, <strong>Confirm this grouping</strong> or
+<strong>Split this sortie off</strong>; to group sorties by hand, select them in the Flights list and <strong>Join into one flight</strong>.</p>
+<h3 id="photo-sets">Photo sets</h3>
+<p>A run of fewer images than <code>photoset_max_images</code> (calibration table, default <strong>20</strong>; an ovid default with no published source) is a photo set: listed on its own tab, kept out of mission grouping and checked for its images only. A <code>kind</code> set in <code>flights.csv</code> (flight or photo set) wins over the count.</p>
+
 <h2 id="6-linking-files-to-flights">6. Linking files to flights</h2>
 <p>Records are linked by what they say first: senseFly logs, eMotion
 geotags, plans and Pix4D projects by aircraft serial and flight number,
@@ -528,6 +538,9 @@ flights share the folder: 0.5, <code>probable</code>.
 probable link and never proof of correction. On the Flight page, each
 link can be confirmed or rejected with a reason
 (<code>config/links.csv</code>).</p>
+<h3 id="logs-no-flight-has-yet">Logs no flight has yet</h3>
+<p>The Flight page lists the flight logs that no flight has yet, from the same aircraft near the flight's time, the closest photo-tag count first, each with <strong>Link this log</strong>. The catalogue lists every log in <code>catalogue/logs.csv</code>.</p>
+
 <h2 id="7-positioning-status">7. Positioning status</h2>
 <p>One of: RTK corrected, partly RTK corrected, PPK corrected,
 standalone GNSS / uncorrected, correction data available, not confirmed,
@@ -602,6 +615,9 @@ ground sample distance, cloud cover and footprint. Footprints are drawn
 solid from vendor scene corners and dashed from file headers (UTM
 converted for display only). Only headers and sidecars are read.
 Catalogue: <code>output/catalogue/datasets.csv</code>.</p>
+<h3 id="other-geodata-keep-or-remove">Other geodata: keep or remove</h3>
+<p>The Other geodata tab lists satellite, aerial, LiDAR, raster and GIS files by folder, with <strong>Keep</strong> or <strong>Remove</strong>. Remove is an ignore rule in <code>file_rules.csv</code> (the files are not touched); Keep is a review decision (<code>review_decisions.csv</code>). A folder with no position, or far from the flights, is suggested for removal.</p>
+
 <h2 id="10-gis-layers">10. GIS layers</h2>
 <p>Shapefiles, GeoJSON and GPX are listed on the Imagery page and drawn
 on the Map by kind from their names: GCPs and checkpoints,
@@ -758,6 +774,47 @@ flight (<code>points_per_flight</code>); flights marked
 </table>
 <h2 id="wrong">When something goes wrong</h2>
 <ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
+<h2 id="plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</h2>
+<h3 id="plot-gestures">Plot gestures</h3>
+<p>The same on the Workbench point chart (photo positions); the maps keep map habits.</p>
+<ul>
+<li><strong>Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong>Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
+<li><strong>Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
+<li>The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.</li>
+<li>Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.</li>
+</ul>
+<h3 id="yesno-picks-in-set-up-tables">Yes/No picks in set-up tables</h3>
+<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong>Yes</strong> or <strong>No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
+<h3 id="needs-you-by-site">Needs you by site</h3>
+<p>Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the aircraft serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>decide</td>
+<td>a flag to keep, remove or note</td>
+</tr>
+<tr>
+<td>fix in ovid</td>
+<td>a set-up change ovid can make</td>
+</tr>
+<tr>
+<td>raw data</td>
+<td>a problem in the files themselves, which ovid cannot fix</td>
+</tr>
+<tr>
+<td>add a file</td>
+<td>a file that is missing and may exist</td>
+</tr>
+</tbody>
+</table>
+<p>The pop-up can also be grouped by what to do.</p>
+
 <h2 id="troubleshooting">Troubleshooting</h2>
 <table>
 <colgroup>

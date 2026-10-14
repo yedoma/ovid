@@ -1,7 +1,7 @@
 # ovid RS Reference Guide
 
 Remote sensing archive: what the app does to every drone image, log and dataset it finds, why, and how to check it.
-For RS 0.5.0 (ovid Core 1.14.0). ovid RS is a catalogue, provenance and positioning-status tool; it does not process imagery.
+For RS 0.6.0 (ovid Core 1.15.0). ovid RS is a catalogue, provenance and positioning-status tool; it does not process imagery.
 The archive is never changed: files are only read, and nothing is written inside a source. Settings are quoted with their defaults;
 change them in `CFG` at the top of `rs_pipeline.R` or in the files under `<project>/config/`.
 
@@ -27,6 +27,7 @@ change them in `CFG` at the top of `rs_pipeline.R` or in the files under `<proje
 19. [The viewer](#the-viewer)
 20. [Sensor notes](#sensor-notes)
 21. [Reasonable values](#reasonable-values)
+22. [Plots, set-up tables and Needs you](#plots-set-up-tables-and-needs-you)
 22. [Troubleshooting](#troubleshooting)
 23. [Glossary](#glossary)
 24. [References](#references)
@@ -125,7 +126,11 @@ on several sources is one flight with copies: copies are found by the flight id,
 
 <div class="ex"><b>Worked example.</b> A senseFly S.O.D.A. image says 2024-07-12 09:15:00 with no zone. A row with model <code>S.O.D.A.</code>, offset <code>-7</code> and reason "camera on local summer time" matches, so <code>time_utc</code> = 09:15 − (−7 h) = 16:15 UTC.</div>
 
-- A camera with an unusable clock (the Canon S110 often reads 1980) takes its time from a linked flown track (KML), and the flight's `time_source` says so.
+- A camera with an unusable clock (the Canon S110 often reads 1980) takes its time from the flight log or a linked flown track (KML), and the flight's `time_source` says so (see below).
+
+### Flight log time first
+
+A decoded flight log's GNSS time wins over eMotion's KML and over the camera clock. A camera clock more than 14 h from the log or the KML (the widest UTC offset) is taken as never set, and the GNSS time is used. The KML's time is used when it is the only GNSS time. The flight's `time_source` says which was used, and the Flight page shows the log and KML start times.
 
 ## 4. Flights
 
@@ -156,11 +161,25 @@ Each image gets, where its headers allow, and each flight gets the median (on th
 
 Nothing here is written into the images or used to change a status; it describes the flight for anyone re-using it. On the Samsung USB drive (scanned 6 October 2026) the three Zenmuse L2 flights of 22 September 2024 came out at a GSD of 1.6 cm (60 m above take-off), forward overlap 77 to 84 % (speed x interval), motion blur 0.6 to 0.8 pixels and sun elevation 23 to 27°. The eBee Plus flights with the Canon S110 have no height above take-off and no position in their EXIF, so none of these values can be worked out for them.
 
+### Editing the Flights list and joining flights
+
+In the Flights list under the map, select rows, then set site, project, name or positioning (dropdowns of known values; a new one can be typed), **Join into one flight**, **Move to photo sets** or **Leave out**. Changes wait in one Save bar (Undo, Discard, Save, or Cmd/Ctrl+S) and are written to `flights.csv` at once; leaving with unsaved changes asks first.
+
+A flight joined by hand (`mission_set` in `flights.csv`) is one row in the list and on the map; its sorties stay separate flights in the catalogue and exports.
+
+### Site names found in folder names
+
+The Timeline's **Site names found** card lists names read from folder names, each with a suggested known site: the same name in another case, a name within it, a name several flights use, or a `sites.csv` site whose coordinates the flights cover. The flights' bounding boxes are not used: they are too wide to tell sites apart. Choices are saved to `config/site_names.csv` (a blank site means "not a site") and applied by the next rebuild; names kept as sites go into `sites.csv`.
+
 ## 5. Missions
 
 Sorties flown as one survey are grouped into a mission: the same aircraft flying again within an hour from the same plan or folder, or
 over the same area and site soon after (battery swaps, two flights on one battery). On the Flight page, **Confirm this grouping** or
-**Split this sortie off**; a mission name typed there groups sorties by hand.
+**Split this sortie off**; to group sorties by hand, select them in the Flights list and **Join into one flight**.
+
+### Photo sets
+
+A run of fewer images than `photoset_max_images` (calibration table, default **20**; an ovid default with no published source) is a photo set: listed on its own tab, kept out of mission grouping and checked for its images only. A `kind` set in `flights.csv` (flight or photo set) wins over the count.
 
 ## 6. Linking files to flights
 
@@ -183,6 +202,10 @@ or by the image names a geoinfo file or eMotion KML lists (score 0.95). Other fi
 
 RINEX observations anywhere in the archive that span a flight are a probable link and never proof of correction. On the Flight page,
 each link can be confirmed or rejected with a reason (`config/links.csv`).
+
+### Logs no flight has yet
+
+The Flight page lists the flight logs that no flight has yet, from the same aircraft near the flight's time, the closest photo-tag count first, each with **Link this log**. The catalogue lists every log in `catalogue/logs.csv`.
 
 ## 7. Positioning status
 
@@ -227,6 +250,10 @@ The Imagery page lists satellite scenes (WorldView, QuickBird, GeoEye, IKONOS `.
 headers) and other georeferenced rasters, with platform, product, date (marked inferred when it comes from a name), ground sample distance,
 cloud cover and footprint. Footprints are drawn solid from vendor scene corners and dashed from file headers (UTM converted for display only).
 Only headers and sidecars are read. Catalogue: `output/catalogue/datasets.csv`.
+
+### Other geodata: keep or remove
+
+The Other geodata tab lists satellite, aerial, LiDAR, raster and GIS files by folder, with **Keep** or **Remove**. Remove is an ignore rule in `file_rules.csv` (the files are not touched); Keep is a review decision (`review_decisions.csv`). A folder with no position, or far from the flights, is suggested for removal.
 
 ## 10. GIS layers
 
@@ -309,6 +336,34 @@ are thinned to 150 per flight (`points_per_flight`); flights marked `exclude_fro
 - A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.
 - A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.
 
+
+## Plots, set-up tables and Needs you
+
+### Plot gestures
+
+The same on the Workbench point chart (photo positions); the maps keep map habits.
+
+- **Drag left to right** zooms in on the dragged stretch (a box on depth, scatter and section plots). **Drag right to left** zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.
+- **Shift + drag** (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.
+- The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.
+- Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.
+
+### Yes/No picks in set-up tables
+
+Columns that hold yes or no (`enabled`, `show`, `identifies`, `include`, `active`, `hidden`) show **Yes** or **No** with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written `TRUE` or `FALSE`. Any other text is marked as an error, and the table cannot be applied until it is fixed.
+
+### Needs you by site
+
+Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the aircraft serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:
+
+| Label | What it means |
+|---|---|
+| decide | a flag to keep, remove or note |
+| fix in ovid | a set-up change ovid can make |
+| raw data | a problem in the files themselves, which ovid cannot fix |
+| add a file | a file that is missing and may exist |
+
+The pop-up can also be grouped by what to do.
 
 ## Troubleshooting
 
