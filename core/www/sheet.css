@@ -38,3 +38,4 @@
 .ds-cols-pop label{display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px;cursor:pointer}
 .wb .ds-host{display:block!important}.wb .dt-host{display:none}.wb .btnrow.editor-only>[id$='-add'],.wb .btnrow.editor-only>[id$='-dup'],.wb .btnrow.editor-only>[id$='-del'],.wb .btnrow.editor-only>[id$='-undo'],.wb .btnrow.editor-only>[id$='-save']{display:none}
 
+.ds-grid tr.ds-sp td{padding:0;border:0;background:none}

@@ -12,7 +12,7 @@ dir.create(lib, showWarnings = FALSE)
 options(repos = c(CRAN = "https://cloud.r-project.org"), install.packages.check.source = "no")
 if (.Platform$OS.type == "windows") options(pkgType = "binary")
 
-PKGS <- unique(c(APP$pkgs, "later", "httpuv", "readxl", "zip"))     # plus what the shared core itself uses (set-up import from .xlsx, zip export)
+PKGS <- unique(c(APP$pkgs, "later", "httpuv", "readxl", "zip", "ncdf4"))     # plus what the shared core itself uses (set-up import from .xlsx, zip export, NetCDF)
 cat(APP$title, "\n  app:     ", app_dir, "\n  R:       ", R.home(), " (", R.version.string, ")\n  library: ", lib, "\n\n", sep = "")
 if (getRversion() < "4.2.0") stop("R 4.2 or newer is needed; this is ", R.version.string, ". Install a newer R from https://cran.r-project.org")
 

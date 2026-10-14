@@ -241,7 +241,7 @@ std_pages <- function(sources = TRUE) list(
     convert_tool(), reference_tool("GT"),
     ovid_tool("Settings", value = "Settings", icon = "sliders", rail = FALSE,
       page_head("Settings", "Time, default depths and the summaries. Saved with the app and applied at the next run. Every on/off switch is on the Automatic corrections step."),
-      time_zone_ui(),
+      time_zone_ui(), dataset_card_ui(),
       fluidRow(column(4, div(class = "panel-x", h3("Time and depths"),
           numericInput("default_first_depth", "Default depth of the first sensor (m)", SETTINGS$default_first_depth, step = 0.05, width = "100%"),
           numericInput("default_step", "Default step between sensors (m)", SETTINGS$default_step, step = 0.05, width = "100%"),

@@ -93,6 +93,7 @@ server <- function(input, output, session, embedded = FALSE) {
   ovid_browse(input, output, session, c("raw_dirs", "metadata_dir", "project_dir"), add = "raw_dirs", places = function() c(Project = SETTINGS$project_dir))
   rv <- reactiveValues(tick = 0, log = character(), stale = FALSE, zoom = NULL, pf = 0, au_rule = NULL, imp = NULL)
   pd <- reactive(sub("[/\\\\]+$", "", path.expand(ovid_project_dir(input$project_dir %||% SETTINGS$project_dir))))   # none set: the default folder (core util.R)
+  dataset_card_server(input, output, pd)                                    # Settings > Dataset (core shell.R)
   # A project folder typed or browsed to, not opened from the Projects list: as the list does (core projects.R switch_to), the
   # project left keeps its settings and the one now open brings its own (config/project_settings.json). A folder with no saved
   # settings starts with the ones shown.

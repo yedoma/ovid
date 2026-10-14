@@ -13,6 +13,7 @@
 
 RULE_DATES   <- "^(start|end|from|to|date|day|deployed|removed|installed|install_date|visit|acquired_date|approved_through|datetime_start|datetime_end|start_date|end_date)$"
 RULE_NUMBERS <- "^(latitude|longitude|lat|lon|elevation|elevation_m|shift_minutes|offset_m|offset_end_m|distance_m|depth_m|utc_offset_hours|utc_offset_h|offset_hours|interval_min|geoid_n_m|t_st_m|z|x|y)$|_(m|cm|mm|kpa|hpa|minutes|min|hours|h|deg|pct|days)$"
+RULE_YESNO   <- "^(enabled|show|identifies|include|active|hidden)$"            # columns that hold only a yes or a no
 RULE_PERIODS <- list(c("start", "end"), c("from", "to"), c("deployed", "removed"), c("datetime_start", "datetime_end"), c("start_date", "end_date"))
 
 # A `known` source: the values of one column of a project file (a set-up table or an output of the last run); none when the file
@@ -21,18 +22,29 @@ known_from <- function(file, col) function(project_dir) { f <- file.path(path.ex
   if (!file.exists(f)) return(character()); d <- tryCatch(fread(f, colClasses = "character", select = col), error = function(e) NULL)
   if (is.null(d) || !nrow(d)) character() else unique(c(d[[1]][nzchar(d[[1]])], if (exists("norm_serial", mode = "function")) norm_serial(d[[1]][nzchar(d[[1]])]))) }
 
+# Yes/no cells: shown as Yes or No in both views, written TRUE or FALSE; any of these spellings (any case) is read.
+YES_WORDS <- c("yes", "y", "true", "t", "1", "on"); NO_WORDS <- c("no", "n", "false", "f", "0", "off")
+yesno_value <- function(x) { x <- tolower(trimws(as.character(x))); ifelse(x %in% YES_WORDS, TRUE, ifelse(x %in% NO_WORDS, FALSE, NA)) }
+# The yes/no columns of a table, by its file name (the app's CONFIG_FILES rules and the names in RULE_YESNO).
+table_yesno_cols <- function(file, cols) { e <- Filter(function(x) identical(x$file, file), get0("CONFIG_FILES", ifnotfound = list()))
+  ex <- if (length(e)) e[[1]]$rules else NULL; if (isFALSE(ex)) return(character()); intersect(table_rules(cols, ex)$yesno, cols) }
+# d with its yes/no cells as shown (Yes, No) or as written (TRUE, FALSE); blanks and other text are left as they are.
+yesno_as <- function(d, file, shown = TRUE) { for (k in table_yesno_cols(file, names(d))) { v <- yesno_value(d[[k]]); x <- as.character(d[[k]])
+    x[!is.na(v)] <- if (shown) ifelse(v[!is.na(v)], "Yes", "No") else ifelse(v[!is.na(v)], "TRUE", "FALSE"); d[[k]] <- x }
+  d }
+
 table_rules_auto <- function(cols) {
   lc <- tolower(cols)
-  list(dates = cols[grepl(RULE_DATES, lc)], numbers = cols[grepl(RULE_NUMBERS, lc) & !grepl(RULE_DATES, lc)],
+  list(dates = cols[grepl(RULE_DATES, lc)], numbers = cols[grepl(RULE_NUMBERS, lc) & !grepl(RULE_DATES, lc)], yesno = cols[grepl(RULE_YESNO, lc)],
        periods = Filter(function(p) all(p %in% lc), RULE_PERIODS), repeats = TRUE)
 }
 # The rules for one table: the automatic ones with the app's added (rules = list(required, choices, unique, known, dates,
-# numbers)), or NULL when the app leaves the table out.
+# numbers, yesno)), or NULL when the app leaves the table out.
 table_rules <- function(cols, extra = NULL) {
   if (isFALSE(extra)) return(NULL)
   r <- table_rules_auto(cols); if (is.null(extra)) return(r)
-  for (k in c("dates", "numbers")) r[[k]] <- unique(c(r[[k]], extra[[k]]))
-  c(r, extra[setdiff(names(extra), c("dates", "numbers"))])
+  for (k in c("dates", "numbers", "yesno")) r[[k]] <- unique(c(r[[k]], extra[[k]]))
+  c(r, extra[setdiff(names(extra), c("dates", "numbers", "yesno"))])
 }
 
 table_check <- function(d, rules, project_dir = NULL) {
@@ -50,6 +62,8 @@ table_check <- function(d, rules, project_dir = NULL) {
   for (p in rules$periods) { a <- names(d)[match(p[1], lc)]; b <- names(d)[match(p[2], lc)]
     ta <- parse_date_cell(v(a)); tb <- parse_date_cell(v(b), end = TRUE); bad <- live & !is.na(ta) & !is.na(tb) & tb < ta
     add(which(bad), b, "error", paste0(b, " is before ", a)) }
+  for (k in intersect(rules$yesno, names(d))) { x <- v(k); bad <- live & nzchar(x) & is.na(yesno_value(x))
+    add(which(bad), k, "error", paste0("'", x[bad], "' is not Yes or No")) }
   for (k in intersect(rules$required, names(d))) add(which(live & !nzchar(v(k))), k, "error", paste0(k, " is needed; the row is left out without it"))
   for (k in intersect(names(rules$choices), names(d))) { x <- tolower(v(k)); ok <- tolower(rules$choices[[k]])
     bad <- live & nzchar(x) & !x %in% ok; add(which(bad), k, "error", paste0("'", v(k)[bad], "' is not one of: ", paste(rules$choices[[k]], collapse = ", "))) }

@@ -163,7 +163,4 @@ std_pages <- function(sources = TRUE) list(
 GS_AREAS <- list(ERT = c("Home", "Archive", "Stack", "Map", "Survey", "QC"), GPR = c("GPR", "GPR processing"))
 ui <- do.call(ovid_page, c(list("GS", PAL, theme = THEME, settings = "Settings", areas = GS_AREAS, project = projects_switch_ui("proj"),
   status = uiOutput("cat_path", inline = TRUE),
-  actions = tags$a(class = "btn btn-outline-secondary btn-sm", href = "?ui=workbench", title = "Open the Workbench interface (preview) on this catalogue and survey",
-                   onclick = "var s=$('#survey').val(); if(s){this.href='?ui=workbench&survey='+encodeURIComponent(s);}",
-                   "Workbench", span(style = "font-size:10px;margin-left:4px;opacity:.8", "preview")),
   help = if (file.exists(file.path(APP_DIR, "docs", "GS_reference_guide.html"))) "docs/GS_reference_guide.html"), std_pages()))

@@ -129,6 +129,24 @@ flow_run_once <- function(label = "Run once")
 #          callbacks need (key, serial, sensor ...);
 #   moved  serial, at (where to split);
 #   note   go (the page that settles it).
+# What a person does about an item (M 14 Oct): decide (a flag to keep, remove or note), fix (a set-up change ovid makes),
+# raw (a problem in the files themselves, which ovid cannot fix) or add (a file that is missing and may exist). An app can
+# name it per item (column fix); otherwise it follows from the kind and the wording.
+NEEDS_LABELS <- c(decide = "decide", fix = "fix in ovid", raw = "raw data", add = "add a file")
+NEEDS_LEVEL  <- c(decide = "warn", fix = "ok", raw = "error", add = "info")
+needs_fix_of <- function(kind, text, fix = NULL) {
+  kind <- as.character(kind); t <- tolower(as.character(text)); out <- ifelse(kind == "flag", "decide", "fix")
+  note <- kind != "flag" & kind != "moved"
+  out[note & grepl("does not exist|not found|cannot be read|could not be read|unreadable|damaged|no serial|empty file|corrupt", t)] <- "raw"
+  out[note & grepl("^no .* found|missing .*(file|log|workbook)|no .*(flight )?log", t)] <- "add"
+  if (length(fix)) { f <- as.character(fix); ok <- !is.na(f) & f %in% names(NEEDS_LABELS); out[ok] <- f[ok] }
+  out }
+# The group an item is listed under: its place (site, station, serial); the project's own findings under Project. An app can
+# name it per item (column group).
+needs_group_of <- function(kind, where, group = NULL) {
+  g <- ifelse(as.character(kind) %in% c("flag", "moved"), as.character(where), "Project")
+  if (length(group)) { x <- as.character(group); ok <- !is.na(x) & nzchar(x); g[ok] <- x[ok] }
+  g }
 REVIEW_KEEP <- "kept"                                        # Keep: the values stay, flagged; the item leaves the list
 # The open flags of a run grouped into items: one per place, check and stretch (flags less than gap_h hours apart join).
 # where, parameter: the columns of flags that name the place and the value (station and parameter, or site and channel);
@@ -191,10 +209,13 @@ review_list_server <- function(id, items, file, open = NULL, remove = NULL, peri
   output$list <- renderUI({ x <- rows(); if (isTRUE(input$only)) x <- x[is.na(decided)]
     validate(need(nrow(x) > 0, if (isTRUE(input$only)) "Nothing waits for you." else "Nothing found yet: bring in files and run once."))
     n <- nrow(x); x <- utils::head(x, 200); E <- !isTRUE(get0("VIEWER"))
+    x[, `:=`(.g = needs_group_of(kind, where, if ("group" %in% names(x)) group), .f = needs_fix_of(kind, paste(what, detail), if ("fix" %in% names(x)) fix))]
+    x <- x[order(.g == "Project", match(.g, unique(.g)))]                          # grouped by place, in the order found; the project last
     tagList(lapply(seq_len(nrow(x)), function(i) { r <- x[i]; dec <- !is.na(r$decided)
+      head <- if (i == 1 || x$.g[i] != x$.g[i - 1]) div(class = "d-rl-group", tags$b(r$.g), span(class = "dim", sum(x$.g == r$.g)))
       when <- if (r$kind == "flag") paste(substr(r$start, 1, 16), if (!identical(r$end, r$start)) paste("to", substr(r$end, 1, 16))) else ""
-      div(class = paste("d-chk-row", if (dec) "d-rl-done"),
-        ovid_flag(switch(r$kind, flag = r$what, moved = "looks moved", "to look at"), if (r$kind == "note") "info" else "warn"),
+      tagList(head, div(class = paste("d-chk-row", if (dec) "d-rl-done"),
+        ovid_flag(NEEDS_LABELS[[r$.f]], NEEDS_LEVEL[[r$.f]]), if (r$kind != "note") span(class = "d-rl-what", switch(r$kind, flag = r$what, moved = "looks moved")),
         if (r$kind == "flag" && is.function(h$open)) tags$a(href = "#", onclick = sprintf("Shiny.setInputValue('%s',{id:%s,a:'open'},{priority:'event'});return false", ns("act"), jsonlite::toJSON(r$id, auto_unbox = TRUE)), title = "Look at the record over this stretch", tags$b(r$where))
         else tags$b(r$where),
         if (r$kind == "flag") span(class = "dim", paste0(r$parameter, " \u00b7 ", when, if (nzchar(r$records %||% "")) paste0(" \u00b7 ", r$records, " records")))
@@ -206,7 +227,7 @@ review_list_server <- function(id, items, file, open = NULL, remove = NULL, peri
                                             if (!is.null(period) || !is.null(h$preset)) btn(r$id, "correct", "Correct\u2026"), btn(r$id, "ok", "Not a problem"))
         else if (r$kind == "moved" && E && is.function(split)) span(class = "d-chk-act", btn(r$id, "split", "Split here"))
         else if (r$kind == "note" && is.function(goto)) tags$a(href = "#", onclick = sprintf("Shiny.setInputValue('%s',{id:%s,a:'go'},{priority:'event'});return false", ns("act"), jsonlite::toJSON(r$id, auto_unbox = TRUE)), "Open \u203a")
-        else if (r$kind == "note" && nzchar(r$go %||% "")) tags$a(href = "#", `data-ovid-go` = r$go, "Open \u203a")) }),
+        else if (r$kind == "note" && nzchar(r$go %||% "")) tags$a(href = "#", `data-ovid-go` = r$go, "Open \u203a"))) }),
       if (n > 200) div(class = "dim", paste("The first 200 of", n))) })
   pend <- reactiveVal(NULL)
   decide <- function(r, decision, note, author = "") { q <- strsplit(r$qids, " ", fixed = TRUE)[[1]]; q <- q[nzchar(q)]; if (!length(q)) return()

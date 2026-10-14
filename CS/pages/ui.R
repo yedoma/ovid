@@ -471,6 +471,6 @@ ui <- do.call(ovid_page, c(list("CS", GB, css = std_css(), head = std_head(),
   help = if (file.exists(file.path(APP_DIR, "docs", "CS_reference_guide.html"))) "docs/CS_reference_guide.html", settings = "Settings"), cs_flow_pages(),
   list(convert_tool(), reference_tool("CS"), ovid_tool("Settings", value = "Settings", icon = "sliders", rail = FALSE,
     page_head("Settings", "The time zone and how CS looks. Both are saved with the app; the colour scheme is used from its next start, in the Workbench too."),
-    time_zone_ui(),
+    time_zone_ui(), dataset_card_ui(),
     div(class = "panel-x", h3("Colours"), colours_ui()),
     projects_panel()))))

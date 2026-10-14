@@ -556,7 +556,7 @@ CONFIG_FILES <- list(
   timezones  = list(file = "timezones.csv",        cols = function() TZ_COLS, label = "Time zones"),
   files      = list(file = "file_rules.csv",       cols = function() FILE_COLS, label = "File rules"),
   cr10x      = list(file = "cr10x.csv",            cols = c("file", "import", "logger_id", "fsl", "start_year", "notes"), label = "CR10X files"),
-  gauges     = list(file = "precip_gauges.csv",    cols = function() PRECIP_COLS, label = "Precipitation gauges"),
+  gauges     = list(file = "precip_gauges.csv",    cols = function() PRECIP_COLS, label = "Precipitation gauges", rules = list(yesno = "bucket_only")),
   sites      = list(file = "station_info.csv",     cols = function() SITE_COLS, label = "Station details"),
   field_log  = list(file = "field_log.csv",        cols = function() LOG_COLS, label = "Field log"),
   composites = list(file = "composites.csv",       cols = function() COMPOSITE_COLS, label = "Combined records"),

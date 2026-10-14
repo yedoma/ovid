@@ -36,17 +36,40 @@
     h.push('</tr><tr class="ds-frow"><th class="rn"></th>');
     T.cols.forEach(function(c, ci){ if (T.hidden && T.hidden[ci]) return; h.push('<th><input class="ds-filt" data-c="' + ci + '" value="' + esc((T.filt || {})[ci] || '') + '" placeholder="filter" title=">5, <=0, 1..3, =2, or text"></th>'); });
     h.push('</tr>');
-    v.forEach(function(ri, vr){ var rs = s.r != null && vr >= Math.min(s.r, s.r2) && vr <= Math.max(s.r, s.r2);
+    var w = win(T, g, v.length), nc = 1 + T.cols.filter(function(_, ci){ return !(T.hidden && T.hidden[ci]); }).length;
+    if (w.a > 0) h.push('<tr class="ds-sp"><td colspan="' + nc + '" style="height:' + (w.a * w.rh) + 'px"></td></tr>');
+    v.slice(w.a, w.b).forEach(function(ri, k){ var vr = w.a + k, rs = s.r != null && vr >= Math.min(s.r, s.r2) && vr <= Math.max(s.r, s.r2);
       h.push('<tr><td class="rn' + (rs ? ' hr' : '') + '">' + (ri + 1) + '</td>');
       T.cols.forEach(function(c, ci){ if (T.hidden && T.hidden[ci]) return; var raw = T.rows[ri][ci], val = cellVal(T, ri, ci), base = T.base[ri], chg = !base || raw !== base[ci];
         var cls = ['c', c.ed ? '' : 'ro', c.t === 'num' ? 'nr' : '', chg ? 'pd' : '', (vr === s.r && ci === s.c) ? 'cur' : '', inSel(T, vr, ci) ? 'in' : '', c.ch && c.ed ? 'chc' : '', c.ed && badCh(c, raw) ? 'bad' : ''].join(' ');
         var tip = c.ed && badCh(c, raw) ? '\u201c' + raw + '\u201d is not one of: ' + c.ch.join(', ') + '. Double-click and pick one.' : val;
         var shown = fmtv(T, ci, val); h.push('<td class="' + cls + '" data-r="' + vr + '" data-c="' + ci + '" title="' + esc(tip) + '">' + (val === '' ? '<span class="m">\u2014</span>' : esc(shown)) + '</td>'); });
       h.push('</tr>'); });
+    if (w.b < v.length) h.push('<tr class="ds-sp"><td colspan="' + nc + '" style="height:' + ((v.length - w.b) * w.rh) + 'px"></td></tr>');
     cols(T); h.push('</table>'); var st = g.scrollTop, sl = g.scrollLeft, ff = T.ffoc; g.innerHTML = h.join(''); g.scrollTop = st; g.scrollLeft = sl;
     if (ff != null) { var fi = g.querySelector('.ds-filt[data-c="' + ff + '"]'); if (fi) { fi.focus(); fi.setSelectionRange(fi.value.length, fi.value.length); } }
     ['compact', 'normal', 'tall'].forEach(function(x){ g.classList.toggle('ds-' + x, (T.rh || 'normal') === x); }); g.classList.toggle('ds-wrap', !!T.wrap);
-    var hh = g.querySelector('th.cl'); if (hh) g.querySelectorAll('tr.ds-frow th').forEach(function(x){ x.style.top = hh.offsetHeight + 'px'; }); bars(T); }
+    var hh = g.querySelector('th.cl'); if (hh) g.querySelectorAll('tr.ds-frow th').forEach(function(x){ x.style.top = hh.offsetHeight + 'px'; });
+    if (w.on) { var tr = g.querySelector('td.c'); if (tr) { var rh = tr.parentNode.getBoundingClientRect().height; if (rh > 4 && Math.abs(rh - (T.rowH || 0)) > 0.5) { T.rowH = rh; T.win = null; return render(T); } } }
+    bars(T); }
+  // Only the rows near the visible part of a long table are drawn (spacer rows stand in for the rest), so a table of
+  // thousands of rows stays quick to scroll, select and edit; Wrap draws every row (row heights then differ).
+  var VROWS = 150, VPAD = 40;
+  function headH(g){ var a = g.querySelector('th.cl'), f = g.querySelector('tr.ds-frow'); return (a ? a.offsetHeight : 28) + (f ? f.offsetHeight : 24); }
+  function win(T, g, n){ var rh = T.rowH || 24; if (n <= VROWS || T.wrap) { T.win = {a: 0, b: n, on: false, rh: rh}; return T.win; }
+    var top = Math.max(0, g.scrollTop - headH(g));
+    var a = Math.max(0, Math.floor(top / rh) - VPAD), b = Math.min(n, Math.ceil((top + (g.clientHeight || 600)) / rh) + VPAD);
+    T.win = {a: a, b: b, on: true, rh: rh}; return T.win; }
+  // after scrolling: draw again when the visible rows reach the edge of those drawn
+  function onScroll(T, g){ var w = T.win; if (!w || !w.on || g.querySelector('.ce')) return; var n = T.view ? T.view.length : 0,   // not while a cell is being edited
+      top = Math.max(0, g.scrollTop - headH(g)), a = Math.floor(top / w.rh), b = Math.ceil((top + g.clientHeight) / w.rh);
+    if ((w.a > 0 && a < w.a + 5) || (w.b < n && b > w.b - 5)) render(T); }
+  // brings view row vr into sight (drawing it first when the table is long), then the cell in column c
+  function reveal(T, vr, c, block){ var g = el(T, '.ds-grid'), w = T.win;
+    if (w && w.on) { var off = headH(g), y = vr * w.rh;
+      if (block === 'center') g.scrollTop = Math.max(0, y - g.clientHeight / 2); else if (y < g.scrollTop) g.scrollTop = y; else if (y + w.rh + off > g.scrollTop + g.clientHeight) g.scrollTop = y + w.rh + off - g.clientHeight;
+      render(T); }
+    var td = T.box.querySelector('td[data-r="' + vr + '"][data-c="' + c + '"]'); if (td) td.scrollIntoView({block: block || 'nearest', inline: 'nearest'}); }
   function cols(T){ var p = T.box.querySelector('.ds-cols-pop'); if (!p || p._n === T.cols.length + ':' + T.id) return; p._n = T.cols.length + ':' + T.id; T.hidden = T.hidden || {};
     T.fmt = T.fmt || {};
     p.innerHTML = T.cols.map(function(c, ci){ return '<label><input type="checkbox" data-ci="' + ci + '"' + (T.hidden[ci] ? '' : ' checked') + '> ' + colL(ci) + ' ' + esc(c.l) +
@@ -115,9 +138,9 @@
     e.addEventListener('blur', function(){ fin(true); }); if (col.ch) e.addEventListener('change', function(){ fin(true); }); }
   function move(T, dr, dc, ext){ var s = T.sel, n = T.view.length, m = T.cols.length; if (s.r == null) { s.r = s.r2 = 0; s.c = s.c2 = 0; render(T); return; }
     var r = Math.max(0, Math.min(n - 1, (ext ? s.r2 : s.r) + dr)), c = Math.max(0, Math.min(m - 1, (ext ? s.c2 : s.c) + dc));
-    if (ext) { s.r2 = r; s.c2 = c; } else { s.r = s.r2 = r; s.c = s.c2 = c; } render(T);
-    var td = T.box.querySelector('td[data-r="' + (ext ? s.r2 : s.r) + '"][data-c="' + (ext ? s.c2 : s.c) + '"]'); if (td) td.scrollIntoView({block: 'nearest', inline: 'nearest'}); }
-  function wire(T){ var g = el(T, '.ds-grid'), inp = el(T, '.ds-in');
+    if (ext) { s.r2 = r; s.c2 = c; } else { s.r = s.r2 = r; s.c = s.c2 = c; } render(T); reveal(T, ext ? s.r2 : s.r, ext ? s.c2 : s.c); }
+  function wire(T){ var g = el(T, '.ds-grid'), inp = el(T, '.ds-in'), sq = false;
+    g.addEventListener('scroll', function(){ if (sq) return; sq = true; requestAnimationFrame(function(){ sq = false; onScroll(T, g); }); });
     g.addEventListener('mousedown', function(e){ var td = e.target.closest('td.c'); if (!td || e.target.closest('input')) return; var vr = +td.dataset.r, c = +td.dataset.c, s = T.sel;
       if (e.shiftKey && s.r != null) { s.r2 = vr; s.c2 = c; } else { s.r = s.r2 = vr; s.c = s.c2 = c; } T.drag = true; render(T); g.focus(); e.preventDefault(); });
     g.addEventListener('mouseover', function(e){ if (!T.drag) return; var td = e.target.closest('td.c'); if (!td) return; T.sel.r2 = +td.dataset.r; T.sel.c2 = +td.dataset.c; render(T); });
@@ -169,7 +192,7 @@
       if (!dc.length) { T.msg = 'this table has no date column'; return bars(T); }
       var hit = -1; T.view.forEach(function(ri, vr){ if (hit >= 0) return; if (dc.some(function(c){ var v = String(cellVal(T, ri, c)).slice(0, 10); return /^\d{4}-\d\d-\d\d/.test(v) && v >= d; })) hit = vr; });
       if (hit < 0) { T.msg = 'no row on or after ' + d; return bars(T); }
-      T.sel.r = T.sel.r2 = hit; T.sel.c = T.sel.c2 = dc[0]; render(T); var td = T.box.querySelector('td[data-r="' + hit + '"][data-c="' + dc[0] + '"]'); if (td) td.scrollIntoView({block: 'center'}); g.focus(); });
+      T.sel.r = T.sel.r2 = hit; T.sel.c = T.sel.c2 = dc[0]; render(T); reveal(T, hit, dc[0], 'center'); g.focus(); });
     T.box.querySelector('.ds-sb').addEventListener('click', function(e){ var b = e.target.closest('[data-ds]'); if (!b || b.disabled) return; var a = b.getAttribute('data-ds'), s = T.sel;
       if (a === 'undo') undo(T); else if (a === 'redo') redo(T); else if (a === 'apply') apply(T);
       else if (a === 'fill') fillDown(T); else if (a === 'export') exportCsv(T);

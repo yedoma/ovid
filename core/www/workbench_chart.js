@@ -1,7 +1,8 @@
 
 // The Workbench chart: one panel per parameter on a shared time axis, drawn on a canvas in the browser.
-// Selecting is the same on every ovid plot (_hub/Plot_table_standards.md A11): drag across a panel selects that stretch
-// of its parameter in the grid, a click the record nearest the pointer, Shift (or Cmd) adds to the selection, Esc clears.
+// Gestures are the same on every ovid plot (_hub/Plot_table_standards.md A11, M 14 Oct): a drag left to right zooms to that
+// stretch, right to left zooms out; Shift (or Cmd) + drag across a panel selects that stretch of its parameter in the grid,
+// a click the record nearest the pointer, Shift + click adds to the selection, Esc clears.
 // A bar above the selection gives its size, Zoom to this and the page's own actions. The wheel zooms at the pointer, a
 // little per notch (sideways or shift-wheel scrolls); dragging the time axis, or holding Space and dragging, moves along;
 // double-click shows the whole period and Back (Backspace) returns to the previous view. The grid's selection is
@@ -178,7 +179,8 @@
   P.pos = function(e){ var r = this.cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };
   P.onAxis = function(q){ return q.y > this.H - this.B; };
   P.down = function(e){ if ((e.button !== 0 && e.button !== 2) || !this.base || !this.view) return; var q = this.pos(e), ax = this.onAxis(q), pn = this.panelAt(q.y) || (ax ? this.panels()[0] : null); if (!pn || q.x < this.L - 4) return; e.preventDefault();
-    var right = e.button === 2 || (e.ctrlKey && /Mac/.test(navigator.platform)), m = !right && (ax || SPACE || e.altKey) ? 'pan' : 'select';
+    var right = e.button === 2 || (e.ctrlKey && /Mac/.test(navigator.platform)), add = e.shiftKey || e.metaKey,
+      m = !right && (ax || SPACE || e.altKey) ? 'pan' : (right || add) ? 'select' : 'zoom';      // plain drag zooms (M 14 Oct); Shift + drag selects
     if (m === 'pan') this.mark(); this.act.hidden = true;
     this.drag = {x0: q.x, x: q.x, mode: m, pn: pn, view: this.view.slice(), add: e.shiftKey || e.metaKey || (e.ctrlKey && !right), right: right}; this.cv.style.cursor = m === 'pan' ? 'grabbing' : 'crosshair'; };
   P.move = function(e){ var q = this.pos(e);
@@ -189,8 +191,10 @@
     if (!inside && !this.hover) return; this.hover = inside ? q : null; this.draw(); };
   P.up = function(e){ var d = this.drag; if (!d) return; this.drag = null; this.cv.style.cursor = ''; var pn = d.pn;
     if (d.mode === 'pan') { if (Math.abs(d.x - d.x0) > 3) this.request(); else this.hist.pop(); this.draw(); this.drawAct(); return; }
-    if (Math.abs(d.x - d.x0) <= 3) { if (d.right) { this.drawAct(); return; } if (window.wbGridSelectNear) window.wbGridSelectNear(pn.p, this.T2(d.x0, pn), d.add); this.draw(); return; }
+    if (Math.abs(d.x - d.x0) <= (d.mode === 'zoom' ? 5 : 3)) { if (d.right) { this.drawAct(); return; } if (window.wbGridSelectNear) window.wbGridSelectNear(pn.p, this.T2(d.x0, pn), d.add); this.draw(); return; }
     var a = this.T2(Math.max(this.L, Math.min(d.x0, d.x)), pn), b = this.T2(Math.min(this.W - this.R, Math.max(d.x0, d.x)), pn);
+    if (d.mode === 'zoom') { this.mark(); if (d.x > d.x0) this.set(a, b);                         // left to right: zoom to the stretch
+      else { var w = (this.view[1] - this.view[0]) * 2, c = (a + b) / 2; this.set(c - w / 2, c + w / 2); } return; }   // right to left: twice as wide
     if (window.wbGridSelectRange) window.wbGridSelectRange(pn.p, a, b, d.add); this.draw(); };
   P.wheel = function(e){ if (!this.base || !this.view) return; e.preventDefault(); var q = this.pos(e), pn = this.panelAt(q.y) || this.panels()[0]; if (!pn) return;
     var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY, dx = e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX, w = this.view[1] - this.view[0];

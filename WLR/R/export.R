@@ -254,8 +254,8 @@ site_netcdf <- function(project_dir, site, path, values = c("depth_m", "elev_m",
     acdd_atts(paste("Water level at", site), paste0("Barometrically compensated water level and temperature at ", site, " from pressure loggers, ",
                 c(raw = "every reading", hour = "hourly means", day = "daily means")[[res]], ", with a WMO quality control code, a standard uncertainty and the approval state of every value. ",
                 "Values removed by a quality rule are absent (fill value)."),
-              paste0("ovid-wlr-", safe_name(site)), t, lat, lon, "timeSeries", proc_level(codes),
+              paste0("ovid-wlr-", safe_name(site)), t, lat, lon, "timeSeries", proc_level(codes, approved = nrow(d) > 0 && all(d$approval == "approved")),
               keywords = c("groundwater", "water table", "peatland", "water level"), source = "pressure loggers (HOBO, Solinst), barometric compensation",
-              extra = list(approval = if (all(d$approval == "approved")) "approved" else if (any(d$approval == "approved")) "approved in part" else "provisional")))
+              extra = list(approval = if (all(d$approval == "approved")) "approved" else if (any(d$approval == "approved")) "approved in part" else "provisional"), project_dir = project_dir))
   path
 }

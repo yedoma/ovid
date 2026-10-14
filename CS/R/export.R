@@ -191,7 +191,7 @@ station_netcdf <- function(station, stream, project_dir, path, from = NULL, to =
                 if (is.na(so %||% NA)) sprintf(" The station has no UTC offset in Station details: its clock was taken as the base zone, UTC%+g.", off) else ""),
               paste0("ovid-cs-", safe_name(paste(station, stream, sep = "-"))), t, lat, lon, "timeSeries", proc_level(codes),
               keywords = c("meteorology", "climate station", "permafrost", "peatland"), source = "Campbell Scientific data logger",
-              extra = list(utc_offset_of_logger_clock = off)))
+              extra = list(utc_offset_of_logger_clock = off), project_dir = project_dir))
   path
 }
 

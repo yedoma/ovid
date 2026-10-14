@@ -5,6 +5,24 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (shared items for every app, 2026-10-14)**
+
+- Plots (tsview.js, workbench_chart.js, workbench_xy.js): a drag left to right zooms to the dragged stretch, right to left
+  zooms out (twice as wide); Shift + drag selects, Shift + click adds. Hints updated.
+- Needs you (workbench.R, flow.R): grouped by place (site or serial; sheet and project findings apart), the same check on
+  nearby days merged, every line labelled decide / fix in ovid / raw data / add a file; the pop-up can group by what to do.
+- Yes/no columns (table_rules.R, editor.R, sheet.R, www/yesno.js): enabled, show, identifies, include, active, hidden and an
+  app's `rules$yesno` show Yes/No with a pick in both views and are written TRUE/FALSE; other text is an error.
+- Set-up sheets (sheet.js, sheet.R, editor.R): only the rows near the view are drawn (tables over 150 rows); rows are
+  converted to and from the browser a column at a time (about 20x faster).
+- Processing levels (standards.R): L0 raw, L1A filtered, L1B flagged, L2 QA/QC, L3 refined, L4 derived, from a file's WMO
+  codes, review and approval. Dataset card (Settings > Dataset, config/dataset.json) written into NetCDF exports as ACDD
+  attributes; `nc_import()` reads CF time series NetCDF (ncdf4, added to the launcher and renv.lock).
+- Fixed: one Standard | Workbench switch in GS and RS (no second Workbench button); the Workbench overview strip waits for
+  room instead of failing with "figure margins too large".
+- **Output changes:** NetCDF processing_level now uses the new codes (L1A, L1B ...) and carries the dataset card's
+  attributes; yes/no cells are written TRUE/FALSE the next time a table is saved. Values are unchanged.
+
 **Changed (ERT is now GS, 2026-10-14)**
 
 - `OVID_APP_RENAMED` (util.R): a project marked with a former app name (ERT) opens in the current app (GS), and

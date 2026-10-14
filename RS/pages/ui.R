@@ -184,7 +184,5 @@ rs_settings_tool <- function(rail = FALSE) ovid_tool("Settings", value = "Settin
   card(class = "mt-3", style = "max-width:1100px", card_header("Colours"), colours_ui()),
   card(class = "mt-3", style = "max-width:1100px", card_header("Projects"), projects_list_ui("proj")))
 ui <- do.call(ovid_page, c(list("RS", PAL, theme = THEME, project = projects_switch_ui("proj"), status = span(class = "muted", textOutput("made", inline = TRUE)),
-  actions = tags$a(class = "btn btn-outline-secondary btn-sm", href = "?ui=workbench", title = "Open the Workbench interface (preview) on this archive and flight",
-                   "Workbench", span(style = "font-size:10px;margin-left:4px;opacity:.8", "preview")),
   help = if (file.exists(file.path(APP_DIR, "docs", "RS_reference_guide.html"))) "docs/RS_reference_guide.html", head = std_head(), settings = "Settings"), std_pages(),
   list(convert_tool(), reference_tool("RS"), rs_settings_tool())))

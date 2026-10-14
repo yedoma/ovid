@@ -294,7 +294,7 @@ std_pages <- function(sources = TRUE) list(
     convert_tool(), reference_tool("WLR"),
     ovid_tool("Settings", value = "Settings", icon = "sliders", rail = FALSE,
       page_head("Settings", "How pressure becomes metres of water, and the thresholds the checks use. Saved with the app and applied at the next run."),
-      time_zone_ui(),
+      time_zone_ui(), dataset_card_ui(),
       fluidRow(column(6, div(class = "panel-x", h3("Units and conversion"),
           numericInput("utm_zone", "UTM zone (1 to 60): used to turn eastings and northings into latitude and longitude", SETTINGS$utm_zone, min = 1, max = 60, step = 1, width = "100%"),
           radioButtons("solinst_altitude", "Solinst altitude setting (Levelogger / Barologger Gold and Junior add altitude/826 m of water to every reading when programmed with an altitude)",

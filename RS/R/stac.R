@@ -31,13 +31,14 @@ crs_status <- function(epsg = NA, text = "") {
 # the processing report gives. The level follows the drone processing levels (Scientific Data FAIR framework for UAV data,
 # after NASA): L1 calibrated (reflectance), L2 corrected and mapped (orthomosaic, DSM, DTM, point cloud), L4 derived (an
 # index, a classification, a change map). A blank level is taken from the kind.
+DRONE_LEVEL_NAMES <- c(`1` = "calibrated", `2` = "corrected", `3` = "corrected", `4` = "derived")   # the drone framework's own names (not the logger levels in core standards.R)
 PRODUCT_KINDS <- c(orthomosaic = 2L, dsm = 2L, dtm = 2L, `point cloud` = 2L, reflectance = 1L, index = 4L, classification = 4L, `change map` = 4L)
 products_table <- function(prod, ds = NULL, flights = NULL) {
   if (is.null(prod) || !nrow(prod)) return(ensure_cols(data.table(), c(PRODUCT_COLS, "level_name", "flights_found", "file_found", "crs_status"))[0])
   p <- ensure_cols(copy(prod), PRODUCT_COLS)
   lv <- suppressWarnings(as.integer(sub("^L", "", trim(p$level))))
   lv[is.na(lv)] <- PRODUCT_KINDS[tolower(trim(p$kind[is.na(lv)]))]
-  p[, level := ifelse(is.na(lv), "", paste0("L", lv))][, level_name := ifelse(is.na(lv), "", PROC_LEVELS$name[match(lv, PROC_LEVELS$level)])]
+  p[, level := ifelse(is.na(lv), "", paste0("L", lv))][, level_name := ifelse(is.na(lv), "", DRONE_LEVEL_NAMES[as.character(lv)])]
   ids <- if (!is.null(flights) && nrow(flights)) flights$flight_id else character()
   p[, flights_found := vapply(strsplit(flights, "[;, ]+"), function(f) { f <- f[nzchar(f)]; if (!length(f)) "" else sprintf("%d of %d", sum(f %in% ids), length(f)) }, "")]
   hit <- if (!is.null(ds) && nrow(ds)) match(trim(p$file), ds$rel) else rep(NA_integer_, nrow(p))

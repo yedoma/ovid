@@ -58,7 +58,7 @@ wmo_code <- function(value, flag, checked = TRUE) {
 # One site as a CF-1.10 / ACDD-1.3 NetCDF file (featureType timeSeriesProfile: temperature on time x depth, depth positive
 # down, the WMO code of every value beside it), the form GTN-P and the PermafrostNet data recommendations ask for. Times are
 # true UTC whatever the zone of the CSV export. NULL when the site has no data in the period.
-site_netcdf <- function(d, path, site, meta = list(), res = "raw", checked = TRUE, from = NULL, to = NULL, base = BASE_OFFSET) {
+site_netcdf <- function(d, path, site, meta = list(), res = "raw", checked = TRUE, from = NULL, to = NULL, base = BASE_OFFSET, project_dir = NULL) {
   if (is.null(d) || !nrow(d)) return(NULL)
   if (length(from) && !is.na(from)) d <- d[TIMESTAMP >= as.POSIXct(from, tz = "UTC")]
   if (length(to) && !is.na(to)) d <- d[TIMESTAMP < as.POSIXct(to, tz = "UTC") + 86400]
@@ -86,7 +86,7 @@ site_netcdf <- function(d, path, site, meta = list(), res = "raw", checked = TRU
                 ", ", RES_LABEL[[res]], ", with a WMO quality control code for every value. Values removed by a quality rule are absent (fill value)."),
               paste0("ovid-gt-", safe_name(site)), ts, lat, lon, "timeSeriesProfile", lvl,
               keywords = c("permafrost", "ground temperature", "active layer", "borehole"), source = if (nzchar(inst)) paste("logger:", inst) else "ground temperature loggers",
-              extra = list(geospatial_vertical_min = min(zz), geospatial_vertical_max = max(zz), geospatial_vertical_units = "m", geospatial_vertical_positive = "down")))
+              extra = list(geospatial_vertical_min = min(zz), geospatial_vertical_max = max(zz), geospatial_vertical_units = "m", geospatial_vertical_positive = "down"), project_dir = project_dir))
   path
 }
 
@@ -108,7 +108,7 @@ build_export <- function(project_dir, sites, zipfile, from = NULL, to = NULL, re
     t <- site_table(load_site(s, project_dir), res, layout, flags, out_offset, BASE_OFFSET, from, to, if (layout == "long") meta else NULL, flag_scheme, checked, sgn)
     if (nrow(t)) fwrite(t, file.path(tmp, "sites", paste0(safe_name(s), "_ground_temp.csv")))
     if (netcdf) { dir.create(file.path(tmp, "netcdf"), showWarnings = FALSE)
-      site_netcdf(load_site(s, project_dir), file.path(tmp, "netcdf", paste0(safe_name(s), "_ground_temp.nc")), s, if (nrow(m)) as.list(m) else list(), res, checked, from, to) }
+      site_netcdf(load_site(s, project_dir), file.path(tmp, "netcdf", paste0(safe_name(s), "_ground_temp.nc")), s, if (nrow(m)) as.list(m) else list(), res, checked, from, to, project_dir = project_dir) }
     if (soil) { so <- load_soil(s, project_dir); if (!is.null(so) && nrow(so)) { dir.create(file.path(tmp, "soil"), showWarnings = FALSE)
       so <- export_depths(so, sgn); so[, TIMESTAMP := fmt_ts(TIMESTAMP + (out_offset - BASE_OFFSET) * 3600)]; setnames(so, "TIMESTAMP", paste0("timestamp_", zone_label(out_offset)))
       fwrite(so, file.path(tmp, "soil", paste0(safe_name(s), "_soil.csv"))) } }

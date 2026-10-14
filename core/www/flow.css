@@ -117,3 +117,4 @@ html.d-layout-tabs body{padding-left:0} html.d-layout-tabs .d-rail-toggle{displa
 @media (max-width:900px){html.d-layout-tabs body{padding-left:0} .d-project{display:none}}
 html.d-has-aside .d-context{display:none}
 
+.d-rl-group{display:flex;gap:8px;align-items:baseline;padding:12px 0 2px;border-top:1px solid var(--bg2);font-size:14px}.d-rl-group+.d-chk-row{border-top:0}.d-rl-what{font-weight:600}

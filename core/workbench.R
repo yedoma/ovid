@@ -259,7 +259,7 @@ wb_chart_ui <- function() tagList(
     tags$button(type = "button", `data-wb-chart` = "back", title = "The previous view (Backspace)", HTML("&larr; Back")),
     span(class = "sep"),
     tags$button(type = "button", `data-wb-chart` = "period", title = "Make the stretch in view the period, so the grid lists its records", "Use as period"),
-    span(class = "wb-chint", "drag selects \u00b7 click a point \u00b7 Shift adds \u00b7 wheel zooms \u00b7 drag the time axis or Space + drag to move \u00b7 Esc clears")),
+    span(class = "wb-chint", "drag \u2192 zooms in, \u2190 zooms out \u00b7 Shift + drag selects \u00b7 click a point \u00b7 Shift + click adds \u00b7 wheel zooms \u00b7 drag the time axis or Space + drag to move \u00b7 Esc clears")),
   div(id = "wb_chart", class = "wb-chart2", tags$canvas(), div(class = "wb-ctip")))
 
 # The point chart's toolbar and canvas (WB_XY_JS draws it; its element has the id wb_xy).
@@ -270,7 +270,7 @@ wb_xy_ui <- function() tagList(
     tags$button(type = "button", `data-wb-xy` = "reset", title = "Every point (or double-click the chart)", "Reset"),
     tags$button(type = "button", `data-wb-xy` = "back", title = "The previous view (Backspace)", HTML("&larr; Back")),
     span(class = "sep"),
-    span(class = "wb-chint", "drag a box to select \u00b7 click a point \u00b7 Shift adds \u00b7 wheel zooms \u00b7 Space + drag moves \u00b7 Esc clears")),
+    span(class = "wb-chint", "drag \u2192 zooms to a box, \u2190 zooms out \u00b7 Shift + drag selects a box \u00b7 click a point \u00b7 Shift + click adds \u00b7 wheel zooms \u00b7 Space + drag moves \u00b7 Esc clears")),
   div(id = "wb_xy", class = "wb-chart2 wb-xy", tags$canvas(), div(class = "wb-ctip")))
 
 # The point chart's data (send it with session$sendCustomMessage("wb-xy", ...)). x, y: the positions; id: each point's row
@@ -311,6 +311,9 @@ wb_data_ui <- function(actions = NULL, tools = NULL, xy = FALSE) tagList(
 
 # The strip above the chart: the daily median of the first charted parameter over the whole record, the period as a box
 # and the stretch in view (view: input wb_view) shaded.
+# TRUE once the strip has room to draw: while the side panels settle their widths it can briefly be a few pixels wide,
+# and drawing then fails ("figure margins too large"); the strip waits for its next size instead.
+wb_overview_fits <- function(session = shiny::getDefaultReactiveDomain()) isTRUE((session$clientData$output_wb_overview_width %||% 0) >= 60)
 wb_overview_plot <- function(t, y, period, view = NULL, pal) {
   tk <- ovid_tokens(pal)
   m <- data.table(day = as.Date(t), y = y)[, .(y = stats::median(y, na.rm = TRUE)), by = day]
@@ -493,25 +496,49 @@ wb_process_tree <- function(app, items, open = TRUE) tags$details(class = "wb-tr
 # in the files, a logger's only deployment), loggers found in the files in no row, files with no serial (core deployments.R,
 # as the Needs you page shows them) and the open items of the one review list (core flow.R: flags, moves, the run's other
 # findings). Each opens the Needs you page, where it is settled.
+# Grouped by place (site or station; a logger's serial until it has one) with the same check on nearby days merged into one
+# line, and each line labelled with what to do about it (core flow.R needs_fix_of: decide, fix in ovid, raw data, add a file).
 wb_needs_items <- function(check = NULL, items = NULL) {
-  out <- list(); add <- function(what, detail, go) out[[length(out) + 1L]] <<- data.table(what = what, detail = detail, go = go)
+  out <- list(); add <- function(group, fix, what, detail, n = 1L) out[[length(out) + 1L]] <<- data.table(group = group, fix = fix, what = what, detail = detail, n = n, go = "Needs")
   if (!is.null(check)) {
     r <- check$rows; if (!is.null(r) && nrow(r)) { r <- r[!match %in% c("dates", "no data", "no data in period")]
-      if (nrow(r)) add(paste0(r$serial, ifelse(nzchar(r$station %||% ""), paste0(" \u00b7 ", r$station), "")), paste0("matched ", r$match, ": a suggestion to accept or change"), "Needs") }
+      if (nrow(r)) { st <- if ("station" %in% names(r)) as.character(r$station) else rep("", nrow(r))
+        add(ifelse(!is.na(st) & nzchar(st), st, as.character(r$serial)), "fix", paste0(r$serial, " matched by ", r$match), "a suggestion to accept or change") } }
     u <- check$unclaimed; if (!is.null(u) && nrow(u)) { u <- u[, .(nm = paste(unique(unlist(strsplit(as.character(names_in_files), "; ", fixed = TRUE))), collapse = "; ")), by = serial]
-      add(as.character(u$serial), paste0("found in the files (", u$nm, "), in no row of the deployment sheet"), "Needs") }
-    f <- check$unassigned; if (!is.null(f) && nrow(f)) add(paste(nrow(f), "file(s) with no serial"), "assign them to a logger, or leave them out", "Needs")
+      add("Not in the deployment sheet", "fix", as.character(u$serial), paste0("found in the files (", u$nm, "): add it to the deployment sheet")) }
+    f <- check$unassigned; if (!is.null(f) && nrow(f)) add("Not in the deployment sheet", "raw", paste(nrow(f), "file(s) with no serial"), "the file header has no serial: name the logger, or leave the file out")
   }
-  if (!is.null(items) && NROW(items)) add(paste0(items$where, ifelse(items$kind == "flag", paste0(" \u00b7 ", items$what), "")),
-                                          ifelse(items$kind == "flag", paste(items$parameter, substr(items$start, 1, 10), sep = " \u00b7 "), items$what), "Needs")
-  if (length(out)) rbindlist(out) else data.table(what = character(), detail = character(), go = character())
+  if (!is.null(items) && NROW(items)) { x <- copy(as.data.table(items)); for (v in c("detail", "parameter", "start", "group", "fix")) if (!v %in% names(x)) x[, (v) := ""]
+    x[, `:=`(.g = needs_group_of(kind, where, group), .f = needs_fix_of(kind, paste(what, detail), fix))]
+    fl <- x[kind == "flag"]
+    if (nrow(fl)) { m <- fl[, .(n = .N, days = paste(unique(substr(start, 1, 10)), collapse = ", "), p = paste(unique(unlist(strsplit(parameter, ", ", fixed = TRUE))), collapse = ", ")), by = .(.g, .f, what)]
+      add(m$.g, m$.f, paste0(m$what, " \u00b7 ", m$p, ifelse(m$n > 1, paste0(" \u00b7 ", m$n, " times"), "")), m$days, m$n) }
+    ot <- x[kind != "flag"]
+    if (nrow(ot)) add(ot$.g, ot$.f, ifelse(ot$kind == "moved", paste(ot$where, "looks moved"), ifelse(nzchar(ot$where) & ot$.g == "Project", paste0(ot$where, ": ", ot$what), ot$what)),
+                    ifelse(ot$kind == "moved", ot$what, ot$detail)) }
+  if (!length(out)) return(data.table(group = character(), fix = character(), what = character(), detail = character(), n = integer(), go = character()))
+  x <- rbindlist(out); x[, detail := ifelse(is.na(detail), "", detail)]
+  x[order(group == "Project", group == "Not in the deployment sheet", match(group, unique(group)))]
 }
 wb_needs_ui <- function() uiOutput("wb_needs", inline = TRUE)
-wb_needs_server <- function(output, items) output$wb_needs <- renderUI({ x <- tryCatch(items(), error = function(e) NULL); n <- if (is.null(x)) 0L else nrow(x)
+# by: group the list by place (default) or by what to do (input wb_needs_by)
+wb_needs_server <- function(output, items, input = shiny::getDefaultReactiveDomain()$input) output$wb_needs <- renderUI({
+  x <- tryCatch(items(), error = function(e) NULL); n <- if (is.null(x)) 0L else sum(x$n)
+  by <- if (identical(input$wb_needs_by, "fix")) "fix" else "group"
+  body <- if (!n) div(class = "wb-needs-none", "Nothing waits for you.") else {
+    key <- if (by == "fix") unname(NEEDS_LABELS[x$fix]) else x$group; ks <- unique(if (by == "fix") unname(NEEDS_LABELS[intersect(names(NEEDS_LABELS), x$fix)]) else key)
+    lapply(ks, function(k) { y <- x[key == k]
+      tags$details(class = "wb-needs-g", open = if (length(ks) <= 4 || k %in% c("Project", "Not in the deployment sheet")) NA,
+        tags$summary(tags$b(k), span(class = "ct", sum(y$n))),
+        lapply(seq_len(min(nrow(y), 40)), function(i) tags$a(class = "wb-needs-it", href = "#", `data-ovid-go` = y$go[i],
+          span(class = paste0("wb-tag t-", y$fix[i]), NEEDS_LABELS[[y$fix[i]]]), div(tags$b(y$what[i]), if (nzchar(y$detail[i])) div(class = "m", y$detail[i])))),
+        if (nrow(y) > 40) div(class = "wb-needs-none", paste("and", nrow(y) - 40, "more on the Needs you page"))) }) }
   tags$details(class = "wb-needs", tags$summary(class = "wb-btn", title = "Matches to confirm, flags to decide and what else the last run found", "Needs you ", tags$b(class = if (n) "w" else "ok", n), " \u25be"),
-    div(class = "wb-needs-pop", if (!n) div(class = "wb-needs-none", "Nothing waits for you.") else tagList(
-      lapply(seq_len(min(n, 60)), function(i) tags$a(class = "wb-needs-it", href = "#", `data-ovid-go` = x$go[i], span(class = "w", "\u25b2"), div(tags$b(x$what[i]), div(class = "m", x$detail[i])))),
-      if (n > 60) div(class = "wb-needs-none", paste("and", n - 60, "more on the Needs you page"))))) })
+    div(class = "wb-needs-pop",
+      div(class = "wb-needs-by", span("group by"),
+        tags$a(href = "#", class = if (by == "group") "on", onclick = "Shiny.setInputValue('wb_needs_by','group');return false", "place"),
+        tags$a(href = "#", class = if (by == "fix") "on", onclick = "Shiny.setInputValue('wb_needs_by','fix');return false", "what to do")),
+      body)) })
 WB_NEEDS_CSS <- paste(readLines(file.path(CORE_DIR, "www", "workbench_needs.css"), encoding = "UTF-8"), collapse = "\n")
 
 # The review list (core flow.R) inside the Workbench: a flag opens its record here, and Remove... and Correct... open the

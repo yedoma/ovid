@@ -716,4 +716,34 @@ local({ for (.f in c("periods", "corrections", "applied")) source(file.path(CORE
   fwrite(data.table(target = c("A", "B", "D"), parameter = "temp", from = "", to = "", action = "remove", value = "", on = c("off", "off", ""), note = "", author = "", added = ""), file.path(pd, "config", PERIOD_FILE))
   check("a period row the run wrote nothing for counts 0", applied_write(list(project_dir = pd), corr)[group == "Corrections over a period", n] == 0) })
 
+local({   # yes/no columns, the dataset card and NetCDF import (14 Oct)
+  check("yes/no spellings are read in any case; other text is not Yes or No",
+        identical(yesno_value(c("YES", "n", "True", "0", "on", "maybe", "")), c(TRUE, FALSE, TRUE, FALSE, TRUE, NA, NA)))
+  d <- data.frame(enabled = c("yes", "FALSE", "", "x"), notes = "a", stringsAsFactors = FALSE)
+  check("yes/no columns show as Yes/No and are written TRUE/FALSE; blanks and other text stay",
+        identical(yesno_as(d, "any.csv")$enabled, c("Yes", "No", "", "x")) && identical(yesno_as(yesno_as(d, "any.csv"), "any.csv", shown = FALSE)$enabled, c("TRUE", "FALSE", "", "x")))
+  check("a yes/no cell with other text is an error", any(table_check(d, table_rules(names(d)))$problem == "'x' is not Yes or No"))
+  for (.f in c("qc", "standards")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  check("processing levels follow the stage of correction (L0 raw to L4 derived)",
+        identical(c(proc_level(4L), proc_level(c(0L, 7L)), proc_level(c(0L, 2L)), proc_level(c(0L, 2L), reviewed = TRUE), proc_level(c(0L, 5L)),
+                    proc_level(c(0L, 6L)), proc_level(0L, approved = TRUE), proc_level(0L, derived = TRUE)), c("L0", "L1A", "L1B", "L2", "L2", "L3", "L3", "L4")) &&
+        proc_level_label("L1B") == "L1B flagged (provisional)" && proc_level_label("L0") == "L0 raw")
+  pd <- tempfile("ovid_ds_"); dir.create(pd)
+  dataset_save(pd, list(title = "Peat plateau study", creator = "M", license = "CC-BY-4.0", institution = ""))
+  a <- acdd_atts("t", "What the file holds.", "id", project_dir = pd)
+  check("the dataset card goes into the NetCDF attributes; blank fields are left out",
+        identical(a$project, "Peat plateau study") && identical(a$creator_name, "M") && identical(a$license, "CC-BY-4.0") && is.null(a$institution) && identical(a$summary, "What the file holds."))
+  if (requireNamespace("ncdf4", quietly = TRUE)) {
+    f <- tempfile(fileext = ".nc"); t <- as.numeric(as.POSIXct("2026-06-01", tz = "UTC")) + c(0, 1800, 3600)
+    nc_write(f, c(time = 3L, name_strlen = 64L), c(list(
+        list(name = "time", dims = "time", data = t, atts = list(standard_name = "time", units = "seconds since 1970-01-01 00:00:00", axis = "T")),
+        list(name = "air_temp", dims = "time", data = c(1.5, NA, 2.5), atts = list(units = "degC", standard_name = "air_temperature")),
+        list(name = "air_temp_qc", dims = "time", data = nc_byte(c(1, 9, 3)), atts = cf_qc_atts("air_temp"))),
+      nc_station_vars("A / Table1", 60.1, -121.3)), acdd_atts("t", "s", "id", t, 60.1, -121.3, project_dir = pd))
+    x <- nc_import(f)
+    check("an exported NetCDF file reads back: station, UTC times, values, gaps, QC codes, units and the file's attributes",
+          nrow(x) == 3 && x$station[1] == "A / Table1" && format(x$time[2], "%H:%M", tz = "UTC") == "00:30" && is.na(x$value[2]) && x$value[3] == 2.5 &&
+          identical(x$qc[c(1, 3)], c(1L, 3L)) && x$units[1] == "degC" && identical(attr(x, "atts")$license, "CC-BY-4.0"))
+  } })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

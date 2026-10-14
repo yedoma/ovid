@@ -102,6 +102,7 @@ server <- function(input, output, session, embedded = FALSE) {
   rv <- reactiveValues(au_rule = NULL, pf_tick = 0, tick = 0, log = character(), stale = FALSE, fsl_tick = 0, prog_tick = 0, zoom = NULL, detail = NULL, ex_focus = NULL, ex_send = 0)
   pd <- reactive(if (VIEWER) normalizePath(path.expand(SETTINGS$project_dir), winslash = "/", mustWork = FALSE)
                  else sub("[/\\\\]+$", "", path.expand(ovid_project_dir(input$project_dir %||% SETTINGS$project_dir))))   # none set: the default folder (core util.R)
+  dataset_card_server(input, output, pd)                                    # Settings > Dataset (core shell.R)
   cfg_path <- function(f) reactive(file.path(pd(), "config", f))
   tick <- reactive(rv$tick)
   mark <- function() rv$stale <- TRUE

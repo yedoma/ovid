@@ -123,7 +123,7 @@ edit_read <- function(p) {
       note(basename(p), " is missing column", if (length(miss) > 1) "s", " ", paste(utils::head(miss, 6), collapse = ", "), if (length(miss) > 6) ", ...",
            ": shown added empty. It may be damaged or from another version; check the table, then save it.")
     for (k in miss) d[, (k) := ""] }
-  as.data.frame(d, stringsAsFactors = FALSE) }
+  yesno_as(as.data.frame(d, stringsAsFactors = FALSE), basename(p)) }
 
 ovid_edit_server <- function(id, path, reload, locked = character(), on_change = function() NULL, dt = NULL) moduleServer(id, function(input, output, session) {
   ro <- function() isTRUE(get0("VIEWER", inherits = TRUE))
@@ -163,10 +163,12 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
   output$tbl <- DT::renderDT({
     ver(); d <- isolate(data())
     validate(need(!is.null(d), "This table is created the first time the pipeline runs."))
+    yn <- setdiff(table_yesno_cols(basename(isolate(path())), names(d)), locked)     # yes/no cells pick Yes or No (www/yesno.js)
+    session$sendCustomMessage("ovid-yesno", list(id = session$ns("tbl"), cols = I(if (ro()) integer() else match(yn, names(d)) - 1L)))
     w <- isolate(want()); w <- w[w <= nrow(d)]                           # rows asked for by select(), on their page
     show(d, selection = list(mode = "multiple", selected = if (length(w)) w else NULL), page = 25,
          opts = if (length(w)) list(displayStart = (min(w) - 1) %/% 25 * 25) else list(),
-         editable = if (ro()) FALSE else list(target = "cell", disable = list(columns = which(names(d) %in% locked) - 1L)))
+         editable = if (ro()) FALSE else list(target = "cell", disable = list(columns = which(names(d) %in% c(locked, yn)) - 1L)))
   }, server = FALSE)
   # In the Workbench the table is a sheet (core/sheet.R): sent whenever it is read or saved, and its Apply saves it here.
   in_wb <- isTRUE(tryCatch(exists("wb_wanted", mode = "function") && wb_wanted(isolate(session$clientData$url_search), get0("SETTINGS")$ui), error = function(e) FALSE))
@@ -175,13 +177,9 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     ovid_sheet_send(session, session$ns("sheet"), d, locked, ro(), label = if (length(p) == 1) basename(p) else "", base = base) })
   # the sheet's changes not yet applied: held as this editor's unsaved edits (so the Standard view has them too)
   observeEvent(input$sheet_pending, { if (ro()) return(); m <- input$sheet_pending; d <- isolate(data()); if (is.null(d)) return()
-    rows <- lapply(m$rows, function(r) vapply(r, function(v) if (is.null(v)) "" else as.character(v), ""))
-    nd <- if (length(rows)) as.data.frame(do.call(rbind, lapply(rows, function(r) { length(r) <- ncol(d); r[is.na(r)] <- ""; r })), stringsAsFactors = FALSE) else d[0, , drop = FALSE]
-    names(nd) <- names(d); data(nd); dirty(isTRUE(m$dirty)) })
+    nd <- sheet_rows_in(m$rows, d); data(nd); dirty(isTRUE(m$dirty)) })
   observeEvent(input$sheet_apply, { if (ro()) return(); m <- input$sheet_apply; d <- isolate(data()); if (is.null(d)) return()
-    rows <- lapply(m$rows, function(r) vapply(r, function(v) if (is.null(v)) "" else as.character(v), ""))
-    nd <- if (length(rows)) as.data.frame(do.call(rbind, lapply(rows, function(r) { length(r) <- ncol(d); r[is.na(r)] <- ""; r })), stringsAsFactors = FALSE) else d[0, , drop = FALSE]
-    names(nd) <- names(d)
+    nd <- sheet_rows_in(m$rows, d)
     if (!identical(file_stamp(isolate(path())), isolate(loaded()))) { if (isolate(dirty())) conflict() else { load_disk(); showNotification(paste(basename(isolate(path())), "was saved elsewhere and has been read again: make the changes once more."), type = "warning", duration = 8) }; return() }
     data(nd); dirty(TRUE); write_now(nd, quiet = TRUE)
     showNotification(paste("Saved", basename(isolate(path())), "\u00b7 the version before is in history. Run to apply."), type = "message", duration = 5); bump() })
@@ -205,8 +203,9 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
   write_now <- function(d, quiet) {
     p <- isolate(path()); was_dirty <- isolate(dirty())
     d <- d[rowSums(d != "") > 0, , drop = FALSE]
-    try(backup_cfg(p, d, edit_user(session)), silent = TRUE)
-    fwrite_safe(d, p); data(d); dirty(FALSE); loaded(file_stamp(p)); undo(list()); live_touch()
+    dw <- yesno_as(d, basename(p), shown = FALSE)                                # Yes/No cells are written TRUE/FALSE
+    try(backup_cfg(p, dw, edit_user(session)), silent = TRUE)
+    fwrite_safe(dw, p); data(d); dirty(FALSE); loaded(file_stamp(p)); undo(list()); live_touch()
     if (was_dirty) on_change()
     if (!quiet) showNotification("Saved. Run the pipeline to apply.", type = "message")
   }

@@ -631,7 +631,7 @@ if (!requireNamespace("xml2", quietly = TRUE)) cat("  skip  the Workbench server
           identical(as.numeric(cb$rem[[1]]$v), c(99, 99)) && identical(as.numeric(cb$period), as.numeric(wb$period())) && cb$zone == "logger time")
     rl16 <- as.character(output$`rl-list`$html); nd16 <- as.character(output$wb_needs$html)
     check("Needs you is one list in both views: the run's flags and findings on the Needs you page, counted in the Workbench's Needs you",
-          nrow(std$review$items()) > 0 && grepl("d-chk-row", rl16, fixed = TRUE) && grepl(paste0("<b class=\"w\">", nrow(app$wb_needs_items(std$needs$check(), std$review$items())), "</b>"), nd16, fixed = TRUE))
+          nrow(std$review$items()) > 0 && grepl("d-chk-row", rl16, fixed = TRUE) && grepl(paste0("<b class=\"w\">", sum(app$wb_needs_items(std$needs$check(), std$review$items())$n), "</b>"), nd16, fixed = TRUE))
     check("the status bar sums up the selection and reports problems, reconciliation and the versions",
           grepl("5 selected", output$wb_status$html) && grepl("No problems", output$wb_status$html) && grepl(paste("workbench", app$OVID_WORKBENCH_VERSION), output$wb_status$html))
 

@@ -228,7 +228,7 @@ wb_server <- function(input, output, session, std) {
     dd <- d[k >= a & k <= z]; ps <- plot_params(); wb_chart_data(dd, ps, removed(), fl(), chart_pend(dd, ps, part()), Inf) })
 
   # charts
-  output$wb_overview <- renderPlot({ d <- dat(); ps <- plot_params(); req(length(ps) > 0)
+  output$wb_overview <- renderPlot({ req(wb_overview_fits()); d <- dat(); ps <- plot_params(); req(length(ps) > 0)
     wb_overview_plot(d$TIMESTAMP, d[[ps[1]]], period(), view_d(), GB) }, bg = GB$bg)
   state_chip <- function(ci) wb_state_chip(ci$state, ci$rule, pend = "removal saved \u00b7 run to apply")
 

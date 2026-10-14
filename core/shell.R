@@ -367,6 +367,22 @@ time_zone_server <- function(input, settings_file = get0("SETTINGS_FILE"), on_ch
     if (!is.null(settings_file)) try(settings_save(settings_file, list(base_offset_h = z)), silent = TRUE)
     BASE_OFFSET <<- z; on_change(z) }, ignoreInit = TRUE)
 
+# Settings > Dataset: who made the data and how it may be used (core standards.R dataset_read/dataset_save), per project,
+# written into every NetCDF export. pd: the app's project folder (a reactive).
+dataset_card_ui <- function() div(class = "panel-x", h3("Dataset"),
+  p(class = "dim", "Written into every NetCDF export (ACDD attributes), so the files say who made them and how they may be used. Blank fields are left out."),
+  div(class = "d-dataset", style = "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px 14px;max-width:900px",
+    textInput("ds_title", "Project title"), textInput("ds_creator", "Creator (person or group)"), textInput("ds_email", "Creator email"),
+    textInput("ds_institution", "Institution"), textInput("ds_license", "Licence (e.g. CC-BY-4.0)")),
+  textAreaInput("ds_summary", "Summary of the project (added after each file's own summary)", rows = 3, width = "100%"),
+  actionButton("ds_save", "Save dataset card", class = "btn-sm"), span(class = "dim", style = "margin-left:8px", textOutput("ds_saved", inline = TRUE)))
+dataset_card_server <- function(input, output, pd, session = shiny::getDefaultReactiveDomain()) {
+  ids <- c(title = "ds_title", summary = "ds_summary", creator = "ds_creator", email = "ds_email", institution = "ds_institution", license = "ds_license")
+  observe({ x <- dataset_read(pd()); for (k in names(ids)) updateTextInput(session, ids[[k]], value = x[[k]] %||% "") })
+  observeEvent(input$ds_save, { if (isTRUE(get0("VIEWER"))) return()
+    dataset_save(pd(), lapply(ids, function(i) input[[i]] %||% "")); output$ds_saved <- renderText(paste("Saved", format(Sys.time(), "%H:%M"))) })
+}
+
 colours_ui <- function(choices = get0("APP_SCHEMES"), pal_of = get0("app_palette")) {
   if (is.null(choices) || is.null(pal_of)) return(NULL)
   sw <- function(p) span(class = "d-sch-sw", lapply(unlist(p[c("bg", "accent", "red", "yellow", "green", "blue", "purple", "aqua")]), function(x) span(style = paste0("background:", x))))
@@ -432,7 +448,8 @@ OVID_CTX_JS <- paste(readLines(file.path(CORE_DIR, "www", "shell_menu.js"), enco
 ovid_field_error <- function(id, msg, session = shiny::getDefaultReactiveDomain()) { if (is.null(session)) return(invisible(FALSE))
   session$sendCustomMessage("ovid-field-err", list(id = session$ns(id), msg = msg)); invisible(FALSE) }
 OVID_FIELD_JS <- paste(readLines(file.path(CORE_DIR, "www", "shell_field.js"), encoding = "UTF-8"), collapse = "\n")
-OVID_SHELL_JS <- paste0(OVID_SHELL_JS, "\n", OVID_CTX_JS, "\n", OVID_FIELD_JS)
+OVID_YESNO_JS <- paste(readLines(file.path(CORE_DIR, "www", "yesno.js"), encoding = "UTF-8"), collapse = "\n")
+OVID_SHELL_JS <- paste0(OVID_SHELL_JS, "\n", OVID_CTX_JS, "\n", OVID_FIELD_JS, "\n", OVID_YESNO_JS)
 
 # ---- One click, one action ------------------------------------------------------------------------------------------
 # Every app's downloads go through this downloadHandler (it stands in for shiny's, which apps call unqualified): when the

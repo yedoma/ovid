@@ -99,7 +99,8 @@
   P.vAt = function(i, y){ var g = this.geo[i]; return g.lo + (g.y0 + g.ph - y) / g.ph * (g.hi - g.lo); };
   P.down = function(e, nav){ if (!this.d) return; ACT = this;
     if (!nav && e.button === 0 && !SPACE) { var vp = this.onVal(this.pos(e)); if (vp != null) return this.bandDrag(e, vp); }
-    if (!nav && (e.button === 2 || (e.button === 0 && !SPACE && !this.onAxis(this.pos(e))))) return this.select(e);   // drag (or right-drag) on the plot: select
+    if (!nav && e.button === 0 && !SPACE && !e.shiftKey && !this.onAxis(this.pos(e))) return this.zoomDrag(e);       // drag on the plot: right zooms in, left zooms out
+    if (!nav && (e.button === 2 || (e.button === 0 && !SPACE && !this.onAxis(this.pos(e))))) return this.select(e);   // Shift + drag (or right-drag): select
     if (e.button !== 0) return; e.preventDefault(); this.mark(); var self = this, q = this.pos(e), w0 = this.win(), c0 = this.c, x0 = e.clientX, r = this.rng(),
       rect = (nav ? this.nav : this.cv).getBoundingClientRect(), L = nav ? 0 : this.L;
     function navAt(cx){ return r[0] + (cx - rect.left) / rect.width * (r[1] - r[0]); }
@@ -115,6 +116,17 @@
     function mv(ev){ if (Math.abs(ev.clientX - x0) < 4) return; var b = self.tAt(ev.clientX); self.sel = join(Math.min(a, b), Math.max(a, b)); self.draw(); }
     function up(ev){ window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); self.dr = false;
       if (Math.abs(ev.clientX - x0) < 4) { var t = self.near(ev); self.sel = t == null ? base : join(t, t); } self.draw(); }
+    window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); };
+  // a plain drag (M 14 Oct): left to right zooms to the dragged stretch; right to left zooms out (the view doubles around the
+  // stretch, up to the whole record); under 6 px it is a click, which selects the nearest record
+  P.zoomDrag = function(e){ e.preventDefault(); var self = this, a = this.tAt(e.clientX), x0 = e.clientX; this.dr = true;
+    function mv(ev){ if (Math.abs(ev.clientX - x0) < 6) { self.zb = null; return self.draw(); } var b = self.tAt(ev.clientX); self.zb = {t0: Math.min(a, b), t1: Math.max(a, b), out: ev.clientX < x0}; self.draw(); }
+    function up(ev){ window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); self.dr = false; var z = self.zb; self.zb = null;
+      if (Math.abs(ev.clientX - x0) < 6 || !z) { self.band = null; var t = self.near(ev); self.sel = t == null ? null : {t0: t, t1: t}; return self.draw(); }
+      self.mark(); var full = self.full() / DAY;
+      if (!z.out) { self.span = Math.max(0.25, Math.min(full, (z.t1 - z.t0) / DAY)); self.c = (z.t0 + z.t1) / 2; }
+      else { self.span = Math.min(full, self.span * 2); self.c = (z.t0 + z.t1) / 2; }
+      self.draw(); }
     window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); };
   // the time of the record nearest a click, within 8 px, or null
   P.near = function(ev){ var s = this.d.series[0], A = agg(this, s, 'v'), t = this.tAt(ev.clientX), i = lower(A.t, t), w = this.win(), pw = this.cv.getBoundingClientRect().width - this.L - this.R, best = null, bd = 8 / pw * (w[1] - w[0]);
@@ -220,6 +232,8 @@
         var a = X(q.t0 - self.step / 2), b = X(q.t1 + self.step / 2); c.fillRect(a, y0, Math.max(3, b - a), ph); c.globalAlpha = 1; });
       d.spans.forEach(function(q){ if (q.t1 < v0 || q.t0 > v1) return; c.globalAlpha = 0.22; c.fillStyle = C.gh;     // spans the page shades: out of the water, removed by hand
         var a = X(q.t0), b = X(q.t1); c.fillRect(a, y0, Math.max(2, b - a), ph); c.globalAlpha = 1; });
+      if (self.zb && !PR) { c.globalAlpha = 0.14; c.fillStyle = self.zb.out ? C.warn : C.line; var za = X(self.zb.t0), zz = X(self.zb.t1); c.fillRect(za, y0, Math.max(1, zz - za), ph); c.globalAlpha = 1;
+        if (si === 0) { c.save(); c.fillStyle = C.line; c.font = '11px sans-serif'; c.fillText(self.zb.out ? 'zoom out' : 'zoom in', za + 4, y0 + 12); c.restore(); } }
       if (self.sel && !PR) { c.globalAlpha = 0.16; c.fillStyle = C.line; var sa = X(self.sel.t0), sb = X(self.sel.t1); c.fillRect(sa, y0, Math.max(1, sb - sa), ph); c.globalAlpha = 0.8; c.strokeStyle = C.line;
         c.beginPath(); c.moveTo(Math.round(sa) + 0.5, y0); c.lineTo(Math.round(sa) + 0.5, y0 + ph); c.moveTo(Math.round(sb) + 0.5, y0); c.lineTo(Math.round(sb) + 0.5, y0 + ph); c.stroke(); c.globalAlpha = 1;
         var bd = self.band; if (bd && bd.p === si) { var ya = Y(bd.hi), yb = Y(bd.lo), xa = Math.max(self.L, sa), xb = Math.min(self.L + pw, sb); c.globalAlpha = 0.3; c.fillStyle = C.warn; c.fillRect(xa, ya, Math.max(1, xb - xa), Math.max(1, yb - ya)); c.globalAlpha = 1;
@@ -286,7 +300,7 @@
     if (!hit) opts.unshift('<option selected>' + spanTxt + '</option>');
     this.ctl.innerHTML = '<button type="button" class="btn btn-default" data-tsv-go="prev" title="Back by most of the window">\u2039</button><button type="button" class="btn btn-default" data-tsv-go="next" title="Forward by most of the window">\u203a</button>' +
       '<select data-tsv-span title="How much of the record the plot shows">' + opts.join('') + '</select><span class="dim">' + (O.agg === 'raw' ? 'as recorded' : O.agg === 'half' ? (this.step < 1800 ? 'half-hourly means' : this.step > 1800 ? 'as recorded (records are further apart than half an hour)' : 'half-hourly') : O.agg + (d.series.some(function(s){ return s.sum; }) ? ' totals' : ' means')) +
-      ' \u00b7 ' + fd(v0) + ' to ' + fd(v1) + (d.zone ? ' \u00b7 ' + esc(d.zone) : '') + '</span><span class="sp"></span><button type="button" class="btn btn-default" data-tsv-go="saveimg" title="Save the plot as an image: journal column, double column or slide">Save image</button><button type="button" class="btn btn-default" data-tsv-go="savedata" title="Save the data behind the plot as CSV">Save data</button><button type="button" class="btn btn-default" data-tsv-go="hist" title="Previous view (Backspace)"' + (this.hist.length ? '' : ' disabled') + '>\u2190 Back</button><span class="dim">drag to select \u00b7 click a point \u00b7 Shift adds \u00b7 wheel zooms \u00b7 drag the time axis or strip to move \u00b7 double-click: whole record \u00b7 \u2190 \u2192 move the selection \u00b7 + \u2212 zoom \u00b7 Enter: look closer</span>';
+      ' \u00b7 ' + fd(v0) + ' to ' + fd(v1) + (d.zone ? ' \u00b7 ' + esc(d.zone) : '') + '</span><span class="sp"></span><button type="button" class="btn btn-default" data-tsv-go="saveimg" title="Save the plot as an image: journal column, double column or slide">Save image</button><button type="button" class="btn btn-default" data-tsv-go="savedata" title="Save the data behind the plot as CSV">Save data</button><button type="button" class="btn btn-default" data-tsv-go="hist" title="Previous view (Backspace)"' + (this.hist.length ? '' : ' disabled') + '>\u2190 Back</button><span class="dim">drag \u2192 zooms in, \u2190 zooms out \u00b7 Shift + drag selects \u00b7 click a point \u00b7 Shift + click adds \u00b7 wheel zooms \u00b7 drag the time axis or strip to move \u00b7 double-click: whole record \u00b7 \u2190 \u2192 move the selection \u00b7 + \u2212 zoom \u00b7 Enter: look closer</span>';
     if (d.series.some(function(s){ return s.raw; }) && O.ghost) notes.push('dashed: the ghost of the raw data');
     if (d.binned) notes.push('sent as half-hourly means; every record is in the Workbench');
     this.note.textContent = notes.filter(function(x, i){ return x && notes.indexOf(x) === i; }).join(' \u00b7 ');

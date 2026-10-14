@@ -20,19 +20,29 @@
 # those columns get a dropdown in the sheet, and a value that is not one of them stops Apply until it is fixed.
 sheet_choices <- function(file, nm) {
   e <- Filter(function(x) identical(x$file, file), get0("CONFIG_FILES", ifnotfound = list())); ch <- if (length(e)) e[[1]]$rules$choices
+  yn <- if (exists("table_yesno_cols", mode = "function")) table_yesno_cols(file, nm) else character()
+  ch <- c(ch, stats::setNames(rep(list(c("Yes", "No")), length(yn)), yn))
   if (!length(ch)) return(list()); ch <- ch[intersect(names(ch), nm)]
   Filter(length, lapply(ch, function(v) { v <- as.character(v); unique(v[!is.na(v) & nzchar(v)]) }))
 }
+# A table as a list of rows of text (NA as ""), converted a column at a time: row by row it took seconds on long tables.
+sheet_rows <- function(d) { if (!nrow(d)) return(list())
+  m <- matrix(vapply(d, function(v) { v <- as.character(v); v[is.na(v)] <- ""; v }, character(nrow(d)), USE.NAMES = FALSE), nrow = nrow(d))
+  lapply(seq_len(nrow(m)), function(i) m[i, ]) }
+# The sheet's rows as they come back (a list of rows of text) as a table with d's columns.
+sheet_rows_in <- function(rows, d) { nc <- ncol(d); if (!length(rows)) return(d[0, , drop = FALSE])
+  v <- unlist(lapply(rows, function(r) { r <- vapply(r, function(x) if (is.null(x)) "" else as.character(x), ""); length(r) <- nc; r[is.na(r)] <- ""; r }), use.names = FALSE)
+  nd <- as.data.frame(matrix(v, ncol = nc, byrow = TRUE), stringsAsFactors = FALSE); names(nd) <- names(d); nd }
 ovid_sheet_send <- function(session, id, d, locked = character(), ro = FALSE, label = "", base = NULL) {
   if (is.null(d)) { session$sendCustomMessage("dsheet", list(id = id, none = TRUE)); return(invisible()) }
   d <- as.data.frame(d, stringsAsFactors = FALSE); nm <- names(d)
-  rows <- lapply(seq_len(nrow(d)), function(i) vapply(d[i, , drop = FALSE], function(v) { v <- as.character(v); if (is.na(v)) "" else v }, "", USE.NAMES = FALSE))
+  rows <- sheet_rows(d)
   numcol <- vapply(d, function(v) { v <- trim(as.character(v)); v <- v[!is.na(v) & nzchar(v)]; length(v) > 0 && all(!is.na(suppressWarnings(as.numeric(v)))) }, NA)
   datecol <- grepl("(^|_)(date|from|to|start|end|visit|time|timestamp|deployed|retrieved)($|_)", tolower(nm))
   chs <- sheet_choices(label, nm)
   cols <- lapply(seq_along(nm), function(j) c(list(l = nm[j], ed = !ro && !nm[j] %in% locked, t = if (numcol[j]) "num" else if (datecol[j]) "date" else "text"),
                                               if (length(chs[[nm[j]]])) list(ch = as.list(chs[[nm[j]]]))))
-  b <- if (!is.null(base)) { base <- as.data.frame(base, stringsAsFactors = FALSE); if (identical(names(base), nm)) lapply(seq_len(nrow(base)), function(i) vapply(base[i, , drop = FALSE], function(v) { v <- as.character(v); if (is.na(v)) "" else v }, "", USE.NAMES = FALSE)) }
+  b <- if (!is.null(base)) { base <- as.data.frame(base, stringsAsFactors = FALSE); if (identical(names(base), nm)) sheet_rows(base) }
   session$sendCustomMessage("dsheet", list(id = id, cols = cols, rows = rows, ro = ro, label = label, base = b))
   invisible()
 }

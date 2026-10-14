@@ -229,7 +229,7 @@ wb_server <- function(input, output, session, std) {
   view_d <- wb_chart_server(input, session, chart_base, function(a, z) { d <- per(); k <- as.numeric(d$TIMESTAMP)
     if (sum(k >= a & k <= z) > WB_DETAIL_MAX) return(NULL)
     dd <- d[k >= a & k <= z]; ps <- plot_params(); wb_chart_data(dd, ps, chart_rem(), flagruns(), chart_pend(dd, ps), Inf) })
-  output$wb_overview <- renderPlot({ d <- dat(); ps <- plot_params(); req(length(ps) > 0)
+  output$wb_overview <- renderPlot({ req(wb_overview_fits()); d <- dat(); ps <- plot_params(); req(length(ps) > 0)
     wb_overview_plot(d$TIMESTAMP, d[[ps[1]]], period(), view_d(), WLR_PAL) }, bg = NORD$bg)
   # each parameter's unit (from its label) and range limits (Automatic limits, qc_rules.csv: a row for this site or serial
   # first, then for the logger kind or all), for the grid and chart

@@ -1,7 +1,8 @@
 
 // The Workbench point chart (wb_xy_ui): points at x and y, coloured by a value, for records that are not a time series
 // (the measurements of an ERT survey on their pseudosection, images at their positions). Selecting is the same on every
-// ovid plot (_hub/Plot_table_standards.md A11): drag selects the points in a box in the grid, a click the point nearest
+// ovid plot (_hub/Plot_table_standards.md A11, M 14 Oct): a drag left to right zooms to the box, right to left zooms out;
+// Shift + drag selects the points in a box in the grid, a click the point nearest
 // the pointer, Shift (or Cmd) adds, Esc clears; a bar above the selection gives its size, Zoom to this and the page's own
 // actions. The wheel zooms at the pointer, Space + drag (or alt-drag) moves, double-click shows every point and Back
 // (Backspace) returns to the previous view. The grid's selection is highlighted here.
@@ -145,7 +146,8 @@
   P.pos = function(e){ var r = this.cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };
   P.inside = function(q){ return q.x >= this.L && q.x <= this.L + this.pw() && q.y >= this.T && q.y <= this.T + this.ph(); };
   P.down = function(e){ if ((e.button !== 0 && e.button !== 2) || !this.d || !this.view) return; var q = this.pos(e); if (!this.inside(q)) return; e.preventDefault();
-    var right = e.button === 2 || (e.ctrlKey && /Mac/.test(navigator.platform)), m = !right && (SPACE || e.altKey) ? 'pan' : 'select';
+    var right = e.button === 2 || (e.ctrlKey && /Mac/.test(navigator.platform)), add = e.shiftKey || e.metaKey,
+      m = !right && (SPACE || e.altKey) ? 'pan' : (right || add) ? 'select' : 'zoom';           // plain drag zooms (M 14 Oct); Shift + drag selects
     if (m === 'pan') this.mark(); this.act.hidden = true;
     this.drag = {x0: q.x, y0: q.y, x: q.x, y: q.y, mode: m, view: this.view.slice(), add: e.shiftKey || e.metaKey || (e.ctrlKey && !right), right: right}; this.cv.style.cursor = m === 'pan' ? 'grabbing' : 'crosshair'; };
   P.move = function(e){ var q = this.pos(e);
@@ -162,6 +164,9 @@
     if (still) { if (d.right) { this.drawAct(); return; } var k = this.nearest(d.x0, d.y0, 12);
       if (window.wbGridSelectRows) window.wbGridSelectRows(k >= 0 ? [this.d.id[k]] : [], d.add); this.draw(); return; }
     var a = [this.ix(Math.min(d.x0, d.x)), this.ix(Math.max(d.x0, d.x)), this.iy(Math.max(d.y0, d.y)), this.iy(Math.min(d.y0, d.y))];
+    if (d.mode === 'zoom') { this.mark(); if (d.x > d.x0) this.set(a);                              // left to right: zoom to the box
+      else { var v = this.view, cx = (a[0] + a[1]) / 2, cy = (a[2] + a[3]) / 2, w = v[1] - v[0], h = v[3] - v[2]; this.set([cx - w, cx + w, cy - h, cy + h]); }   // right to left: twice as wide and tall
+      this.draw(); return; }
     var ids = [], m = this.d; for (var i = 0; i < m.x.length; i++) if (m.x[i] >= a[0] && m.x[i] <= a[1] && m.y[i] >= a[2] && m.y[i] <= a[3]) ids.push(m.id[i]);
     if (window.wbGridSelectRows) window.wbGridSelectRows(ids, d.add); this.draw(); };
   P.wheel = function(e){ if (!this.d || !this.view) return; var q = this.pos(e); if (!this.inside(q)) return; e.preventDefault();
