@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (GS icon, 2026-10-17)**
+
+- Updated only the GS entry in `OVID_ICONS` to the new ERT/GPR trace-and-section artwork, shared by Standard and Workbench. Other app icons are unchanged. **Output changes:** none.
+
 **Added (toggles and not deployed, 2026-10-14)**
 
 - shell.R `ovid_switch()`: a toggle switch (a checkbox input with role="switch", value TRUE/FALSE as before), its state

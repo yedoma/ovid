@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Changed (2026-10-17).** GS has a new icon (a GPR trace above an ERT section) in both interfaces, browser tabs, platform icons and documentation banners. The other four app icons are unchanged. **Output changes:** none.
+
 **Renamed.** ERT is now GS (geophysical surveys), since it covers GPR as well as resistivity. Projects made as ERT open
 unchanged; ERT stays the name of the resistivity side of the app.
 

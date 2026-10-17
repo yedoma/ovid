@@ -7,6 +7,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (combined ERT/GPR icon, 2026-10-17)**
+
+- New icon: a gold radar trace above a purple ERT sample section. The app headers, browser-tab icon, platform icons and documentation banners use this artwork. **Output changes:** none.
+
 **Changed (toggles, 2026-10-14)**
 - QC rules, GPR processing steps, Before / after, Topography, Markers, Legend and the list filters are toggles. **Output changes:** none.
 
