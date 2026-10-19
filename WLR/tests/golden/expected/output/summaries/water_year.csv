@@ -1,0 +1,4 @@
+site,water_year,parameter,mean,min,date_min,max,date_max,range,days,complete,sigma_m
+Well A,2014,depth_m,0.267,0.223,2014-02-12,0.303,2014-02-12,0.08,5,FALSE,0.0071
+Well A,2014,dtw_m,1.233,1.197,2014-02-12,1.277,2014-02-12,0.08,5,FALSE,0.0123
+Well A,2014,temp_c,18.267,17.185,2014-02-14,23.688,2014-02-12,6.503,5,FALSE,""

@@ -13,6 +13,8 @@ status_style <- function(dt, col) ovid_dt_levels(dt, col, c(ok = "ok", paired_ho
 
 RULE_INFO <- fread(sep = "|", quote = "", colClasses = "character", text = '
 rule|title|lost|meaning|action|page
+clock_reset|Records after a clock reset|yes|The logger clock jumped back by more than a day within one file (a reset or a flat clock battery), so these readings could not be placed in time and were left out.|Check the logger clock; set a clock correction on Clock checks if the true times are known.|Clock checks
+logger_nan|Cells the logger wrote as NaN|no|The logger wrote NaN where a reading should be; the cell is left empty.|Nothing, unless there are many: then check the sensor.|
 bad_timestamp|Records with impossible dates|yes|Stamped before the earliest plausible year or in the future (a reset clock), so they were left out.|Check the logger clock.|
 stray_record|Records with corrupt time stamps|yes|A failing memory or clock stamped these at random times among good records (off the time grid and out of written order), so they were left out.|Nothing to do.|
 duplicate_record|Identical copies of a record|no|The same reading was found in more than one download (a Solinst logger that is not cleared carries every earlier season; HOBO files are often exported twice). One copy is kept.|Nothing to do.|

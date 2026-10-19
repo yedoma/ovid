@@ -79,6 +79,8 @@ discover_files <- function(cfg) {
                   error = function(e) { set(m, i, "note", conditionMessage(e)); NULL })
     if (is.null(r)) { set(m, i, "status", "unreadable"); next }
     mt <- r$meta; unread_report(mt, m$rel[i])                                # cells that were not numbers (core audit.R)
+    if (isTRUE(mt$cut_last)) problem(m$rel[i], "the file ends inside its last row (cut off): that row was left out")
+    if (!is.null(mt$header_change)) problem(m$rel[i], sprintf("a second header with other columns at line %d: the %d rows after it were left out (export them as a file of their own)", mt$header_change$line, mt$header_change$rows))
     set(m, i, "serial", mt$serial %||% NA); set(m, i, "model", mt$model %||% NA); set(m, i, "title", mt$title %||% NA)
     set(m, i, "offset_hours", mt$offset_hours %||% NA_real_); set(m, i, "altitude_m", as.numeric(mt$altitude_m %||% NA_real_))
     set(m, i, "unit_pres", unname(mt$units["pres"]) %||% NA); set(m, i, "unit_temp", unname(mt$units["temp"]) %||% NA)
@@ -116,6 +118,10 @@ pair_files <- function(m) {
       if (is.na(m$model[pick[1]])) set(m, pick[1], "model", m$model[i])
       if (is.na(m$pair[pick[1]])) set(m, pick[1], "pair", m$path[i]) }
     else if (grepl(HOBO_DECODE_MODELS, m$model[i] %||% "")) { set(m, i, "format", "hobo_decoded"); set(m, i, "use", TRUE)     # read directly (core hobo.R)
+      r <- tryCatch(read_cached(m$path[i], m$md5[i], "hobo_decoded"), error = function(e) { set(m, i, "note", conditionMessage(e)); NULL })   # its units (kPa, C), times and rows,
+      if (is.null(r)) { set(m, i, "status", "unreadable"); set(m, i, "use", FALSE); next }                                                  # as a CSV's come from the CSV
+      set(m, i, "unit_pres", unname(r$meta$units["pres"])); set(m, i, "unit_temp", unname(r$meta$units["temp"])); set(m, i, "rows", nrow(r$data)); set(m, i, "interval_s", r$meta$interval_s %||% NA_real_)
+      if (nrow(r$data)) { set(m, i, "first_ts", min(r$data$TIMESTAMP)); set(m, i, "last_ts", max(r$data$TIMESTAMP)) }
       set(m, i, "note", trim(paste(m$note[i] %|% "", "no CSV export: records read from the .hobo file itself"))) }
     else set(m, i, "status", if (grepl(HOBO_TEMP_MODELS, m$model[i] %||% "")) "temperature_logger" else "hobo_without_csv")
   }

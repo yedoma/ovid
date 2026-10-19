@@ -1,0 +1,3 @@
+file,name,folder_year,kind,format,status,used,serial,model,md5,size_bytes,first_ts,last_ts,readings_read,pair,note,in_output,used_in,dropped,dropped_why,values_removed,reconciles,what_happened
+<raw>/baro/2014/1000003_Baro.xle,1000003_Baro.xle,2014,baro,solinst_xle,ok,TRUE,1000003,LT_Gold M1.5,90cd54c5fcf96ef81201bde841c225a2,58534,2014-02-11 18:00:00,2014-02-17 17:30:00,288,"",no matching CSV export,288,baro station Well A,0,"",0,TRUE,all 288 readings in the output
+<raw>/2014/2000001_SiteA.xle,2000001_SiteA.xle,2014,water,solinst_xle,ok,TRUE,2000001,LT_EDGE M2,0676fcd044fe37047b6a1c3c179127db,58764,2014-02-11 18:00:00,2014-02-17 17:30:00,288,"",no matching CSV export,287,2000001__Well_A__2014,1,1 outside_deployment,0,TRUE,287 of 288 readings in the output

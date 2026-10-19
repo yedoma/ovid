@@ -1,0 +1,2 @@
+serial,file,altitude_m,correction_kpa,correction_m_water,records,applied
+1000003,1000003_Baro.xle,269,3.1937,0.3257,288,TRUE

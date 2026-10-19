@@ -1,0 +1,8 @@
+serial,model,offset_m,source,notes
+"",U20L,0.0125,Onset U20L-0x specifications: distance from sensing element to tip 1.25 cm (0.49 in),HOBO U20L water level
+"",U20-001,0.0125,Onset U20-001-0x specifications: distance from sensing element to tip 1.25 cm (0.49 in),HOBO U20 water level (also -Ti)
+"",LT_?EDGE|Levelogger ?Edge|Junior ?Edge,"",Solinst Levelogger user guide: the sensor is the machined line just above the pressure holes; no distance is given in its text,measure the tip to the machined line and enter it here
+"",LT_?5|Levelogger ?5,"",Solinst Levelogger user guide: the sensor is the machined line just above the pressure holes; no distance is given in its text,measure the tip to the machined line and enter it here
+"",LTC,"",Solinst Levelogger user guide: the sensor is the machined line just above the pressure holes; no distance is given in its text,measure the tip to the machined line and enter it here
+"",Junior,"",Solinst Levelogger user guide: the sensor is the machined line just above the pressure holes; no distance is given in its text,measure the tip to the machined line and enter it here
+"",LT_?Gold|Levelogger ?Gold,"",Solinst Levelogger user guide: the sensor is the machined line just above the pressure holes; no distance is given in its text,measure the tip to the machined line and enter it here

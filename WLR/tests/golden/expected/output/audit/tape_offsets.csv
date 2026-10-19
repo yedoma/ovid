@@ -1,0 +1,2 @@
+deployment,site,serial,year,checks,median_diff_m,largest_diff_m,tape_level_m,logger_level_m,T_ST,T_ST_source,offset_m,reference,status,hint
+2000001__Well_A__2014,Well A,2000001,2014,1,-0.02,-0.02,0.286,0.266,1.5,workbook,0,T,ok,""

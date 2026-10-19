@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (tests, 2026-10-19)**
+- Reader samples for every format WLR reads: a Solinst .xle (a Levelogger Edge, first 48 records), and a HOBO U20 .hobo read directly and as its header, with its HOBOware export kept beside it: the .hobo decoder gives HOBOware's 1,564 times and every reading but the first and last within the export's rounding. tests/test_bad_files.R (damaged files, and a barologger with a gap, a late start, another time zone or interval, a logger in the air), tests/test_golden.R with tests/golden (a Levelogger and its Barologger, a tape check and drift applied: a whole run against accepted outputs), tests/test_formulas.R (water density against Tanaka et al. 2001; the compensation against Solinst's own software, within 3 mm; the rest hand-computed); all run by tests/run_tests.R. **Output changes:** none.
+
+**Fixed (damaged files and deployments, 2026-10-19)**
+- A logger with no deployment visit (no workbook, or a year left open) lost its last reading as outside_deployment: a deployment that ends at the last record now holds it. **Output changes:** such loggers keep one more reading, their last.
+- A .hobo read directly (no CSV export) had no units, times or row count in files.csv: its readings were reported as an unknown pressure unit and, with no deployment window, left out as outside every deployment. **Output changes:** such loggers are now compensated.
+- A text file that ends inside a row (no final line break) has that row left out and the file reported, not a value cut short read as whole. A raw folder whose water files are all empty or header-only stops with a message naming each file. **Output changes:** only for such files: the cut row is left out.
+- A clock that jumps back by more than a day within one file (a reset) is found with core clock_faults(), as GT does: the readings after it leave as clock_reset (rule listed on the audit page; off with the reset-clock switch). Before, they were sorted in among the others at the times they carry. **Output changes:** only for such files: those readings are removed, with the reason.
+- A HOBOware or Solinst CSV with a second header naming other columns partway (two exports joined) is read up to that header and reported, not read on under the first header's columns (temperature read as pressure). **Output changes:** only for such files: the rows after the second header are left out, with a problem naming the line.
+- A cell the logger wrote as NaN is audited (logger_nan, the column and how many) instead of being left empty without a word. **Output changes:** none to the values; new audit lines.
+
 **Changed (toggles, 2026-10-14)**
 - Settings switches (tip-to-sensor offset, in-air limit, baro fill, in-air trim), plot layers and filters are toggles. The Workbench Whole record hatches the time between deployments grey, labelled not deployed, with dates, length and loggers in the tooltip. **Output changes:** none.
 

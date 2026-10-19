@@ -1,0 +1,3 @@
+serial,site,station,latitude,longitude,from,to,notes,year,name,type,model,installed,visit,T_ST,T_water,T_TOC,TOC_water,easting,northing,land_cover
+2000001,Well A,"","","","","",golden test project: the tape reads 2 cm more water than the logger,2014,"",WLR,"",2014-02-11 18:00,2014-02-17 17:30,150,121.4,"","","","",""
+1000003,Well A,"","","","","",golden test project,2014,"",Baro,"","","","","","","","","",""

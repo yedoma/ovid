@@ -1,0 +1,2 @@
+deployment,site,serial,year,visit_time,visit_time_known,reference,T_ST,offset_m,tape_to_water,h_tape,h_logger,difference_m
+2000001__Well_A__2014,Well A,2000001,2014,2014-02-17 17:30:00,TRUE,T,1.5,0,1.214,0.286,0.266,-0.02

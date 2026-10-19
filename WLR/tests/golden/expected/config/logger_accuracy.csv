@@ -1,0 +1,8 @@
+pattern,sigma_m,source,notes
+U20L-0?4,0.004,"HOBO U20L-04 (4 m) water level logger, typical error 0.4 cm (Onset U20L specifications)",typical value; check the model's sheet
+U20L-0?2,0.03,"HOBO U20L-02 (30 m) water level logger, typical error 3.0 cm (Onset U20L specifications)",typical value; check the model's sheet
+U20L,0.01,"HOBO U20L-01 (9 m) water level logger, typical error 1.0 cm (Onset U20L specifications); also any U20L not named",typical value; check the model's sheet
+U20,0.005,"HOBO U20 water level logger, typical error (Onset)",typical value; check the model's sheet
+Levelogger ?5|LT5|M5\b,0.003,"Solinst Levelogger 5, 0.05 % of a 5 m range (Solinst)",typical value; check the model's sheet
+Levelogger|Edge|LTC|Junior,0.005,"Solinst Levelogger Edge, Junior or LTC, 0.05 % of a 10 m range (Solinst)",typical value; check the model's sheet
+.,0.01,any other logger: a cautious 1 cm,typical value; check the model's sheet

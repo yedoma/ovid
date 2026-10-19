@@ -1,0 +1,2065 @@
+<?xml version="1.0" ?>
+<Body_xle>
+    <File_info>
+        <Company></Company>
+        <LICENCE></LICENCE>
+        <Date>2014/02/24</Date>
+        <Time>15:26:53</Time>
+        <FileName></FileName>
+        <Created_by>Version 4.1.0</Created_by>
+    </File_info>
+    <Instrument_info>
+        <Instrument_type>LT_Gold</Instrument_type>
+        <Model_number>M1.5</Model_number>
+        <Instrument_state>Stopped</Instrument_state>
+        <Serial_number>1000003</Serial_number>
+        <Battery_level>100</Battery_level>
+        <Channel>2</Channel>
+        <Firmware>2.007</Firmware>
+    </Instrument_info>
+    <Instrument_info_data_header>
+        <Project_ID></Project_ID>
+        <Location>SiteA</Location>
+        <Latitude>43.000</Latitude>
+        <Longtitude>79.000</Longtitude>
+        <Sample_rate>180000</Sample_rate>
+        <Sample_mode>0</Sample_mode>
+        <Event_ch>1</Event_ch>
+        <Event_threshold>0.000000</Event_threshold>
+        <Schedule />
+        <Start_time>2014/02/11 18:00:00</Start_time>
+        <Stop_time>2014/02/24 17:00:00</Stop_time>
+        <Num_log>288</Num_log>
+    </Instrument_info_data_header>
+    <Ch1_data_header>
+        <Identification>Level</Identification>
+        <Unit>m</Unit>
+        <Parameters>
+            <Offset Val="0.0000" Unit="m" />
+            <Altitude Val="269" Unit="m" />
+        </Parameters>
+    </Ch1_data_header>
+    <Ch2_data_header>
+        <Identification>Temperature</Identification>
+        <Unit>Deg C</Unit>
+        <Parameters />
+    </Ch2_data_header>
+    <Data>
+        <Log id="1">
+            <Date>2014/02/11</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8857</ch1>
+            <ch2>23.320</ch2>
+        </Log>
+        <Log id="2">
+            <Date>2014/02/11</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8890</ch1>
+            <ch2>22.492</ch2>
+        </Log>
+        <Log id="3">
+            <Date>2014/02/11</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8889</ch1>
+            <ch2>20.537</ch2>
+        </Log>
+        <Log id="4">
+            <Date>2014/02/11</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8923</ch1>
+            <ch2>20.383</ch2>
+        </Log>
+        <Log id="5">
+            <Date>2014/02/11</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8885</ch1>
+            <ch2>20.042</ch2>
+        </Log>
+        <Log id="6">
+            <Date>2014/02/11</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8887</ch1>
+            <ch2>19.772</ch2>
+        </Log>
+        <Log id="7">
+            <Date>2014/02/11</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8886</ch1>
+            <ch2>19.629</ch2>
+        </Log>
+        <Log id="8">
+            <Date>2014/02/11</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8906</ch1>
+            <ch2>19.570</ch2>
+        </Log>
+        <Log id="9">
+            <Date>2014/02/11</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8904</ch1>
+            <ch2>19.561</ch2>
+        </Log>
+        <Log id="10">
+            <Date>2014/02/11</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8898</ch1>
+            <ch2>19.564</ch2>
+        </Log>
+        <Log id="11">
+            <Date>2014/02/11</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8893</ch1>
+            <ch2>19.573</ch2>
+        </Log>
+        <Log id="12">
+            <Date>2014/02/11</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8813</ch1>
+            <ch2>19.587</ch2>
+        </Log>
+        <Log id="13">
+            <Date>2014/02/12</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8827</ch1>
+            <ch2>19.597</ch2>
+        </Log>
+        <Log id="14">
+            <Date>2014/02/12</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8812</ch1>
+            <ch2>19.611</ch2>
+        </Log>
+        <Log id="15">
+            <Date>2014/02/12</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8829</ch1>
+            <ch2>19.624</ch2>
+        </Log>
+        <Log id="16">
+            <Date>2014/02/12</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8819</ch1>
+            <ch2>19.640</ch2>
+        </Log>
+        <Log id="17">
+            <Date>2014/02/12</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8797</ch1>
+            <ch2>19.658</ch2>
+        </Log>
+        <Log id="18">
+            <Date>2014/02/12</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8794</ch1>
+            <ch2>19.679</ch2>
+        </Log>
+        <Log id="19">
+            <Date>2014/02/12</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8794</ch1>
+            <ch2>19.708</ch2>
+        </Log>
+        <Log id="20">
+            <Date>2014/02/12</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8743</ch1>
+            <ch2>19.731</ch2>
+        </Log>
+        <Log id="21">
+            <Date>2014/02/12</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8745</ch1>
+            <ch2>19.747</ch2>
+        </Log>
+        <Log id="22">
+            <Date>2014/02/12</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8738</ch1>
+            <ch2>19.761</ch2>
+        </Log>
+        <Log id="23">
+            <Date>2014/02/12</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8735</ch1>
+            <ch2>19.767</ch2>
+        </Log>
+        <Log id="24">
+            <Date>2014/02/12</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8717</ch1>
+            <ch2>19.777</ch2>
+        </Log>
+        <Log id="25">
+            <Date>2014/02/12</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8730</ch1>
+            <ch2>19.782</ch2>
+        </Log>
+        <Log id="26">
+            <Date>2014/02/12</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8721</ch1>
+            <ch2>19.790</ch2>
+        </Log>
+        <Log id="27">
+            <Date>2014/02/12</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8723</ch1>
+            <ch2>19.797</ch2>
+        </Log>
+        <Log id="28">
+            <Date>2014/02/12</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8705</ch1>
+            <ch2>19.805</ch2>
+        </Log>
+        <Log id="29">
+            <Date>2014/02/12</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8674</ch1>
+            <ch2>19.823</ch2>
+        </Log>
+        <Log id="30">
+            <Date>2014/02/12</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8674</ch1>
+            <ch2>19.853</ch2>
+        </Log>
+        <Log id="31">
+            <Date>2014/02/12</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8611</ch1>
+            <ch2>19.931</ch2>
+        </Log>
+        <Log id="32">
+            <Date>2014/02/12</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8579</ch1>
+            <ch2>20.060</ch2>
+        </Log>
+        <Log id="33">
+            <Date>2014/02/12</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8565</ch1>
+            <ch2>20.235</ch2>
+        </Log>
+        <Log id="34">
+            <Date>2014/02/12</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8607</ch1>
+            <ch2>20.423</ch2>
+        </Log>
+        <Log id="35">
+            <Date>2014/02/12</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8591</ch1>
+            <ch2>20.588</ch2>
+        </Log>
+        <Log id="36">
+            <Date>2014/02/12</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8551</ch1>
+            <ch2>20.705</ch2>
+        </Log>
+        <Log id="37">
+            <Date>2014/02/12</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8470</ch1>
+            <ch2>20.770</ch2>
+        </Log>
+        <Log id="38">
+            <Date>2014/02/12</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8385</ch1>
+            <ch2>20.795</ch2>
+        </Log>
+        <Log id="39">
+            <Date>2014/02/12</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8309</ch1>
+            <ch2>20.804</ch2>
+        </Log>
+        <Log id="40">
+            <Date>2014/02/12</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8264</ch1>
+            <ch2>20.806</ch2>
+        </Log>
+        <Log id="41">
+            <Date>2014/02/12</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8134</ch1>
+            <ch2>20.802</ch2>
+        </Log>
+        <Log id="42">
+            <Date>2014/02/12</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8058</ch1>
+            <ch2>20.787</ch2>
+        </Log>
+        <Log id="43">
+            <Date>2014/02/12</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8032</ch1>
+            <ch2>20.768</ch2>
+        </Log>
+        <Log id="44">
+            <Date>2014/02/12</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8010</ch1>
+            <ch2>20.744</ch2>
+        </Log>
+        <Log id="45">
+            <Date>2014/02/12</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7950</ch1>
+            <ch2>20.715</ch2>
+        </Log>
+        <Log id="46">
+            <Date>2014/02/12</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7908</ch1>
+            <ch2>20.681</ch2>
+        </Log>
+        <Log id="47">
+            <Date>2014/02/12</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7881</ch1>
+            <ch2>20.635</ch2>
+        </Log>
+        <Log id="48">
+            <Date>2014/02/12</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7888</ch1>
+            <ch2>20.571</ch2>
+        </Log>
+        <Log id="49">
+            <Date>2014/02/12</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7866</ch1>
+            <ch2>20.487</ch2>
+        </Log>
+        <Log id="50">
+            <Date>2014/02/12</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7898</ch1>
+            <ch2>20.394</ch2>
+        </Log>
+        <Log id="51">
+            <Date>2014/02/12</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7885</ch1>
+            <ch2>20.309</ch2>
+        </Log>
+        <Log id="52">
+            <Date>2014/02/12</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7848</ch1>
+            <ch2>20.229</ch2>
+        </Log>
+        <Log id="53">
+            <Date>2014/02/12</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7860</ch1>
+            <ch2>20.153</ch2>
+        </Log>
+        <Log id="54">
+            <Date>2014/02/12</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7860</ch1>
+            <ch2>20.081</ch2>
+        </Log>
+        <Log id="55">
+            <Date>2014/02/12</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7890</ch1>
+            <ch2>20.015</ch2>
+        </Log>
+        <Log id="56">
+            <Date>2014/02/12</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7860</ch1>
+            <ch2>19.950</ch2>
+        </Log>
+        <Log id="57">
+            <Date>2014/02/12</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7820</ch1>
+            <ch2>19.890</ch2>
+        </Log>
+        <Log id="58">
+            <Date>2014/02/12</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7777</ch1>
+            <ch2>19.832</ch2>
+        </Log>
+        <Log id="59">
+            <Date>2014/02/12</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7751</ch1>
+            <ch2>19.795</ch2>
+        </Log>
+        <Log id="60">
+            <Date>2014/02/12</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7745</ch1>
+            <ch2>19.807</ch2>
+        </Log>
+        <Log id="61">
+            <Date>2014/02/13</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7723</ch1>
+            <ch2>19.844</ch2>
+        </Log>
+        <Log id="62">
+            <Date>2014/02/13</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7688</ch1>
+            <ch2>19.883</ch2>
+        </Log>
+        <Log id="63">
+            <Date>2014/02/13</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7664</ch1>
+            <ch2>19.905</ch2>
+        </Log>
+        <Log id="64">
+            <Date>2014/02/13</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7627</ch1>
+            <ch2>19.900</ch2>
+        </Log>
+        <Log id="65">
+            <Date>2014/02/13</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7623</ch1>
+            <ch2>19.888</ch2>
+        </Log>
+        <Log id="66">
+            <Date>2014/02/13</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7607</ch1>
+            <ch2>19.889</ch2>
+        </Log>
+        <Log id="67">
+            <Date>2014/02/13</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7567</ch1>
+            <ch2>19.900</ch2>
+        </Log>
+        <Log id="68">
+            <Date>2014/02/13</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7555</ch1>
+            <ch2>19.914</ch2>
+        </Log>
+        <Log id="69">
+            <Date>2014/02/13</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7563</ch1>
+            <ch2>19.919</ch2>
+        </Log>
+        <Log id="70">
+            <Date>2014/02/13</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7553</ch1>
+            <ch2>19.928</ch2>
+        </Log>
+        <Log id="71">
+            <Date>2014/02/13</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7529</ch1>
+            <ch2>19.935</ch2>
+        </Log>
+        <Log id="72">
+            <Date>2014/02/13</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7527</ch1>
+            <ch2>19.940</ch2>
+        </Log>
+        <Log id="73">
+            <Date>2014/02/13</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7512</ch1>
+            <ch2>19.950</ch2>
+        </Log>
+        <Log id="74">
+            <Date>2014/02/13</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7464</ch1>
+            <ch2>19.955</ch2>
+        </Log>
+        <Log id="75">
+            <Date>2014/02/13</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7417</ch1>
+            <ch2>19.960</ch2>
+        </Log>
+        <Log id="76">
+            <Date>2014/02/13</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7395</ch1>
+            <ch2>19.964</ch2>
+        </Log>
+        <Log id="77">
+            <Date>2014/02/13</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7367</ch1>
+            <ch2>19.966</ch2>
+        </Log>
+        <Log id="78">
+            <Date>2014/02/13</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7372</ch1>
+            <ch2>19.983</ch2>
+        </Log>
+        <Log id="79">
+            <Date>2014/02/13</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7340</ch1>
+            <ch2>20.048</ch2>
+        </Log>
+        <Log id="80">
+            <Date>2014/02/13</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7301</ch1>
+            <ch2>20.168</ch2>
+        </Log>
+        <Log id="81">
+            <Date>2014/02/13</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7248</ch1>
+            <ch2>20.314</ch2>
+        </Log>
+        <Log id="82">
+            <Date>2014/02/13</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7192</ch1>
+            <ch2>20.432</ch2>
+        </Log>
+        <Log id="83">
+            <Date>2014/02/13</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7160</ch1>
+            <ch2>20.508</ch2>
+        </Log>
+        <Log id="84">
+            <Date>2014/02/13</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7115</ch1>
+            <ch2>20.556</ch2>
+        </Log>
+        <Log id="85">
+            <Date>2014/02/13</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7063</ch1>
+            <ch2>20.587</ch2>
+        </Log>
+        <Log id="86">
+            <Date>2014/02/13</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6976</ch1>
+            <ch2>20.610</ch2>
+        </Log>
+        <Log id="87">
+            <Date>2014/02/13</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6873</ch1>
+            <ch2>20.636</ch2>
+        </Log>
+        <Log id="88">
+            <Date>2014/02/13</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6833</ch1>
+            <ch2>20.655</ch2>
+        </Log>
+        <Log id="89">
+            <Date>2014/02/13</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6770</ch1>
+            <ch2>20.665</ch2>
+        </Log>
+        <Log id="90">
+            <Date>2014/02/13</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6702</ch1>
+            <ch2>20.670</ch2>
+        </Log>
+        <Log id="91">
+            <Date>2014/02/13</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6641</ch1>
+            <ch2>20.667</ch2>
+        </Log>
+        <Log id="92">
+            <Date>2014/02/13</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6576</ch1>
+            <ch2>20.663</ch2>
+        </Log>
+        <Log id="93">
+            <Date>2014/02/13</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6539</ch1>
+            <ch2>20.656</ch2>
+        </Log>
+        <Log id="94">
+            <Date>2014/02/13</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6480</ch1>
+            <ch2>20.632</ch2>
+        </Log>
+        <Log id="95">
+            <Date>2014/02/13</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6410</ch1>
+            <ch2>20.601</ch2>
+        </Log>
+        <Log id="96">
+            <Date>2014/02/13</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6405</ch1>
+            <ch2>20.561</ch2>
+        </Log>
+        <Log id="97">
+            <Date>2014/02/13</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6365</ch1>
+            <ch2>20.504</ch2>
+        </Log>
+        <Log id="98">
+            <Date>2014/02/13</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6337</ch1>
+            <ch2>20.432</ch2>
+        </Log>
+        <Log id="99">
+            <Date>2014/02/13</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6318</ch1>
+            <ch2>20.358</ch2>
+        </Log>
+        <Log id="100">
+            <Date>2014/02/13</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6292</ch1>
+            <ch2>20.290</ch2>
+        </Log>
+        <Log id="101">
+            <Date>2014/02/13</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6255</ch1>
+            <ch2>20.231</ch2>
+        </Log>
+        <Log id="102">
+            <Date>2014/02/13</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6183</ch1>
+            <ch2>20.174</ch2>
+        </Log>
+        <Log id="103">
+            <Date>2014/02/13</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6133</ch1>
+            <ch2>20.123</ch2>
+        </Log>
+        <Log id="104">
+            <Date>2014/02/13</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6108</ch1>
+            <ch2>20.073</ch2>
+        </Log>
+        <Log id="105">
+            <Date>2014/02/13</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6066</ch1>
+            <ch2>20.026</ch2>
+        </Log>
+        <Log id="106">
+            <Date>2014/02/13</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5996</ch1>
+            <ch2>19.984</ch2>
+        </Log>
+        <Log id="107">
+            <Date>2014/02/13</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5942</ch1>
+            <ch2>19.944</ch2>
+        </Log>
+        <Log id="108">
+            <Date>2014/02/13</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5864</ch1>
+            <ch2>19.906</ch2>
+        </Log>
+        <Log id="109">
+            <Date>2014/02/14</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5855</ch1>
+            <ch2>19.871</ch2>
+        </Log>
+        <Log id="110">
+            <Date>2014/02/14</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5813</ch1>
+            <ch2>19.836</ch2>
+        </Log>
+        <Log id="111">
+            <Date>2014/02/14</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5789</ch1>
+            <ch2>19.805</ch2>
+        </Log>
+        <Log id="112">
+            <Date>2014/02/14</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5739</ch1>
+            <ch2>19.777</ch2>
+        </Log>
+        <Log id="113">
+            <Date>2014/02/14</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5705</ch1>
+            <ch2>19.750</ch2>
+        </Log>
+        <Log id="114">
+            <Date>2014/02/14</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5657</ch1>
+            <ch2>19.724</ch2>
+        </Log>
+        <Log id="115">
+            <Date>2014/02/14</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5602</ch1>
+            <ch2>19.700</ch2>
+        </Log>
+        <Log id="116">
+            <Date>2014/02/14</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5542</ch1>
+            <ch2>19.675</ch2>
+        </Log>
+        <Log id="117">
+            <Date>2014/02/14</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5496</ch1>
+            <ch2>19.651</ch2>
+        </Log>
+        <Log id="118">
+            <Date>2014/02/14</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5483</ch1>
+            <ch2>19.628</ch2>
+        </Log>
+        <Log id="119">
+            <Date>2014/02/14</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5481</ch1>
+            <ch2>19.605</ch2>
+        </Log>
+        <Log id="120">
+            <Date>2014/02/14</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5497</ch1>
+            <ch2>19.583</ch2>
+        </Log>
+        <Log id="121">
+            <Date>2014/02/14</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5516</ch1>
+            <ch2>19.560</ch2>
+        </Log>
+        <Log id="122">
+            <Date>2014/02/14</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5526</ch1>
+            <ch2>19.537</ch2>
+        </Log>
+        <Log id="123">
+            <Date>2014/02/14</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5540</ch1>
+            <ch2>19.514</ch2>
+        </Log>
+        <Log id="124">
+            <Date>2014/02/14</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5543</ch1>
+            <ch2>19.497</ch2>
+        </Log>
+        <Log id="125">
+            <Date>2014/02/14</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5568</ch1>
+            <ch2>19.516</ch2>
+        </Log>
+        <Log id="126">
+            <Date>2014/02/14</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5572</ch1>
+            <ch2>19.585</ch2>
+        </Log>
+        <Log id="127">
+            <Date>2014/02/14</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5611</ch1>
+            <ch2>19.676</ch2>
+        </Log>
+        <Log id="128">
+            <Date>2014/02/14</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5641</ch1>
+            <ch2>19.769</ch2>
+        </Log>
+        <Log id="129">
+            <Date>2014/02/14</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5663</ch1>
+            <ch2>19.860</ch2>
+        </Log>
+        <Log id="130">
+            <Date>2014/02/14</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5665</ch1>
+            <ch2>19.949</ch2>
+        </Log>
+        <Log id="131">
+            <Date>2014/02/14</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5700</ch1>
+            <ch2>20.036</ch2>
+        </Log>
+        <Log id="132">
+            <Date>2014/02/14</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5760</ch1>
+            <ch2>20.127</ch2>
+        </Log>
+        <Log id="133">
+            <Date>2014/02/14</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5799</ch1>
+            <ch2>20.211</ch2>
+        </Log>
+        <Log id="134">
+            <Date>2014/02/14</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5834</ch1>
+            <ch2>20.289</ch2>
+        </Log>
+        <Log id="135">
+            <Date>2014/02/14</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5848</ch1>
+            <ch2>20.354</ch2>
+        </Log>
+        <Log id="136">
+            <Date>2014/02/14</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5896</ch1>
+            <ch2>20.402</ch2>
+        </Log>
+        <Log id="137">
+            <Date>2014/02/14</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5882</ch1>
+            <ch2>20.445</ch2>
+        </Log>
+        <Log id="138">
+            <Date>2014/02/14</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5898</ch1>
+            <ch2>20.490</ch2>
+        </Log>
+        <Log id="139">
+            <Date>2014/02/14</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.5966</ch1>
+            <ch2>20.522</ch2>
+        </Log>
+        <Log id="140">
+            <Date>2014/02/14</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.5998</ch1>
+            <ch2>20.529</ch2>
+        </Log>
+        <Log id="141">
+            <Date>2014/02/14</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6036</ch1>
+            <ch2>20.513</ch2>
+        </Log>
+        <Log id="142">
+            <Date>2014/02/14</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6063</ch1>
+            <ch2>20.477</ch2>
+        </Log>
+        <Log id="143">
+            <Date>2014/02/14</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6112</ch1>
+            <ch2>20.429</ch2>
+        </Log>
+        <Log id="144">
+            <Date>2014/02/14</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6147</ch1>
+            <ch2>20.382</ch2>
+        </Log>
+        <Log id="145">
+            <Date>2014/02/14</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6192</ch1>
+            <ch2>20.328</ch2>
+        </Log>
+        <Log id="146">
+            <Date>2014/02/14</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6217</ch1>
+            <ch2>20.271</ch2>
+        </Log>
+        <Log id="147">
+            <Date>2014/02/14</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6267</ch1>
+            <ch2>20.214</ch2>
+        </Log>
+        <Log id="148">
+            <Date>2014/02/14</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6247</ch1>
+            <ch2>20.162</ch2>
+        </Log>
+        <Log id="149">
+            <Date>2014/02/14</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6265</ch1>
+            <ch2>20.112</ch2>
+        </Log>
+        <Log id="150">
+            <Date>2014/02/14</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6276</ch1>
+            <ch2>20.065</ch2>
+        </Log>
+        <Log id="151">
+            <Date>2014/02/14</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6289</ch1>
+            <ch2>20.021</ch2>
+        </Log>
+        <Log id="152">
+            <Date>2014/02/14</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6325</ch1>
+            <ch2>19.981</ch2>
+        </Log>
+        <Log id="153">
+            <Date>2014/02/14</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6348</ch1>
+            <ch2>19.944</ch2>
+        </Log>
+        <Log id="154">
+            <Date>2014/02/14</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6352</ch1>
+            <ch2>19.909</ch2>
+        </Log>
+        <Log id="155">
+            <Date>2014/02/14</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6341</ch1>
+            <ch2>19.876</ch2>
+        </Log>
+        <Log id="156">
+            <Date>2014/02/14</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6358</ch1>
+            <ch2>19.846</ch2>
+        </Log>
+        <Log id="157">
+            <Date>2014/02/15</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6407</ch1>
+            <ch2>19.818</ch2>
+        </Log>
+        <Log id="158">
+            <Date>2014/02/15</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6424</ch1>
+            <ch2>19.791</ch2>
+        </Log>
+        <Log id="159">
+            <Date>2014/02/15</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6454</ch1>
+            <ch2>19.764</ch2>
+        </Log>
+        <Log id="160">
+            <Date>2014/02/15</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6458</ch1>
+            <ch2>19.739</ch2>
+        </Log>
+        <Log id="161">
+            <Date>2014/02/15</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6453</ch1>
+            <ch2>19.711</ch2>
+        </Log>
+        <Log id="162">
+            <Date>2014/02/15</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6458</ch1>
+            <ch2>19.683</ch2>
+        </Log>
+        <Log id="163">
+            <Date>2014/02/15</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6478</ch1>
+            <ch2>19.685</ch2>
+        </Log>
+        <Log id="164">
+            <Date>2014/02/15</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6507</ch1>
+            <ch2>19.725</ch2>
+        </Log>
+        <Log id="165">
+            <Date>2014/02/15</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6533</ch1>
+            <ch2>19.777</ch2>
+        </Log>
+        <Log id="166">
+            <Date>2014/02/15</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6583</ch1>
+            <ch2>19.825</ch2>
+        </Log>
+        <Log id="167">
+            <Date>2014/02/15</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6599</ch1>
+            <ch2>19.844</ch2>
+        </Log>
+        <Log id="168">
+            <Date>2014/02/15</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6631</ch1>
+            <ch2>19.839</ch2>
+        </Log>
+        <Log id="169">
+            <Date>2014/02/15</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6656</ch1>
+            <ch2>19.829</ch2>
+        </Log>
+        <Log id="170">
+            <Date>2014/02/15</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6693</ch1>
+            <ch2>19.830</ch2>
+        </Log>
+        <Log id="171">
+            <Date>2014/02/15</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6733</ch1>
+            <ch2>19.846</ch2>
+        </Log>
+        <Log id="172">
+            <Date>2014/02/15</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6794</ch1>
+            <ch2>19.870</ch2>
+        </Log>
+        <Log id="173">
+            <Date>2014/02/15</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6827</ch1>
+            <ch2>19.894</ch2>
+        </Log>
+        <Log id="174">
+            <Date>2014/02/15</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6883</ch1>
+            <ch2>19.943</ch2>
+        </Log>
+        <Log id="175">
+            <Date>2014/02/15</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6913</ch1>
+            <ch2>20.035</ch2>
+        </Log>
+        <Log id="176">
+            <Date>2014/02/15</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6934</ch1>
+            <ch2>20.149</ch2>
+        </Log>
+        <Log id="177">
+            <Date>2014/02/15</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6956</ch1>
+            <ch2>20.276</ch2>
+        </Log>
+        <Log id="178">
+            <Date>2014/02/15</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.6966</ch1>
+            <ch2>20.388</ch2>
+        </Log>
+        <Log id="179">
+            <Date>2014/02/15</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.6996</ch1>
+            <ch2>20.474</ch2>
+        </Log>
+        <Log id="180">
+            <Date>2014/02/15</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7022</ch1>
+            <ch2>20.529</ch2>
+        </Log>
+        <Log id="181">
+            <Date>2014/02/15</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7033</ch1>
+            <ch2>20.558</ch2>
+        </Log>
+        <Log id="182">
+            <Date>2014/02/15</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7016</ch1>
+            <ch2>20.570</ch2>
+        </Log>
+        <Log id="183">
+            <Date>2014/02/15</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7009</ch1>
+            <ch2>20.571</ch2>
+        </Log>
+        <Log id="184">
+            <Date>2014/02/15</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7009</ch1>
+            <ch2>20.562</ch2>
+        </Log>
+        <Log id="185">
+            <Date>2014/02/15</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7028</ch1>
+            <ch2>20.549</ch2>
+        </Log>
+        <Log id="186">
+            <Date>2014/02/15</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7058</ch1>
+            <ch2>20.531</ch2>
+        </Log>
+        <Log id="187">
+            <Date>2014/02/15</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7087</ch1>
+            <ch2>20.513</ch2>
+        </Log>
+        <Log id="188">
+            <Date>2014/02/15</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7104</ch1>
+            <ch2>20.490</ch2>
+        </Log>
+        <Log id="189">
+            <Date>2014/02/15</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7143</ch1>
+            <ch2>20.461</ch2>
+        </Log>
+        <Log id="190">
+            <Date>2014/02/15</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7177</ch1>
+            <ch2>20.431</ch2>
+        </Log>
+        <Log id="191">
+            <Date>2014/02/15</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7175</ch1>
+            <ch2>20.406</ch2>
+        </Log>
+        <Log id="192">
+            <Date>2014/02/15</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7209</ch1>
+            <ch2>20.373</ch2>
+        </Log>
+        <Log id="193">
+            <Date>2014/02/15</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7257</ch1>
+            <ch2>20.327</ch2>
+        </Log>
+        <Log id="194">
+            <Date>2014/02/15</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7317</ch1>
+            <ch2>20.271</ch2>
+        </Log>
+        <Log id="195">
+            <Date>2014/02/15</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7345</ch1>
+            <ch2>20.224</ch2>
+        </Log>
+        <Log id="196">
+            <Date>2014/02/15</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7369</ch1>
+            <ch2>20.195</ch2>
+        </Log>
+        <Log id="197">
+            <Date>2014/02/15</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7399</ch1>
+            <ch2>20.173</ch2>
+        </Log>
+        <Log id="198">
+            <Date>2014/02/15</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7400</ch1>
+            <ch2>20.159</ch2>
+        </Log>
+        <Log id="199">
+            <Date>2014/02/15</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7420</ch1>
+            <ch2>20.145</ch2>
+        </Log>
+        <Log id="200">
+            <Date>2014/02/15</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7415</ch1>
+            <ch2>20.127</ch2>
+        </Log>
+        <Log id="201">
+            <Date>2014/02/15</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7410</ch1>
+            <ch2>20.109</ch2>
+        </Log>
+        <Log id="202">
+            <Date>2014/02/15</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7427</ch1>
+            <ch2>20.100</ch2>
+        </Log>
+        <Log id="203">
+            <Date>2014/02/15</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7400</ch1>
+            <ch2>20.090</ch2>
+        </Log>
+        <Log id="204">
+            <Date>2014/02/15</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7378</ch1>
+            <ch2>20.085</ch2>
+        </Log>
+        <Log id="205">
+            <Date>2014/02/16</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7386</ch1>
+            <ch2>20.087</ch2>
+        </Log>
+        <Log id="206">
+            <Date>2014/02/16</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7373</ch1>
+            <ch2>20.086</ch2>
+        </Log>
+        <Log id="207">
+            <Date>2014/02/16</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7372</ch1>
+            <ch2>20.098</ch2>
+        </Log>
+        <Log id="208">
+            <Date>2014/02/16</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7372</ch1>
+            <ch2>20.105</ch2>
+        </Log>
+        <Log id="209">
+            <Date>2014/02/16</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7359</ch1>
+            <ch2>20.112</ch2>
+        </Log>
+        <Log id="210">
+            <Date>2014/02/16</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7350</ch1>
+            <ch2>20.122</ch2>
+        </Log>
+        <Log id="211">
+            <Date>2014/02/16</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7349</ch1>
+            <ch2>20.127</ch2>
+        </Log>
+        <Log id="212">
+            <Date>2014/02/16</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7315</ch1>
+            <ch2>20.125</ch2>
+        </Log>
+        <Log id="213">
+            <Date>2014/02/16</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7272</ch1>
+            <ch2>20.134</ch2>
+        </Log>
+        <Log id="214">
+            <Date>2014/02/16</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7231</ch1>
+            <ch2>20.138</ch2>
+        </Log>
+        <Log id="215">
+            <Date>2014/02/16</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7217</ch1>
+            <ch2>20.146</ch2>
+        </Log>
+        <Log id="216">
+            <Date>2014/02/16</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7241</ch1>
+            <ch2>20.156</ch2>
+        </Log>
+        <Log id="217">
+            <Date>2014/02/16</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7255</ch1>
+            <ch2>20.164</ch2>
+        </Log>
+        <Log id="218">
+            <Date>2014/02/16</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7296</ch1>
+            <ch2>20.179</ch2>
+        </Log>
+        <Log id="219">
+            <Date>2014/02/16</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7344</ch1>
+            <ch2>20.194</ch2>
+        </Log>
+        <Log id="220">
+            <Date>2014/02/16</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7376</ch1>
+            <ch2>20.209</ch2>
+        </Log>
+        <Log id="221">
+            <Date>2014/02/16</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7394</ch1>
+            <ch2>20.235</ch2>
+        </Log>
+        <Log id="222">
+            <Date>2014/02/16</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7386</ch1>
+            <ch2>20.262</ch2>
+        </Log>
+        <Log id="223">
+            <Date>2014/02/16</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7413</ch1>
+            <ch2>20.297</ch2>
+        </Log>
+        <Log id="224">
+            <Date>2014/02/16</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7436</ch1>
+            <ch2>20.346</ch2>
+        </Log>
+        <Log id="225">
+            <Date>2014/02/16</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7440</ch1>
+            <ch2>20.401</ch2>
+        </Log>
+        <Log id="226">
+            <Date>2014/02/16</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7436</ch1>
+            <ch2>20.471</ch2>
+        </Log>
+        <Log id="227">
+            <Date>2014/02/16</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7455</ch1>
+            <ch2>20.564</ch2>
+        </Log>
+        <Log id="228">
+            <Date>2014/02/16</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7477</ch1>
+            <ch2>20.669</ch2>
+        </Log>
+        <Log id="229">
+            <Date>2014/02/16</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7458</ch1>
+            <ch2>20.778</ch2>
+        </Log>
+        <Log id="230">
+            <Date>2014/02/16</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7437</ch1>
+            <ch2>20.887</ch2>
+        </Log>
+        <Log id="231">
+            <Date>2014/02/16</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7436</ch1>
+            <ch2>20.980</ch2>
+        </Log>
+        <Log id="232">
+            <Date>2014/02/16</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7431</ch1>
+            <ch2>21.055</ch2>
+        </Log>
+        <Log id="233">
+            <Date>2014/02/16</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7449</ch1>
+            <ch2>21.107</ch2>
+        </Log>
+        <Log id="234">
+            <Date>2014/02/16</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7471</ch1>
+            <ch2>21.128</ch2>
+        </Log>
+        <Log id="235">
+            <Date>2014/02/16</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7494</ch1>
+            <ch2>21.120</ch2>
+        </Log>
+        <Log id="236">
+            <Date>2014/02/16</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7528</ch1>
+            <ch2>21.088</ch2>
+        </Log>
+        <Log id="237">
+            <Date>2014/02/16</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7587</ch1>
+            <ch2>21.040</ch2>
+        </Log>
+        <Log id="238">
+            <Date>2014/02/16</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7641</ch1>
+            <ch2>20.983</ch2>
+        </Log>
+        <Log id="239">
+            <Date>2014/02/16</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7695</ch1>
+            <ch2>20.920</ch2>
+        </Log>
+        <Log id="240">
+            <Date>2014/02/16</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7759</ch1>
+            <ch2>20.852</ch2>
+        </Log>
+        <Log id="241">
+            <Date>2014/02/16</Date>
+            <Time>18:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7847</ch1>
+            <ch2>20.779</ch2>
+        </Log>
+        <Log id="242">
+            <Date>2014/02/16</Date>
+            <Time>18:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7931</ch1>
+            <ch2>20.706</ch2>
+        </Log>
+        <Log id="243">
+            <Date>2014/02/16</Date>
+            <Time>19:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7996</ch1>
+            <ch2>20.640</ch2>
+        </Log>
+        <Log id="244">
+            <Date>2014/02/16</Date>
+            <Time>19:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8062</ch1>
+            <ch2>20.584</ch2>
+        </Log>
+        <Log id="245">
+            <Date>2014/02/16</Date>
+            <Time>20:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8134</ch1>
+            <ch2>20.540</ch2>
+        </Log>
+        <Log id="246">
+            <Date>2014/02/16</Date>
+            <Time>20:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8194</ch1>
+            <ch2>20.495</ch2>
+        </Log>
+        <Log id="247">
+            <Date>2014/02/16</Date>
+            <Time>21:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8212</ch1>
+            <ch2>20.455</ch2>
+        </Log>
+        <Log id="248">
+            <Date>2014/02/16</Date>
+            <Time>21:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8251</ch1>
+            <ch2>20.420</ch2>
+        </Log>
+        <Log id="249">
+            <Date>2014/02/16</Date>
+            <Time>22:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8322</ch1>
+            <ch2>20.384</ch2>
+        </Log>
+        <Log id="250">
+            <Date>2014/02/16</Date>
+            <Time>22:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8345</ch1>
+            <ch2>20.358</ch2>
+        </Log>
+        <Log id="251">
+            <Date>2014/02/16</Date>
+            <Time>23:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8347</ch1>
+            <ch2>20.333</ch2>
+        </Log>
+        <Log id="252">
+            <Date>2014/02/16</Date>
+            <Time>23:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8377</ch1>
+            <ch2>20.309</ch2>
+        </Log>
+        <Log id="253">
+            <Date>2014/02/17</Date>
+            <Time>00:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8417</ch1>
+            <ch2>20.293</ch2>
+        </Log>
+        <Log id="254">
+            <Date>2014/02/17</Date>
+            <Time>00:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8439</ch1>
+            <ch2>20.277</ch2>
+        </Log>
+        <Log id="255">
+            <Date>2014/02/17</Date>
+            <Time>01:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8466</ch1>
+            <ch2>20.262</ch2>
+        </Log>
+        <Log id="256">
+            <Date>2014/02/17</Date>
+            <Time>01:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8449</ch1>
+            <ch2>20.257</ch2>
+        </Log>
+        <Log id="257">
+            <Date>2014/02/17</Date>
+            <Time>02:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8462</ch1>
+            <ch2>20.248</ch2>
+        </Log>
+        <Log id="258">
+            <Date>2014/02/17</Date>
+            <Time>02:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8492</ch1>
+            <ch2>20.243</ch2>
+        </Log>
+        <Log id="259">
+            <Date>2014/02/17</Date>
+            <Time>03:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8490</ch1>
+            <ch2>20.247</ch2>
+        </Log>
+        <Log id="260">
+            <Date>2014/02/17</Date>
+            <Time>03:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8524</ch1>
+            <ch2>20.243</ch2>
+        </Log>
+        <Log id="261">
+            <Date>2014/02/17</Date>
+            <Time>04:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8555</ch1>
+            <ch2>20.242</ch2>
+        </Log>
+        <Log id="262">
+            <Date>2014/02/17</Date>
+            <Time>04:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8581</ch1>
+            <ch2>20.243</ch2>
+        </Log>
+        <Log id="263">
+            <Date>2014/02/17</Date>
+            <Time>05:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8562</ch1>
+            <ch2>20.237</ch2>
+        </Log>
+        <Log id="264">
+            <Date>2014/02/17</Date>
+            <Time>05:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8595</ch1>
+            <ch2>20.235</ch2>
+        </Log>
+        <Log id="265">
+            <Date>2014/02/17</Date>
+            <Time>06:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8613</ch1>
+            <ch2>20.232</ch2>
+        </Log>
+        <Log id="266">
+            <Date>2014/02/17</Date>
+            <Time>06:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8658</ch1>
+            <ch2>20.226</ch2>
+        </Log>
+        <Log id="267">
+            <Date>2014/02/17</Date>
+            <Time>07:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8663</ch1>
+            <ch2>20.228</ch2>
+        </Log>
+        <Log id="268">
+            <Date>2014/02/17</Date>
+            <Time>07:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8683</ch1>
+            <ch2>20.226</ch2>
+        </Log>
+        <Log id="269">
+            <Date>2014/02/17</Date>
+            <Time>08:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8695</ch1>
+            <ch2>20.230</ch2>
+        </Log>
+        <Log id="270">
+            <Date>2014/02/17</Date>
+            <Time>08:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8741</ch1>
+            <ch2>20.303</ch2>
+        </Log>
+        <Log id="271">
+            <Date>2014/02/17</Date>
+            <Time>09:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8751</ch1>
+            <ch2>20.443</ch2>
+        </Log>
+        <Log id="272">
+            <Date>2014/02/17</Date>
+            <Time>09:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8727</ch1>
+            <ch2>20.625</ch2>
+        </Log>
+        <Log id="273">
+            <Date>2014/02/17</Date>
+            <Time>10:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8652</ch1>
+            <ch2>20.826</ch2>
+        </Log>
+        <Log id="274">
+            <Date>2014/02/17</Date>
+            <Time>10:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8629</ch1>
+            <ch2>21.007</ch2>
+        </Log>
+        <Log id="275">
+            <Date>2014/02/17</Date>
+            <Time>11:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8599</ch1>
+            <ch2>21.148</ch2>
+        </Log>
+        <Log id="276">
+            <Date>2014/02/17</Date>
+            <Time>11:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8504</ch1>
+            <ch2>21.229</ch2>
+        </Log>
+        <Log id="277">
+            <Date>2014/02/17</Date>
+            <Time>12:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8468</ch1>
+            <ch2>21.246</ch2>
+        </Log>
+        <Log id="278">
+            <Date>2014/02/17</Date>
+            <Time>12:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8431</ch1>
+            <ch2>21.230</ch2>
+        </Log>
+        <Log id="279">
+            <Date>2014/02/17</Date>
+            <Time>13:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8367</ch1>
+            <ch2>21.195</ch2>
+        </Log>
+        <Log id="280">
+            <Date>2014/02/17</Date>
+            <Time>13:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8311</ch1>
+            <ch2>21.164</ch2>
+        </Log>
+        <Log id="281">
+            <Date>2014/02/17</Date>
+            <Time>14:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8221</ch1>
+            <ch2>21.136</ch2>
+        </Log>
+        <Log id="282">
+            <Date>2014/02/17</Date>
+            <Time>14:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8143</ch1>
+            <ch2>21.112</ch2>
+        </Log>
+        <Log id="283">
+            <Date>2014/02/17</Date>
+            <Time>15:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.8108</ch1>
+            <ch2>21.110</ch2>
+        </Log>
+        <Log id="284">
+            <Date>2014/02/17</Date>
+            <Time>15:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.8067</ch1>
+            <ch2>21.109</ch2>
+        </Log>
+        <Log id="285">
+            <Date>2014/02/17</Date>
+            <Time>16:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7992</ch1>
+            <ch2>21.082</ch2>
+        </Log>
+        <Log id="286">
+            <Date>2014/02/17</Date>
+            <Time>16:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7941</ch1>
+            <ch2>21.032</ch2>
+        </Log>
+        <Log id="287">
+            <Date>2014/02/17</Date>
+            <Time>17:00:00</Time>
+            <ms>0</ms>
+            <ch1>0.7818</ch1>
+            <ch2>20.959</ch2>
+        </Log>
+        <Log id="288">
+            <Date>2014/02/17</Date>
+            <Time>17:30:00</Time>
+            <ms>0</ms>
+            <ch1>0.7713</ch1>
+            <ch2>20.882</ch2>
+        </Log>
+    </Data>
+</Body_xle>

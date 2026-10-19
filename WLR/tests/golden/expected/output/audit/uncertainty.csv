@@ -1,0 +1,2 @@
+deployment,site,serial,year,sigma_logger_m,logger_accuracy_from,sigma_baro_m,baro_fill_share,sigma_density_m,sigma_tape_m,tape_checks,sigma_survey_m,depth_sigma_m,dtw_sigma_m,elev_sigma_m
+2000001__Well_A__2014,Well A,2000001,2014,0.005,"Solinst Levelogger Edge, Junior or LTC, 0.05 % of a 10 m range (Solinst)",0.005,0,5e-04,0.01,1,"",0.0071,0.0123,""

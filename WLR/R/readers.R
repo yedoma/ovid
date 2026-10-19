@@ -17,6 +17,17 @@ wlr_read_lines <- function(path) {
   strsplit(gsub("\r", "", txt, fixed = TRUE), "\n", fixed = TRUE)[[1]]
 }
 
+# A text file that does not end with a line break was cut off (a copy or download that stopped): its last row can hold a value
+# cut short ("108.2" of 108.277), so that row is left out and the file reported (meta$cut_last). Every logger and software
+# export seen ends with a line break.
+ends_cut <- function(path) { n <- file.info(path)$size; if (is.na(n) || n == 0) return(FALSE)
+  con <- file(path, "rb"); on.exit(close(con)); seek(con, n - 1); !identical(readBin(con, "raw", 1L), as.raw(10L)) }
+
+# Cells the logger wrote as NaN (no reading): left empty, and counted per column so the run can audit them with that reason.
+is_nan_cell <- function(x) !is.na(x) & grepl("^\\s*-?nan\\s*$", x, ignore.case = TRUE)
+nan_cells <- function(t, cols) { x <- rbindlist(lapply(names(cols), function(k) if (any(cols[[k]])) data.table(column = k, n = sum(cols[[k]]), first = min(t[cols[[k]]], na.rm = TRUE))))
+  if (nrow(x)) x else NULL }
+
 split_cells <- function(l, sep) trim(scan(text = l, what = character(), sep = sep, quote = "\"", quiet = TRUE, na.strings = NULL))
 
 empty_events <- function() data.table(TIMESTAMP = as.POSIXct(character(), tz = "UTC"), event = character())
@@ -62,24 +73,32 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   model <- NA_character_
   if (header_only) return(list(meta = list(format = "hobo_csv", serial = serial, model = model, title = title, location = title,
                                            offset_hours = offset, units = units), header = hdr))
-  body <- L[-seq_len(h$hi)]; body <- body[nzchar(trim(body)) & !grepl("Date Time", body, fixed = TRUE)]   # no blank lines (fread stops at one) or repeated headings
+  hc <- which(grepl("Date Time", L, fixed = TRUE) & trim(L) != trim(L[h$hi])); hc <- hc[hc > h$hi]     # a second heading with other columns: read up to it, and report it
+  body <- L[-seq_len(h$hi)]; if (length(hc)) body <- L[(h$hi + 1L):(hc[1] - 1L)][seq_len(max(0L, hc[1] - h$hi - 1L))]
+  body <- body[nzchar(trim(body)) & !grepl("Date Time", body, fixed = TRUE)]   # no blank lines (fread stops at one) or repeated headings
+  cut <- ends_cut(path) && length(body) > 0; if (cut) body <- body[-length(body)]
   d <- fread(text = body, sep = sep, header = FALSE, colClasses = "character", fill = TRUE, na.strings = c("", "NA"), quote = "\"")
   if (!nrow(d)) stop("no records")
   ts <- parse_dt(d[[dcol]])
   bad <- is.na(ts)
   out <- data.table(TIMESTAMP = ts)
-  for (j in which(!is.na(role) & !startsWith(role, "derived_"))) set(out, j = role[j], value = num_cells(gsub(",", ".", d[[j]], fixed = TRUE)))
+  nan <- list(); for (j in which(!is.na(role) & !startsWith(role, "derived_"))) { nan[[role[j]]] <- is_nan_cell(d[[j]]); set(out, j = role[j], value = num_cells(gsub(",", ".", d[[j]], fixed = TRUE))) }
   ev <- rbindlist(lapply(which(is_event), function(j) { k <- which(!is.na(d[[j]]) & nzchar(d[[j]]))
     if (length(k)) data.table(TIMESTAMP = ts[k], event = name[j]) else NULL }))
   if (!nrow(ev)) ev <- empty_events()
   vals <- intersect(c("pres", "temp", "ec_low", "ec_full", "ec_spc"), names(out))
   has_val <- if (length(vals)) rowSums(!is.na(out[, ..vals])) > 0 else rep(FALSE, nrow(out))
   out <- out[!bad & has_val]                                          # event-only lines carry no reading
+  nc <- nan_cells(to_base(ts, offset), lapply(nan, function(v) v & !bad))
   out[, TIMESTAMP := to_base(TIMESTAMP, offset)]; ev[, TIMESTAMP := to_base(TIMESTAMP, offset)]
-  list(meta = list(format = "hobo_csv", serial = serial, model = model, title = title, location = title, offset_hours = offset,
+  res <- list(meta = list(format = "hobo_csv", serial = serial, model = model, title = title, location = title, offset_hours = offset,
                    units = units, interval_s = step_of(out$TIMESTAMP), first = suppressWarnings(min(out$TIMESTAMP)),
                    last = suppressWarnings(max(out$TIMESTAMP)), rows = nrow(out), unparsed_rows = sum(bad & has_val)),
        data = out, events = ev)
+  if (cut) res$meta$cut_last <- TRUE                                   # only when present, so a whole file reads as it always has
+  if (!is.null(nc)) res$meta$nan_cells <- nc
+  if (length(hc)) res$meta$header_change <- list(line = hc[1], rows = sum(grepl("^\\s*[0-9]", L[-seq_len(hc[1])])))
+  res
 }
 
 # The .hobo binary is Onset's closed format: only its plain-text identity is read (model, serial, title, zone),
@@ -146,10 +165,11 @@ read_solinst_xle <- function(path, header_only = FALSE) {
   ms <- suppressWarnings(as.numeric(col("ms"))); ms[is.na(ms)] <- 0
   ts <- parse_dt(paste(col("Date"), col("Time")), "%Y/%m/%d %H:%M:%S") + ms / 1000
   out <- data.table(TIMESTAMP = ts)
-  for (i in which(!is.na(ch$role))) set(out, j = ch$role[i], value = num_cells(col(ch$k[i])))
+  nan <- list(); for (i in which(!is.na(ch$role))) { v <- col(ch$k[i]); nan[[ch$role[i]]] <- is_nan_cell(v) & !is.na(ts); set(out, j = ch$role[i], value = num_cells(v)) }
+  nc <- nan_cells(ts, nan)
   out <- out[!is.na(TIMESTAMP)]
   meta <- c(meta, list(interval_s = if (!is.na(rate) && rate > 0) rate / 100 else step_of(out$TIMESTAMP),
-                       first = suppressWarnings(min(out$TIMESTAMP)), last = suppressWarnings(max(out$TIMESTAMP)), rows = nrow(out)))
+                       first = suppressWarnings(min(out$TIMESTAMP)), last = suppressWarnings(max(out$TIMESTAMP)), rows = nrow(out)), if (!is.null(nc)) list(nan_cells = nc))
   list(meta = meta, data = out, events = empty_events())
 }
 
@@ -169,16 +189,21 @@ read_solinst_csv <- function(path, header_only = FALSE) {
   units <- c(pres = ch$unit[match("pres", ch$role)], temp = ch$unit[match("temp", ch$role)], ec = ch$unit[match("ec", ch$role)])
   meta <- list(format = "solinst_csv", serial = serial, model = "Solinst", title = loc, location = loc, offset_hours = NA_real_, units = units)
   if (header_only) return(list(meta = meta))
-  body <- L[-seq_len(h)]; body <- body[grepl("^\\s*[0-9]", body)]        # records only: blank lines and a repeated header block (two exports joined) left out
+  hc <- which(grepl("^\\s*Date\\s*,\\s*Time", L) & trim(L) != trim(L[h])); hc <- hc[hc > h]   # a second export joined on with other columns: read up to it, and report it
+  body <- L[-seq_len(h)]; if (length(hc)) body <- L[(h + 1L):(hc[1] - 1L)][seq_len(max(0L, hc[1] - h - 1L))]
+  body <- body[grepl("^\\s*[0-9]", body)]        # records only: blank lines and a repeated header block (two exports joined) left out
+  cut <- ends_cut(path) && length(body) > 0; if (cut) body <- body[-length(body)]
   if (!length(body)) stop("no records")
   d <- fread(text = body, sep = ",", header = FALSE, colClasses = "character", fill = TRUE, na.strings = c("", "NA"))
   ts <- parse_dt(paste(d[[1]], d[[2]]), c("%m/%d/%Y %I:%M:%S %p", "%Y/%m/%d %H:%M:%S", "%m/%d/%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S"))
   ms <- if ("ms" %in% cols) suppressWarnings(as.numeric(d[[match("ms", cols)]])) else 0
   out <- data.table(TIMESTAMP = ts + ifelse(is.na(ms), 0, ms) / 1000)
-  for (j in seq_along(cols)) { r <- xle_role(cols[j]); if (!is.na(r)) set(out, j = r, value = num_cells(d[[j]])) }
+  nan <- list(); for (j in seq_along(cols)) { r <- xle_role(cols[j]); if (!is.na(r)) { nan[[r]] <- is_nan_cell(d[[j]]) & !is.na(ts); set(out, j = r, value = num_cells(d[[j]])) } }
+  nc <- nan_cells(ts, nan)
   out <- out[!is.na(TIMESTAMP)]
   meta <- c(meta, list(interval_s = step_of(out$TIMESTAMP), first = suppressWarnings(min(out$TIMESTAMP)),
-                       last = suppressWarnings(max(out$TIMESTAMP)), rows = nrow(out)))
+                       last = suppressWarnings(max(out$TIMESTAMP)), rows = nrow(out)), if (cut) list(cut_last = TRUE), if (!is.null(nc)) list(nan_cells = nc),
+            if (length(hc)) list(header_change = list(line = hc[1], rows = sum(grepl("^\\s*[0-9]", L[-seq_len(hc[1])])))))
   list(meta = meta, data = out, events = empty_events())
 }
 

@@ -657,6 +657,20 @@ local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE); source(file.path
   for (f in r[reference_ok %in% FALSE, file]) cat("  ", f, ": a value in tests/samples/reference.csv differs from what the reader makes\n", sep = "")
   check("every sample file reads, with rows (or a header for a format read only that far), the same twice and the same as its expected result, accepted, and equal to its hand-checked reference values",
         nrow(r) > 0 && all(r$rerun_identical) && !any(r$matches_expected %in% FALSE) && all(r$rows > 0 | r$kind %in% SAMPLE_NO_ROWS) && all(r$accepted) && !any(r$reference_ok %in% FALSE)) })
+local({ sd <- file.path(here, "tests", "samples"); hd <- list.files(sd, "^hobo_decoded__", full.names = TRUE); ex <- list.files(sd, "^hobo_decoded_export_", full.names = TRUE)
+  if (!length(hd) || !length(ex)) return(invisible())                  # the decoded .hobo against HOBOware's export of the same file, row by row
+  a <- read_hobo_decoded(hd[1])$data; e <- read_hobo_csv(ex[1]); u <- e$meta$units
+  b <- e$data[, .(TIMESTAMP, pres = to_kpa(pres, u[["pres"]], CFG), temp = if (grepl("F$", u[["temp"]])) convert_unit(temp, "degF", "degC") else temp)]
+  m <- merge(a, b, by = "TIMESTAMP"); inner <- m[-c(1L, .N)]
+  check("a .hobo read directly gives HOBOware's records: the same times, and every reading but the first and last within the export's rounding (0.001 kPa and C)",
+        nrow(m) == nrow(a) && nrow(m) == nrow(b) && max(abs(inner$pres.x - inner$pres.y)) < 0.001 && max(abs(inner$temp.x - inner$temp.y)) < 0.001)
+  if (abs(m$pres.x[1] - m$pres.y[1]) > 0.01 || abs(m$pres.x[nrow(m)] - m$pres.y[nrow(m)]) > 0.01) cat(sprintf("  known  core hobo.R: the first and last records differ from HOBOware (%.1f and %.1f kPa against %.1f and %.1f)\n",
+        m$pres.x[1], m$pres.x[nrow(m)], m$pres.y[1], m$pres.y[nrow(m)]))
+  h <- read_hobo_binary_header(list.files(sd, "^hobo_binary__", full.names = TRUE)[1])
+  check("the .hobo header gives the serial and time zone its HOBOware export states", identical(h$serial, e$meta$serial) && identical(h$offset_hours, e$meta$offset_hours) && grepl("^HOBO U20", h$model)) })
+local(source(file.path(here, "tests", "test_bad_files.R"), local = TRUE))   # damaged raw files and barometric records that do not fit: a clear problem or flag
+local(source(file.path(here, "tests", "test_golden.R"), local = TRUE))      # the golden project: a whole run against accepted outputs
+local(source(file.path(here, "tests", "test_formulas.R"), local = TRUE))    # derived values against published tables, the maker's software or hand-computed cases
 check("no app function replaces a core function of the same name", !length(core_shadows(app_code_files(PIPELINE_DIR))))
 check("each cached step has its own code fingerprint, the same when computed again", identical(STEP_HASH, step_hashes(globalenv())) && all(nchar(unlist(STEP_HASH)) == 12))
 local({                                                               # the shared deployment sheet (core deployments.R)

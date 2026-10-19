@@ -377,7 +377,8 @@ run_pipeline_steps <- function(cfg = CFG) {
                                    start_source = "first record", end_source = "last record", T_ST_source = "", alias = ttl,
                                    deployment = paste(s, safe_name(paste("Unlisted", s)), yrs, sep = "__"), added_by_hand = FALSE), fill = TRUE)
   }
-  if (!nrow(deps)) stop("No deployments: the workbook lists none of the loggers found.")
+  if (!nrow(deps)) stop(if (length(water)) "No deployments: the workbook lists none of the loggers found." else
+    paste0("No water logger in the raw folders holds readings (", paste(man[kind == "water", paste0(rel, ": ", fifelse(status == "ok", "no readings", gsub("_", " ", status)))], collapse = "; "), "); nothing to compensate"))
   # deployment windows that the workbook leaves open come from the records in that year's folder
   for (i in which(deps$serial %in% water & (is.na(deps$start) | is.na(deps$end)))) {
     f <- use[serial == deps$serial[i] & year == deps$year[i]]
@@ -456,7 +457,8 @@ run_pipeline_steps <- function(cfg = CFG) {
     series_hash[[k]] }
   # the deployments of a logger, which deployment each record belongs to, and the barologgers each season of it uses
   owner_of <- function(dt, ds) { owner <- rep(NA_integer_, nrow(dt))
-    for (i in seq_len(nrow(ds))) { k <- is.na(owner) & (is.na(ds$start[i]) | dt$TIMESTAMP >= ds$start[i]) & (is.na(ds$end[i]) | dt$TIMESTAMP < ds$end[i]); owner[k] <- i }
+    for (i in seq_len(nrow(ds))) { last <- ds$end_source[i] %in% "last record"                     # an end taken from the last record holds that record
+      k <- is.na(owner) & (is.na(ds$start[i]) | dt$TIMESTAMP >= ds$start[i]) & (is.na(ds$end[i]) | dt$TIMESTAMP < ds$end[i] | (last & dt$TIMESTAMP == ds$end[i])); owner[k] <- i }
     owner }
   chains_of <- function(dt, ds, owner) {
     if (!nrow(dt) || !nrow(ds) || dt$kind[1] != "water") return(list())

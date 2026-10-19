@@ -1,0 +1,4 @@
+site,parameter,year,month,mean,min,max,days,days_in_month,complete,sigma_m
+Well A,depth_m,2014,2,0.267,0.223,0.303,5,28,FALSE,0.0071
+Well A,dtw_m,2014,2,1.233,1.197,1.277,5,28,FALSE,0.0123
+Well A,temp_c,2014,2,18.267,17.185,23.688,5,28,FALSE,""

@@ -1,0 +1,3 @@
+year,sheet,row,site,alias,easting,northing,land_cover,type,serial_raw,serial,logger,downloaded_by,dgps,visit_date,visit_sec,install_date,remarks,notes,T_water_raw,T_water,T_TOC_raw,T_TOC,TOC_water_raw,TOC_water,T_veg_raw,T_veg,TOC_veg_raw,TOC_veg,T_ST_raw,T_ST,visit_time,visit_time_known,tst_from_toc,tst_problem
+2014,metadata.csv,2,Well A,"","","","",WLR,2000001,2000001,"","",FALSE,2014-02-17,63000,2014-02-11,golden test project: the tape reads 2 cm more water than the logger,"",121.4,1.214,"","","","","","","","",150,1.5,2014-02-17 17:30:00,TRUE,FALSE,""
+2014,metadata.csv,3,Well A,"","","","",Baro,1000003,1000003,"","",FALSE,"","","",golden test project,"","","","","","","","","","","","","","",FALSE,FALSE,""

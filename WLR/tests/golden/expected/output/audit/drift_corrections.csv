@@ -1,0 +1,2 @@
+deployment,site,serial,year,mode,checks,offset_first_m,offset_last_m,largest_offset_m,applied,how,rows_corrected
+2000001__Well_A__2014,Well A,2000001,2014,tape,1,0.02,0.02,0.02,TRUE,"tape offsets applied, prorated linearly between checks",287

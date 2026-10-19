@@ -61,7 +61,10 @@ shiny::runApp("path/to/ovid_WLR")      # the app; set the folders under Home > D
 or without the app:
 ```
 Rscript wlr_pipeline.R                    # uses the folders in CFG at the top of the file (or WLR_* environment variables)
-Rscript tests/run_tests.R                 # checks
+Rscript tests/run_tests.R                 # checks (also the reader samples, damaged files, the golden project and the formula checks below)
+Rscript tests/test_bad_files.R            # damaged copies of the samples and barometric records that do not fit: each gives a clear problem or flag
+Rscript tests/test_golden.R               # a whole run on tests/golden against accepted outputs; `accept "<name>"` after checking them
+Rscript tests/test_formulas.R             # each derived value against a published table, the maker's software or a hand-computed case
 ```
 Needs R with data.table, ggplot2, xml2, readxl, shiny, DT and zip (installed on first run if missing).
 

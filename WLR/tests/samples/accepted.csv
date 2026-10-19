@@ -1,3 +1,6 @@
 file,expected_md5,checked_by,checked_on,note
+hobo_binary__10000006.hobo,42836b6c53e58668201e88a49dccfcc3,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 hobo_csv__10000005_SiteA_2024.csv,8abdf5bd0bedc05edbc6b78074447a7a,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+hobo_decoded__10000006.hobo,b9a0748ab34fd75368819fbe4b3fb505,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 solinst_csv__1000002_ST01_20250920.csv,3003697fb8a6a47d9523164ff8409c8b,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+solinst_xle__2000001_SiteA.xle,3d45b49b9de4f9b8adf651e31473c6a3,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"

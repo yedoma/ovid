@@ -1,0 +1,9 @@
+applies_to,parameter,min,max,max_spike,max_flat_hours,action,notes,rule_id
+water,pres_kpa,50,250,5,"",remove,water pressure outside anything a water level logger here can read,Q-01
+water,depth_m,-0.05,"",0.5,"",flag,water below the sensor: logger likely out of water,Q-02
+water,temp_c,-40,50,"","",remove,"",Q-03
+baro,pres_kpa,90,110,1.5,"",remove,air pressure outside what is possible at this elevation,Q-04
+baro,temp_c,-55,45,"","",remove,"",Q-05
+ec,spc_uscm,0,5000,500,"",remove,"",Q-06
+ec,temp_c,-5,40,"","",remove,"",Q-07
+all,pres_kpa,"","","",48,remove,a reading stuck on one value for two days,Q-08

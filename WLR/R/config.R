@@ -49,8 +49,8 @@ CONFIG_FILES <- list(
 CORRECTIONS <- list(
   list(id = "stray_records", rules = "stray_record", does = "removes", setting = "drop_stray_records", panel = TRUE,
        what = "Records with corrupt time stamps among good ones (off the time grid and out of order) are left out; each is in the audit trail."),
-  list(id = "bad_clock", rules = "bad_timestamp", does = "removes", setting = "drop_bad_clock", panel = TRUE,
-       what = "Records stamped before the first year or in the future are left out as a reset clock (off: kept at the time they carry; records with no time are always left out)."),
+  list(id = "bad_clock", rules = c("bad_timestamp", "clock_reset"), does = "removes", setting = "drop_bad_clock", panel = TRUE,
+       what = "Records stamped before the first year or in the future, or after the clock jumped back by more than a day within a file, are left out as a reset clock (off: kept at the time they carry; records with no time are always left out)."),
   list(id = "base_zone", does = "changes", setting = "", where = "Settings (base zone)", what = "Every time stamp is moved to the base zone (the time zone in Settings)."),
   list(id = "clock", does = "changes", table = "time_corrections.csv", where = "Clock corrections", what = "Logger clocks are shifted by the rows of the clock corrections table."),
   list(id = "solinst_altitude", does = "changes", setting = "solinst_altitude", on = function(cfg) identical(cfg$solinst_altitude, "undo"), where = "Settings, Units and conversion",

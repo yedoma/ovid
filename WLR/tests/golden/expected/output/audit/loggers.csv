@@ -1,0 +1,3 @@
+serial,kind,model,files,first,last,records,read,duplicates,conflicts,interval,years
+1000003,baro,LT_Gold M1.5,1,2014-02-11 18:00:00,2014-02-17 17:30:00,288,288,0,0,30 min,2014
+2000001,water,LT_EDGE M2,1,2014-02-11 18:00:00,2014-02-17 17:30:00,288,288,0,0,30 min,2014

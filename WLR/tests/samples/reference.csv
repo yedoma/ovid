@@ -7,3 +7,11 @@ solinst_csv__1000002_ST01_20250920.csv,rows,48,raw file lines 13-60
 solinst_csv__1000002_ST01_20250920.csv,first_time,2024-09-20 16:30:00,"raw file line 13 (9/20/2024 04:30:00 pm; no zone in the file, not shifted by the reader)"
 solinst_csv__1000002_ST01_20250920.csv,last_time,2024-10-02 10:30:00,raw file line 60
 solinst_csv__1000002_ST01_20250920.csv,col:pres@1,0,"raw file line 13, LEVEL 0.0 m (kept in m; the unit is in the reader's meta)"
+solinst_xle__2000001_SiteA.xle,rows,48,"raw file: Num_log 48, <Log id=""1""> to <Log id=""48"">"
+solinst_xle__2000001_SiteA.xle,first_time,2014-02-11 18:00:00,"raw file <Log id=""1"">: 2014/02/11 18:00:00 (no zone in the file, not shifted by the reader)"
+solinst_xle__2000001_SiteA.xle,last_time,2014-02-12 17:30:00,"raw file <Log id=""48"">"
+solinst_xle__2000001_SiteA.xle,col:pres@1,10.0809,"raw file <Log id=""1""> ch1 LEVEL m (kept in m; the unit is in the reader's meta)"
+solinst_xle__2000001_SiteA.xle,col:temp@3,18.408,"raw file <Log id=""3""> ch2 TEMPERATURE"
+hobo_decoded__10000006.hobo,rows,1564,"HOBOware export of the same file (hobo_decoded_export_10000006.csv): 1564 rows with readings; its values are checked row by row in run_tests.R"
+hobo_decoded__10000006.hobo,first_time,2016-08-28 11:00:00,"HOBOware export row 1: 08/28/16 12:00:00 PM, GMT-06:00 (the .hobo states Mountain Daylight Time), 11:00 at UTC-7"
+hobo_decoded__10000006.hobo,last_time,2017-09-23 05:00:00,"HOBOware export row 1564: 09/23/17 06:00:00 AM, GMT-06:00"
