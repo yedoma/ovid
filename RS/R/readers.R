@@ -44,9 +44,14 @@ format_of <- function(file) {
 
 # ---- images ----------------------------------------------------------------------------------------------------------
 # One row per image from its EXIF and XMP: camera, serial, aircraft, time, position, and what the positioning was worth.
-#   DJI: XMP drone-dji tags (aircraft model and serial, UTC exposure time, RTK flag 50 fixed / 34 float / 16 single, and
+#   DJI: XMP drone-dji tags (aircraft model and serial, exposure time (GPS time, despite its name), RTK flag 50 fixed / 34 float / 16 single, and
 #        the RTK standard deviations). senseFly S.O.D.A.: EXIF time is UTC; XMP Camera:GPSXYAccuracy is the geotag's
 #        accuracy in m (about 0.02 when corrected, metres when not). Canon S110 on the eBee: no GPS, a clock reading 1980.
+# GPS time runs ahead of UTC by the leap seconds added since 1980 (IERS Bulletin C; GPS ICD IS-GPS-200): 13 s from 1999, 14 from
+# 2006, 15 from 2009, 16 from 2012-07-01, 17 from 2015-07-01, 18 from 2017-01-01. DJI writes GPS time in the XMP UTCAtExposure
+# (its fraction of a second is the MRK's GPS seconds of week) and in the MRK; both are taken back to UTC here.
+GPS_UTC_LEAP <- data.table(from = as.POSIXct(c("1999-01-01", "2006-01-01", "2009-01-01", "2012-07-01", "2015-07-01", "2017-01-01"), tz = "UTC"), s = 13:18)
+gps_to_utc <- function(t) { i <- findInterval(as.numeric(t), as.numeric(GPS_UTC_LEAP$from)); t - ifelse(!is.na(i) & i > 0, GPS_UTC_LEAP$s[pmax(i, 1L)], NA_real_) }
 DJI_TAGS <- c(drone_model = "drone-dji:DroneModel", drone_serial = "drone-dji:DroneSerialNumber", product = "drone-dji:ProductName",
               camera_serial = "drone-dji:CameraSerialNumber", utc = "drone-dji:UTCAtExposure", rtk_flag = "drone-dji:RtkFlag",
               rtk_std_lat = "drone-dji:RtkStdLat", rtk_std_lon = "drone-dji:RtkStdLon", rtk_std_hgt = "drone-dji:RtkStdHgt",
@@ -100,7 +105,7 @@ read_image_meta <- function(paths) {
   # exposure time in UTC: DJI gives it; senseFly's and Sequoia's EXIF clocks are UTC (GPS-set); other cameras: local clock, zone unknown
   t_exif <- as.POSIXct(datetime_original <- d$datetime_original, format = "%Y:%m:%d %H:%M:%S", tz = "UTC")
   d[, time_exif := t_exif]
-  d[, time_utc := fifelse(!is.na(utc) & nzchar(utc), as.POSIXct(sub("T", " ", substr(utc, 1, 19)), format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+  d[, time_utc := fifelse(!is.na(utc) & nzchar(utc), gps_to_utc(as.POSIXct(sub("T", " ", substr(utc, 1, 19)), format = "%Y-%m-%d %H:%M:%S", tz = "UTC")),
                   fifelse((!is.na(make) & make %in% c("senseFly", "Parrot")) | (!is.na(rig) & rig == "Sequoia"), t_exif, as.POSIXct(NA)))]
   d[, clock_ok := !is.na(t_exif) & t_exif > as.POSIXct("2000-01-01", tz = "UTC")]
   d[, c("utc", "product", "body_serial", "datetime_original", "subsec", "gps_time", "gps_date", "rig", "cam_id") := NULL][]
@@ -129,7 +134,7 @@ read_mrk <- function(path) {
   d <- data.table(shot = as.integer(sub("^\\s*([0-9]+).*", "\\1", L)), lat = g(".*\\s(-?[0-9.]+),Lat.*"),
                   lon = g(".*\\s(-?[0-9.]+),Lon.*"), h_ellps = g(".*\\s(-?[0-9.]+),Ellh.*"), q = g(".*\\s([0-9]+),Q.*"))
   sow <- suppressWarnings(as.numeric(sub("^\\s*[0-9]+\\s+([0-9.]+).*", "\\1", L))); wk <- suppressWarnings(as.numeric(sub(".*\\[([0-9]{4})\\].*", "\\1", L)))
-  t0 <- if (length(L) && is.finite(wk[1]) && is.finite(sow[1])) format(as.POSIXct("1980-01-06", tz = "UTC") + wk[1] * 604800 + sow[1] - 18, "%Y-%m-%d %H:%M:%S") else NA_character_   # GPS time, 18 s ahead of UTC
+  t0 <- if (length(L) && is.finite(wk[1]) && is.finite(sow[1])) format(gps_to_utc(as.POSIXct("1980-01-06", tz = "UTC") + wk[1] * 604800 + sow[1]), "%Y-%m-%d %H:%M:%S") else NA_character_   # GPS time to UTC
   ok <- is.finite(d$lat) & is.finite(d$lon) & (d$lat != 0 | d$lon != 0); r <- function(f, v) if (any(ok)) f(v[ok]) else NA_real_
   list(mrk_shots = nrow(d), mrk_fixed_pct = if (nrow(d)) round(100 * mean(d$q == 50, na.rm = TRUE), 1) else NA_real_,
        mrk_start_utc = t0, mrk_lat_min = r(min, d$lat), mrk_lat_max = r(max, d$lat), mrk_lon_min = r(min, d$lon), mrk_lon_max = r(max, d$lon))
@@ -226,6 +231,11 @@ read_rinex <- function(path) {
   sz <- file.size(path); seek(con, max(0, sz - 65536)); t <- readLines(con, warn = FALSE)
   ep <- if (any(startsWith(t, ">"))) t[startsWith(t, ">")] else t[grepl("^ [0-9 ]{2} [ 0-9]{2} [ 0-9]{2} [ 0-9]{2} [ 0-9]{2} [ 0-9.]{10}  [0-9]", t)]
   last <- if (length(ep)) epoch(ep[length(ep)]) else as.POSIXct(NA)
+  # epochs are in the header's time system (TIME OF FIRST OBS, columns 49-51): GPS time is taken back to UTC (GPS_UTC_LEAP). With no
+  # system stated (DJI's base files have no TIME OF FIRST OBS) the epochs are GPS time unless the file is GLONASS only (RINEX 3.04,
+  # 5.2.4); GLONASS (UTC-based), Galileo and BeiDou times are left as written
+  sys <- trimws(substr(lab("TIME OF FIRST OBS") %|% "", 49, 51)); gps <- sys == "GPS" || (!nzchar(sys) && !substr(h[1], 41, 41) %in% "R")
+  if (gps) { first <- gps_to_utc(first); last <- gps_to_utc(last) }
   xyz <- suppressWarnings(as.numeric(strsplit(trimws(lab("APPROX POSITION XYZ")), " +")[[1]][1:3]))
   ll <- if (!anyNA(xyz) && sum(abs(xyz)) > 1e6) ecef_to_ll(xyz) else c(NA_real_, NA_real_)
   list(rinex_version = suppressWarnings(as.numeric(substr(h[1], 1, 9))), rinex_marker = trimws(lab("MARKER NAME")),

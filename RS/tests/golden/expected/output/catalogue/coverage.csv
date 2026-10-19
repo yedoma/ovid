@@ -1,0 +1,3 @@
+scope,site,year,kind,count,images,finest_gsd_cm,corrected_pct,first,last
+flights,(no site),2023,RGB,1,3,"",0,2023-09-22,2023-09-22
+flights,SiteA,2024,LiDAR,1,4,1.6,100,2024-09-21,2024-09-21

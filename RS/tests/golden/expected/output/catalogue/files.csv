@@ -1,0 +1,10 @@
+source_id,rel,format,family,role,status,size
+golden,DJI_202409211138_010_SiteA-RGB/DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,dji_mrk,dji,flight_record,"",4613
+golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121419_0001_D.RPT,dji_rpt,dji,flight_record,"",7020
+golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121527_0003_D.JPG,image_jpg,camera,image,"",45000
+golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121531_0004_D.JPG,image_jpg,camera,image,"",45000
+golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121532_0005_D.JPG,image_jpg,camera,image,"",45000
+golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121534_0006_D.JPG,image_jpg,camera,image,"",45000
+golden,EP-01-00001_0304/EP-01-00001_0304_0001.JPG,image_jpg,camera,image,"",30000
+golden,EP-01-00001_0304/EP-01-00001_0304_0003.JPG,image_jpg,camera,image,"",30000
+golden,EP-01-00001_0304/EP-01-00001_0304_0005.JPG,image_jpg,camera,image,"",30000

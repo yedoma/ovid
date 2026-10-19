@@ -1,0 +1,3 @@
+flight_id,file,source_id,rel,name,folder,format,role,score,state,evidence
+UAV-9d2934bb72,golden:DJI_202409211138_010_SiteA-RGB/DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,golden,DJI_202409211138_010_SiteA-RGB/DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,DJI_202409211138_010_SiteA-RGB,dji_mrk,flight_record,0.9,auto,covers the flight's area; time within the flight
+UAV-9d2934bb72,golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121419_0001_D.RPT,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121419_0001_D.RPT,DJI_20240921121419_0001_D.RPT,DJI_202409211138_010_SiteA-RGB,dji_rpt,flight_record,0.9,auto,same folder; file time within the flight

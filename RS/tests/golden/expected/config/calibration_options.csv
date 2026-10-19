@@ -1,0 +1,17 @@
+app,value,applies_to,choice,number,source,notes
+RS,base_single_avg_error_m,*,default,2.5,"Emlid docs (docs.emlid.com, placing the base): a base averaged in single mode is about 2.5 m off; averaging longer does not improve it",Base set by single averaging: absolute error (m)
+RS,base_float_avg_error_m,*,default,1.0,"Emlid docs (docs.emlid.com, placing the base): a base averaged with an RTK float solution is about 1.0 m off",Base set by float averaging: absolute error (m)
+RS,max_correction_age_s,*,default,10,"Emlid firmware 31 onward drops a fix after 10 s without corrections (Emlid staff, community forum)",Oldest corrections (s)
+RS,max_baseline_m,*,default,60000,Emlid Reach RTK working range up to 60 km (PPK up to 100 km); the + 1 ppm term of the RTK spec grows with it,Longest baseline (m)
+RS,min_fixed_pct,*,default,"",no published minimum; set your own,Fewest fixed positions (%)
+RS,checkpoint_survey_rmse_h_cm,*,default,2,"Ovid default, about an RTK receiver over a short baseline (Emlid RTK 7 mm + 1 ppm H); use the receiver's own RMS where it is exported","Checkpoint survey RMSE, horizontal (cm). Scotty Creek option: 2 (Scotty Creek differential GPS, +/- 0.02 m (Leica SR530 / Viva GS10: Connon et al. 2018; Disher et al. 2021))"
+RS,checkpoint_survey_rmse_v_cm,*,default,3,"Ovid default, about an RTK receiver over a short baseline (Emlid RTK 14 mm + 1 ppm V); use the receiver's own RMS where it is exported","Checkpoint survey RMSE, vertical (cm). Scotty Creek option: 2 (Scotty Creek differential GPS, +/- 0.02 m (Leica SR530 / Viva GS10: Connon et al. 2018; Disher et al. 2021))"
+RS,geotag_corrected_m,*,default,0.1,"RTK/PPK geotags are about 0.02 m (DJI Phantom 4 RTK, M350 RTK: 1 cm + 1 ppm H), standalone GNSS metres; 0.1 m separates them",Geotag accuracy that counts as corrected (m)
+RS,blur_limit_px,*,default,1,"convention: no well-cited paper gives a fixed pixel limit (Sieberth et al. 2014, 2016; gap 15)",Motion blur limit (px)
+RS,fwd_overlap_target_pct,*,default,"",no fixed target; judge against the platform's spec conditions (Zenmuse P1 75 %); accuracy is fairly insensitive once the network is strong (James et al. 2020),Forward overlap target (%)
+RS,side_overlap_target_pct,*,default,"","no fixed target; judge against the platform's spec conditions (Zenmuse P1 55 %, Zenmuse L2 20 %)",Side overlap target (%)
+RS,min_sun_elev_deg,*,default,"",no well-cited fixed minimum; shadow lowers NIR in boreal peatland (Chasmer et al. 2011),Lowest sun elevation (deg)
+RS,check_placed_ok_pct,*,default,95,"Ovid default (interface design, 9 Oct 2026); no published threshold; set your own",Positions check: placed for ok (%)
+RS,check_placed_look_pct,*,default,50,"Ovid default (interface design, 9 Oct 2026); no published threshold; set your own",Positions check: placed for look (below: bad) (%)
+RS,photoset_max_images,*,default,20,Ovid default; no published threshold; set your own. A photo set is kept apart from mapping flights and is not checked as one,Photo set: a run of fewer images than this (images)
+RS,check_standalone_max_m,*,default,5,standalone GNSS geotags are good to 2-5 m (see geotag_corrected_m); worse suggests a bad fix,Accuracy check: worst standalone accuracy for look (above: bad) (m)

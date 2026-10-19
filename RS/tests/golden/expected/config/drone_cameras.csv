@@ -1,0 +1,20 @@
+make,model,drone,note
+DJI,FC300X,yes,Phantom 3 Professional
+DJI,FC300S,yes,Phantom 3 Advanced
+DJI,FC300C,yes,Phantom 3 Standard
+DJI,FC330,yes,Phantom 4
+DJI,FC6310,yes,Phantom 4 Pro
+DJI,FC6310S,yes,Phantom 4 Pro V2
+DJI,FC6310R,yes,Phantom 4 RTK
+DJI,FC6360,yes,Phantom 4 Multispectral
+DJI,ZenmuseP1,yes,Zenmuse P1
+DJI,L2,yes,Zenmuse L2 RGB camera
+DJI,M3M,yes,Mavic 3 Multispectral
+senseFly,"",yes,"S.O.D.A., thermoMAP, Aeria and other eBee cameras"
+Parrot,Sequoia,yes,Parrot Sequoia multispectral
+MicaSense,"",yes,"RedEdge, Altum"
+Canon,Canon PowerShot S110,yes,eBee RGB and NIR camera (a compact camera: handheld S110 photos match too)
+DJI,DJI Pocket,no,Pocket 2 (handheld)
+DJI,OT110,no,Osmo Pocket (handheld)
+DJI,OSMO,no,Osmo cameras (handheld)
+DJI,AC00,no,Osmo Action (action camera)

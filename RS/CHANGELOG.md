@@ -5,6 +5,18 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added and fixed (tests: samples, damaged files, golden project, derived values, 2026-10-19)**
+- tests/samples: a trimmed, neutralized real file for every format RS reads but eMotion .mis3 (DJI JPG with XMP, SODA JPG, MRK, RPT, eMotion geoinfo, DJI WPML KMZ, RINEX observation header, GeoTIFF), with reference values from the raw files in reference.csv (tests/samples.R).
+- tests/test_bad_files.R: every sample emptied, cut in half and cut to 1,000 bytes beside a good flight; photos with no GPS, an MRK that matches no photo, a camera clock in local time, the same photos stored twice.
+- tests/test_golden.R and tests/golden: a small DJI RTK flight (JPG heads, MRK, RPT) and a SODA flight; outputs compared with tests/golden/expected, failing until accepted (`Rscript tests/test_golden.R accept "<name>"`).
+- tests/test_formulas.R: GSD against DJI's Phantom 4 RTK figure, blur, forward overlap, sun elevation at the solstice noon, checkpoint RMSE and vertical bias (ASPRS Edition 2), fixed share, base check, UTM. run_tests.R runs all three.
+- Fixed: an empty file (0 bytes) was catalogued as a dataset or record; it is now listed with the status "empty file" and not catalogued.
+- Fixed: DJI's XMP UTCAtExposure is GPS time, not UTC; photo and flight times were 18 s late. The GPS - UTC leap seconds (GPS_UTC_LEAP, R/readers.R; 18 s since 2017) are now taken off, as they already were for MRK times. Flight ids still count from the GPS time, so they and every edit saved against them stay the same.
+- Fixed: RINEX observation times (obs_start_utc, obs_end_utc) are GPS time when the header says GPS or states no system (DJI base files), unless the file is GLONASS only; the leap seconds are now taken off.
+- tests/test_golden.R compares numbers to 1e-9 of their size (the last bits of a mean or percentile differ between x86_64 and arm64).
+
+**Output changes:** empty files move from the catalogue to the file audit as "empty file". DJI photo times (images.csv time_utc) and the flight times taken from them (flights.csv start_utc, end_utc and what depends on them, such as the sun elevation) are 18 s earlier (17 s for 2015-2016, 16 s for 2012-2015). RINEX files' obs_start_utc and obs_end_utc (logs.csv and the GNSS base checks) are 18 s earlier.
+
 **Changed (toggles, 2026-10-14)**
 - The Map and Imagery filters and the Workbench's show-done switch are toggles; Leave out on the flight form stays a checkbox (saved with the form). **Output changes:** none.
 

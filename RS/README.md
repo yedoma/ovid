@@ -59,7 +59,7 @@ From this folder:
 
 The project folder is `~/Desktop/RS_project` (an existing `~/Desktop/UAV_project` is used while `RS_project` does not exist) (`CFG` at the top of the script, or `RS_PROJECT_DIR`). Sources are listed in
 `config/sources.csv`. Each image is opened once (its first 64 kB: EXIF and XMP) and the result kept per folder in
-`<project>/cache/sources/<source>/`, so a rescan only reads folders whose files changed. Tests: `Rscript tests/run_tests.R`.
+`<project>/cache/sources/<source>/`, so a rescan only reads folders whose files changed. Tests: `Rscript tests/run_tests.R` (with tests/test_bad_files.R, test_golden.R and test_formulas.R; samples in tests/samples, the golden project in tests/golden). eMotion mission plans (.mis3) have no sample yet: the files at hand hold place names.
 
 </details>
 

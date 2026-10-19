@@ -1,0 +1,10 @@
+file,source_id,rel,format,role,status,size,used,read,in_output,used_in,dropped,dropped_why,reconciles,what_happened
+golden:DJI_202409211138_010_SiteA-RGB/DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,golden,DJI_202409211138_010_SiteA-RGB/DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,dji_mrk,flight_record,"",4613,TRUE,1,1,linked to a flight,0,"",TRUE,in the catalogue: linked to a flight
+golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121419_0001_D.RPT,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121419_0001_D.RPT,dji_rpt,flight_record,"",7020,TRUE,1,1,linked to a flight,0,"",TRUE,in the catalogue: linked to a flight
+golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121527_0003_D.JPG,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121527_0003_D.JPG,image_jpg,image,"",45000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121531_0004_D.JPG,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121531_0004_D.JPG,image_jpg,image,"",45000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121532_0005_D.JPG,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121532_0005_D.JPG,image_jpg,image,"",45000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:DJI_202409211138_010_SiteA-RGB/DJI_20240921121534_0006_D.JPG,golden,DJI_202409211138_010_SiteA-RGB/DJI_20240921121534_0006_D.JPG,image_jpg,image,"",45000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:EP-01-00001_0304/EP-01-00001_0304_0001.JPG,golden,EP-01-00001_0304/EP-01-00001_0304_0001.JPG,image_jpg,image,"",30000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:EP-01-00001_0304/EP-01-00001_0304_0003.JPG,golden,EP-01-00001_0304/EP-01-00001_0304_0003.JPG,image_jpg,image,"",30000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image
+golden:EP-01-00001_0304/EP-01-00001_0304_0005.JPG,golden,EP-01-00001_0304/EP-01-00001_0304_0005.JPG,image_jpg,image,"",30000,TRUE,1,1,flight image,0,"",TRUE,in the catalogue: flight image

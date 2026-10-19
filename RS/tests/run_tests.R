@@ -95,7 +95,7 @@ check(nrow(r$files) == 23, "every file of the first source listed; recycle bin s
 check(nrow(f) == 6, "six flights in the first source")
 g <- f[site == "LakeA"]
 check(nrow(g) == 1 && g$positioning_status == "RTK corrected" && g$rtk_fixed_pct == 100 && g$sensor == "DJI L2" && g$aircraft == "Matrice 350 RTK", "DJI flight: sensor, aircraft, RTK corrected")
-check(g$date == "2024-09-21" && g$start == "2024-09-21 10:43:41", "start in Ovid's base zone (UTC-7)")
+check(g$date == "2024-09-21" && g$start == "2024-09-21 10:43:23", "start in Ovid's base zone (UTC-7), the XMP's GPS time less 18 leap seconds")
 check(g$has_mrk && g$has_rpt && g$mission_id == 20030 && g$mrk_shots == 3 && grepl("RPT counts 4 captures, 3 images", g$qa_flags), "MRK and RPT linked, read and compared")
 l <- r$links
 check(l[grepl("0002_D.RTK$", rel)]$state == "auto" && l[grepl("0009_D.RTB$", rel)]$state == "suggested", "link confidence follows the file time")
@@ -555,6 +555,14 @@ local({                                                               # editing 
   check(gd[folder == "CT"]$files == 2 && gd[folder == "CT"]$suggest == "remove" && gd[folder == "Sat"]$suggest == "keep" && gd[folder == "far"]$where == "far from the flights" &&
         grepl("CT/", geodata_rule("CT")$pattern), "other geodata by folder: no position or far from the flights suggested for removal, as an ignore rule")
 })
+local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE); source(file.path(here, "tests", "samples.R"), local = TRUE)   # the reader samples (core testkit.R)
+  r <- check_reader_samples(file.path(here, "tests", "samples"), SAMPLE_READ); new <- r[is.na(matches_expected), file]
+  if (length(new)) cat("  (expected results saved for", length(new), "new sample(s): check them in", file.path("tests", "samples", "expected"), ")\n")
+  for (f in r[!(accepted), file]) cat("  ", f, ": not accepted. Check tests/samples/expected/", f, ".rds, then accept_sample(\"tests/samples\", \"", f, "\", \"<your name>\")\n", sep = "")
+  for (f in r[reference_ok %in% FALSE, file]) cat("  ", f, ": a value in tests/samples/reference.csv differs from what the reader makes\n", sep = "")
+  check(nrow(r) > 0 && all(r$rerun_identical) && !any(r$matches_expected %in% FALSE) && all(r$rows > 0) && all(r$accepted) && !any(r$reference_ok %in% FALSE),
+        "every sample file reads, the same twice and the same as its expected result, accepted, and equal to its hand-checked reference values") })
+for (t in c("test_bad_files.R", "test_golden.R", "test_formulas.R")) source(file.path(here, "tests", t), local = new.env())   # damaged files, the golden project, derived values
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(RS_PROJECT_DIR = proj, RS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))

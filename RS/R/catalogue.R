@@ -33,6 +33,7 @@ list_source <- function(root, rules = NULL) {
   out[, format := format_of(file)]
   out <- merge(out, FORMAT_INFO, by = "format", all.x = TRUE, sort = FALSE)
   out[is.na(role), `:=`(role = "unknown", family = "other")][, status := ""]
+  out[size %in% 0, status := "empty file"]                                    # nothing to read: listed with why, never catalogued
   out[role == "processed" | grepl(PROCESSED_DIRS, folder, ignore.case = TRUE), status := "out of scope"]
   # satellite scenes are rasters, never photos: TIFF / JP2 / NITF in a folder with satellite metadata (.IMD, .TIL, DIMAP) or with
   # a satellite name are listed as rasters, and their JPG quicklooks are only listed
@@ -229,10 +230,13 @@ build_flights <- function(img, gap_min = 10, files = NULL, blur_limit_px = 1) {
   d[, t := fifelse(clock_ok, fifelse(is.na(time_utc), time_exif, time_utc), as.POSIXct(NA))]
   setorder(d, key, t, file, na.last = TRUE)
   d[, seg := if (all(is.na(t)) || !is.na(fno[1]) || !is.na(flight_uuid[1])) 1L else cumsum(c(TRUE, diff(as.numeric(t)) > gap_min * 60)), by = key]
-  # the identity of a flight: camera + first exposure; or, without a usable clock, camera + flight number + first image name
-  d[, flight_id := { t0 <- suppressWarnings(min(t, na.rm = TRUE))
+  # the identity of a flight: camera + first exposure; or, without a usable clock, camera + flight number + first image name.
+  # A DJI exposure counts at the GPS time the camera wrote (time_utc plus the leap seconds), so flight ids made before the
+  # leap seconds were taken off (2026-10-19) stay the same, and with them every edit saved against them.
+  d[, t_id := fifelse(make %in% "DJI" & !is.na(time_utc) & clock_ok, t + (as.numeric(t) - as.numeric(gps_to_utc(t))), t)]
+  d[, flight_id := { t0 <- suppressWarnings(min(t_id, na.rm = TRUE))
       k <- if (is.finite(t0)) list(cam[1], fmt_ts(t0)) else list(cam[1], fno[1], file[1], .N)
-      paste0("UAV-", substr(hash_of(k), 1, 10)) }, by = .(key, seg)]
+      paste0("UAV-", substr(hash_of(k), 1, 10)) }, by = .(key, seg)][, t_id := NULL]
   # one flight per eBee flight number (and serial, when known): a camera folder and eMotion's re-geotagged img/ copy, or a
   # partial copy elsewhere, start at different times and so got flight ids of their own. eBee images with the same flight
   # number starting within an hour of each other are one flight (the largest group's id); numbers taken from year folders

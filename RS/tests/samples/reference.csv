@@ -1,0 +1,26 @@
+file,what,value,source
+image_jpg__DJI_20240921121527_0003_D.JPG,col:lat@1,61.304230739,"XMP drone-dji:GpsLatitude (the flight's MRK line 3 has 61.30423074)"
+image_jpg__DJI_20240921121527_0003_D.JPG,col:alt@1,330.706,XMP drone-dji:AbsoluteAltitude (MRK line 3: 330.706 Ellh)
+image_jpg__DJI_20240921121527_0003_D.JPG,col:rtk_flag@1,50,XMP drone-dji:RtkFlag (50 = fixed)
+image_jpg__DJI_20240921121527_0003_D.JPG,col:rtk_std_lat@1,0.01245,XMP drone-dji:RtkStdLat
+image_jpg__DJI_20240921121527_0003_D.JPG,col:drone_model@1,Matrice 350 RTK,XMP drone-dji:DroneModel
+image_jpg__DJI_20240921121527_0003_D.JPG,col:camera_serial@1,000AA000AA0001,"XMP drone-dji:CameraSerialNumber (neutralized, same length)"
+image_jpg__DJI_20240921121527_0003_D.JPG,col:time_exif@1,2024-09-21 12:15:27,EXIF DateTimeOriginal 2024:09:21 12:15:27 (camera clock)
+image_jpg__EP-01-00001_0304_0001.JPG,col:acc_xy@1,2.755072,XMP Camera:GPSXYAccuracy
+image_jpg__EP-01-00001_0304_0001.JPG,col:acc_z@1,4.24663,XMP Camera:GPSZAccuracy
+image_jpg__EP-01-00001_0304_0001.JPG,col:time_exif@1,2023-09-22 21:27:06,EXIF DateTimeOriginal 2023:09:22 21:27:06 (S.O.D.A. clock in UTC)
+dji_mrk__DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,col:mrk_shots@1,35,raw file: 35 exposure lines
+dji_mrk__DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,col:mrk_start_utc@1,2024-09-21 18:15:29,"raw file line 1: GPS week 2332, 584147.141386 s of week, less the 18 leap seconds"
+dji_mrk__DJI_202409211138_010_SiteA-RGB_Timestamp.MRK,col:mrk_fixed_pct@1,100,"raw file: Q = 50 on all 35 lines"
+dji_rpt__DJI_20240921121419_0001_D.RPT,col:mission_start_utc@1,2024-09-21 18:14:19,"raw file MISSION_START_TIME 1726942459 (Unix seconds)"
+dji_rpt__DJI_20240921121419_0001_D.RPT,col:fly_time_s@1,110,raw file FLY_TIME
+dji_rpt__DJI_20240921121419_0001_D.RPT,col:rpt_fixed@1,35,raw file RTK_FIXED_NUM (the MRK has 35 exposures)
+emotion_geoinfo__2018_08_28_siteb_geoinfo.txt,col:geo_images@1,60,raw file lines 3 to 62
+emotion_geoinfo__2018_08_28_siteb_geoinfo.txt,col:geo_lat_min@1,61.2976600189,raw file latitude column minimum
+emotion_geoinfo__2018_08_28_siteb_geoinfo.txt,col:geo_lat_max@1,61.3011540260,raw file latitude column maximum
+kml__Area_A.kmz,col:kml_vertices@1,90,"DJI WPML mission: the waylines' 90 points (wpmz/waylines.wpml)"
+rinex__rnx_bas.26O,col:rinex_version@1,3.02,raw file line 1 (RINEX VERSION / TYPE)
+rinex__rnx_bas.26O,col:rinex_program@1,DJI RTK ENGINE 2.0.1,raw file line 2 (PGM / RUN BY / DATE)
+rinex__rnx_bas.26O,col:obs_start_utc@1,2026-09-01 18:08:27,raw file first epoch (> 2026 09 01 18 08 45.0000000) in GPS time less 18 leap seconds
+raster__gsddsm.tif,col:width@1,171,TIFF tag ImageWidth
+raster__gsddsm.tif,col:epsg@1,4326,GeoKey GeographicTypeGeoKey (WGS 84; the .prj beside it in the source names WGS 84 too)
