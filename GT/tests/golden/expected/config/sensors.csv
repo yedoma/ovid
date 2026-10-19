@@ -1,0 +1,28 @@
+logger_type,make,model,serial,sensor,depth_m,depth_source,site,start,end,notes
+"","","",1000004,"","","",Pit B,"","",from the logger list
+"","","",1001TABLE1,"","","",Pit D,"","",from the logger list
+"","","",123,"","","",Borehole C,"","",from the logger list
+"","","",E00001,"","","",Pit A,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_2_Avg,0.2,logger list,Pit D,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_3_Avg,0.4,logger list,Pit D,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_4_Avg,0.8,logger list,Pit D,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_5_Avg,1.6,logger list,Pit D,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_6_Avg,+1.5,logger list,Pit D,"","",from the logger list
+campbell,Campbell Scientific,"",1001TABLE1,T109_C_Avg,0.1,logger list,Pit D,"","",from the logger list
+geoprecision,GeoPrecision,"",E00001,T1,0.1,logger list,Pit A,"","",from the logger list
+geoprecision,GeoPrecision,"",E00001,T2,0.25,logger list,Pit A,"","",from the logger list
+geoprecision,GeoPrecision,"",E00001,T3,0.5,logger list,Pit A,"","",from the logger list
+geoprecision,GeoPrecision,"",E00001,T4,1,logger list,Pit A,"","",from the logger list
+geoprecision,GeoPrecision,"",E00001,T5,2,logger list,Pit A,"","",from the logger list
+hobo,Onset,"",1000004,T1,0.05,logger list,Pit B,"","",from the logger list
+hobo,Onset,"",1000004,T2,0.2,logger list,Pit B,"","",from the logger list
+hobo,Onset,"",1000004,T3,0.5,logger list,Pit B,"","",from the logger list
+hobo,Onset,"",1000004,T4,1,logger list,Pit B,"","",from the logger list
+rbr,RBR,"",123,T1,0.25,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T2,0.5,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T3,1,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T4,1.5,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T5,2,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T6,3,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T7,5,logger list,Borehole C,"","",from the logger list
+rbr,RBR,"",123,T8,8,logger list,Borehole C,"","",from the logger list

@@ -416,6 +416,9 @@ local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE); source(file.path
   for (f in r[reference_ok %in% FALSE, file]) cat("  ", f, ": a value in tests/samples/reference.csv differs from what the reader makes\n", sep = "")
   check("every sample file reads, with rows (or a header for a format read only that far), the same twice and the same as its expected result, accepted, and equal to its hand-checked reference values",
         nrow(r) > 0 && all(r$rerun_identical) && !any(r$matches_expected %in% FALSE) && all(r$rows > 0 | r$kind %in% SAMPLE_NO_ROWS) && all(r$accepted) && !any(r$reference_ok %in% FALSE)) })
+local({ sd <- file.path(here, "tests", "samples"); hb <- list.files(sd, "^hobo_binary__", full.names = TRUE); hc <- list.files(sd, "^hobo_csv__", full.names = TRUE)   # a header has no table for reference.csv
+  if (length(hb) && length(hc)) { b <- read_hobo_binary_header(hb[1])$meta; c <- read_hobo_csv(hc[1], header_only = TRUE)$meta
+    check("the .hobo header gives the serial, plot title and time zone its HOBOware export states", identical(b$serial, c$serial) && identical(b$title, c$title) && identical(b$offset_hours, c$offset_hours) && grepl("^HOBO U", b$model)) } })
 check("no app function replaces a core function of the same name", !length(core_shadows(app_code_files(PIPELINE_DIR))))
 check("each cached step has its own code fingerprint, the same when computed again", identical(STEP_HASH, step_hashes(globalenv())) && all(nchar(unlist(STEP_HASH)) == 12))
 local({                                                               # the shared deployment sheet (core deployments.R)
@@ -435,6 +438,9 @@ local({                                                               # damaged 
   raw0 <- tempfile("raw0"); dir.create(raw0); for (f in list.files(sd, "__", full.names = TRUE)) if (!dir.exists(f)) file.copy(f, file.path(raw0, sub("^.*?__", "", basename(f))))
   p0 <- tempfile("p0"); rn(raw0, p0); t <- damaged_table_runs(p0, function() rn(raw0, p0)); bad <- t[result != "ok" & !startsWith(result, "The set-up table")]; if (nrow(bad)) print(bad)
   check(paste0("a damaged or emptied set-up table never stops a run without saying which table: ", nrow(t), " runs"), !nrow(bad)) })
+local(source(file.path(here, "tests", "test_bad_files.R"), local = TRUE))   # damaged raw files: a clear problem or flag, never a stop or a silent loss
+local(source(file.path(here, "tests", "test_golden.R"), local = TRUE))      # the golden project: a whole run against accepted outputs
+local(source(file.path(here, "tests", "test_formulas.R"), local = TRUE))    # derived values against worked examples from their sources
 cat("sensors above the ground (a chain in a casing that stands above the surface)\n")
 local({
   check("depth convention: \"down\" (the default) keeps typed depths, \"up\" turns them over", depth_sign(list()) == 1 && depth_sign(list(depth_positive = "down")) == 1 && depth_sign(list(depth_positive = "Up")) == -1)

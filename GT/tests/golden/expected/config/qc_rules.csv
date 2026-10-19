@@ -1,0 +1,6 @@
+variable,applies_to,min,max,max_spike,max_flat_hours,flat_exempt_band,action,notes,rule_id
+temp,all,-50,50,1,"","",remove,Limits beyond which a thermistor is open or shorted or its logger is failing. A spike is a single reading that jumps by at least max_spike (and by far more than the sensor usually moves) and comes straight back.,Q-01
+temp,all,"","","",720,0.2,flag,Unchanged for 30 days: a stuck sensor. Readings within 0.2 C of zero are exempt (the zero curtain is real).,Q-02
+vwc,all,0,0.8,0.3,"","",remove,"Volumetric water content, m3/m3.",Q-03
+ec,all,0,20,"","","",remove,"Bulk electrical conductivity, mS/cm.",Q-04
+battery,all,2.5,4.2,"","","",flag,"GeoPrecision battery, V.",Q-05

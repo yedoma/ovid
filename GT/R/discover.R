@@ -90,7 +90,7 @@ make_bundles <- function(m) {
     else if (is.na(b[[hit]]$serial)) b[[hit]]$serial <- r$serial
     m[path == r$path, bundle := b[[hit]]$id]
   }
-  if (!length(b)) return(list(files = m, bundles = data.table()))
+  if (!length(b)) return(list(files = m[, use := FALSE], bundles = data.table()))                 # no file of a logger type (all empty or unknown)
   bt <- rbindlist(lapply(b, function(x) data.table(bundle = x$id, type = x$type, serial = x$serial, dir = x$dir)))
   m[!is.na(bundle) & is.na(serial), serial := bt$serial[match(bundle, bt$bundle)]]
   # the file each bundle is read from

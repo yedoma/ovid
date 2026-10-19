@@ -1,0 +1,4 @@
+site,water_year,gst_depth_m,air_source,days_s,days_a,fdd_s,tdd_s,fdd_a,tdd_a,n_f,n_t,magst,maat,surface_offset,complete_s,complete_a
+Pit A,2020,0.1,"",1,"",0,23.8,"","","","",23.804,"","",FALSE,""
+Pit B,2023,0.05,"",1,"",0,7.7,"","","","",7.684,"","",FALSE,""
+Pit D,2019,0.1,sensor 1.5 m above the ground,2,2,0,16.1,0,23.4,"","",8.065,11.722,"",FALSE,FALSE

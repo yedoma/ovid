@@ -1,0 +1,7 @@
+pattern,exclude,variable,notes
+^T10[79]_C(_[0-9]+)?_Avg$,"",temp,107/109 thermistors (averages)
+^T10[79]_[0-9]+_C_Avg$,"",temp,"107/109 thermistors, other naming"
+^(Therm|Tsoil|SoilT|GT|TS|Ground_?T|T_?soil)[_0-9A-Za-z]*(_Avg)?$,(Max|Min|Std)$,temp,other ground temperature names
+^T_?[0-9]+_?cm(_Avg)?$,(Max|Min)$,temp,"temperature named by depth (T10cm, T_10_cm)"
+^(VW|VWC|WaterContent|SWC)(_[0-9]+)?(_Avg)?$,(Max|Min)$,vwc,soil water content
+^(EC|BulkEC|Soil_?EC)(_[0-9]+)?(_Avg)?$,(Max|Min)$,ec,soil conductivity

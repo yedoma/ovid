@@ -1,0 +1,5 @@
+site,site_group,landcover,instrument,status,utm_zone,easting,northing,latitude,longitude,install_date,drilling_method,borehole_depth_m,sensor_type,sensor_accuracy,calibration,description,source,profile
+Pit B,Pit B,"","","","","","","","","","","","","","","","",""
+Pit D,Pit D,"","","","","","","","","","","","","","","","",""
+Borehole C,Borehole C,"","","","","","","","","","","","","","","","",""
+Pit A,Pit A,"","","","","","","","","","","","","","","","",""

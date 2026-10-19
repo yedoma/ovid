@@ -1,0 +1,6 @@
+bundle,type,serial,folder,members,n_files,source_file,source_format,raw_file,exports,status,advice,values_read,values_out,dropped,reconciles,source_md5
+B003,rbr,123,raw,000123_20240926_1542.hex | 000123_20240926_1542.txt,2,000123_20240926_1542.hex,rbr_hex,000123_20240926_1542.hex,000123_20240926_1542.txt,ok,"",64,64,0,TRUE,cecb53b8ace4c1fc1160412dd15cb559
+B004,rbr,123,raw,000123_20240926_1544.xlsx,1,000123_20240926_1544.xlsx,rbr_xls,"","",ok,"",432,368,64,TRUE,b29dd490cb90c548f2f87cf03fc7dc1d
+B001,hobo,1000004,raw,1000004_SiteA.hobo | 1000004_SiteA20240921.csv,2,1000004_SiteA20240921.csv,hobo_csv,1000004_SiteA.hobo,"",ok,"",232,232,0,TRUE,91f1ee58d67c4ee43023f784dc8f0df0
+B002,campbell,1001TABLE1,raw,CR300_1001_Table1.dat,1,CR300_1001_Table1.dat,campbell_toa5,CR300_1001_Table1.dat,"",ok,"",336,336,0,TRUE,bad5bec4662acc47fab27455ceab78d9
+B005,geoprecision,E00001,raw,E00001_20240927165437.csv,1,E00001_20240927165437.csv,fg2_csv,"","",ok,"",254,252,2,TRUE,7dda9f695521f308773717fb5b611ce0

@@ -14,3 +14,34 @@ rbr_hex__000123_20240926_1542.hex,first_time,2021-04-15 22:00:00,"raw file 'Time
 rbr_hex__000123_20240926_1542.hex,last_time,2021-04-16 01:30:00,"sample 8 at the 00:30:00 sample period (Ruskin export row 8, 2021-04-16T08:30 UTC)"
 rbr_hex__000123_20240926_1542.hex,col:value@1,-0.3919342,"Ruskin 2.4.6 export 014040_20240926_1542.txt row 1, first temperature (T1)"
 rbr_hex__000123_20240926_1542.hex,col:value@8,-0.3896876,"Ruskin 2.4.6 export 014040_20240926_1542.txt row 8, first temperature (T1)"
+fg2_f2b__E00001_20240927165437.f2b,rows,184584,"FG2-Shell V3.93a export of the same download (E5320D_20240927165437.csv; its first 60 lines are the fg2_csv sample): 35723 data rows x 5 channels + 5969 rows with HK-BAT"
+fg2_f2b__E00001_20240927165437.f2b,first_time,1998-01-01 00:00:30,"FG2-Shell export line 12308 (after <FIRMWARE RESET>: the logger clock was not set; kept as written)"
+fg2_f2b__E00001_20240927165437.f2b,last_time,2024-09-27 17:00:00,FG2-Shell export line 35780 (row 35723)
+fg2_f2b__E00001_20240927165437.f2b,col:value@1,21,"FG2-Shell export line 11, #1 (T1), record 1"
+fg2_f2b__E00001_20240927165437.f2b,col:value@35723,8.75,"FG2-Shell export line 35780, #1 (T1), record 35723"
+fg2_f2b__E00001_20240927165437.f2b,col:value@35724,21.92,"FG2-Shell export line 11, #2 (T2), record 1 (the .f2b float32 is 21.92000008; FG2-Shell prints 2 decimals)"
+fg2_f2b__E00001_20240927165437.f2b,col:err@149368,logger reported (NoReply),"FG2-Shell export line 6497, #5 (T5), record 6476: (NoReply)"
+fg2_f2b__E00001_20240927165437.f2b,col:value@178616,3.408,"FG2-Shell export line 11, HK-BAT(V), record 1"
+fg2_f2b__E00001_20240927165437.f2b,col:TIMESTAMP@12278,1998-01-01 00:00:30,"FG2-Shell export line 12308, record 12278"
+em50_xls__EM00003_SiteB_20240921_1506.xls,rows,57608,"workbook sheet 1: 7201 records (cell A2 '7201 records') x 4 ports x VWC and Temp"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:TIMESTAMP@1,2023-09-19 16:00:00,"sheet 1 cell A4 = 45188.666666666664 (Excel days since 1899-12-30, logger clock)"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:value@1,0.53132975101470947,"sheet 1 cell B4, Port 1 m3/m3 VWC"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:err@2,raw count 4094 (sensor error code),"sheet Unprocessed Data cell B5 = 4094 (sheet 1 B5 shows 1.011, ECH2O Utility's value for the error code)"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:value@7202,-12.800000190734863,"sheet 1 cell C4, Port 1 degC Temp"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:value@14403,0.25816264748573303,"sheet 1 cell D4, Port 2 m3/m3 VWC"
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:TIMESTAMP@5265,2000-01-02 00:30:00,"sheet 1 cell A5268 = 36527.020833333336: the logger clock jumped back to 2000 after record 5264 (kept as written)"
+em50_xls__EM00003_SiteB_20240921_1506.xls,first_time,2000-01-02 00:30:00,sheet 1 column A minimum (cell A5268)
+em50_xls__EM00003_SiteB_20240921_1506.xls,last_time,2024-01-07 07:30:00,sheet 1 column A maximum (cell A5267 = 45298.3125)
+em50_xls__EM00003_SiteB_20240921_1506.xls,col:TIMESTAMP@7201,2007-09-17 10:00:00,sheet 1 cell A7204 = 39342.416666666664 (last record)
+campbell_toa5__CR300_1001_Table1.dat,rows,336,raw file: 56 data rows (lines 5 to 60) x 6 T109 columns
+campbell_toa5__CR300_1001_Table1.dat,first_time,2019-09-10 17:00:00,raw file line 5
+campbell_toa5__CR300_1001_Table1.dat,last_time,2019-09-13 00:00:00,raw file line 60
+campbell_toa5__CR300_1001_Table1.dat,col:value@1,7.992,"raw file line 5, T109_C_Avg"
+campbell_toa5__CR300_1001_Table1.dat,col:value@57,6.788,"raw file line 5, T109_C_2_Avg"
+campbell_toa5__CR300_1001_Table1.dat,col:value@336,2.405,"raw file line 60, T109_C_6_Avg"
+rbr_xls__000123_20240926_1544.xlsx,rows,432,"Ruskin .xls rows 7 to 60 (54 samples) x 8 temperatures"
+rbr_xls__000123_20240926_1544.xlsx,first_time,2021-04-15 22:00:00,"Ruskin .xls 014040_20240926_1544.xls cell A7 '15/04/2021 22:00:00.000' (logger time; the rbr_hex sample's 'Timestamp 2021/04/15 22:00:00 at sample 1')"
+rbr_xls__000123_20240926_1544.xlsx,last_time,2021-04-17 00:30:00,Ruskin .xls cell A60
+rbr_xls__000123_20240926_1544.xlsx,col:value@1,-0.3919342,"Ruskin .xls cell B7, first temperature (T1); the same value as the rbr_hex and rbr_txt samples"
+rbr_xls__000123_20240926_1544.xlsx,col:value@8,-0.3896876,"Ruskin .xls cell B14 (T1, sample 8); the rbr_hex sample's col:value@8"
+rbr_xls__000123_20240926_1544.xlsx,col:value@55,-0.1090454,"Ruskin .xls cell C7, second temperature (T2), sample 1"

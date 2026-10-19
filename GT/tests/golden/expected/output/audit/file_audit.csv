@@ -1,0 +1,8 @@
+file,bundle,status,used,type,serial,format,md5,size_bytes,first_ts,last_ts,read,copy_of,in_output,used_in,dropped,dropped_why,values_removed,reconciles,what_happened
+CR300_1001_Table1.dat,B002,ok,TRUE,campbell,1001TABLE1,campbell_toa5,bad5bec4662acc47fab27455ceab78d9,4108,2019-09-10 17:00:00,2019-09-13 00:00:00,336,"",336,Pit D,0,"",0,TRUE,all 336 values in the output
+E00001_20240927165437.csv,B005,ok,TRUE,geoprecision,E00001,fg2_csv,7dda9f695521f308773717fb5b611ce0,3036,2020-07-24 07:57:48,2020-07-26 07:00:00,254,"",252,Pit A | battery table,2,2 spike,0,TRUE,252 of 254 values in the output
+1000004_SiteA20240921.csv,B001,ok,TRUE,hobo,1000004,hobo_csv,91f1ee58d67c4ee43023f784dc8f0df0,3334,2023-09-27 15:00:00,2023-09-28 19:30:00,232,"",232,Pit B,0,"",0,TRUE,all 232 values in the output
+1000004_SiteA.hobo,B001,proprietary_not_readable,FALSE,hobo,1000004,hobo_binary,da15b087fb9475126dea2881f6ac6a9f,65536,"","","","","","","","","","",proprietary_not_readable
+000123_20240926_1542.hex,B003,ok,TRUE,rbr,123,rbr_hex,cecb53b8ace4c1fc1160412dd15cb559,2406,2021-04-15 22:00:00,2021-04-16 01:30:00,64,"",64,Borehole C,0,"",0,TRUE,all 64 values in the output
+000123_20240926_1544.xlsx,B004,ok,TRUE,rbr,123,rbr_xls,b29dd490cb90c548f2f87cf03fc7dc1d,7102,2021-04-15 22:00:00,2021-04-17 00:30:00,432,"",368,Borehole C,64,64 duplicate_value,0,TRUE,368 of 432 values in the output
+000123_20240926_1542.txt,B003,export_not_used,FALSE,rbr,123,rbr_txt,4e1441ba002efebc6155cea6dd3039cf,7915,"","","","","","","","","","",export_not_used

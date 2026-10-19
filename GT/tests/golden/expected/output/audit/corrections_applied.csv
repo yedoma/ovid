@@ -1,0 +1,17 @@
+group,item,does,n,detail
+On by default,Readings with corrupt time stamps among good ones (off the time grid and out of order) are left out; each is in the audit trail,removed,0,""
+On by default,"Readings stamped before the clock-reset year (Settings, Advanced) or in the future are left out as a reset clock (off: kept at the time they carry)",removed,0,""
+On by default,Every time stamp is moved to the base zone (the time zone in Settings),changed,0,""
+On by default,"Sensors with no depth are given one: the first at the default first depth, then one step deeper each (Settings, Time and depths). Off: their values are left out until a depth is typed",sensors filled,0,""
+On by default,"Short daily gaps at depth are estimated (linearly, or from the sensors above and below); estimated days are marked and kept out of annual statistics unless that is switched on",filled,0,""
+On by default,Flag sensors that swing like air: buried sensors whose daily range is like the air's,flagged,0,""
+On by default,Flag the start of a record where every sensor reads the same (not yet in the ground),flagged,432,""
+On by default,"Check RBR .hex files against their Ruskin exports (Raw files, Downloads); no value is changed",flagged,0,""
+On by default,"Flags decided not a problem (Needs you) are left out of the exported flag columns; flags.csv keeps them, marked accepted",flagged,"",""
+On by default,Days on which a site departs from the other sites at the same depth are flagged,flagged,0,""
+Quality rules and checks,Spike,removed,2,temp
+Totals,corrections,"",11,""
+Totals,removed,"",2,""
+Totals,changed,"",0,""
+Totals,flagged,"",432,""
+Totals,values,"",1243,""

@@ -1,0 +1,2 @@
+logger_id,raw_file,export_file,values_compared,max_abs_diff,export_values,result
+RBR 123,000123_20240926_1542.hex,000123_20240926_1542.txt,64,4.89e-08,376,agree

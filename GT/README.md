@@ -54,6 +54,10 @@ or without the app:
 ```
 Rscript gt_pipeline.R          # folders from CFG at the top of the file, or GT_RAW_DIRS (; separated), GT_METADATA_DIR, GT_PROJECT_DIR
 Rscript tests/run_tests.R      # builds synthetic files of every format, runs the pipeline on them and checks the results
+                               # (also the reader samples, damaged files, the golden project and the formula checks below)
+Rscript tests/test_bad_files.R # damaged copies of the samples: each gives a clear problem or flag
+Rscript tests/test_golden.R    # a whole run on tests/golden against accepted outputs; `accept "<name>"` after checking them
+Rscript tests/test_formulas.R  # each derived value against a worked case from its source, or a hand-computed one
 ```
 Needs R 4.2+ with data.table, ggplot2, readxl, zip, shiny and DT (installed on first run if missing).
 

@@ -256,6 +256,8 @@ run_pipeline_steps <- function(cfg = CFG) {
         problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], unreadable = unreadable, log = AUDIT$log, seen = seen_l[[lid]]))) }
     audit_flush(paste0("1_", lid))
   }
+  if (!length(seen_l)) stop("None of the ", nrow(m), " files in ", paste(cfg$raw_dirs, collapse = ", "), " holds readings GT can use (",
+                             paste(vapply(AUDIT$problems, function(x) paste0(x$where, ": ", x$problem), ""), collapse = "; ") %||% "", "); nothing to process")
   say("  ", length(loggers), " loggers stitched", if (n_hit[["read"]]) paste0(" (", n_hit[["read"]], " unchanged, reused)"))
   read_counts <- if (length(read_counts)) rbindlist(read_counts)[, .(values_read = sum(values_read)), by = .(logger_id, channel)] else data.table(logger_id = character(), channel = character(), values_read = integer())
   meta_rows <- if (length(meta_rows)) rbindlist(meta_rows)[, .SD[.N], by = logger_id] else data.table(logger_id = character(), model = character(), title = character(), interval_s = numeric())

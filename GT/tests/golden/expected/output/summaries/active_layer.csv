@@ -1,0 +1,5 @@
+site,year,alt_m,date_alt,days,below_deepest,permafrost,years_needed,frozen_years,deepest_frozen_m,deepest_m,shallowest_m,sensors,result,surface_change_m,alt_from_surface_m
+Borehole C,2021,"","",1,0,"","","","","","","",year incomplete at one or more depths,0,""
+Pit A,2020,"","",1,1,"","","","","","","",year incomplete at one or more depths,0,""
+Pit B,2023,"","",1,1,"","","","","","","",year incomplete at one or more depths,0,""
+Pit D,2019,"","",2,2,"","","","","","","",year incomplete at one or more depths,0,""

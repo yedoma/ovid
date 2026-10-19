@@ -5,6 +5,14 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (tests, 2026-10-19)**
+- Reader samples for every format GT reads: a second .f2b (the download behind the fg2_csv sample, decoded row for row the same as its FG2-Shell V3.93a export: 184,584 values, times, NoReply and battery), an EM50 workbook, a Campbell TOA5 table, a .hobo header and a Ruskin Excel export (its first 60 rows as .xlsx), with reference values from the raw files and vendor exports. tests/test_bad_files.R (damaged files), tests/test_golden.R with tests/golden (a whole run against accepted outputs), tests/test_formulas.R (derived values against worked cases); all run by tests/run_tests.R. **Output changes:** none.
+
+**Fixed (damaged files, 2026-10-19)**
+- A text file that ends inside a row (no final line break) has that row's values marked "last row cut short", not read as whole values (a cut 23.52 read as 23.5). **Output changes:** only for such files: their last row is removed, with the reason.
+- FG2-Shell exports read each row by the header above it: a parameter set that changed the channels shifted the earlier rows' values into the wrong channels. **Output changes:** only for exports whose headers name different channels.
+- A file with its header only (FG2-Shell, HOBOware, TOA5, RBR .hex) is reported as holding no readings, not as an unreadable file with an internal error. A raw folder whose files are all empty or header-only stops with a message naming each file, not an internal error. **Output changes:** none.
+
 **Changed (toggles, 2026-10-14)**
 - Plot layers (0 °C isotherm, sensor depths), One axis for every depth and Complete years only are toggles; export choices stay checkboxes. **Output changes:** none.
 

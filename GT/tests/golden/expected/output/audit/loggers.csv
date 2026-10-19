@@ -1,0 +1,5 @@
+logger_id,logger_type,serial,sites,sensors,first,last,values,model,title,interval_s
+Campbell 1001TABLE1,campbell,1001TABLE1,Pit D,6,2019-09-10T17:00:00Z,2019-09-13T00:00:00Z,336,Campbell CR300,CR300_Generic,3600
+GeoPrecision E00001,geoprecision,E00001,Pit A,5,2020-07-24T07:57:48Z,2020-07-26T07:00:00Z,243,GeoPrecision FG2,"",3600
+HOBO 1000004,hobo,1000004,Pit B,4,2023-09-27T15:00:00Z,2023-09-28T19:30:00Z,232,HOBO U12-008 4-Ch Ext Out/Ind,SiteA,1800
+RBR 123,rbr,123,Borehole C,8,2021-04-15T22:00:00Z,2021-04-17T00:30:00Z,432,RBR XR-420,"",1800

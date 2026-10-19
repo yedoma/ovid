@@ -1,0 +1,5 @@
+site,instrument,loggers,depths,depth_list,assumed_depths,first,last,values,flagged,site_group,landcover
+Borehole C,RBR,123,8,"0.25, 0.50, 1.00, 1.50, 2.00, 3.00, 5.00, 8.00",0,2021-04-15T22:00:00Z,2021-04-17T00:30:00Z,432,432,Borehole C,""
+Pit A,GeoPrecision,E00001,5,"0.10, 0.25, 0.50, 1.00, 2.00",0,2020-07-24T07:57:48Z,2020-07-26T07:00:00Z,243,0,Pit A,""
+Pit B,HOBO,1000004,4,"0.05, 0.20, 0.50, 1.00",0,2023-09-27T15:00:00Z,2023-09-28T19:30:00Z,232,0,Pit B,""
+Pit D,Campbell,1001TABLE1,6,"-1.5,  0.1,  0.2,  0.4,  0.8,  1.6",0,2019-09-10T17:00:00Z,2019-09-13T00:00:00Z,336,0,Pit D,""

@@ -25,6 +25,14 @@ melt_channels <- function(w, chans, variable, err = NULL) {
   out
 }
 
+# A text file that does not end with a line break was cut off (a copy or download that stopped): its last row can hold a value
+# cut short ("23.5" of 23.52), so that row's values are marked, not read as whole. Every logger and software export seen ends
+# with a line break (2,394 files checked).
+CUT_ERR <- "last row cut short (the file ends inside a row)"
+ends_cut <- function(path) { n <- file.info(path)$size; if (is.na(n) || n == 0) return(FALSE)
+  con <- file(path, "rb"); on.exit(close(con)); seek(con, n - 1); !identical(readBin(con, "raw", 1L), as.raw(10L)) }
+mark_cut <- function(long, path) { if (nrow(long) && ends_cut(path)) long[ord == max(ord) & is.na(err), `:=`(value = NA_real_, err = CUT_ERR)]; long }
+
 # ---- what kind of file is this? -------------------------------------------------
 sniff_format <- function(path) {
   ext <- tolower(tools::file_ext(path)); size <- file.info(path)$size
@@ -105,7 +113,8 @@ read_rbr_hex <- function(path, header_only = FALSE) {
   if (header_only) return(list(meta = meta))
   hb <- as.integer(g("Number of bytes in header")); di <- grep("^Number of bytes of data", l)[1]
   if (is.na(di) || is.na(nch) || nch < 1) stop("no data section in the .hex file")
-  body <- l[(di + 1):length(l)]; body <- body[grepl("^[0-9A-Fa-f]+$", body)]
+  body <- if (di < length(l)) l[(di + 1):length(l)] else character(); body <- body[grepl("^[0-9A-Fa-f]+$", body)]
+  if (!length(body)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))   # the header only
   s <- toupper(paste(body, collapse = ""))
   if (!is.na(hb) && hb > 0) s <- substring(s, 2L * hb + 1L, nchar(s))   # substring() stops at 1e6 characters unless given an end
   n <- nchar(s) %/% 6L
@@ -162,7 +171,7 @@ read_rbr_txt <- function(path, header_only = FALSE) {
   chans <- sprintf("T%d", seq_len(nch)); vars <- ifelse(grepl("Temp", names_after[seq_len(nch)], ignore.case = TRUE) | is.na(names_after[seq_len(nch)]), "temp", "raw")
   for (k in seq_len(nch)) set(wide, j = chans[k], value = num_cells(vals[[k]]))
   meta$interval_s <- step_of(head(wide$TIMESTAMP, 500)); meta$channels <- nch
-  list(meta = meta, data = melt_channels(wide, chans, vars), events = empty_events())
+  list(meta = meta, data = mark_cut(melt_channels(wide, chans, vars), path), events = empty_events())
 }
 
 # ---- RBR Ruskin Excel export (times in the logger's clock) -----------------------------------
@@ -199,21 +208,25 @@ read_fg2_csv <- function(path, header_only = FALSE) {
                title = NA_character_, offset_hours = NA_real_, interval_s = NA_real_, rows = sum(grepl("^[0-9]+,", l)), download = dl,
                export_utc = as.POSIXct(strptime(now, "%d.%m.%Y %H:%M:%S", tz = "UTC")))
   if (header_only) return(list(meta = meta))
-  hi <- which(startsWith(l, "NO,TIME"))
-  if (!length(hi)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))
-  hdr <- strsplit(l[hi[length(hi)]], ",", fixed = TRUE)[[1]]                 # the last header has the units (the first can be "(unk.)")
-  di <- which(grepl("^[0-9]+,", l))
-  p <- tstrsplit(l[di], ",", fixed = TRUE, fill = NA, keep = seq_along(hdr))
-  wide <- data.table(TIMESTAMP = as.POSIXct(strptime(p[[2]], "%d.%m.%Y %H:%M:%S", tz = "UTC")), ord = seq_along(di))
-  vc <- 3:length(hdr); chans <- sub("\\(.*$", "", hdr[vc]); chans[grepl("^HK-BAT", chans)] <- "HK-BAT"
+  hi <- which(startsWith(l, "NO,TIME")); di <- which(grepl("^[0-9]+,", l))
+  if (!length(hi) || !length(di)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))
+  # each row is read by the header above it (a new parameter set can change the channels); a header's units are left out of
+  # its names, as the first header can say "(unk.)" where a later one says "(oC)"
+  hn <- vapply(strsplit(l[hi], ",", fixed = TRUE), function(h) paste(sub("\\(.*$", "", h), collapse = ","), "")
+  sg <- hn[pmax(1L, findInterval(di, hi))]
+  w <- rbindlist(lapply(unique(sg), function(s) { k <- which(sg == s); h <- strsplit(s, ",", fixed = TRUE)[[1]]
+    p <- tstrsplit(l[di[k]], ",", fixed = TRUE, fill = NA); p <- c(p, rep(list(rep(NA_character_, length(k))), max(0L, length(h) - length(p))))[seq_along(h)]
+    setnames(setDT(p), h)[, ord := k] }), fill = TRUE)[order(ord)]
+  wide <- data.table(TIMESTAMP = as.POSIXct(strptime(w$TIME, "%d.%m.%Y %H:%M:%S", tz = "UTC")), ord = w$ord)
+  vc <- setdiff(names(w), c("NO", "TIME", "ord")); chans <- vc; chans[grepl("^HK-BAT", chans)] <- "HK-BAT"
   vars <- ifelse(chans == "HK-BAT", "battery", ifelse(grepl("^#", chans), "temp", "raw"))
   chans <- sub("^#", "T", chans)
   errs <- vector("list", length(vc))
-  for (k in seq_along(vc)) { v <- p[[vc[k]]]; v[is.na(v)] <- ""
+  for (k in seq_along(vc)) { v <- w[[vc[k]]]; v[is.na(v)] <- ""
     e <- ifelse(grepl("^\\(", v), v, NA_character_)                              # (NoReply), (Error) ...
     set(wide, j = chans[k], value = num_cells(ifelse(is.na(e), v, NA)))
     errs[[k]] <- ifelse(is.na(e), NA_character_, paste("logger reported", e)) }
-  long <- melt_channels(wide, chans, vars, errs)
+  long <- mark_cut(melt_channels(wide, chans, vars, errs), path)
   long <- long[!(variable == "battery" & is.na(value) & is.na(err))]          # battery is written only every few rows
   # events: each tag belongs to the next data row
   nxt <- findInterval(which(tag), di) + 1L; nxt[nxt > length(di)] <- length(di)
@@ -240,6 +253,7 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   meta <- list(format = "hobo_csv", type = "hobo", serial = serial, model = "HOBO", title = title, offset_hours = offset, interval_s = NA_real_,
                rows = length(l) - hi, download = NA, water = water)
   if (header_only) return(list(meta = meta))
+  if (hi >= length(l)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))   # the header only
   d <- fread(text = l[(hi + 1):length(l)], header = FALSE, sep = h$sep, colClasses = "character", fill = TRUE, na.strings = NULL)
   if (!nrow(d)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))
   tt <- parse_dt(d[[dcol]])
@@ -251,7 +265,7 @@ read_hobo_csv <- function(path, header_only = FALSE) {
     if (!length(k)) return(NULL); data.table(TIMESTAMP = tt[k], event = sub(" *\\(.*$", "", hdr[j])) }))
   if (!nrow(evt)) evt <- empty_events()
   meta$interval_s <- step_of(head(tt, 500)); meta$channels <- length(ti)
-  list(meta = meta, data = melt_channels(wide, lbl, rep("temp", length(ti))), events = evt)
+  list(meta = meta, data = mark_cut(melt_channels(wide, lbl, rep("temp", length(ti))), path), events = evt)
 }
 
 # The .hobo binary is Onset's closed format: only its plain-text identity is read (model, serial, title, zone).
@@ -308,7 +322,9 @@ read_campbell_toa5 <- function(path, header_only = FALSE, patterns = NULL) {
     if (nzchar(patterns$exclude[i] %||% "")) hit <- hit & !grepl(patterns$exclude[i], nm, ignore.case = TRUE, perl = TRUE)
     var[hit] <- patterns$variable[i] }
   keep <- which(!is.na(var) & var != "skip")
-  d <- fread(path, skip = toa5_skip(path), header = FALSE, sep = th$sep, colClasses = "character", na.strings = NULL, fill = TRUE, blank.lines.skip = TRUE)
+  sk <- toa5_skip(path); hl <- suppressWarnings(readLines(path, n = sk + 40L, warn = FALSE, skipNul = TRUE))
+  if (!any(nzchar(trimws(hl[-seq_len(sk)])))) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))   # the header only
+  d <- fread(path, skip = sk, header = FALSE, sep = th$sep, colClasses = "character", na.strings = NULL, fill = TRUE, blank.lines.skip = TRUE)
   meta$rows <- nrow(d)
   if (!nrow(d) || !length(keep)) return(list(meta = meta, data = empty_data(), events = empty_events()))
   tt <- parse_dt(d[[1]])
@@ -319,7 +335,7 @@ read_campbell_toa5 <- function(path, header_only = FALSE, patterns = NULL) {
     if (grepl("F", un[keep[k]] %||% "") && grepl("Deg", un[keep[k]] %||% "") && var[keep[k]] == "temp") x <- convert_unit(x, "degF", "degC")
     set(wide, j = nm[keep[k]], value = x); errs[[k]] <- e }
   meta$interval_s <- step_of(head(tt, 500)); meta$channels <- sum(var[keep] == "temp")
-  list(meta = meta, data = melt_channels(wide, nm[keep], var[keep], errs), events = empty_events())
+  list(meta = meta, data = mark_cut(melt_channels(wide, nm[keep], var[keep], errs), path), events = empty_events())
 }
 
 default_campbell_patterns <- function() fread(sep = "~", colClasses = "character", na.strings = NULL, text = "
