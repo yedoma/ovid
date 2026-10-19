@@ -1,0 +1,15 @@
+pattern,group
+^(Pitch|Roll|IntTemp|IntRH|SupVolt|ResFreq|Alert|ExtTemp|panel_tmpr_CDM.*|AM[0-9]+_T_AVG|Panel_T_AVG_[0-9]+|StationName|SiteName|SerialNumber|OSVersion|OSDate|ProgName|ProgSig(nature)?|RunSignature|StartTime|LithiumBattery|SkippedScan|SkippedSystemScan|VarOutOfBound|WatchdogErrors|Low[0-9]+VCount|PakBusAddress|CompileResults|CPUDriveFree|USRDriveFree|CardBytesFree|ScanRate|Slow_Scan_Rate|ApplyAndRestart|BusLoad|ModuleReportCount|ActiveModules|BuffErr|RxErrMax|TxErrMax|FrameErr|ModuleInfo.*|CPI_DEVICE.*|.*_Add|.*SerialNum(ber)?|.*Const|.*_sensitivity|InitialSnowDepth|SR50A?DistToGrnd)$,Logger housekeeping
+^ground_temp|^soil_probe_temp|^surface_temp|^temp_above_ground,Ground temperature
+^snow_temp,Snow
+^soil_ec,Soil moisture
+^radiometer_temp,Radiation
+batt|^panel_temp|ptemp,Power
+^rh|rh$|^RH_|humid,Relative humidity
+^air_temp|AirT,Air temperature
+soil_temp|^T10[79]|^10[79]_|Temp109|HumT|HolT|CS655Temp|^TC_|T_C_|therm,Ground temperature
+vwc|WaterContent|^HP[0-9]_(WC|VC)|moist,Soil moisture
+wind|^WS_|wnd,Wind
+^sw_|^lw_|net_rad|albedo|^Rs_|^Rl_|CM3|CG3|CNR|NetR|Tot_Avg$|^Rn_|^SW|^LW,Radiation
+snow|SR50,Snow
+rain|precip|pluvio|geonor,Precipitation

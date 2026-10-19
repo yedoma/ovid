@@ -1,0 +1,2 @@
+source_file,stage,rule,level,n,entries
+<raw>/CR1000X_52001_StationB_ThirtyMinute.dat,qc,range_min,cell,250,250

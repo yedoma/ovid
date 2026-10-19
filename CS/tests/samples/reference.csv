@@ -4,3 +4,18 @@ TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,first_time,2023-0
 TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,last_time,2023-11-15 00:00:00,raw file line 60
 TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,col:PTemp_C_Avg@1,14.67,raw file line 5
 TOA5__CR1000X_10001_SiteA_Table2_daily_2023_09_18_10_24_31.dat,col:Rain_tip_co_Tot@5,8.6,raw file line 9
+TOB3__CR3000_4001_flux_3.dat,rows,145,"LoggerNet TOA5 copy of the same table (CR3000_1372_CPU_..._3824_20110502_20110830.dat), lines 23 to 167: RECORD 18 to 162; every column of every record agrees within its 7 printed digits, NAN in the same 35 cells"
+TOB3__CR3000_4001_flux_3.dat,first_time,2011-05-31 19:40:00,TOA5 copy line 23 (RECORD 18)
+TOB3__CR3000_4001_flux_3.dat,last_time,2011-06-02 19:40:00,TOA5 copy line 167 (RECORD 162)
+TOB3__CR3000_4001_flux_3.dat,col:kh_Avg@1,206.5128,"TOA5 copy line 23, kh_Avg"
+TOB3__CR3000_4001_flux_3.dat,col:t_hmp_mean@50,20.46359,"TOA5 copy line 72 (RECORD 67), t_hmp_mean"
+mixed-array__130_20050905_ST01.dat,rows,28,raw file: 28 lines of array 130 (23 fields)
+mixed-array__130_20050905_ST01.dat,first_time,2005-09-05 11:32:00,"raw file line 1: year 2005, day 248, 1132 (labels Year_RTM, Day_RTM, Hour_Minute_RTM from the FSL)"
+mixed-array__130_20050905_ST01.dat,last_time,2005-09-05 12:26:00,"raw file line 28: 2005, 248, 1226"
+mixed-array__130_20050905_ST01.dat,col:CM3_up_AVG@1,452.64,"raw file line 1, field 5 (FSL: CM3_up_AVG)"
+mixed-array__130_20050905_ST01.dat,col:Pannel_T_AVG@28,19.97,"raw file line 28, field 23 (FSL: Pannel_T_AVG)"
+TOA5__CR200X_NoSN_SiteB_Table1.dat,rows,56,"raw file lines 5-60 (4 header lines; the logger has no serial: No_SN)"
+TOA5__CR200X_NoSN_SiteB_Table1.dat,first_time,2015-06-10 13:00:00,raw file line 5
+TOA5__CR200X_NoSN_SiteB_Table1.dat,last_time,2015-06-11 16:30:00,raw file line 60
+TOA5__CR200X_NoSN_SiteB_Table1.dat,col:T109_C_Avg@1,0.6020765,"raw file line 5, T109_C_Avg"
+TOA5__CR200X_NoSN_SiteB_Table1.dat,col:T109_C_2_Avg@56,8.146023,"raw file line 60, T109_C_2_Avg"

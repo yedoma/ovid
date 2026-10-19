@@ -1,0 +1,31 @@
+Final Storage Label File for:  ST01_001.CSI
+Date:  6/5/2005
+Time:  11:31:50
+
+130 Output_Table  30.00 Min
+1 130 L
+2 Year_RTM  L
+3 Day_RTM  L
+4 Hour_Minute_RTM  L
+5 CM3_up_AVG  H
+6 CM3_down_AVG  H
+7 CG3_up_AVG  H
+8 CG3_down_AVG  H
+9 CG3_upCor_AVG  H
+10 CG3_dnCor_AVG  H
+11 CNR1_T_C_AVG  H
+12 CNR1_T_K_AVG  H
+13 Bog_T_AVG  H
+14 Bog_RH_AVG  H
+15 BogT_10cm_AVG  H
+16 BogT_30cm_AVG  H
+17 SR50Q1_AVG  H
+18 H20Depth_AVG  H
+19 Bog_ws_AVG  L
+20 Bog_ws2_AVG  L
+21 Bog_TBRG_TOT  L
+22 Batt_V_AVG  L
+23 Pannel_T_AVG  L
+
+
+Estimated Total Final Storage Locations used per day 1776.0

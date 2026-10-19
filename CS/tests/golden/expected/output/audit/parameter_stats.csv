@@ -1,0 +1,59 @@
+station,stream,parameter,values,missing_pct,min,p01,median,p99,max,group,topic,typical_min,typical_max,outside_typical
+46001,Table1,battery_v,480,0,12.53,12.53,12.57,12.61,12.61,Power,Battery voltage,11.5,14.8,FALSE
+46001,Table1,int_rt,480,0,0,0,0,0.308399999999999,0.77,Other,"","","",FALSE
+46001,Table1,acc_rtnrt,480,0,0,0,0,0.3,0.7,Other,"","","",FALSE
+46001,Table1,acc_nrt,480,0,0,0,0,0.33,0.48,Other,"","","",FALSE
+46001,Table1,acc_total,480,0,68.16,68.71,242.6,372.7,372.9,Other,"","","",FALSE
+46001,Table1,bucket_rt,480,0,315.7,316.3,351.35,362.521,363,Other,"","","",FALSE
+46001,Table1,bucket_nr,480,0,315.7,316.3,351.4,362.5,362.8,Other,"","","",FALSE
+46001,Table1,pluvio_temp,480,0,12.5,13.237,20.85,34.442,35.9,Precipitation,Precipitation (weighing gauge),0,1500,FALSE
+46001,Table1,Result8,480,0,128,128,128,128,128,Other,"","","",FALSE
+46001,Table1,Result9,480,0,0,0,0,0,0,Other,"","","",FALSE
+46001,Table1,wind_speed,480,0,0,0,0.203,1.77889,2.071,Wind,Wind speed,0,30,FALSE
+46001,Table1,wind_speed_max,480,0,0,0,1.407,4.0006,4.927,Wind,Wind speed,0,30,FALSE
+46001,Table1,wind_speed_min,480,0,0,0,0,0.927,1.087,Wind,Wind speed,0,30,FALSE
+52001,ThirtyMinute,sw_in,83,0,-3.249,-3.08746,0.628,418.708,439.7,Radiation,Incoming shortwave (solar) radiation,-10,1200,FALSE
+52001,ThirtyMinute,sw_out,83,0,-0.469,-0.40586,1.77,38.4716,38.57,Radiation,Reflected shortwave radiation,-10,900,FALSE
+52001,ThirtyMinute,lw_in_raw,83,0,-91.7,-90.798,-19.79,0.58278,0.6,Radiation,"Longwave radiation, raw thermopile signal",-200,80,FALSE
+52001,ThirtyMinute,lw_out_raw,83,0,-20.59,-19.4994,-2.341,2.92399999999999,3.539,Radiation,"Longwave radiation, raw thermopile signal",-200,80,FALSE
+52001,ThirtyMinute,radiometer_temp,83,0,0.989,1.05132,6.401,19.1196,19.3,Radiation,"","","",FALSE
+52001,ThirtyMinute,cnr4_T_K_Avg,83,0,268.8,273.146,279.5,292.254,292.5,Radiation,"","","",FALSE
+52001,ThirtyMinute,sw_net,83,0,-3.796,-3.7714,-0.05,381.888,403.7,Radiation,Net shortwave radiation,-10,1000,FALSE
+52001,ThirtyMinute,lw_net,83,0,-85.9,-85.244,-18.86,0.611599999999997,0.997,Radiation,Net longwave radiation,-200,50,FALSE
+52001,ThirtyMinute,albedo,83,0,-35.42,-12.9233,0.113,9.14299999999998,11.07,Radiation,Albedo,0,1,TRUE
+52001,ThirtyMinute,net_rad,83,0,-46.65,-46.568,-5.796,297.526,318.6,Radiation,Net radiation,-200,900,FALSE
+52001,ThirtyMinute,lw_in,83,0,279,279.328,318.6,367,367,Radiation,Longwave radiation (temperature corrected),100,550,FALSE
+52001,ThirtyMinute,lw_out,83,0,312.5,313.402,344.1,408.18,409,Radiation,Longwave radiation (temperature corrected),100,550,FALSE
+52001,ThirtyMinute,air_temp,82,1.2,1.015,1.2256,6.508,17.9984,18.29,Air temperature,Air temperature,-50,35,FALSE
+52001,ThirtyMinute,rh,82,1.2,35.52,36.5487,94.45,100,100,Relative humidity,Relative humidity,10,100,FALSE
+52001,ThirtyMinute,air_temp_2,32,61.4,1.911,1.92185,3.8085,15.4686,15.76,Air temperature,Air temperature,-50,35,FALSE
+52001,ThirtyMinute,rh_2,32,61.4,40.59,41.4828,78.245,94.314,94.5,Relative humidity,Relative humidity,10,100,FALSE
+52001,ThirtyMinute,wind_speed,83,0,0,0,0.429,3.1701,3.207,Wind,Wind speed,0,30,FALSE
+52001,ThirtyMinute,wind_dir,83,0,0,0,187.7,337.98,359.3,Wind,Wind direction,0,360,FALSE
+52001,ThirtyMinute,wind_dir_sd,83,0,0,0,15.04,36.4712,38.8,Wind,Wind direction,0,360,FALSE
+52001,ThirtyMinute,vwc_5cm,33,60.2,0,0.00128,0.065,0.072,0.072,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_5cm,33,60.2,0,0.09408,4.464,4.75288,4.758,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_5cm,33,60.2,0,0.20512,2.249,9.6008,9.62,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_5cm,33,60.2,0,0,0,0,0,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,vwc_10cm,33,60.2,0,0.00896,0.424,0.429,0.429,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_10cm,33,60.2,0,0.58848,27.81,28.2268,28.23,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_10cm,33,60.2,0,0.16544,4.283,7.7578,7.761,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_10cm,33,60.2,0,0.00032,0.018,0.022,0.022,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,vwc_20cm,33,60.2,0,0.0128,0.596,0.6,0.6,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_20cm,33,60.2,0,0.93664,43.52,43.8936,43.9,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_20cm,33,60.2,0,0.11712,5.207,5.531,5.531,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_20cm,33,60.2,0,0.00032,0.01,0.015,0.015,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,vwc_30cm,33,60.2,0,0.01696,0.785,0.789,0.789,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_30cm,33,60.2,0,1.27392,59.4,59.7968,59.8,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_30cm,33,60.2,0,0.10208,4.764,4.784,4.784,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_30cm,33,60.2,0,0.00032,0.009,0.01,0.01,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,vwc_40cm,33,60.2,0,0.01664,0.785,0.789,0.789,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_40cm,33,60.2,0,1.27168,59.45,59.8168,59.82,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_40cm,33,60.2,0,0.08928,4.163,4.183,4.183,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_40cm,33,60.2,0,0.00064,0.034,0.038,0.038,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,vwc_50cm,33,60.2,0,0.01792,0.832,0.837,0.837,Soil moisture,Soil volumetric water content,0,0.95,FALSE
+52001,ThirtyMinute,soil_permittivity_50cm,33,60.2,0,1.36832,63.76,64.2,64.2,Other,"","","",FALSE
+52001,ThirtyMinute,soil_temp_50cm,33,60.2,0,0.07776,3.627,3.647,3.647,Ground temperature,Ground and soil temperature,-30,35,FALSE
+52001,ThirtyMinute,soil_ec_50cm,33,60.2,0,0.00096,0.051,0.054,0.054,Soil moisture,Soil electrical conductivity,0,3,FALSE
+52001,ThirtyMinute,precip,83,0,0,0,0,0,0,Precipitation,Precipitation (weighing gauge),0,1500,FALSE
+52001,ThirtyMinute,rain_tips,83,0,0,0,0,0,0,Precipitation,Rainfall (tipping bucket),0,40,FALSE

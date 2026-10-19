@@ -1,0 +1,2 @@
+Year,Final_mm,Raw_acc_total_mm,Bucket_mm,Outage_accum_mm,Low_confidence_days,Single_days_from_bucket,Bucket_only_days,Missing_days,Days,Corrected_mm
+2024,33.4,304.7,33.4,0,10,0,0,0,10,33.5

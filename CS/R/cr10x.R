@@ -49,6 +49,7 @@ sync_cr10x <- function(cfg, files) {
   f <- file.path(cfg$project_dir, "config", "cr10x.csv")
   cx <- if (file.exists(f)) read_cfg(f) else data.table(file = character(), import = character(),
     logger_id = character(), fsl = character(), start_year = character(), notes = character())
+  for (k in setdiff(c("file", "import", "logger_id", "fsl", "start_year", "notes"), names(cx))) set(cx, j = k, value = character(nrow(cx)))   # an emptied table is a table with no rows
   # rows whose file is no longer at its path (a new drive letter or volume name, a folder copied elsewhere) follow it to the
   # one file now found with the same name and folder, so their logger and FSL settings are kept
   moved <- which(!cx$file %in% files & !file.exists(cx$file))

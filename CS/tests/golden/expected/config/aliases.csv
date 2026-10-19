@@ -1,0 +1,250 @@
+pattern,parameter,logger_id,notes
+^BattV(_Avg)?$|^batt_volt_Avg$,battery_v,"",""
+^BattV_Min$|^Batt_volt_Min$,battery_v_min,"",""
+^PTemp(_C)?(_Avg)?$|^panel_tmpr_Avg$,panel_temp,"",""
+^AirTC_1_Avg$|^T_tmpr_rh$|^Bog_T$|^PT_T_Avg$|^AirTC_Avg$,air_temp,"",primary air temperature
+^AirTC_2_Avg$,air_temp_2,"",""
+^AirTC_1_(Min|Max)$,air_temp_\L\1,"",""
+^AirTC_2_(Min|Max)$,air_temp_2_\L\1,"",""
+^AirTemp_(High|Low)_Avg$,air_temp_\L\1,"",two-height profile
+^AirTemp_(High|Low)_(Min|Max)$,air_temp_\L\1_\2,"",""
+^RH_1_Avg$|^RH_tmpr_rh$|^BogRH$|^PT_RH$|^RH$,rh,"",""
+^RH_2_Avg$,rh_2,"",""
+^RH_1_(Min|Max)$,rh_\L\1,"",""
+^RH_2_(Min|Max)$,rh_2_\L\1,"",""
+^RH_(High|Low)_Avg$,rh_\L\1,"",""
+^RH_(High|Low)_(Min|Max)$,rh_\L\1_\2,"",""
+^WS_ms_S_WVT$|^wnd_spd_Avg$|^WS_ms_Avg$|^Bog_ws$|^WindSpeed_S_WVT$,wind_speed,"",""
+^WS_ms_Max$|^WindSpeed_Max$,wind_speed_max,"",""
+^WindDir_D1_WVT$|^wnd_dir_Unit_Vec$|^WindDir$|^WindDirection_D1_WVT$,wind_dir,"",""
+^WindDir_SD1_WVT$|^wnd_dir_Std$|^WindDirection_SD1_WVT$,wind_dir_sd,"",""
+^SWTop_Avg$|^CM3_up_Avg$|^Rs_incoming_Avg$|^SWin_Avg$|^ShortwaveUp_Avg$,sw_in,"",up-facing sensor = incoming
+^SWBottom_Avg$|^CM3_down_Avg$|^Rs_outgoing_Avg$|^SWout_Avg$|^ShortwaveDown_Avg$,sw_out,"",""
+^LWTopC_Avg$|^CG3_upCor_Avg$|^Rl_incoming_Avg$|^LongwaveUpCorrected_Avg$,lw_in,"",temperature-corrected
+^LWBottomC_Avg$|^CG3_dnCor_Avg$|^Rl_outgoing_Avg$|^LongwaveDownCorrected_Avg$|^LW_out_corr_Avg$,lw_out,"",temperature-corrected
+^LWTop_Avg$|^CG3_up_Avg$|^Rl_incoming_meas_Avg$|^LongwaveUp_Avg$,lw_in_raw,"",""
+^LWBottom_Avg$|^CG3_down_Avg$|^Rl_outgoing_meas_Avg$|^LongwaveDown_Avg$|^LW_out_Avg$,lw_out_raw,"",""
+^CM3Up_Avg$,sw_in,"",CNR1 named the CR1000 example-program way
+^CM3Dn_Avg$,sw_out,"",""
+^CG3UpCo_Avg$,lw_in,"",temperature-corrected
+^CG3DnCo_Avg$,lw_out,"",temperature-corrected
+^CG3Up_Avg$,lw_in_raw,"",""
+^CG3Dn_Avg$,lw_out_raw,"",""
+^Rn_Avg$|^NetTot_Avg$|^TotalNetRadiation_Avg$,net_rad,"",""
+^Rs_net_Avg$|^NetRs_Avg$|^NetShortwave_Avg$,sw_net,"",""
+^Rl_net_Avg$|^NetRl_Avg$|^NetLongwave_Avg$,lw_net,"",""
+^albedo_Avg$,albedo,"",""
+^SnowDepth_Avg$|^snow_depth_Avg$|^SR50Sd$|^SR50A_SnowDepth$,snow_depth,"",""
+^Rain_mm_Tot$|^Rain_Tot$,rain,"",""
+^RV_Pre_Accu_Tot$,precip,"",""
+^VWC_([0-9]+)cm_Avg$,vwc_\1cm,"",""
+^TC_([0-9]+)cm_Avg$,soil_temp_\1cm,"",""
+^EC_([0-9]+)cm_Avg$,soil_ec_\1cm,"",""
+^Batt_V_AVG$|^BatteryV(_Avg)?$|^BattVolts(_Avg)?$,battery_v,"",logger battery
+^(BatteryV|BattV|BattVolts|Batt_V)_(Min|Max)$,battery_v_\L\2,"",""
+^panel_temp_Avg$|^PanelT(_Avg)?$|^LoggerTemp(_Avg)?$,panel_temp,"",logger panel temperature
+^(PanelT|PTemp_C|PTemp|LoggerTemp|panel_temp)_(Min|Max)$,panel_temp_\L\2,"",""
+^SR50A?_SnowDepth_Avg$,snow_depth,"",SR50A sonic ranger
+^SR50A?_SnowDepth_(Min|Max)$,snow_depth_\L\1,"",""
+^ShortwaveUp_(Min|Max)$,sw_in_\L\1,"",up-facing sensor = incoming
+^ShortwaveDown_(Min|Max)$,sw_out_\L\1,"",""
+^LongwaveUpCorrected_(Min|Max)$,lw_in_\L\1,"",""
+^LongwaveDownCorrected_(Min|Max)$,lw_out_\L\1,"",""
+^LongwaveUp_(Min|Max)$,lw_in_raw_\L\1,"",""
+^LongwaveDown_(Min|Max)$,lw_out_raw_\L\1,"",""
+^RsNet_Avg$,sw_net,"",""
+^RlNet_Avg$,lw_net,"",""
+^NetShortwave_(Min|Max)$,sw_net_\L\1,"",""
+^NetLongwave_(Min|Max)$,lw_net_\L\1,"",""
+^TotalNetRadiation_(Min|Max)$,net_rad_\L\1,"",""
+^Albedo_(Min|Max)$,albedo_\L\1,"",""
+^CNR[14]Temp_Avg$|^CNR[14]TC_Avg$|^cnr[14]_T_C_Avg$,radiometer_temp,"",radiometer body temperature in deg C
+^CNR[14]Temp_(Min|Max)$,radiometer_temp_\L\1,"",""
+^wnd_spd$,wind_speed,"",""
+^WS_ms$,wind_speed_sample,"",instantaneous reading logged beside the average
+^wnd_dir_compass$,wind_dir,"",""
+^std_wnd_dir$,wind_dir_sd,"",""
+^Precip_Tot$,precip,"",tipping bucket total
+^WindSpeed_(High|Low)_S_WVT$,wind_speed_\L\1,"",two-height towers
+^WindSpeed_(High|Low)_Max$,wind_speed_\L\1_max,"",""
+^WindDirection_(High|Low)_D1_WVT$,wind_dir_\L\1,"",""
+^WindDirection_(High|Low)_SD1_WVT$,wind_dir_\L\1_sd,"",""
+^SR50A?_QualityVal$|^signal_quality_Avg$,snow_depth_quality,"",sonic ranger quality number
+^raw_distance_Avg$,snow_distance_raw,"",sonic ranger distance before temperature correction
+^SnowDepth_Max$,snow_depth_max,"",""
+^Perm_([0-9]+)cm_Avg$,soil_permittivity_\1cm,"",""
+^RV_Tips_Tot$,rain_tips,"",""
+^e_tmpr_rh$,vapour_pressure,"",kPa
+^e_sat_tmpr_rh$,sat_vapour_pressure,"",kPa
+^T_nr_Avg$,radiometer_temp_k,"",radiometer body temperature in kelvin
+^temp$,pluvio_temp,"",temperature sensor of the OTT Pluvio
+^WS_ms_Min$,wind_speed_min,"",""
+^GN_F_AVG$,geonor_frequency,"",""
+^windspd_AVG$,wind_speed,"",""
+^Panel_T_AVG$,panel_temp,"",""
+^Fen_T_AVG$,air_temp,"",""
+^Fen_RH_AVG$,rh,"",""
+^Fen_RnObs_AVG$,net_rad_raw,"",""
+^Fen_RnCor_AVG$,net_rad,"",wind-corrected
+^Fen_wind_AVG$,wind_speed,"",""
+^PT_wind_AVG$,wind_speed_2,"",""
+^TBRG_TOT$|^Bog_TBRG_TOT$,rain_tips,"",tipping bucket: whole numbers so these are tips and not mm
+^Rain_tip_Tot$,rain_tips,"",tips
+^Rain_tip_co_Tot$,rain,"",mm per tip applied by the logger
+^615_water_AVG$,vwc,"",CS615
+^615_perid_AVG$,soil_period,"",CS615 period
+^appTar_T_AVG$,surface_temp_ir,"",Apogee infrared radiometer: target temperature
+^Sensor_T_AVG$,ir_sensor_body_temp,"",Apogee infrared radiometer: body temperature
+^DW0*([0-9]+)_AVG$,ground_temp_down_west_\1cm,"",depth in cm from the column name
+^UW0*([0-9]+)_AVG$,ground_temp_up_west_\1cm,"",""
+^UE0*([0-9]+)_AVG$,ground_temp_up_east_\1cm,"",""
+^DE0*([0-9]+)_AVG$,ground_temp_down_east_\1cm,"",""
+^MID0*([0-9]+)_AVG$,ground_temp_mid_\1cm,"",""
+^SUp_Avg$,sw_in,"",up-facing sensor = incoming
+^SDn_Avg$,sw_out,"",""
+^LUpCo_Avg$,lw_in,"",""
+^LDnCo_Avg$,lw_out,"",""
+^LUp_Avg$,lw_in_raw,"",""
+^LDn_Avg$,lw_out_raw,"",""
+^HumT_([0-9]+)_Avg$,soil_temp_hummock_\1cm,"",hummock profile; depth in cm on a doubling scale (2 4 8 16 32 64 128)
+^HolT_([0-9]+)_Avg$,soil_temp_hollow_\1cm,"",hollow profile; depth in cm on a doubling scale
+^HumSurfaceT_Avg$,surface_temp_hummock,"",""
+^HolSurfaceT_Avg$,surface_temp_hollow,"",""
+^HumSnowT_([0-9]+)_Avg$,snow_temp_hummock_\1cm,"",height above the hummock surface in cm
+^HolSnowT_([0-9]+)_Avg$,snow_temp_hollow_\1cm,"",""
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)(?:_?1)?(?:_Avg)?$,air_temp,"",paired sensors (any name not listed above): sensor 1 or no number is the main one
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)(?:_?1)?_(Max|Min)$,air_temp_\L\1,"",""
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)_?([2-9])(?:_Avg)?$,air_temp_\1,"",second (third ...) sensor
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)_?([2-9])_(Max|Min)$,air_temp_\1_\L\2,"",""
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)_?(High|Low|Hi|Lo|Upper|Lower)(?:_Avg)?$,air_temp_\L\1,"",two heights
+^(?:AirTC|AirT|Air_?Temp|Bog_T|T_?Air)_?(High|Low|Hi|Lo|Upper|Lower)_(Max|Min)$,air_temp_\L\1_\2,"",""
+^(?:RH|Bog_?RH|RelHum)(?:_?1)?(?:_Avg)?$,rh,"",""
+^(?:RH|Bog_?RH|RelHum)(?:_?1)?_(Max|Min)$,rh_\L\1,"",""
+^(?:RH|Bog_?RH|RelHum)_?([2-9])(?:_Avg)?$,rh_\1,"",""
+^(?:RH|Bog_?RH|RelHum)_?([2-9])_(Max|Min)$,rh_\1_\L\2,"",""
+^(?:RH|Bog_?RH|RelHum)_?(High|Low|Hi|Lo|Upper|Lower)(?:_Avg)?$,rh_\L\1,"",""
+^(?:RH|Bog_?RH|RelHum)_?(High|Low|Hi|Lo|Upper|Lower)_(Max|Min)$,rh_\L\1_\2,"",""
+^(?:WS_ms|WindSpeed|Wind_Speed|Bog_ws|wnd_spd|AvgWS)(?:_?1)?(?:_Avg|_S_WVT)?$,wind_speed,"",""
+^(?:WS_ms|WindSpeed|Wind_Speed|Bog_ws|wnd_spd)(?:_?1)?_(Max|Min)$,wind_speed_\L\1,"",""
+^(?:WS_ms|WindSpeed|Wind_Speed|Bog_ws|wnd_spd)_?([2-9])(?:_Avg|_S_WVT)?$,wind_speed_\1,"",""
+^(?:WS_ms|WindSpeed|Wind_Speed|Bog_ws|wnd_spd)_?([2-9])_(Max|Min)$,wind_speed_\1_\L\2,"",""
+^T109_C_Avg$|^T109_C_1_Avg$|^T109_1_C_Avg$|^Temp109_1_Avg$,ground_temp_10cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_(Min|Max)$|^T109_C_1_(Min|Max)$|^T109_1_C_(Min|Max)$|^Temp109_1_(Min|Max)$,ground_temp_10cm_\L\1\2\3,"",""
+^T107_C_Avg$|^T107_C_1_Avg$|^T107_1_C_Avg$|^Temp107_1_Avg$,ground_temp_107_10cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_(Min|Max)$|^T107_C_1_(Min|Max)$|^T107_1_C_(Min|Max)$|^Temp107_1_(Min|Max)$,ground_temp_107_10cm_\L\1\2\3,"",""
+^CS65[05]Temp_1_Avg$,soil_probe_temp_10cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_1_(Min|Max)$,soil_probe_temp_10cm_\L\1,"",""
+^WaterContent_1_Avg$|^VW_1_Avg$|^VW_Avg$,vwc_10cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_1_(Min|Max)$,vwc_10cm_\L\1,"",""
+^EC_1_Avg$|^EC_Avg$,soil_ec_10cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_1_(Min|Max)$|^EC_(Min|Max)$,soil_ec_10cm_\L\1\2,"",""
+^T109_C_2_Avg$|^T109_2_C_Avg$|^Temp109_2_Avg$,ground_temp_20cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_2_(Min|Max)$|^T109_2_C_(Min|Max)$|^Temp109_2_(Min|Max)$,ground_temp_20cm_\L\1\2\3,"",""
+^T107_C_2_Avg$|^T107_2_C_Avg$|^Temp107_2_Avg$,ground_temp_107_20cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_2_(Min|Max)$|^T107_2_C_(Min|Max)$|^Temp107_2_(Min|Max)$,ground_temp_107_20cm_\L\1\2\3,"",""
+^CS65[05]Temp_2_Avg$,soil_probe_temp_20cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_2_(Min|Max)$,soil_probe_temp_20cm_\L\1,"",""
+^WaterContent_2_Avg$|^VW_2_Avg$,vwc_20cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_2_(Min|Max)$,vwc_20cm_\L\1,"",""
+^EC_2_Avg$,soil_ec_20cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_2_(Min|Max)$,soil_ec_20cm_\L\1\2,"",""
+^T109_C_3_Avg$|^T109_3_C_Avg$|^Temp109_3_Avg$,ground_temp_30cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_3_(Min|Max)$|^T109_3_C_(Min|Max)$|^Temp109_3_(Min|Max)$,ground_temp_30cm_\L\1\2\3,"",""
+^T107_C_3_Avg$|^T107_3_C_Avg$|^Temp107_3_Avg$,ground_temp_107_30cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_3_(Min|Max)$|^T107_3_C_(Min|Max)$|^Temp107_3_(Min|Max)$,ground_temp_107_30cm_\L\1\2\3,"",""
+^CS65[05]Temp_3_Avg$,soil_probe_temp_30cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_3_(Min|Max)$,soil_probe_temp_30cm_\L\1,"",""
+^WaterContent_3_Avg$|^VW_3_Avg$,vwc_30cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_3_(Min|Max)$,vwc_30cm_\L\1,"",""
+^EC_3_Avg$,soil_ec_30cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_3_(Min|Max)$,soil_ec_30cm_\L\1\2,"",""
+^T109_C_4_Avg$|^T109_4_C_Avg$|^Temp109_4_Avg$,ground_temp_40cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_4_(Min|Max)$|^T109_4_C_(Min|Max)$|^Temp109_4_(Min|Max)$,ground_temp_40cm_\L\1\2\3,"",""
+^T107_C_4_Avg$|^T107_4_C_Avg$|^Temp107_4_Avg$,ground_temp_107_40cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_4_(Min|Max)$|^T107_4_C_(Min|Max)$|^Temp107_4_(Min|Max)$,ground_temp_107_40cm_\L\1\2\3,"",""
+^CS65[05]Temp_4_Avg$,soil_probe_temp_40cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_4_(Min|Max)$,soil_probe_temp_40cm_\L\1,"",""
+^WaterContent_4_Avg$|^VW_4_Avg$,vwc_40cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_4_(Min|Max)$,vwc_40cm_\L\1,"",""
+^EC_4_Avg$,soil_ec_40cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_4_(Min|Max)$,soil_ec_40cm_\L\1\2,"",""
+^T109_C_5_Avg$|^T109_5_C_Avg$|^Temp109_5_Avg$,ground_temp_50cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_5_(Min|Max)$|^T109_5_C_(Min|Max)$|^Temp109_5_(Min|Max)$,ground_temp_50cm_\L\1\2\3,"",""
+^T107_C_5_Avg$|^T107_5_C_Avg$|^Temp107_5_Avg$,ground_temp_107_50cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_5_(Min|Max)$|^T107_5_C_(Min|Max)$|^Temp107_5_(Min|Max)$,ground_temp_107_50cm_\L\1\2\3,"",""
+^CS65[05]Temp_5_Avg$,soil_probe_temp_50cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_5_(Min|Max)$,soil_probe_temp_50cm_\L\1,"",""
+^WaterContent_5_Avg$|^VW_5_Avg$,vwc_50cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_5_(Min|Max)$,vwc_50cm_\L\1,"",""
+^EC_5_Avg$,soil_ec_50cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_5_(Min|Max)$,soil_ec_50cm_\L\1\2,"",""
+^T109_C_6_Avg$|^T109_6_C_Avg$|^Temp109_6_Avg$,ground_temp_60cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_6_(Min|Max)$|^T109_6_C_(Min|Max)$|^Temp109_6_(Min|Max)$,ground_temp_60cm_\L\1\2\3,"",""
+^T107_C_6_Avg$|^T107_6_C_Avg$|^Temp107_6_Avg$,ground_temp_107_60cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_6_(Min|Max)$|^T107_6_C_(Min|Max)$|^Temp107_6_(Min|Max)$,ground_temp_107_60cm_\L\1\2\3,"",""
+^CS65[05]Temp_6_Avg$,soil_probe_temp_60cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_6_(Min|Max)$,soil_probe_temp_60cm_\L\1,"",""
+^WaterContent_6_Avg$|^VW_6_Avg$,vwc_60cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_6_(Min|Max)$,vwc_60cm_\L\1,"",""
+^EC_6_Avg$,soil_ec_60cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_6_(Min|Max)$,soil_ec_60cm_\L\1\2,"",""
+^T109_C_7_Avg$|^T109_7_C_Avg$|^Temp109_7_Avg$,ground_temp_70cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_7_(Min|Max)$|^T109_7_C_(Min|Max)$|^Temp109_7_(Min|Max)$,ground_temp_70cm_\L\1\2\3,"",""
+^T107_C_7_Avg$|^T107_7_C_Avg$|^Temp107_7_Avg$,ground_temp_107_70cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_7_(Min|Max)$|^T107_7_C_(Min|Max)$|^Temp107_7_(Min|Max)$,ground_temp_107_70cm_\L\1\2\3,"",""
+^CS65[05]Temp_7_Avg$,soil_probe_temp_70cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_7_(Min|Max)$,soil_probe_temp_70cm_\L\1,"",""
+^WaterContent_7_Avg$|^VW_7_Avg$,vwc_70cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_7_(Min|Max)$,vwc_70cm_\L\1,"",""
+^EC_7_Avg$,soil_ec_70cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_7_(Min|Max)$,soil_ec_70cm_\L\1\2,"",""
+^T109_C_8_Avg$|^T109_8_C_Avg$|^Temp109_8_Avg$,ground_temp_80cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_8_(Min|Max)$|^T109_8_C_(Min|Max)$|^Temp109_8_(Min|Max)$,ground_temp_80cm_\L\1\2\3,"",""
+^T107_C_8_Avg$|^T107_8_C_Avg$|^Temp107_8_Avg$,ground_temp_107_80cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_8_(Min|Max)$|^T107_8_C_(Min|Max)$|^Temp107_8_(Min|Max)$,ground_temp_107_80cm_\L\1\2\3,"",""
+^CS65[05]Temp_8_Avg$,soil_probe_temp_80cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_8_(Min|Max)$,soil_probe_temp_80cm_\L\1,"",""
+^WaterContent_8_Avg$|^VW_8_Avg$,vwc_80cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_8_(Min|Max)$,vwc_80cm_\L\1,"",""
+^EC_8_Avg$,soil_ec_80cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_8_(Min|Max)$,soil_ec_80cm_\L\1\2,"",""
+^T109_C_9_Avg$|^T109_9_C_Avg$|^Temp109_9_Avg$,ground_temp_90cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_9_(Min|Max)$|^T109_9_C_(Min|Max)$|^Temp109_9_(Min|Max)$,ground_temp_90cm_\L\1\2\3,"",""
+^T107_C_9_Avg$|^T107_9_C_Avg$|^Temp107_9_Avg$,ground_temp_107_90cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_9_(Min|Max)$|^T107_9_C_(Min|Max)$|^Temp107_9_(Min|Max)$,ground_temp_107_90cm_\L\1\2\3,"",""
+^CS65[05]Temp_9_Avg$,soil_probe_temp_90cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_9_(Min|Max)$,soil_probe_temp_90cm_\L\1,"",""
+^WaterContent_9_Avg$|^VW_9_Avg$,vwc_90cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_9_(Min|Max)$,vwc_90cm_\L\1,"",""
+^EC_9_Avg$,soil_ec_90cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_9_(Min|Max)$,soil_ec_90cm_\L\1\2,"",""
+^T109_C_10_Avg$|^T109_10_C_Avg$|^Temp109_10_Avg$,ground_temp_100cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_10_(Min|Max)$|^T109_10_C_(Min|Max)$|^Temp109_10_(Min|Max)$,ground_temp_100cm_\L\1\2\3,"",""
+^T107_C_10_Avg$|^T107_10_C_Avg$|^Temp107_10_Avg$,ground_temp_107_100cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_10_(Min|Max)$|^T107_10_C_(Min|Max)$|^Temp107_10_(Min|Max)$,ground_temp_107_100cm_\L\1\2\3,"",""
+^CS65[05]Temp_10_Avg$,soil_probe_temp_100cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_10_(Min|Max)$,soil_probe_temp_100cm_\L\1,"",""
+^WaterContent_10_Avg$|^VW_10_Avg$,vwc_100cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_10_(Min|Max)$,vwc_100cm_\L\1,"",""
+^EC_10_Avg$,soil_ec_100cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_10_(Min|Max)$,soil_ec_100cm_\L\1\2,"",""
+^T109_C_11_Avg$|^T109_11_C_Avg$|^Temp109_11_Avg$,ground_temp_110cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_11_(Min|Max)$|^T109_11_C_(Min|Max)$|^Temp109_11_(Min|Max)$,ground_temp_110cm_\L\1\2\3,"",""
+^T107_C_11_Avg$|^T107_11_C_Avg$|^Temp107_11_Avg$,ground_temp_107_110cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_11_(Min|Max)$|^T107_11_C_(Min|Max)$|^Temp107_11_(Min|Max)$,ground_temp_107_110cm_\L\1\2\3,"",""
+^CS65[05]Temp_11_Avg$,soil_probe_temp_110cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_11_(Min|Max)$,soil_probe_temp_110cm_\L\1,"",""
+^WaterContent_11_Avg$|^VW_11_Avg$,vwc_110cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_11_(Min|Max)$,vwc_110cm_\L\1,"",""
+^EC_11_Avg$,soil_ec_110cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_11_(Min|Max)$,soil_ec_110cm_\L\1\2,"",""
+^T109_C_12_Avg$|^T109_12_C_Avg$|^Temp109_12_Avg$,ground_temp_120cm,"",depth ASSUMED: sensor number x 10 cm
+^T109_C_12_(Min|Max)$|^T109_12_C_(Min|Max)$|^Temp109_12_(Min|Max)$,ground_temp_120cm_\L\1\2\3,"",""
+^T107_C_12_Avg$|^T107_12_C_Avg$|^Temp107_12_Avg$,ground_temp_107_120cm,"",depth ASSUMED: sensor number x 10 cm
+^T107_C_12_(Min|Max)$|^T107_12_C_(Min|Max)$|^Temp107_12_(Min|Max)$,ground_temp_107_120cm_\L\1\2\3,"",""
+^CS65[05]Temp_12_Avg$,soil_probe_temp_120cm,"",depth ASSUMED: sensor number x 10 cm
+^CS65[05]Temp_12_(Min|Max)$,soil_probe_temp_120cm_\L\1,"",""
+^WaterContent_12_Avg$|^VW_12_Avg$,vwc_120cm,"",depth ASSUMED: sensor number x 10 cm
+^WaterContent_12_(Min|Max)$,vwc_120cm_\L\1,"",""
+^EC_12_Avg$,soil_ec_120cm,"",depth ASSUMED: sensor number x 10 cm
+^EC_12_(Min|Max)$,soil_ec_120cm_\L\1\2,"",""

@@ -63,7 +63,7 @@ derive_products <- function(dt, cfgs, cfg) {
   if (has("air_temp", "rh")) { d[, vpd_kpa := round(0.6108 * exp(17.27 * air_temp / (air_temp + 237.3)) * (1 - pmin(pmax(rh, 0), 100) / 100), 4)]; made <- c(made, "vpd_kpa") }
   if (has("air_temp", "rh") && !"dew_point" %in% nv) {                          # Magnus formula, Alduchov and Eskridge (1996) constants
     g <- log(pmin(pmax(d$rh, 0.1), 100) / 100) + 17.625 * d$air_temp / (243.04 + d$air_temp); d[, dew_point_calc := round(243.04 * g / (17.625 - g), 2)]; made <- c(made, "dew_point_calc") }
-  if (has("sw_in", "sw_out") && !"albedo" %in% nv) { d[, albedo_calc := ifelse(sw_in > 50 & sw_out >= 0 & sw_out <= sw_in, round(sw_out / sw_in, 3), NA_real_)]; made <- c(made, "albedo_calc") }
+  if (has("sw_in", "sw_out")) { d[, albedo_calc := ifelse(sw_in > 50 & sw_out >= 0 & sw_out <= sw_in, round(sw_out / sw_in, 3), NA_real_)]; made <- c(made, "albedo_calc") }   # also beside a logger's own albedo column
   if (has("sw_in", "sw_out", "lw_in", "lw_out") && !"net_rad" %in% nv) { d[, net_rad_calc := round(sw_in - sw_out + lw_in - lw_out, 2)]; made <- c(made, "net_rad_calc") }
   # Snow depth = sensor height - distance to the snow. The SR50A's distance assumes sound at 0 C, so the raw distance (DT) must be
   # scaled by sqrt((Ta + 273.15) / 273.15) with the air temperature (Campbell Scientific SR50A manual, "Temperature correction").
@@ -72,7 +72,7 @@ derive_products <- function(dt, cfgs, cfg) {
   dc <- sr50_distance(d, nv, calib_get(cfgs$calib, CS_CALIBRATION, "sr50_temp_correction", dt$station[1])$value)
   if (length(h) == 1 && !is.na(h) && !is.null(dc) && !"snow_depth" %in% nv) { d[, snow_depth_calc := round(h - dc$dist, 3)]; made <- c(made, "snow_depth_calc")
     if (dc$corrected) { d[, snow_dist_tc_calc := round(dc$dist, 3)]; made <- c(made, "snow_dist_tc_calc") } }
-  cols <- setdiff(names(d), "TIMESTAMP"); tot <- grepl(TOTAL_RX, cols, ignore.case = TRUE)
+  cols <- setdiff(names(d), c("TIMESTAMP", if ("albedo_calc" %in% names(d)) "albedo")); tot <- grepl(TOTAL_RX, cols, ignore.case = TRUE)   # a logger's albedo is a ratio: its mean is not the day's albedo
   step <- stats::median(diff(as.numeric(d$TIMESTAMP))); per_day <- if (is.finite(step) && step > 0) max(1, round(86400 / step)) else 1
   d[, Date := as.Date(TIMESTAMP)]
   dirc <- grepl(WIND_DIR_RX, cols)
@@ -86,9 +86,11 @@ derive_products <- function(dt, cfgs, cfg) {
   }
   day <- agg(d, "Date", function(n) per_day)
   dv <- day$v; dv[, records := d[, .N, by = Date]$N]
-  # A day's albedo is the day's reflected over its incoming shortwave (Oke 1987, Boundary Layer Climates), not the mean of
-  # each record's ratio, which weights low sun too much. Records with sunlight above 50 W/m2 only (an Ovid default), on days
-  # with SW in and out complete.
+  # A day's albedo is the day's reflected over its incoming shortwave, summed over its daylight records (Oke 1987, Boundary Layer
+  # Climates; Wang et al. 2015, JGR Atmospheres, daily mean albedo from daytime totals), not the mean of each record's ratio, which
+  # weights low sun too much, and not the mean of a logger's own albedo column (it holds night and low-sun ratios). Daylight is
+  # sunlight above 50 W/m2 (an Ovid default: published stations gate on the sun's height instead, e.g. PROMICE under 70 degrees
+  # zenith, Fausto et al. 2026), on days with SW in and out complete.
   if ("albedo_calc" %in% names(dv)) {
     a <- d[!is.na(albedo_calc), .(albedo_day = round(sum(sw_out) / sum(sw_in), 3)), by = Date]
     dv[, albedo_calc := NA_real_]
@@ -109,7 +111,8 @@ derive_products <- function(dt, cfgs, cfg) {
     x <- merge(dv[, c("Date", intersect(c("air_temp", "rh", "wind_speed", "sw_in", "net_rad"), names(dv))), with = FALSE], mm, by = "Date", all.x = TRUE)
     pc <- grep("^(baro|press|bp|atm_?press|pressure)", nv, ignore.case = TRUE, value = TRUE)
     pk <- if (length(pc)) { v <- dv[[pc[1]]]; if (stats::median(v, na.rm = TRUE) > 200) v / 10 else v } else NULL
-    e <- fao56_et(x$Date, (x$tmax + x$tmin) / 2, x$tmax, x$tmin,                            # FAO-56 eq. 9: Tmean from Tmax, Tmin x$rh, if ("wind_speed" %in% names(x)) x$wind_speed else NA_real_, if ("sw_in" %in% names(x)) x$sw_in else NA_real_,
+    e <- fao56_et(x$Date, (x$tmax + x$tmin) / 2, x$tmax, x$tmin,                            # FAO-56 eq. 9: Tmean from Tmax, Tmin
+                  x$rh, if ("wind_speed" %in% names(x)) x$wind_speed else NA_real_, if ("sw_in" %in% names(x)) x$sw_in else NA_real_,
                   if ("net_rad" %in% names(x)) x$net_rad else NULL, pk, lat, if (length(z) && is.finite(z)) z else 0, zu, al$number)
     new <- character()
     if (has("wind_speed")) { dv[, et0_fao56_mm := e$et0]; new <- c(new, "et0_fao56_mm") }

@@ -1,0 +1,15 @@
+group,item,does,n,detail
+On by default,Records with corrupt time stamps among good ones (off the time grid and out of the order the file was written in) are left out; each is in the audit trail,removed,0,""
+On by default,Records stamped before the first year (min_year) or more than two days in the future are left out as a reset clock (off: kept at the time they carry; records with no time are always left out),removed,0,""
+On by default,"Campbell out-of-range codes (-7999, 7999, -6999, 6999) are removed (off: kept as values). Infinite values are always removed",removed,0,""
+On by default,"Where two files hold different values for the same time, one file's are kept: the newest download's by default",changed,0,set to The newest file's
+On by default,"Values that disagree with another sensor on the same station (two air temperatures, two humidities, a mean outside its minimum and maximum) are flagged",flagged,0,""
+On by default,Days on which a station departs from the same parameter at the other stations are flagged,flagged,0,""
+On by default,"Flags decided not a problem (Needs you) are left out of the exported flag columns; flags.csv keeps them, marked accepted",flagged,"",""
+Quality rules and checks,Range min,removed,250,"ground_temp_10cm, ground_temp_20cm, ground_temp_30cm, ground_temp_40cm +1"
+Quality rules and checks,Step,flagged,5,"vwc_10cm, vwc_20cm, vwc_30cm, vwc_40cm +1"
+Totals,corrections,"",9,""
+Totals,removed,"",250,""
+Totals,changed,"",0,""
+Totals,flagged,"",5,""
+Totals,values,"",8671,""

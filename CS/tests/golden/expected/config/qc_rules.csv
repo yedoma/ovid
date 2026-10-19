@@ -1,0 +1,16 @@
+pattern,min,max,max_spike,max_flat_hours,action,notes,applies_to,max_step_per_hour,rule_id
+^air_temp.*,-60,50,10,12,"",degC,"",10,Q-01
+^rh(_.*)?$,0,105,40,72,"",percent,"",50,Q-02
+^battery_v.*,0,20,3,"","",volts,"",3,Q-03
+^wind_speed.*,0,75,"",48,"",m/s,"","",Q-04
+^wind_dir$,0,360,"","","",degrees,"","",Q-05
+^sw_(in|out)$,-25,1500,"","","",W/m2,"","",Q-06
+^lw_(in|out)$,50,700,150,12,"",W/m2,"",200,Q-07
+^net_rad$,-300,1200,"","","",W/m2,"","",Q-08
+^snow_depth$,-0.25,5,0.2,"","",metres,"",0.3,Q-09
+^soil_temp_.*,-40,50,8,"","",degC,"",10,Q-10
+^(surface_temp|snow_temp).*,-60,60,15,"","",degC,"",20,Q-11
+^temp_above_ground.*,-60,50,10,"","",degC; a thermistor in the air or snow above the ground,"",10,Q-12
+^(ground_temp|soil_probe_temp).*,-50,50,5,"","",degC; a 109 measures -50 to 70 and a loose wire reads far below or above,"",5,Q-13
+^ground_temp_107.*,-35,50,5,"","",degC; the measurement range of the 107 probe,"",5,Q-14
+^vwc.*,0,1,0.15,"","",m3/m3; a CS650/CS655 reports 0 to 1 and a loose wire gives values far outside it,"",0.3,Q-15

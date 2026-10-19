@@ -1,0 +1,6 @@
+station,stream,parameter,start,end,records,check,detail,accepted,rule_id,qc_code,app
+52001,ThirtyMinute,vwc_10cm,2024-09-24 18:30:00,2024-09-24 18:30:00,1,step,changed by more than 0.3 per hour between two readings (^vwc.*),FALSE,Q-15,2,CS
+52001,ThirtyMinute,vwc_20cm,2024-09-24 18:30:00,2024-09-24 18:30:00,1,step,changed by more than 0.3 per hour between two readings (^vwc.*),FALSE,Q-15,2,CS
+52001,ThirtyMinute,vwc_30cm,2024-09-24 18:30:00,2024-09-24 18:30:00,1,step,changed by more than 0.3 per hour between two readings (^vwc.*),FALSE,Q-15,2,CS
+52001,ThirtyMinute,vwc_40cm,2024-09-24 18:30:00,2024-09-24 18:30:00,1,step,changed by more than 0.3 per hour between two readings (^vwc.*),FALSE,Q-15,2,CS
+52001,ThirtyMinute,vwc_50cm,2024-09-24 18:30:00,2024-09-24 18:30:00,1,step,changed by more than 0.3 per hour between two readings (^vwc.*),FALSE,Q-15,2,CS

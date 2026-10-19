@@ -1,0 +1,66 @@
+logger_id,table,raw_column,unit,process,parameter,group
+46001,Table1,BattV_Avg,Volts,Avg,battery_v,Power
+46001,Table1,temp,degrees,Smp,pluvio_temp,Precipitation
+46001,Table1,WS_ms_Avg,meters/second,Avg,wind_speed,Wind
+46001,Table1,WS_ms_Max,meters/second,Max,wind_speed_max,Wind
+46001,Table1,WS_ms_Min,meters/second,Min,wind_speed_min,Wind
+52001,ThirtyMinute,SWTop_Avg,W/m^2,Avg,sw_in,Radiation
+52001,ThirtyMinute,SWBottom_Avg,W/m^2,Avg,sw_out,Radiation
+52001,ThirtyMinute,LWTop_Avg,W/m^2,Avg,lw_in_raw,Radiation
+52001,ThirtyMinute,LWBottom_Avg,W/m^2,Avg,lw_out_raw,Radiation
+52001,ThirtyMinute,cnr4_T_C_Avg,deg_C,Avg,radiometer_temp,Radiation
+52001,ThirtyMinute,Rs_net_Avg,W/m^2,Avg,sw_net,Radiation
+52001,ThirtyMinute,Rl_net_Avg,W/m^2,Avg,lw_net,Radiation
+52001,ThirtyMinute,albedo_Avg,W/m^2,Avg,albedo,Radiation
+52001,ThirtyMinute,Rn_Avg,W/m^2,Avg,net_rad,Radiation
+52001,ThirtyMinute,LWTopC_Avg,W/m^2,Avg,lw_in,Radiation
+52001,ThirtyMinute,LWBottomC_Avg,W/m^2,Avg,lw_out,Radiation
+52001,ThirtyMinute,SnowDepth_Avg,Meters,Avg,snow_depth,Snow
+52001,ThirtyMinute,SnowDepth_Max,Meters,Max,snow_depth_max,Snow
+52001,ThirtyMinute,AirTC_1_Avg,Deg C,Avg,air_temp,Air temperature
+52001,ThirtyMinute,RH_1_Avg,%,Avg,rh,Relative humidity
+52001,ThirtyMinute,AirTC_2_Avg,Deg C,Avg,air_temp_2,Air temperature
+52001,ThirtyMinute,RH_2_Avg,%,Avg,rh_2,Relative humidity
+52001,ThirtyMinute,WS_ms_S_WVT,meters/second,WVc,wind_speed,Wind
+52001,ThirtyMinute,WindDir_D1_WVT,Deg,WVc,wind_dir,Wind
+52001,ThirtyMinute,WindDir_SD1_WVT,Deg,WVc,wind_dir_sd,Wind
+52001,ThirtyMinute,VWC_5cm_Avg,"",Avg,vwc_5cm,Soil moisture
+52001,ThirtyMinute,Perm_5cm_Avg,"",Avg,soil_permittivity_5cm,Other
+52001,ThirtyMinute,TC_5cm_Avg,"",Avg,soil_temp_5cm,Ground temperature
+52001,ThirtyMinute,EC_5cm_Avg,"",Avg,soil_ec_5cm,Soil moisture
+52001,ThirtyMinute,VWC_10cm_Avg,"",Avg,vwc_10cm,Soil moisture
+52001,ThirtyMinute,Perm_10cm_Avg,"",Avg,soil_permittivity_10cm,Other
+52001,ThirtyMinute,TC_10cm_Avg,"",Avg,soil_temp_10cm,Ground temperature
+52001,ThirtyMinute,EC_10cm_Avg,"",Avg,soil_ec_10cm,Soil moisture
+52001,ThirtyMinute,VWC_20cm_Avg,"",Avg,vwc_20cm,Soil moisture
+52001,ThirtyMinute,Perm_20cm_Avg,"",Avg,soil_permittivity_20cm,Other
+52001,ThirtyMinute,TC_20cm_Avg,"",Avg,soil_temp_20cm,Ground temperature
+52001,ThirtyMinute,EC_20cm_Avg,"",Avg,soil_ec_20cm,Soil moisture
+52001,ThirtyMinute,VWC_30cm_Avg,"",Avg,vwc_30cm,Soil moisture
+52001,ThirtyMinute,Perm_30cm_Avg,"",Avg,soil_permittivity_30cm,Other
+52001,ThirtyMinute,TC_30cm_Avg,"",Avg,soil_temp_30cm,Ground temperature
+52001,ThirtyMinute,EC_30cm_Avg,"",Avg,soil_ec_30cm,Soil moisture
+52001,ThirtyMinute,VWC_40cm_Avg,"",Avg,vwc_40cm,Soil moisture
+52001,ThirtyMinute,Perm_40cm_Avg,"",Avg,soil_permittivity_40cm,Other
+52001,ThirtyMinute,TC_40cm_Avg,"",Avg,soil_temp_40cm,Ground temperature
+52001,ThirtyMinute,EC_40cm_Avg,"",Avg,soil_ec_40cm,Soil moisture
+52001,ThirtyMinute,VWC_50cm_Avg,"",Avg,vwc_50cm,Soil moisture
+52001,ThirtyMinute,Perm_50cm_Avg,"",Avg,soil_permittivity_50cm,Other
+52001,ThirtyMinute,TC_50cm_Avg,"",Avg,soil_temp_50cm,Ground temperature
+52001,ThirtyMinute,EC_50cm_Avg,"",Avg,soil_ec_50cm,Soil moisture
+52001,ThirtyMinute,RV_Pre_Accu_Tot,mm,Tot,precip,Precipitation
+52001,ThirtyMinute,RV_Tips_Tot,count,Tot,rain_tips,Precipitation
+52001,ThirtyMinute,T109_1_C_Avg,Deg C,Avg,ground_temp_10cm,Ground temperature
+52001,ThirtyMinute,T109_2_C_Avg,Deg C,Avg,ground_temp_20cm,Ground temperature
+52001,ThirtyMinute,T109_3_C_Avg,Deg C,Avg,ground_temp_30cm,Ground temperature
+52001,ThirtyMinute,T109_4_C_Avg,Deg C,Avg,ground_temp_40cm,Ground temperature
+52001,ThirtyMinute,T109_5_C_Avg,Deg C,Avg,ground_temp_50cm,Ground temperature
+46001,Table1,int_rt,mm/min,Smp,int_rt,Other
+46001,Table1,acc_rtnrt,mm/min,Smp,acc_rtnrt,Other
+46001,Table1,acc_nrt,mm,Smp,acc_nrt,Other
+46001,Table1,acc_total,mm,Smp,acc_total,Other
+46001,Table1,bucket_rt,mm,Smp,bucket_rt,Other
+46001,Table1,bucket_nr,mm,Smp,bucket_nr,Other
+46001,Table1,Result8,Units,Smp,Result8,Other
+46001,Table1,Result9,Units,Smp,Result9,Other
+52001,ThirtyMinute,cnr4_T_K_Avg,K,Avg,cnr4_T_K_Avg,Radiation

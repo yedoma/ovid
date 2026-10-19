@@ -1,0 +1,2 @@
+logger_id,table,check,source_file,from,to,records,detail,suggest_shift_min,station,stream
+52001,ThirtyMinute,logger_restarted,<raw>/CR1000X_52001_StationB_ThirtyMinute.dat,2024-09-24 14:30:00,2024-09-24 18:00:00,1,record number went from 50 to 0 at 2024-09-24 18:00:00: the logger restarted (power loss or a new program),"",52001,ThirtyMinute

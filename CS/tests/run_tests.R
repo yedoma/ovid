@@ -824,6 +824,10 @@ local({                                                               # damaged 
   raw0 <- tempfile("raw0"); dir.create(raw0); for (f in list.files(sd, "__", full.names = TRUE)) if (!dir.exists(f)) file.copy(f, file.path(raw0, sub("^.*?__", "", basename(f))))
   p0 <- tempfile("p0"); rn(raw0, p0); t <- damaged_table_runs(p0, function() rn(raw0, p0)); bad <- t[result != "ok" & !startsWith(result, "The set-up table")]; if (nrow(bad)) print(bad)
   check(paste0("a damaged or emptied set-up table never stops a run without saying which table: ", nrow(t), " runs"), !nrow(bad)) })
+group("7c. Damaged files, the golden project and the formulas")
+local(source(file.path(.app, "tests", "test_bad_files.R"), local = TRUE))     # damaged raw files: a clear problem or flag, never a stop or a silent loss
+local(source(file.path(.app, "tests", "test_golden.R"), local = TRUE))        # the golden project: a whole run against accepted outputs
+local(source(file.path(.app, "tests", "test_formulas.R"), local = TRUE))      # derived values against FAO-56's worked example and hand-computed cases
 group("7b. Station names and text in any language or encoding")
 local({ nm <- c(dene = "\u0141\u0131\u0301\u0131\u0301ta\u0131\u0328\u0131\u0328 X\u0173\u0301\u0119\u0301", order = "a\u0328\u0301 a\u0301\u0328 o\u0328\u0300",
                 syllabics = "\u14c0\u1426\u1403\u152d\u140d\u140f\u1423", cjk = "\u6c14\u8c61\u7ad9", emoji = "\u2744\ufe0f \U0001F321", units = "W/m\u00b2 \u00b0C \u00b5mol")

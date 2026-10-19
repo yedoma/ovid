@@ -1,0 +1,3 @@
+group,logger_id,table,model,id_source,files,rows_read,rows_stitched,first_ts,last_ts,step_seconds,gaps,logger_nan_values,seen_as,serial,os,program,format,columns,largest_gap_hours,conflicts,station,stream
+46001__Table1,46001,Table1,CR1000,header serial,1,480,480,2024-07-01 00:00:00,2024-07-10 23:30:00,1800,0,0,CR1000_Pluvio_SiteA,46001,CR1000.Std.24,pluvio.CR1,TOA5,13,0,0,46001,Table1
+52001__ThirtyMinute,52001,ThirtyMinute,CR1000X,header serial,1,83,83,2024-09-23 13:30:00,2024-09-25 09:30:00,1800,1,1635,CR1000X_52001,52001,CR1000X.Std.06.02,met.CR1X,TOA5,52,3.5,0,52001,ThirtyMinute

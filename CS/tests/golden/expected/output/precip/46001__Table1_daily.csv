@@ -1,0 +1,11 @@
+Date,precip_mm,source,qc_flag,n_records,precip_acc_total_mm,precip_bucket_mm,gap_accum_mm,precip_corrected_mm,collection_efficiency,precip_corrected_low_mm,precip_corrected_high_mm
+2024-07-01,22.7,bucket,low_confidence,48,50.64,22.7,"",22.77,0.997,22.7,28.485
+2024-07-02,1.6,bucket,low_confidence,48,18.3,1.6,"",1.606,0.996,1.6,2.009
+2024-07-03,0.8,bucket,low_confidence,48,30.1,0.8,"",0.805,0.994,0.8,1.008
+2024-07-04,0,bucket,low_confidence,48,28.8,0,"",0,0.997,0,0
+2024-07-05,0.7,bucket,low_confidence,48,46.6,0.7,"",0.704,0.995,0.7,0.881
+2024-07-06,0.6,bucket,low_confidence,48,26.8,0.6,"",0.601,0.999,0.6,0.751
+2024-07-07,0,bucket,low_confidence,48,25.5,0,"",0,0.994,0,0
+2024-07-08,6.8,bucket,low_confidence,48,30.9,6.8,"",6.821,0.997,6.8,8.532
+2024-07-09,0.2,bucket,low_confidence,48,26.4,0.2,"",0.201,0.994,0.2,0.252
+2024-07-10,0,bucket,low_confidence,48,20.7,0,"",0,0.998,0,0

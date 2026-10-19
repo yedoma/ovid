@@ -1,0 +1,6 @@
+station,logger_id,stream,column,rule,n
+52001,52001,ThirtyMinute,ground_temp_10cm,range_min,50
+52001,52001,ThirtyMinute,ground_temp_20cm,range_min,50
+52001,52001,ThirtyMinute,ground_temp_30cm,range_min,50
+52001,52001,ThirtyMinute,ground_temp_40cm,range_min,50
+52001,52001,ThirtyMinute,ground_temp_50cm,range_min,50

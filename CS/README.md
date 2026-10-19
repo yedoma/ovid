@@ -89,7 +89,8 @@ or, without the app:
     R/export.R         flag columns, station report (HTML and/or PDF), export zip
     R/composite.R      combined records: one parameter stitched from several stations (config/composites.csv)
     www/               the Station map (cs_map.js; map_tools.js is the same file as in ovid RS)
-    tests/run_tests.R  tests on synthetic logger files
+    tests/run_tests.R  tests on synthetic logger files (also the reader samples, damaged files, the golden project and the formulas)
+    tests/test_bad_files.R, test_golden.R, test_formulas.R   each also runs on its own; test_golden.R accept "<name>" after checking tests/golden/expected
 
 The files in R/ are sourced by cs_pipeline.R in a fixed order; they are not a package.
 

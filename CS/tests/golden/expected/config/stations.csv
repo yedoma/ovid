@@ -1,0 +1,3 @@
+logger_id,header_name,table,start,end,station,stream,seen_as,notes
+52001,"","","","","","",CR1000X_52001,""
+46001,"","","","","","",CR1000_Pluvio_SiteA,""

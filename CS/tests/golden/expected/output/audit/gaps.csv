@@ -1,0 +1,2 @@
+logger_id,table,gap_start,gap_end,gap_hours,missing_records
+52001,ThirtyMinute,2024-09-24 14:30:00,2024-09-24 18:00:00,3.5,6

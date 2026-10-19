@@ -5,6 +5,18 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (daily albedo, 2026-10-19)**
+- The day's albedo is the sum of SW out over the sum of SW in over its daylight records (SW in above 50 W/m2) also where the logger writes its own albedo column; that column stays in the station file but is no longer averaged into the daily, monthly and water-year tables (its mean holds night and low-sun ratios: -0.131 for a day whose ratio of sums is 0.125). Sources in the hub references file; the 50 W/m2 daylight test is an Ovid default with no published source found. **Output changes:** stations whose logger writes an albedo column: the daily tables have albedo_calc in place of the logger albedo's mean.
+
+**Fixed (evapotranspiration, 2026-10-19)**
+- The daily FAO-56 reference evapotranspiration (et0_fao56_mm) and Priestley-Taylor (et_pt_mm) were computed with the humidity, wind and shortwave left out of the call (a comment had taken that line in since 1.0.0), so every other argument landed in the wrong place. Both now get the day's values; FAO-56 Example 18 (Brussels) is reproduced (Rn 13.28 MJ/m2/day, ET0 3.88 mm/day). **Output changes:** every et0_fao56_mm and et_pt_mm value, in the daily, monthly and water-year tables.
+
+**Added (tests, 2026-10-19)**
+- Reader samples for every format CS reads: a TOB3 table (every column of its 145 records equal to LoggerNet's TOA5 copy of it within its 7 printed digits), a CR10X mixed array with its .FSL, and a CR200X table with no serial. tests/test_bad_files.R (damaged files, a program change partway, a table re-initialised, NAN/INF/-7999, two intervals), tests/test_golden.R with tests/golden (a Pluvio2 gauge with the single-Alter undercatch correction and a met station: a whole run against accepted outputs), tests/test_formulas.R (FAO-56 Example 18; the rest hand-computed); all run by tests/run_tests.R. **Output changes:** none.
+
+**Fixed (damaged files, 2026-10-19)**
+- A TOA5 file that ends inside a row (no final line break) has that row left out and the file reported, not a value cut short read as whole. A new program written into the same file (a second TOA5 header with other columns) is read up to it and reported, not read on under the first header's names; a repeated header with the same columns is skipped. An emptied cr10x.csv no longer stops a run. **Output changes:** only for such files.
+
 **Changed (toggles, 2026-10-14)**
 - Settings (CR10X files, reuse unchanged loggers), Same scale, Station names and the "Only ..." filters are toggles; export and dialog choices stay checkboxes. **Output changes:** none.
 

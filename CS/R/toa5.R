@@ -122,6 +122,17 @@ read_toa5 <- function(path, cols, mtime, sep = ",") {
   dt <- tryCatch(withCallingHandlers(rd(), warning = function(w) invokeRestart("muffleWarning")),
                  error = function(e) { problem(basename(path), paste("could not be read and was left out:", conditionMessage(e))); NULL })
   if (is.null(dt) || !nrow(dt)) return(NULL)
+  # a new program written into the same file starts another TOA5 header: the same columns go on being read, other columns
+  # stop the read there (read on, they would land under the first header's names) and the file is reported
+  hb <- which(trim(dt[[1]]) == "TOA5")
+  if (length(hb)) { nx <- unlist(dt[hb[1] + 1L, -1L], use.names = FALSE); same <- identical(trim(c(dt[[1]][hb[1] + 1L], nx[nzchar(nx %||% "")])), trim(cols[nzchar(cols)]))
+    if (same) dt <- dt[-unlist(lapply(hb, function(i) i + 0:3))]
+    else { problem(basename(path), sprintf("a new TOA5 header with other columns after record %d (the program changed): the %d records after it were left out; split the file there",
+                                           hb[1] - 1L, nrow(dt) - hb[1] - 3L)); dt <- dt[seq_len(hb[1] - 1L)] } }
+  # a file that does not end with a line break was cut off (a copy that stopped): its last row can hold a value cut short
+  sz <- file.size(path); con <- file(path, "rb"); seek(con, sz - 1); cut <- !identical(readBin(con, "raw", 1L), as.raw(10L)); close(con)
+  if (cut && nrow(dt)) { problem(basename(path), "the file ends inside its last row (cut off): that row was left out"); dt <- dt[-nrow(dt)] }
+  if (!nrow(dt)) return(NULL)
   cols <- make.unique(ifelse(is.na(cols) | cols == "", "UNNAMED", cols), sep = "_dup")
   nm <- c(cols, paste0("EXTRA_", seq_len(max(0, ncol(dt) - length(cols)))))[seq_len(ncol(dt))]
   setnames(dt, nm)

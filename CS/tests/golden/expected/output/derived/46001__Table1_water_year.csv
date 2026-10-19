@@ -1,0 +1,14 @@
+water_year,parameter,value,days_with_value,statistic,complete
+2024,battery_v,12.5674,10,mean,FALSE
+2024,int_rt,0.0174583,10,mean,FALSE
+2024,acc_rtnrt,0.0241667,10,mean,FALSE
+2024,acc_nrt,0.0216458,10,mean,FALSE
+2024,acc_total,227.259,10,mean,FALSE
+2024,bucket_rt,348.979,10,mean,FALSE
+2024,bucket_nr,348.959,10,mean,FALSE
+2024,pluvio_temp,22.0506,10,mean,FALSE
+2024,Result8,128,10,mean,FALSE
+2024,Result9,0,10,mean,FALSE
+2024,wind_speed,0.48095,10,mean,FALSE
+2024,wind_speed_max,1.34819,10,mean,FALSE
+2024,wind_speed_min,0.0910812,10,mean,FALSE

@@ -1,0 +1,3 @@
+station,latitude,longitude,elevation_m,utc_offset_hours,snow_sensor_height_m,wind_height_m,description
+52001,61.3,-121.3,270,"","",2,golden test project: the met table station
+46001,"","","","","","",""
