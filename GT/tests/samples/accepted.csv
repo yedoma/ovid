@@ -1,6 +1,11 @@
 file,expected_md5,checked_by,checked_on,note
+campbell_toa5__CR300_1001_Table1.dat,9488d686fbba8c7906a3368c394eb731,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+em50_xls__EM00003_SiteB_20240921_1506.xls,e35f3587948432364a85426c26d7094c,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 fg2_csv__E00001_20240927165437.csv,2703f9c5cc3e749df96c19223d202cdd,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+fg2_f2b__E00001_20240927165437.f2b,c7cf51c94e4f2190c4d793c957b49058,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 fg2_f2b__E00002_20240921120719.f2b,cafcc46bd8cf474a4755c733094c70bf,neutralized copy of an accepted sample,2026-10-09,"binary; no FG2-Shell export exists for this logger, so its values are unverified"
+hobo_binary__1000004_SiteA.hobo,27207f595f77f5c589b549124740df89,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 hobo_csv__1000004_SiteA20240921.csv,b05d880e7ca3b0f539bd36179d93fb55,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
 rbr_hex__000123_20240926_1542.hex,908fd8f02f3dd6ca1ae1da7a4b68abf0,neutralized copy of an accepted sample,2026-10-09,"binary; checked against the Ruskin export, see reference.csv"
 rbr_txt__000123_20240926_1542.txt,f3522f60ade0d9e8fe4d6379f6b45b8c,neutralized copy of an accepted sample,2026-10-09,text: raw-file values in reference.csv
+rbr_xls__000123_20240926_1544.xlsx,025c19da6aca9d2d4092b5578a592bb2,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
