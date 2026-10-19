@@ -37,6 +37,10 @@ golden_outputs <- function(p, raw, to) {
 golden_md5 <- function(dir) { f <- sort(list.files(dir, recursive = TRUE)); if (!length(f)) return("")
   t <- tempfile(); on.exit(unlink(t)); writeLines(paste(f, tools::md5sum(file.path(dir, f))), t); unname(as.character(tools::md5sum(t))) }
 
+# Cells that differ: numbers by more than 1e-9 of their size (the last bits of a mean or a percentile differ between processors,
+# x86_64 and arm64), everything else as text.
+golden_cells_differ <- function(a, b) { na <- suppressWarnings(as.numeric(a)); nb <- suppressWarnings(as.numeric(b)); n <- !is.na(na) & !is.na(nb)
+  out <- a != b; out[n] <- abs(na[n] - nb[n]) > 1e-9 * pmax(1, abs(na[n])); out }
 # What differs between two folders of normalized outputs, one line each (as run_check.R reports it).
 golden_diff <- function(want, got) {
   fw <- sort(list.files(want, recursive = TRUE)); fg <- sort(list.files(got, recursive = TRUE)); out <- c(paste("gone:", setdiff(fw, fg)), paste("new: ", setdiff(fg, fw)))
@@ -46,9 +50,9 @@ golden_diff <- function(want, got) {
     if (nrow(x) != nrow(y)) m <- c(m, sprintf("rows %d -> %d", nrow(x), nrow(y)))
     if (length(d <- setdiff(names(x), names(y)))) m <- c(m, paste("columns gone:", paste(d, collapse = " ")))
     if (length(d <- setdiff(names(y), names(x)))) m <- c(m, paste("columns new:", paste(d, collapse = " ")))
-    if (nrow(x) == nrow(y)) { cm <- intersect(names(x), names(y)); k <- vapply(cm, function(c) sum(x[[c]] != y[[c]]), 0L)
+    if (nrow(x) == nrow(y)) { cm <- intersect(names(x), names(y)); k <- vapply(cm, function(c) sum(golden_cells_differ(x[[c]], y[[c]])), 0L)
       if (any(k > 0)) m <- c(m, paste("cells:", paste(sprintf("%s=%d", names(k)[k > 0], k[k > 0]), collapse = " "))) }
-    out <- c(out, paste0("differs: ", p, if (length(m)) paste0(" (", paste(m, collapse = "; "), ")") else "")) }
+    if (length(m)) out <- c(out, paste0("differs: ", p, " (", paste(m, collapse = "; "), ")")) }   # numbers within the tolerance are the same
   out[!grepl("^(gone|new): *$", out)]
 }
 

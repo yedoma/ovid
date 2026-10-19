@@ -363,7 +363,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       if (before - after != n_aud) stop("values do not reconcile: ", before - after, " removed but ", n_aud, " audited")
       dt[, c(".mtime", "table") := NULL]
       nv <- vals[vapply(vals, function(v) is.numeric(dt[[v]]) && any(!is.na(dt[[v]])), logical(1))]
-      if (length(nv)) pstats[[kk]] <- rbindlist(lapply(nv, function(v) { x <- dt[[v]]; q <- stats::quantile(x, c(0.01, 0.5, 0.99), na.rm = TRUE, names = FALSE)
+      if (length(nv)) pstats[[kk]] <- rbindlist(lapply(nv, function(v) { x <- dt[[v]]; q <- signif(stats::quantile(x, c(0.01, 0.5, 0.99), na.rm = TRUE, names = FALSE), 10)   # 10 digits: interpolated percentiles differ in the last bits between processors
         data.table(station = dt$station[1], stream = dt$stream[1], parameter = v, values = sum(!is.na(x)), missing_pct = round(100 * mean(is.na(x)), 1),
                    min = min(x, na.rm = TRUE), p01 = q[1], median = q[2], p99 = q[3], max = max(x, na.rm = TRUE)) }))
       fn <- if (length(FLAGS$list) > nf0) rbindlist(FLAGS$list[(nf0 + 1L):length(FLAGS$list)], fill = TRUE) else NULL

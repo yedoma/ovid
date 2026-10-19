@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (CI, 2026-10-19)**
+- parameter_stats.csv percentiles (p01, median, p99) are kept to 10 significant digits: the interpolated values differed in their last bits between x86_64 (the GitHub runner) and arm64 (the Mac), which failed the golden test on CI. tests/test_golden.R also compares numbers to 1e-9 of their size. **Output changes:** percentiles that carried floating-point noise (0.308399999999999) read 0.3084.
+
 **Changed (daily albedo, 2026-10-19)**
 - The day's albedo is the sum of SW out over the sum of SW in over its daylight records (SW in above 50 W/m2) also where the logger writes its own albedo column; that column stays in the station file but is no longer averaged into the daily, monthly and water-year tables (its mean holds night and low-sun ratios: -0.131 for a day whose ratio of sums is 0.125). Sources in the hub references file; the 50 W/m2 daylight test is an Ovid default with no published source found. **Output changes:** stations whose logger writes an albedo column: the daily tables have albedo_calc in place of the logger albedo's mean.
 
