@@ -1,0 +1,251 @@
+meas_id,rule,flag,value,survey_id,profile,rule_id,app
+26,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+48,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+47,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+25,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+24,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+60,moving_median,uncertain,5;7,ERT-236e007264,frozen_ground,Q-53,GS
+17,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+18,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+19,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+20,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+21,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+22,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+23,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+24,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+25,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+26,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+43,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+44,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+45,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+46,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+47,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+48,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+49,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+50,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+51,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+52,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+8,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+7,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,frozen_ground,Q-54,GS
+1,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+2,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+3,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+4,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+5,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+6,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+7,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+8,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+9,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+10,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+11,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+12,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+13,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+14,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+15,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+16,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+27,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+28,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+29,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+30,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+31,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+32,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+33,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+34,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+35,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+36,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+37,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+38,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+39,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+40,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+41,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+42,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+53,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+54,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+55,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+56,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+57,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+58,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+59,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+60,min_current_ma,low current,20,ERT-236e007264,standard,Q-08,GS
+26,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+48,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+47,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+25,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+24,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+60,moving_median,uncertain,5;7,ERT-236e007264,standard,Q-49,GS
+7,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+8,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+9,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+10,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+11,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+12,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+13,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+14,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+15,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+16,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+17,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+18,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+19,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+20,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+21,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+22,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+23,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+24,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+25,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+26,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+27,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+28,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+29,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+30,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+31,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+32,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+33,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+34,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+35,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+36,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+43,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+44,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+45,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+46,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+47,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+48,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+49,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+50,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+51,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+52,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+53,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+54,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+55,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+56,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+57,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+58,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+59,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+60,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+42,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+41,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (42% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (33% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (80% flagged),ERT-236e007264,standard,Q-50,GS
+1,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+2,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+3,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+4,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+5,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+6,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+7,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+8,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+9,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+10,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+11,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+12,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+13,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+14,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+15,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+16,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+27,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+28,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+29,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+30,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+31,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+32,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+33,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+34,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+35,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+36,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+37,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+38,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+39,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+40,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+41,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+42,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+53,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+54,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+55,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+56,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+57,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+58,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+59,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+60,min_current_ma,low current,20,ERT-236e007264,strict,Q-19,GS
+26,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+48,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+47,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+25,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+24,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+60,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+8,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+17,moving_median,uncertain,5;5,ERT-236e007264,strict,Q-51,GS
+7,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+8,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+9,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+10,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+11,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+12,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+13,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+14,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+15,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+16,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+17,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+18,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+19,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+20,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+21,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+22,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+23,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+24,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+25,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+26,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+27,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+28,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+29,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+30,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+31,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+32,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+33,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+34,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+35,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+36,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+43,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+44,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+45,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+46,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+47,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+48,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+49,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+50,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+51,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+52,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+53,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+54,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+55,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+56,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+57,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+58,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+59,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+60,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+42,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+41,bad_electrode,bad electrode,electrode 10 (86% flagged); electrode 19 (50% flagged); electrode 28 (100% flagged); electrode 12 (33% flagged); electrode 11 (85% flagged); electrode 20 (42% flagged); electrode 29 (100% flagged); electrode 13 (43% flagged); electrode 22 (90% flagged),ERT-236e007264,strict,Q-52,GS
+26,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+48,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+47,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+25,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+24,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+60,moving_median,uncertain,5;7,ERT-236e007264,cpers,Q-60,GS
+17,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+18,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+19,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+20,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+21,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+22,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+23,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+24,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+25,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+26,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+43,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+44,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+45,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+46,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+47,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+48,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+49,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+50,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+51,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+52,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+7,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS
+8,bad_electrode,bad electrode,electrode 19 (42% flagged); electrode 12 (25% flagged); electrode 20 (33% flagged); electrode 13 (29% flagged),ERT-236e007264,cpers,Q-61,GS

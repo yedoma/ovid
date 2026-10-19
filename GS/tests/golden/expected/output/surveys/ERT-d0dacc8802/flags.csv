@@ -1,0 +1,82 @@
+meas_id,rule,flag,value,survey_id,profile,rule_id,app
+17,min_current_ma,low current,20,ERT-d0dacc8802,standard,Q-08,GS
+18,min_current_ma,low current,20,ERT-d0dacc8802,standard,Q-08,GS
+19,min_current_ma,low current,20,ERT-d0dacc8802,standard,Q-08,GS
+20,min_current_ma,low current,20,ERT-d0dacc8802,standard,Q-08,GS
+21,min_current_ma,low current,20,ERT-d0dacc8802,standard,Q-08,GS
+1,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+2,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+3,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+4,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+17,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+18,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+19,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+20,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+21,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,standard,Q-17,GS
+7,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+8,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+9,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+10,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+11,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+1,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+2,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+3,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+4,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+5,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+12,bad_electrode,bad electrode,electrode 8 (36% flagged),ERT-d0dacc8802,standard,Q-50,GS
+17,min_current_ma,low current,20,ERT-d0dacc8802,strict,Q-19,GS
+18,min_current_ma,low current,20,ERT-d0dacc8802,strict,Q-19,GS
+19,min_current_ma,low current,20,ERT-d0dacc8802,strict,Q-19,GS
+20,min_current_ma,low current,20,ERT-d0dacc8802,strict,Q-19,GS
+21,min_current_ma,low current,20,ERT-d0dacc8802,strict,Q-19,GS
+1,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+2,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+3,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+4,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+5,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+6,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+7,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+8,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+9,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+10,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+11,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+12,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+13,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+14,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+15,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+16,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+17,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+18,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+19,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+20,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+21,max_contact_ohm,poor contact,5000,ERT-d0dacc8802,strict,Q-28,GS
+7,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+8,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+9,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+10,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+11,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+12,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+13,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+14,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+15,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+16,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+1,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+2,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+3,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+4,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+5,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+6,bad_electrode,bad electrode,electrode 8 (100% flagged); electrode 9 (100% flagged),ERT-d0dacc8802,strict,Q-52,GS
+17,min_current_ma,low current,20,ERT-d0dacc8802,supersting_r8,Q-30,GS
+18,min_current_ma,low current,20,ERT-d0dacc8802,supersting_r8,Q-30,GS
+19,min_current_ma,low current,20,ERT-d0dacc8802,supersting_r8,Q-30,GS
+20,min_current_ma,low current,20,ERT-d0dacc8802,supersting_r8,Q-30,GS
+21,min_current_ma,low current,20,ERT-d0dacc8802,supersting_r8,Q-30,GS
+1,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+2,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+3,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+4,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+17,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+18,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+19,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+20,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS
+21,max_contact_ohm,poor contact,10000,ERT-d0dacc8802,supersting_r8,Q-33,GS

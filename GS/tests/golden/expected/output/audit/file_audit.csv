@@ -1,0 +1,7 @@
+file,format,role,status,size,md5,survey_id,used,read,in_output,used_in,dropped,dropped_why,reconciles,what_happened
+IRIS/LineN_wenner.dat,res2dinv_dat,derived,"",12326,f67dc29ff05d3cb9fd68e039f11d9623,ERT-f67dc29ff0,TRUE,198,198,ERT-f67dc29ff0,0,"",TRUE,all 198 measurements in the output
+IRIS/dipdip_A.csv,syscal_prosys_txt,data,"",5718,236e007264033d9573020332413e3d54,ERT-236e007264,TRUE,60,60,ERT-236e007264,0,"",TRUE,all 60 measurements in the output
+Line 2018/SCH-INV.cmd,agi_cmd,companion,companion,7690,da613a771552b6b527fb09720321bf68,"",FALSE,"","",ERT-d0dacc8802,"","","",read with ERT-d0dacc8802: electrode positions and command count
+Line 2018/SCH-INV.crs,agi_crs,companion,companion,1582,793d26aff7bfa46e4e34307e096476ff,"",FALSE,"","",ERT-d0dacc8802,"","","",read with ERT-d0dacc8802: contact resistances joined to its measurements
+Line 2018/SCH-INV.stg,agi_stg,data,"",5937,d0dacc88022c647b824ae1f86836250a,ERT-d0dacc8802,TRUE,21,21,ERT-d0dacc8802,0,"",TRUE,all 21 measurements in the output
+Line 2019/MC7WEN_trial11_1.stg,agi_stg_earthimager,derived,"",2736,5068ce8985c1537fb0f576889d24f7a7,ERT-5068ce8985,TRUE,13,13,ERT-5068ce8985,0,"",TRUE,all 13 measurements in the output

@@ -1,0 +1,7 @@
+survey_id,rel,file,format,type,role,readable,status,size,md5
+ERT-f67dc29ff0,IRIS/LineN_wenner.dat,LineN_wenner.dat,res2dinv_dat,other,derived,TRUE,"",12326,f67dc29ff05d3cb9fd68e039f11d9623
+ERT-236e007264,IRIS/dipdip_A.csv,dipdip_A.csv,syscal_prosys_txt,syscal,data,TRUE,"",5718,236e007264033d9573020332413e3d54
+"",Line 2018/SCH-INV.cmd,SCH-INV.cmd,agi_cmd,agi,companion,TRUE,"",7690,da613a771552b6b527fb09720321bf68
+"",Line 2018/SCH-INV.crs,SCH-INV.crs,agi_crs,agi,companion,TRUE,"",1582,793d26aff7bfa46e4e34307e096476ff
+ERT-d0dacc8802,Line 2018/SCH-INV.stg,SCH-INV.stg,agi_stg,agi,data,TRUE,"",5937,d0dacc88022c647b824ae1f86836250a
+ERT-5068ce8985,Line 2019/MC7WEN_trial11_1.stg,MC7WEN_trial11_1.stg,agi_stg_earthimager,agi,derived,TRUE,"",2736,5068ce8985c1537fb0f576889d24f7a7

@@ -1,0 +1,5 @@
+survey_id,display_name,acquired_date,instrument_model,project,site,transect_id,operator,conditions,ground_conditions,notes,quality,quality_reasons,quality_notes,exclude_from_archive,electrode_contact,inversion_software,inversion_parameters,inversion_rms_pct
+ERT-f67dc29ff0,"","","","","","","","","","",Unknown,"","","","","","",""
+ERT-236e007264,"","","","","","","","","","",Unknown,"","","","","","",""
+ERT-d0dacc8802,"","","","","","","","","","",Unknown,"","","","","","",""
+ERT-5068ce8985,"","","","","","","","","","",Unknown,"","","","","","",""

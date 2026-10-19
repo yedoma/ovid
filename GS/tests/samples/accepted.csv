@@ -1,3 +1,11 @@
 file,expected_md5,checked_by,checked_on,note
+agi_cmd__SCH-INV.cmd,b684c9d603387dd81351dfcc992481c5,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+agi_crs__SCH-INV.crs,733dcc68eceec984b39db2df925a6cd3,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
 agi_stg__SCH-INV.stg,ce6ba6038199c71f045442577585c8e8,existing sample (accepted before reference checks),2026-10-09,text: raw-file values in reference.csv
 agi_stg_earthimager__MC7WEN_trial11_1.stg,8042447be8b60fe28383e2c05ca63684,existing sample (accepted before reference checks),2026-10-09,text: raw-file values in reference.csv
+gpr_cor__DAT_0204.cor,f1526fbb4a7886416aa9318a89ec1ef2,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+gpr_mrk__DAT_0204.mrk,14070c0309779513e6d36d99f4270f13,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+gpr_rad__DAT_0204.rad,b37c92afc72f818b496060a6554803e5,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+gpr_rd3__DAT_0204.rd3,cea9b535cff509f1ef3b304a25af43a7,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+res2dinv_dat__LineN_wenner.dat,fa3f7ed2d7f4e872ffe29cbd9d31c4c5,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"
+syscal_prosys_txt__dipdip_A.csv,1f0c9a235c2a3b8677bcd7172b993a48,M,2026-10-19,"accepted in M's name on M's instruction, from the summaries of each .rds"

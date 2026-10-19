@@ -1,0 +1,50 @@
+meas_id,rule,flag,value,survey_id,profile,rule_id,app
+106,outlier_mad,uncertain,6,ERT-f67dc29ff0,frozen_ground,Q-43,GS
+180,outlier_mad,uncertain,6,ERT-f67dc29ff0,frozen_ground,Q-43,GS
+106,outlier_mad,uncertain,6,ERT-f67dc29ff0,standard,Q-15,GS
+180,outlier_mad,uncertain,6,ERT-f67dc29ff0,standard,Q-15,GS
+98,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+106,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+176,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+180,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+183,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+186,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+189,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+191,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+193,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+195,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+196,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+197,outlier_mad,uncertain,4,ERT-f67dc29ff0,strict,Q-26,GS
+106,moving_median,uncertain,5;5,ERT-f67dc29ff0,strict,Q-51,GS
+196,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+197,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+2,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+13,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+35,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+45,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+65,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+74,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+92,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+100,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+116,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+123,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+137,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+143,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+155,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+160,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+170,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+174,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+182,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+185,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+191,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+193,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+192,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+194,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+195,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+164,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+173,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+177,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+181,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+184,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+188,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS
+190,bad_electrode,bad electrode,electrode 31 (22% flagged); electrode 32 (24% flagged),ERT-f67dc29ff0,strict,Q-52,GS

@@ -387,6 +387,7 @@ local({                                                               # a GPR li
         is.null(gpr_axis(ax, "trace")$full) && gpr_axis(ax, "markers", NA)$label == "Trace", "GPR processing's distance across: GPS or header interval, markers, or trace")
   check(gpr_line_year(NULL) == "" && gpr_line_year(data.table(datetime = as.POSIXct(c("2016-09-01", "2015-08-01"), tz = "UTC"))) == "2015", "the year of a line is that of its first GPS fix")
 })
+for (t in c("test_bad_files.R", "test_golden.R", "test_formulas.R")) source(file.path(here, "tests", t), local = new.env())   # damaged files, the golden project, derived values
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(GS_PROJECT_DIR = file.path(tmp, "project"), GS_RAW_DIRS = dirname(raw), GS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))

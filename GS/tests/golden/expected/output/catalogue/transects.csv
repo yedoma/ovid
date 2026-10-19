@@ -1,0 +1,1 @@
+transect_id,site,name,start_lat,start_lon,end_lat,end_lon,start_x,start_y,start_z,end_x,end_y,end_z,crs,orientation_deg,length_m,spacing_m,n_electrodes,array,method,terrain,ground,notes

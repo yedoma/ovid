@@ -88,6 +88,9 @@ read_agi_stg <- function(path) {
                   resistance_ohm = nm(5), error_permille = nm(6), current_ma = nm(7), rhoa_ohmm = nm(8), name = fx(9))
   xyz <- c("ax", "ay", "az", "bx", "by", "bz", "mx", "my", "mz", "nx", "ny", "nz")
   for (k in seq_along(xyz)) set(d, j = xyz[k], value = nm(9 + k))
+  if (grepl("^f(ee|oo)?t$", meta$unit %||% "", ignore.case = TRUE)) {        # positions in feet: every GS column is in metres
+    for (k in xyz) set(d, j = k, value = ifelse(abs(d[[k]]) >= 9999, d[[k]], d[[k]] * 0.3048))   # a remote electrode stays remote
+    meta$processing <- trim(paste(if (!is.na(meta$processing)) paste0(meta$processing, ";"), "positions converted from feet to metres (x 0.3048); apparent resistivity as the instrument wrote it")) }
   # key=value settings and anything else after the coordinates go to the instrument-specific table
   extra <- data.table(meas_id = d$meas_id, survey_name = d$name, error_permille = d$error_permille, current_ma = d$current_ma)
   kv <- lapply(tok, function(t) if (length(t) > 21) trim(t[22:length(t)]) else character())

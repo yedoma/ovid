@@ -7,6 +7,18 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added and fixed (tests: samples, damaged files, golden project, derived values, 2026-10-19)**
+- tests/samples: real files for every format GS reads: the AGI .cmd and .crs of the SCH-INV line, an IRIS Prosys export (60 of 1958 quadrupoles), a Res2DInv file, and a MALA GPR line (.rad, .rd3, .cor, .mrk); reference values from the raw files (the .rd3 values from its bytes, read apart from R) in reference.csv. tests/samples.R reads the companions and GPR files with their own readers.
+- tests/test_bad_files.R: every sample emptied, cut in half and cut to 3 lines; an .stg in feet, a line with an electrode never used, a record with no positions, GPR lines with no traces, no sample count or a cut data file, positions in UTM or swapped.
+- tests/test_golden.R and tests/golden: the SCH-INV line with its .cmd and .crs, an EarthImager subset, the IRIS export and a Res2DInv file; outputs compared with tests/golden/expected (numbers to 1e-9 of their size), failing until accepted.
+- tests/test_formulas.R: geometric factors per array (Telford 1990), rho_a = K R against the IRIS and AGI instruments' own values, the CPERS QC rules (9 SD, reciprocal error, moving median, bad electrode), the reciprocal error model, electrode heights, GPR velocity, depth and distance. run_tests.R runs all three.
+- Fixed: a folder whose files were all empty (or held no survey file) stopped the run.
+- Fixed: an .stg with Unit: feet kept its positions in feet in columns named and used as metres (spacing_m, length_m, geometric factors); positions are now converted (x 0.3048) and the survey's processing says so. The apparent resistivity stays as the instrument wrote it.
+- Fixed: a GPR header saying 0 traces with an empty data file was "ok"; it is now "no traces (the header says 0)".
+- File audit: an empty file says "empty file"; an AGI .cmd or .crs read with a survey names that survey and what was taken from it (it was listed as an unused companion).
+
+**Output changes:** .stg files in feet: positions, spacing, length and geometric factors in metres. file_audit.csv: status and used_in of empty files and of .cmd / .crs companions. gpr status of zero-trace lines.
+
 **Changed (combined ERT/GPR icon, 2026-10-17)**
 
 - New icon: a gold radar trace above a purple ERT sample section. The app headers, browser-tab icon, platform icons and documentation banners use this artwork. **Output changes:** none.

@@ -81,6 +81,8 @@ build_surveys <- function(files, cfg) {
     S[[sid]] <- s; M[[sid]] <- r$meas; X[[sid]] <- r$extra
   }
   surveys <- rbindlist(lapply(S, function(s) as.data.table(lapply(s, function(v) if (is.null(v) || !length(v)) NA else v[1]))), fill = TRUE)
+  if (!nrow(surveys)) surveys <- data.table(survey_id = character(), kind = character(), format = character(), type = character(), primary_file = character(),   # no survey file (all empty or none)
+                                            other_paths = character(), folder = character(), stem = character(), status = character(), message = character(), n_read = integer(), n_stated = integer())
   list(surveys = surveys, meas = M, extra = X)
 }
 
@@ -202,7 +204,13 @@ ert_file_audit <- function(files, surveys, meas) {
   f[, read := fifelse(used, n_read, NA_integer_)]
   f[!used %in% TRUE, status := fifelse(!is.na(survey_status), survey_status,
                                fifelse(role %in% c("data", "derived") & status != "ignored", "copy of another file (same content)", fifelse(nzchar(status), status, role)))]
+  f[!used %in% TRUE & size %in% 0, status := "empty file"]                    # nothing to read: listed with why
   kept <- f[used %in% TRUE, .(source_file = file, in_output = vapply(survey_id, function(s) if (is.null(meas[[s]])) 0L else nrow(meas[[s]]), 0L), used_in = survey_id)]
   fa <- file_reconcile(f, kept, data.table(source_file = character(), stage = character(), rule = character(), level = character(), n = integer()), unit = "measurements")
+  # companions read with a survey (attach_companions) carry no measurements of their own, so stay unused, but say which survey read them
+  cm <- if ("companions" %in% names(surveys)) surveys[!is.na(companions) & nzchar(companions), .(file = trimws(unlist(strsplit(companions, ";", fixed = TRUE)))), by = .(survey_id, folder)] else data.table()
+  if (nrow(cm)) { cm <- merge(cm, files[, .(rel, file, folder, format)], by = c("folder", "file"))[, .(used_in = paste(unique(survey_id), collapse = " | ")), by = .(rel, format)]
+    fa[cm, on = .(file = rel), `:=`(used_in = i.used_in, what_happened = paste0("read with ", i.used_in, fcase(i.format == "agi_crs", ": contact resistances joined to its measurements",
+                                                                                                         i.format == "agi_cmd", ": electrode positions and command count", default = "")))] }
   fa[, c("n_read", "survey_status", "values_removed") := NULL][]
 }

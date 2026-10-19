@@ -1,0 +1,26 @@
+meas_id,rule,flag,value,survey_id,profile,rule_id,app
+1,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+7,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+8,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+9,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+10,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+11,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+12,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+13,min_current_ma,low current,20,ERT-5068ce8985,standard,Q-08,GS
+1,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+7,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+8,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+9,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+10,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+11,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+12,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+13,min_current_ma,low current,20,ERT-5068ce8985,strict,Q-19,GS
+3,moving_median,uncertain,5;5,ERT-5068ce8985,strict,Q-51,GS
+1,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+7,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+8,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+9,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+10,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+11,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+12,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS
+13,min_current_ma,low current,20,ERT-5068ce8985,supersting_r8,Q-30,GS

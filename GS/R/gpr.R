@@ -73,11 +73,12 @@ gpr_scan <- function(dirs) {
   rad[, `:=`(samples = vapply(H, function(h) h$samples %||% NA_integer_, 0L), traces = vapply(H, function(h) h$last_trace %||% NA_integer_, 0L))]
   ntr <- function(size, bytes, s) floor(size / (s * bytes))                         # whole traces in the file
   fit <- function(size, bytes, s, n) { r <- size / (s * bytes)                        # 1 ok (whole traces, LAST TRACE to + slack), 2 truncated (fewer than the header says; a cut last trace is dropped)
-    fcase(!is.na(r) & r == round(r) & r >= n & r <= n + GPR_SLACK, 1L, !is.na(r) & r < n & floor(r) >= 1, 2L, default = 0L) }
+    fcase(!is.na(r) & r >= 1 & r == round(r) & r >= n & r <= n + GPR_SLACK, 1L, !is.na(r) & r < n & floor(r) >= 1, 2L, default = 0L) }   # no traces is never a fit
   take <- rep(NA_character_, nrow(rad)); how <- rep("", nrow(rad)); msg <- rep("", nrow(rad)); kind <- rep(0L, nrow(rad))
   # pass 1: by name
   for (i in seq_len(nrow(rad))) {
     r <- rad[i]; if (is.na(r$samples) || is.na(r$traces)) { msg[i] <- "header not read"; next }
+    if (r$samples < 1L || r$traces < 1L) { msg[i] <- "no traces (the header says 0)"; next }
     c1 <- dat[stem == r$stem]; if (!nrow(c1)) next
     c1[, k := fit(size, bytes, r$samples, r$traces)]; c1 <- c1[k > 0]
     if (!nrow(c1)) { msg[i] <- "data file size does not fit the header"; next }
@@ -86,7 +87,7 @@ gpr_scan <- function(dirs) {
   }
   # pass 2: by exact size, for headers with no data file of their name. A data file is used only when it is the one fit for that header
   # and that header is the only one it fits.
-  free <- dat[!path %in% take]; todo <- which(is.na(take) & !rad$stem %in% dat$stem & !is.na(rad$samples))
+  free <- dat[!path %in% take]; todo <- which(is.na(take) & !rad$stem %in% dat$stem & !is.na(rad$samples) & rad$samples > 0 & !is.na(rad$traces) & rad$traces > 0)
   fitp <- lapply(todo, function(i) free[fit(size, bytes, rad$samples[i], rad$traces[i]) == 1L, path])
   for (j in seq_along(todo)) { i <- todo[j]; f <- fitp[[j]]
     if (length(f) > 1L) { same <- f[dirname(f) == rad$folder[i]]; if (length(same) == 1L) f <- same }

@@ -9,3 +9,36 @@ agi_stg_earthimager__MC7WEN_trial11_1.stg,first_time,2019-08-16 14:32:32,"raw fi
 agi_stg_earthimager__MC7WEN_trial11_1.stg,last_time,2019-08-16 15:54:22,raw file line 16
 agi_stg_earthimager__MC7WEN_trial11_1.stg,col:rhoa_ohmm@1,971.938,raw file line 4 (9.71938E+02)
 agi_stg_earthimager__MC7WEN_trial11_1.stg,col:resistance_ohm@2,56.4361,raw file line 5 (5.64361E+01)
+agi_cmd__SCH-INV.cmd,rows,56,raw file :geometry section (56 electrode lines)
+agi_cmd__SCH-INV.cmd,col:x@56,55,"raw file geometry line 56 (56,55.00,0.00,0.00)"
+agi_crs__SCH-INV.crs,rows,9,raw file lines 6-14
+agi_crs__SCH-INV.crs,first_time,2018-03-23 13:29:59,raw file line 6
+agi_crs__SCH-INV.crs,last_time,2018-03-23 14:03:35,raw file line 14
+agi_crs__SCH-INV.crs,col:contact_ohm@1,10288.9,raw file line 6 (1.02889E+04)
+agi_crs__SCH-INV.crs,col:current_a@9,0.0175525,raw file line 14 (1.75525E-02)
+syscal_prosys_txt__dipdip_A.csv,rows,60,raw file lines 2-61 (first 60 of 1958 quadrupoles)
+syscal_prosys_txt__dipdip_A.csv,col:rhoa_ohmm@1,1294.2,raw file line 2 (Rho)
+syscal_prosys_txt__dipdip_A.csv,col:voltage_v@1,-0.604653,raw file line 2 (Vp -604.653 mV)
+syscal_prosys_txt__dipdip_A.csv,col:current_a@1,0.017613,raw file line 2 (In 17.613 mA)
+syscal_prosys_txt__dipdip_A.csv,col:mx@60,32,raw file line 61 (Spa.3)
+syscal_prosys_txt__dipdip_A.csv,col:rhoa_ohmm@60,581.46,raw file line 61 (Rho)
+res2dinv_dat__LineN_wenner.dat,rows,198,raw file line 7 (198) and lines 10-207
+res2dinv_dat__LineN_wenner.dat,col:resistance_ohm@1,12.66736,raw file line 10 (line 6 = 1: resistance)
+res2dinv_dat__LineN_wenner.dat,col:bx@1,66,raw file line 10 (Bx)
+res2dinv_dat__LineN_wenner.dat,col:mx@1,22,raw file line 10 (Mx)
+gpr_rad__DAT_0204.rad,col:samples@1,447,raw file SAMPLES:447
+gpr_rad__DAT_0204.rad,col:last_trace@1,223,raw file LAST TRACE:223
+gpr_rad__DAT_0204.rad,col:timewindow_ns@1,81.229198,raw file TIMEWINDOW:81.229198
+gpr_rd3__DAT_0204.rd3,rows,223,"file size 199362 bytes / (447 samples x 2 bytes)"
+gpr_rd3__DAT_0204.rd3,col:first@1,127,"bytes 0-1, int16 little-endian (Python struct, not R)"
+gpr_rd3__DAT_0204.rd3,col:s100@1,315,"trace 1 sample 100, int16 little-endian (Python struct)"
+gpr_rd3__DAT_0204.rd3,col:min@1,-14437,trace 1 minimum (Python struct)
+gpr_rd3__DAT_0204.rd3,col:sum@223,99609,trace 223 sum (Python struct)
+gpr_cor__DAT_0204.cor,rows,56,raw file (56 fixes)
+gpr_cor__DAT_0204.cor,first_time,2019-09-06 14:35:20,raw file line 1
+gpr_cor__DAT_0204.cor,last_time,2019-09-06 14:37:09,raw file line 56
+gpr_cor__DAT_0204.cor,col:lat@1,63.29187833333,raw file line 1
+gpr_cor__DAT_0204.cor,col:lon@1,-129.83746833333,raw file line 1 (129.83746833333 W)
+gpr_cor__DAT_0204.cor,col:elev_m@56,1280.5,raw file line 56
+gpr_mrk__DAT_0204.mrk,rows,5,raw file lines 2-6
+gpr_mrk__DAT_0204.mrk,col:trace@5,198,raw file line 6

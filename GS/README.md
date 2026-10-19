@@ -44,7 +44,7 @@ Raw files are never changed; QC only adds flags; failed and unreadable surveys s
 
 - **Mac:** double-click `Open GS (Mac).command` in the Ovid_Apps folder. **Windows:** double-click `Ovid_GS.bat` (`Make_Portable.bat` makes a copy that runs without R).
 - From R: `shiny::runApp("GS")`. The first start builds the catalogue; set the raw archive and project folders on the Settings page.
-- Without the app: `Rscript gs_pipeline.R` (folders from CFG, or GS_RAW_DIRS and GS_PROJECT_DIR); tests: `Rscript tests/run_tests.R`.
+- Without the app: `Rscript gs_pipeline.R` (folders from CFG, or GS_RAW_DIRS and GS_PROJECT_DIR); tests: `Rscript tests/run_tests.R` (with tests/test_bad_files.R, test_golden.R and test_formulas.R; samples in tests/samples, the golden project in tests/golden).
 - **Set-up tables** edits every table in config/ (the Survey, Map and QC pages write some of them too).
 - A rebuild redoes only what changed (`incremental = TRUE`, kept in `<project>/cache/`): a survey is checked again when its measurements, its details or the QC rows, manual flags and electrode rows that can apply to it change, and a preview is drawn again when its measurements, flags or title change.
 
