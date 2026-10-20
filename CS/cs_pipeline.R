@@ -98,7 +98,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
   if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
-for (.f in c("util", "convert", "audit", "qc", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
+for (.f in c("util", "convert", "audit", "qc", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
 for (.f in c("plots", "toa5", "tob3", "cr10x", "program", "stitch", "config", "qc", "derived", "homog", "precip", "history", "preflight", "io", "export", "composite"))
@@ -236,6 +236,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       # at once, its records (.data.rds) only if a station it feeds has to be rebuilt
       ck <- cache_key(g, tcr, cfg); cf <- cache_file(cache_dir, k, ck); dfile <- sub("\\.rds$", ".data.rds", cf); hit <- FALSE
       if (isTRUE(cfg$incremental) && file.exists(cf) && file.exists(dfile)) {
+        # safe: a damaged cache is rebuilt from the raw files
         cc <- tryCatch(readRDS(cf), error = function(e) NULL)
         if (!is.null(cc)) { res <- cc$res
           AUDIT$log <- audit_restamp(cc$log)
@@ -387,7 +388,7 @@ run_pipeline_steps <- function(cfg = CFG) {
         values_removed = n_aud, values_flagged = n_flag, loggers = paste(unique(dt$logger_id), collapse = ", "))
       if (isTRUE(cfg$make_plots)) {
         rem <- rbindlist(Filter(function(a) a$stage[1] == "qc", AUDIT$log))
-        p <- tryCatch(plot_station(dt, max_params = cfg$plot_max_params, removed = if (nrow(rem)) rem else NULL), error = function(e) NULL)
+        p <- try_or(plot_station(dt, max_params = cfg$plot_max_params, removed = if (nrow(rem)) rem else NULL), where = paste("plot of", kk))
         if (!is.null(p)) station_plots <- c(station_plots, gb_save(p, file.path(out, "plots", paste0("station_", safe_name(kk), ".png")),
                                                                   11, 1.2 + 1.35 * min(cfg$plot_max_params, length(vals))))
       }

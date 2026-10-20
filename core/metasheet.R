@@ -37,7 +37,7 @@ meta_defaults <- function(fields) {
 # uses keeps the app's type and use, so the pipeline can always read it.
 meta_spec <- function(app_fields, project_dir) {
   def <- meta_defaults(app_fields); p <- cfg_path_meta(project_dir, "fields")
-  saved <- if (file.exists(p)) tryCatch(ensure_cols(read_cfg(p), META_FIELD_COLS)[, META_FIELD_COLS, with = FALSE], error = function(e) NULL) else NULL
+  saved <- if (file.exists(p)) try_or(ensure_cols(read_cfg(p), META_FIELD_COLS)[, META_FIELD_COLS, with = FALSE], where = basename(p)) else NULL
   if (is.null(saved) || !nrow(saved)) return(def)
   saved <- saved[nzchar(field) & !duplicated(field) & (field %in% def$field | !nzchar(use))]     # a field the app no longer has (folded into another) goes
   out <- copy(saved)
@@ -157,18 +157,18 @@ meta_fold <- function(app_fields, deploy = NULL, map = character()) function(old
   S <- if (is.null(cur) || !ncol(cur)) empty_cfg(DEPLOY_COLS) else { x <- copy(as.data.table(cur)); setnames(x, dep_names(names(x), own)); x }
   cols <- unique(c(DEPLOY_COLS, names(S), names(L))); L <- ensure_cols(L, cols)[, cols, with = FALSE]; S <- ensure_cols(S, cols)[, cols, with = FALSE]
   kL <- meta_norm(L[[k0]]); kS <- meta_norm(S$serial); add <- rep(TRUE, nrow(L)); drop <- integer(); log <- list()
-  say <- function(sn, what) log[[length(log) + 1L]] <<- data.table(where = "logger list and deployment sheet", problem = paste0(sn, ": ", what))
+  note_problem <- function(sn, what) log[[length(log) + 1L]] <<- data.table(where = "logger list and deployment sheet", problem = paste0(sn, ": ", what))
   base <- function(r) { cl <- dep_clean(r)$rows; b <- if (is.function(deploy)) as.data.table(deploy(cl)) else data.table(serial = cl$serial)
     for (v in names(map)) if (v %in% names(b)) setnames(b, v, map[[v]]); b }
   for (sn in unique(kL[nzchar(kL)])) { iL <- which(kL == sn); iS <- which(kS == sn); if (!length(iS)) next
     b <- if (length(iL) == 1 && length(iS) == 1) base(S[iS]) else NULL
     if (is.null(b) || nrow(b) != 1L) { drop <- c(drop, iS)
-      say(L[[k0]][iL[1]], paste0("the logger list's row", if (length(iL) > 1) "s were" else " was", " used, not the deployment sheet's (", paste(S$station[iS], S$from[iS], S$to[iS], collapse = "; "), "): the sheet now holds the list's")); next }
+      note_problem(L[[k0]][iL[1]], paste0("the logger list's row", if (length(iL) > 1) "s were" else " was", " used, not the deployment sheet's (", paste(S$station[iS], S$from[iS], S$to[iS], collapse = "; "), "): the sheet now holds the list's")); next }
     add[iL] <- FALSE; l <- L[iL]
     for (v in setdiff(names(L), "serial")) { a <- trim(l[[v]]); if (!nzchar(a)) next
       was <- if (v == "site") dep_where(S[iS]) else if (v %in% names(b)) trim(as.character(b[[v]])) else trim(S[[v]][iS]); was[is.na(was)] <- ""
       if (nzchar(was) && meta_same(a, was)) next
-      if (nzchar(was)) say(l[[k0]], paste0("the deployment sheet gave ", v, " '", was, "', the logger list '", a, "'; the logger list's is kept"))
+      if (nzchar(was)) note_problem(l[[k0]], paste0("the deployment sheet gave ", v, " '", was, "', the logger list '", a, "'; the logger list's is kept"))
       set(S, iS, if (v == "site" && nzchar(S$station[iS])) "station" else v, a) } }
   out <- rbind(if (length(drop)) S[-drop] else S, L[add])
   list(rows = out, log = if (length(log)) rbindlist(log) else NULL)

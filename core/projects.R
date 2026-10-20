@@ -26,6 +26,7 @@ project_owner <- function(path) { mk <- file.path(path.expand(path), PROJECT_MAR
 project_info <- function(paths) {
   if (!length(paths)) return(data.table(path = character(), name = character(), there = logical(), last_run = character(), output = character(), cache = character(), raw = character()))
   rbindlist(lapply(paths, function(p) { q <- path.expand(p); there <- dir.exists(q)
+    # safe: the Projects list shows "never run" for a project whose history cannot be read
     h <- if (there) tryCatch(fread(file.path(q, "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) NULL) else NULL
     s <- project_settings_read(p)
     data.table(path = p, name = if (there) project_name(p) else basename(p), there = there,
@@ -202,9 +203,11 @@ projects_with_open <- function(saved, now) { if (nzchar(saved$project_dir %||% "
 projects_server <- function(id, open, settings_now, settings_file = get0("SETTINGS_FILE")) moduleServer(id, function(input, output, session) {
   ns <- session$ns; tick <- reactiveVal(0)
   st <- function() { e <- env_with("SETTINGS", environment(projects_server)); if (is.null(e)) list() else get("SETTINGS", envir = e) }
+  # safe: the list applies in this session; only remembering it failed
   st_set <- function(x) { if (!is.null(settings_file)) tryCatch(settings_save(settings_file, x), error = function(e) NULL); live_touch()
     e <- env_with("SETTINGS", environment(projects_server)); if (!is.null(e)) { s <- get("SETTINGS", envir = e); s[names(x)] <- x; assign("SETTINGS", s, envir = e) } }
   rows <- reactive({ tick(); live_settings(settings_file)                     # projects opened or made on another page
+    # safe: as above
     s <- projects_with_open(st(), tryCatch(settings_now(), error = function(e) list())); x <- project_info(projects_known(s))
     if (nrow(x)) { x[, open := vapply(path, path_norm, "") == path_norm(s$project_dir %||% "")]
       x[open == TRUE, raw := paste(tilde(as.character(unlist(s$raw_dirs))), collapse = "; ")] }        # the open project's folders as they stand

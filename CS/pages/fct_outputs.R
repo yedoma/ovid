@@ -42,6 +42,7 @@ make_viewer_bundle <- function(project_dir, dest = file.path(project_dir, "viewe
 load_outputs <- function(pd) {
   a <- file.path(pd, "output", "audit")
   if (!file.exists(file.path(a, "audit_index.csv"))) return(NULL)
+  # safe: an output table that cannot be read shows as empty until the next run writes it
   rd <- function(f, ...) if (file.exists(file.path(a, f))) tryCatch(fread(file.path(a, f), ...), error = function(e) data.table()) else data.table()
   chr <- list(character = "logger_id")
   src <- rd("sources.csv", colClasses = list(character = c("logger_id", "header_name")), na.strings = NULL)

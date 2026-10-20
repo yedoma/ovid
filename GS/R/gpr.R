@@ -69,6 +69,7 @@ gpr_scan <- function(dirs) {
                         if (length(pp)) fl(pp)[, `:=`(stem = sub("^\\.", "", sub("\\.rd[37]\\.partial$", "", basename(path), ignore.case = TRUE)), partial = TRUE)]), fill = TRUE)
   if (!nrow(dat)) dat <- data.table(path = character(), stem = character(), folder = character(), size = numeric(), partial = logical())
   dat[, bytes := ifelse(grepl("\\.rd7(\\.partial)?$", path, ignore.case = TRUE), 4L, 2L)]
+  # safe: a header that cannot be read leaves samples and traces unknown (NA), shown as such
   H <- lapply(rad$path, function(p) tryCatch(read_rad(p), error = function(e) NULL))
   rad[, `:=`(samples = vapply(H, function(h) h$samples %||% NA_integer_, 0L), traces = vapply(H, function(h) h$last_trace %||% NA_integer_, 0L))]
   ntr <- function(size, bytes, s) floor(size / (s * bytes))                         # whole traces in the file
@@ -295,12 +296,12 @@ view_radargram <- function(m, dt_ns, x = NULL, xlab = "Trace", vaxis = "time", v
                    margin = list(l = 60, r = 20, t = 10, b = 50))
   sh <- list(); an <- list()                                               # one layout() call at the end: a second one would replace these
   if (dep && isTRUE(thaw_m > 0)) {
-    if (topo) p <- plotly::add_lines(p, x = x, y = elev - thaw_m, inherit = FALSE, line = list(color = "#E6C384", width = 1.5, dash = "dash"), name = "thaw depth", hoverinfo = "skip", showlegend = FALSE)
-    else { sh <- list(list(type = "line", xref = "paper", x0 = 0, x1 = 1, y0 = thaw_m, y1 = thaw_m, line = list(color = "#E6C384", width = 1.5, dash = "dash")))
-           an <- list(list(xref = "paper", x = 0.995, xanchor = "right", y = thaw_m, yanchor = "bottom", text = sprintf("thaw depth %.2f m", thaw_m), showarrow = FALSE, font = list(color = "#E6C384", size = 12))) } }
+    if (topo) p <- plotly::add_lines(p, x = x, y = elev - thaw_m, inherit = FALSE, line = list(color = PAL$gold, width = 1.5, dash = "dash"), name = "thaw depth", hoverinfo = "skip", showlegend = FALSE)
+    else { sh <- list(list(type = "line", xref = "paper", x0 = 0, x1 = 1, y0 = thaw_m, y1 = thaw_m, line = list(color = PAL$gold, width = 1.5, dash = "dash")))
+           an <- list(list(xref = "paper", x = 0.995, xanchor = "right", y = thaw_m, yanchor = "bottom", text = sprintf("thaw depth %.2f m", thaw_m), showarrow = FALSE, font = list(color = PAL$gold, size = 12))) } }
   if (!is.null(markers) && nrow(markers)) {
-    sh <- c(sh, lapply(markers$x, function(v) list(type = "line", xref = "x", yref = "paper", x0 = v, x1 = v, y0 = 0, y1 = 1, line = list(color = "#FFA066", width = 1, dash = "dot"))))
-    an <- c(an, lapply(seq_len(nrow(markers)), function(i) list(x = markers$x[i], xref = "x", yref = "paper", y = 1, yanchor = "bottom", text = markers$marker[i], showarrow = FALSE, font = list(color = "#FFA066", size = 10)))) }
+    sh <- c(sh, lapply(markers$x, function(v) list(type = "line", xref = "x", yref = "paper", x0 = v, x1 = v, y0 = 0, y1 = 1, line = list(color = PAL$orange, width = 1, dash = "dot"))))
+    an <- c(an, lapply(seq_len(nrow(markers)), function(i) list(x = markers$x[i], xref = "x", yref = "paper", y = 1, yanchor = "bottom", text = markers$marker[i], showarrow = FALSE, font = list(color = PAL$orange, size = 10)))) }
   if (length(sh)) p <- plotly::layout(p, shapes = sh, annotations = an)
   p
 }
@@ -311,10 +312,10 @@ gpr_map <- function(tracks, selected = "", basemap = "satellite", markers = NULL
   for (k in c(setdiff(names(tracks), selected), intersect(names(tracks), selected))) { d <- tracks[[k]]; if (is.null(d) || nrow(d) < 1L) next; sel <- k == selected      # the picked line is drawn last, on top
     g <- plotly::add_trace(g, type = "scattermapbox", mode = if (nrow(d) > 1L) "lines" else "markers", lat = d$lat, lon = d$lon, hoverinfo = "text", name = k, showlegend = FALSE,
                            text = sprintf("<b>%s</b><br>trace %d<br>%s", k, d$trace, format(d$datetime, "%Y-%m-%d %H:%M:%S")), customdata = paste(k, d$trace, sep = "|"),   # line|trace, for a click or the shared cursor
-                           line = list(width = if (sel) 6 else 2, color = if (sel) "#E6C384" else "#7E9CD8"))
+                           line = list(width = if (sel) 6 else 2, color = if (sel) PAL$gold else PAL$blue))
     ll[[k]] <- d }
   if (!is.null(markers) && nrow(markers)) g <- plotly::add_trace(g, type = "scattermapbox", mode = "markers+text", lat = markers$lat, lon = markers$lon, text = markers$marker, textposition = "top right",
-    hoverinfo = "text", hovertext = sprintf("marker %d, trace %d", markers$marker, markers$trace), marker = list(size = 9, color = "#FFA066"), textfont = list(color = "#ffffff"), showlegend = FALSE)
+    hoverinfo = "text", hovertext = sprintf("marker %d, trace %d", markers$marker, markers$trace), marker = list(size = 9, color = PAL$orange), textfont = list(color = MAP_LABEL_COL), showlegend = FALSE)
   sel <- if (selected %in% names(ll)) ll[[selected]] else rbindlist(ll)
   none <- !nrow(sel); if (none) sel <- data.table(lat = 0, lon = 0)                    # nothing placed: the whole world
   span <- max(diff(range(sel$lat)), diff(range(sel$lon)) / 2, 1e-4); zoom <- max(3, min(15, floor(log2(360 / span)) - 2))   # Esri imagery stops near zoom 17 in the north; mapbox fetches 256 px tiles one or two levels finer (more on a Retina screen)

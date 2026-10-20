@@ -67,6 +67,7 @@ read_source_emotion <- function(files, sdir, ring = bb3_ring_path()) {
     if (is.null(r))                                            # the same file read for another source, or this one under the earlier key
       for (cf in c(Sys.glob(file.path(dirname(sdir), "*", "emotion", basename(cache_file(cdir, name, key)))),
                    cache_file(cdir, paste0(what, "_", hash_of(f$rel[i], 12L)), hash_of(list(f$rel[i], f$size[i], as.numeric(f$mtime[i]), rkk, sh)))))
+        # safe: a damaged cache is read again from the source
         if (file.exists(cf) && !is.null(r <- tryCatch(readRDS(cf), error = function(e) NULL))) { cache_write(cdir, name, key, r); break }
     if (is.null(r)) { r <- tryCatch(fun(f$path[i]), error = function(e) { problem(f$rel[i], paste("not read:", conditionMessage(e))); NULL })
                       if (!is.null(r)) cache_write(cdir, name, key, r) }

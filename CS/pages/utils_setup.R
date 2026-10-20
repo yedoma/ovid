@@ -3,15 +3,8 @@
 #  Editable config table (one module, used for every config file)
 # =============================================================================
 # Every saved change to a set-up table is logged, and the version before it is kept, in config/history/.
-current_user <- function(session) { u <- tryCatch(session$user, error = function(e) NULL)
-  if (is.null(u) || !nzchar(u)) u <- tryCatch(session$rootScope()$user, error = function(e) NULL)
-  if (is.null(u) || !nzchar(u)) u <- Sys.info()[["user"]]; u }
 log_change <- function(path, new, who = "", what = "") backup_cfg(path, new, who, what)   # Ovid/config.R
 
-# The table editor is shared by every app (Ovid/editor.R): the same table open in both interfaces and in several windows
-# stays one table (a copy with no unsaved edits takes up a newer saved version; one with unsaved edits asks first).
-editServer <- function(id, path, reload, locked = character(), on_change = function() NULL)
-  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt)
 
 # Every set-up table the interfaces edit: module id, file, columns that cannot be edited, and whether a saved change
 # needs a run to apply (the run state then says so). Both interfaces build their editors from this list.
@@ -49,20 +42,15 @@ run_redone <- function(pd) {
 }
 # Saves some settings into app_settings.json and keeps the rest (each interface has its own subset of the inputs).
 update_settings <- function(x) {
+  # safe: the settings apply in this session; only remembering them failed
   s <- tryCatch(settings_save(SETTINGS_FILE, x), error = function(e) NULL); SETTINGS[names(x)] <<- x; invisible(s)
 }
 # History of the set-up tables (config/history/change_log.csv), newest first, and going back to one saved version.
 hist_log <- function(pd) { f <- file.path(pd, "config", "history", "change_log.csv"); if (!file.exists(f)) return(data.table())
+  # safe: a history that cannot be read lists nothing
   d <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) data.table()); d[order(-seq_len(.N))] }
 hist_restore <- function(pd, r, who = "") {
   tb <- sub(" \\(.*$", "", r$table); cur <- file.path(pd, "config", tb); bk <- file.path(pd, "config", "history", r$backup)
   if (!file.exists(bk)) return(FALSE)
   old <- as.data.frame(read_cfg(bk)); log_change(cur, old, who, "restored"); file.copy(bk, cur, overwrite = TRUE)
-}
-# Started from Ovid_CS.bat: closing the last browser tab, in either interface, stops the app.
-track_session <- function(session) {
-  if (!LOCAL) return(invisible())
-  OPEN_SESSIONS$n <- OPEN_SESSIONS$n + 1L
-  session$onSessionEnded(function() { OPEN_SESSIONS$n <- OPEN_SESSIONS$n - 1L
-    later::later(function() if (OPEN_SESSIONS$n <= 0L) { cat("Browser closed; stopping Ovid CS.\n"); stopApp() }, 8) })
 }

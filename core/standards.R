@@ -164,7 +164,7 @@ DATASET_FIELDS <- c(title = "project", summary = "summary", creator = "creator_n
 dataset_file <- function(project_dir) file.path(path.expand(project_dir), "config", "dataset.json")
 dataset_read <- function(project_dir) { if (is.null(project_dir) || !nzchar(project_dir %||% "")) return(list())
   f <- dataset_file(project_dir); if (!file.exists(f)) return(list())
-  x <- tryCatch(jsonlite::fromJSON(f, simplifyVector = TRUE), error = function(e) list())
+  x <- try_or(jsonlite::fromJSON(f, simplifyVector = TRUE), list(), basename(f))
   x <- x[intersect(names(x), names(DATASET_FIELDS))]; x[vapply(x, function(v) length(v) == 1 && !is.na(v) && nzchar(trimws(as.character(v))), NA)] }
 dataset_save <- function(project_dir, x) { f <- dataset_file(project_dir); dir.create(dirname(f), showWarnings = FALSE, recursive = TRUE)
   x <- lapply(x[intersect(names(x), names(DATASET_FIELDS))], function(v) trimws(as.character(v %||% "")))

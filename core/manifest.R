@@ -30,7 +30,7 @@ write_run_manifest <- function(cfg, t0, counts, settings = list(), packages = c(
   fwrite(setnames(data.table(names(kv), as.character(kv)), c("key", "value")), file.path(adir, "run_manifest.csv"))
   hist <- as.data.table(as.list(c(kv[c("run_id", "pipeline_version", "core_version", "started", "seconds", "user", "config_hash")], unlist(counts))))
   hf <- file.path(adir, "run_history.csv")
-  old <- if (file.exists(hf)) tryCatch(fread(hf, colClasses = "character"), error = function(e) NULL) else NULL
+  old <- if (file.exists(hf)) try_or(fread(hf, colClasses = "character"), where = "output/audit/run_history.csv") else NULL
   fwrite(rbind(old, hist[, lapply(.SD, as.character)], fill = TRUE), hf)
   invisible(kv)
 }
@@ -48,12 +48,14 @@ run_logged <- function(cfg, fun) {
   t0 <- Sys.time(); app <- if (exists("APP_NAME")) APP_NAME else "app"
   f <- file.path(dir, paste0(format(t0, "%Y%m%dT%H%M%S"), "_", safe_name(sub("^.*// *", "", app)), ".log"))
   k <- 1L; while (file.exists(f)) { k <- k + 1L; f <- sub("(_[0-9]+)?\\.log$", paste0("_", k, ".log"), f) }    # two runs in one second
+  # safe: with no log file the run goes on without its log
   con <- tryCatch(file(f, "wt"), error = function(e) NULL); if (is.null(con)) return(fun())
   w <- function(...) { cat(paste0(...), "\n", sep = "", file = con); flush(con) }
   w("Ovid ", sub("^.*// *", "", app), " ", if (exists("APP_VERSION")) APP_VERSION else "", ", core ", if (exists("CORE_VERSION")) CORE_VERSION else "", ", ", R.version.string, " (", R.version$platform, ")")
   w("Run started ", format(t0, "%Y-%m-%d %H:%M:%S %Z"), " by ", Sys.info()[["user"]], " on ", Sys.info()[["nodename"]])
   w("Project: ", tilde(pd)); for (k in intersect(c("raw_dirs", "metadata_dir", "dgps_dir"), names(cfg))) w(k, ": ", paste(tilde(path.expand(as.character(unlist(cfg[[k]])))), collapse = " ; "))
   for (n in cfg$run_notes) w("Note: ", n)
+  # safe: corrections_log() puts its own failure on the problem list
   if (exists("corrections_log", mode = "function")) for (x in tryCatch(corrections_log(cfg), error = function(e) character())) w(x)
   if (is.character(cfg$run_kept) && !identical(cfg$run_kept, "kept")) w("Output updated in place (no copy kept to put back if the run stops): ", cfg$run_kept)
   if (length(cfg$run_anyway)) { w("Run anyway: started although the set-up check found ", length(cfg$run_anyway), " thing(s) that would be ignored or misapplied:")
@@ -82,6 +84,7 @@ run_logged <- function(cfg, fun) {
 log_app_errors <- function(app = if (exists("APP_NAME")) APP_NAME else "app") {
   f <- file.path(path.expand("~"), ".ovid", "logs", paste0(safe_name(sub("^.*// *", "", app)), "_app.log"))
   options(shiny.error = function() tryCatch({ dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+    # safe: an error while recording an error; nothing more can be done
     cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " ", sub("\n$", "", geterrmessage()), "\n", sep = "", file = f, append = TRUE) }, error = function(e) NULL))
   invisible(f)
 }
@@ -103,6 +106,7 @@ troubleshooting_zip <- function(project_dir, zipfile, check = NULL, n_logs = 10L
   put <- function(src, dest) { if (!file.exists(src)) return(invisible(FALSE))
     if (file.info(src)$size > max_mb * 1e6) { left <<- c(left, paste0(clean(src), " (over ", max_mb, " MB)")); return(invisible(FALSE)) }
     dir.create(dirname(file.path(tmp, dest)), recursive = TRUE, showWarnings = FALSE)
+    # safe: a file that is not text is copied as it is
     l <- tryCatch(readLines(src, warn = FALSE, encoding = "UTF-8"), error = function(e) NULL)
     if (is.null(l)) file.copy(src, file.path(tmp, dest)) else writeLines(clean(l), file.path(tmp, dest)); invisible(TRUE) }
   # versions
@@ -122,7 +126,7 @@ troubleshooting_zip <- function(project_dir, zipfile, check = NULL, n_logs = 10L
     if (!is.null(sc)) { sc <- as.data.table(sc); for (k in names(sc)) if (is.character(sc[[k]])) set(sc, j = k, value = clean(sc[[k]])); fwrite(sc, file.path(tmp, "setup_check_now.csv")) } }
   # set-up tables (secrets left out) and when they changed
   cf <- list.files(file.path(pd, "config"), pattern = "\\.csv$", full.names = TRUE)
-  for (f in cf) { d <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) NULL); if (is.null(d)) next
+  for (f in cf) { d <- try_or(fread(f, colClasses = "character", na.strings = NULL), where = basename(f)); if (is.null(d)) next
     drop <- grep("password|passwd|token|secret|api_?key", names(d), ignore.case = TRUE, value = TRUE); if (length(drop)) d[, (drop) := NULL]
     for (k in names(d)) set(d, j = k, value = clean(d[[k]]))
     dir.create(file.path(tmp, "config"), showWarnings = FALSE); fwrite(d, file.path(tmp, "config", basename(f))) }
@@ -216,6 +220,7 @@ pid_alive <- function(pid) if (.Platform$OS.type == "windows") { if (requireName
 # ended on this computer, or the lock is over a day old).
 lock_holder <- function(project_dir) {
   lk <- file.path(path.expand(project_dir), PROJECT_LOCK); if (!dir.exists(lk)) return(NULL)
+  # safe: the lock's details are only for the message
   info <- tryCatch(readLines(file.path(lk, "run.txt"), warn = FALSE), error = function(e) character())
   g <- function(k) sub(paste0("^", k, ": *"), "", grep(paste0("^", k, ":"), info, value = TRUE)[1] %|% "")
   pid <- suppressWarnings(as.integer(g("pid"))); same_host <- identical(g("host"), Sys.info()[["nodename"]])
@@ -226,6 +231,7 @@ lock_holder <- function(project_dir) {
 project_lock <- function(cfg) {
   p <- path.expand(cfg$project_dir); dir.create(p, recursive = TRUE, showWarnings = FALSE)
   mk <- file.path(p, PROJECT_MARK); app <- sub("^.*// *", "", if (exists("APP_NAME")) APP_NAME else "app")
+  # safe: the marker file is a convenience; the project works without it
   if (!file.exists(mk)) try(writeLines(c(paste0("app: ", app), "This folder is an Ovid project. Raw data is never kept here."), mk), silent = TRUE)
   lk <- file.path(p, PROJECT_LOCK); me <- c(paste0("pid: ", Sys.getpid()), paste0("host: ", Sys.info()[["nodename"]]), paste0("started: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
   if (!dir.create(lk, showWarnings = FALSE)) {
@@ -241,6 +247,7 @@ project_lock <- function(cfg) {
 files_locked <- function(project_dir) {
   p <- path.expand(project_dir); f <- list.files(file.path(p, c("output", "config")), pattern = "\\.(csv|xlsx|xls|rds|html|pdf|nc|json)$", recursive = TRUE, full.names = TRUE)
   f <- f[!grepl("/history/", f, fixed = TRUE)]
+  # safe: this tests whether each file can be written; one that cannot be opened is the answer
   bad <- f[!vapply(f, function(x) { con <- tryCatch(suppressWarnings(file(x, "ab")), error = function(e) NULL); if (is.null(con)) FALSE else { close(con); TRUE } }, NA)]
   sub(paste0("^", rx_escape(normalizePath(p, winslash = "/", mustWork = FALSE)), "/?"), "", normalizePath(bad, winslash = "/", mustWork = FALSE))
 }
@@ -263,6 +270,7 @@ cloud_service <- function(path) {                                   # the servic
 }
 online_only <- function(dir) {                                      # files under `dir` kept online only (a Mac's file providers mark them "dataless")
   if (Sys.info()[["sysname"]] != "Darwin" || !dir.exists(dir)) return(0L)
+  # safe: a count for a note only
   length(tryCatch(suppressWarnings(system2("find", c(shQuote(path.expand(dir)), "-type", "f", "-flags", "+dataless"), stdout = TRUE, stderr = FALSE)), error = function(e) character()))
 }
 cloud_notes <- function(cfg) {
@@ -296,16 +304,20 @@ dir_bytes <- function(d) { f <- list.files(d, recursive = TRUE, full.names = TRU
 disk_free <- function(path) {                                       # bytes free on the drive of `path` (or of its nearest existing parent); NA when unknown
   if (identical(R.version$os, "emscripten")) return(NA_real_)          # R in the browser (webR): no disk to ask about
   p <- path_norm(path); while (!dir.exists(p) && dirname(p) != p) p <- dirname(p)
+  # safe: free space is for a note only; unknown when the system cannot say
   if (requireNamespace("ps", quietly = TRUE)) { v <- tryCatch(as.numeric(ps::ps_disk_usage(p)$available[1]), error = function(e) NA_real_); if (isTRUE(v >= 0)) return(v) }
   if (.Platform$OS.type == "windows") return(NA_real_)
+  # safe: free space is for a note only; unknown when the system cannot say
   x <- tryCatch(suppressWarnings(system2("df", c("-Pk", shQuote(p)), stdout = TRUE, stderr = FALSE)), error = function(e) character())
   v <- if (length(x) >= 2) suppressWarnings(as.numeric(strsplit(trimws(x[length(x)]), "\\s+")[[1]][4])) else NA_real_
   v * 1024
 }
 disk_clones <- function(path) {                                     # TRUE on a Mac's APFS disk, where a copy is a clone
   if (Sys.info()[["sysname"]] != "Darwin") return(FALSE)
+  # safe: the disk type is for a note only; unknown when the system cannot say
   x <- tryCatch(suppressWarnings(system2("df", c("-P", shQuote(path_norm(path))), stdout = TRUE, stderr = FALSE)), error = function(e) character())
   if (length(x) < 2) return(FALSE); mp <- sub("^.*%\\s+", "", x[length(x)])
+  # safe: the disk type is for a note only; unknown when the system cannot say
   m <- tryCatch(suppressWarnings(system2("mount", stdout = TRUE, stderr = FALSE)), error = function(e) character())
   any(startsWith(m, "/") & grepl(paste0(" on ", mp, " (apfs"), m, fixed = TRUE))
 }
@@ -335,6 +347,7 @@ output_keep <- function(project_dir, free = disk_free(project_dir)) {    # TRUE 
 output_restore <- function(project_dir, why = "stopped") {
   pd <- path.expand(project_dir); out <- file.path(pd, "output"); kept <- file.path(pd, OUTPUT_KEPT); failed <- file.path(pd, OUTPUT_FAILED)
   if (!dir.exists(kept)) return(FALSE)
+  # safe: with no stamp the folder's own time is used
   since <- suppressWarnings(as.numeric(tryCatch(readLines(file.path(kept, ".ovid_kept"), warn = FALSE)[1], error = function(e) NA)))
   if (is.na(since)) since <- as.numeric(file.mtime(kept))
   unlink(failed, recursive = TRUE)
@@ -372,6 +385,7 @@ run_project <- function(cfg, fun, need_raw = TRUE) {                # need_raw =
                             else unlink(file.path(pd, OUTPUT_KEPT), recursive = TRUE), add = TRUE, after = FALSE)
   mk <- file.path(pd, "output", RUN_INCOMPLETE); dir.create(dirname(mk), recursive = TRUE, showWarnings = FALSE)
   writeLines(paste("started", format(Sys.time(), "%Y-%m-%d %H:%M")), mk); unlink(file.path(pd, "output", RUN_RESTORED))
+  # safe: cloud-folder notes are advice only
   notes <- tryCatch(cloud_notes(cfg), error = function(e) character())
   res <- run_logged(c(cfg, list(run_kept = if (isTRUE(kept) || identical(kept, "no output yet")) "kept" else kept, run_notes = notes)),
                     function() { for (n in notes) say("  Note: ", n, col = "orange"); cache_retry(cfg, fun) })

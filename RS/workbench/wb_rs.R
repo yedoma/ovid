@@ -56,6 +56,7 @@ wb_params <- function(d) WB_COLS[col %in% WB_TEXT | vapply(col, function(k) any(
 wb_ignored <- function(rules, d) {
   out <- rep(FALSE, nrow(d)); if (is.null(rules) || !NROW(rules)) return(out)
   r <- as.data.table(rules)[trim(action) == "ignore" & nzchar(trim(pattern))]
+  # safe: an invalid pattern matches nothing here; Check the data lists it
   for (i in seq_len(nrow(r))) out <- out | tryCatch(grepl(r$pattern[i], d$rel, perl = TRUE), error = function(e) FALSE)
   out
 }
@@ -71,16 +72,7 @@ wb_states <- function(w, params, ign) {
     data.table(state = st, why = why, rule = why, old = NA_real_) }), params)
 }
 
-# A value of column p as the grid shows it.
-wb_num <- function(v, p) { dg <- WB_COLS$digits[match(p, WB_COLS$p)]
-  if (!is.numeric(v)) { v <- as.character(v); v[is.na(v)] <- ""; return(v) }
-  out <- if (is.na(dg)) formatC(signif(v, 4), digits = 4, format = "fg") else formatC(v, format = "f", digits = as.integer(dg))
-  out <- sub("^-", "\u2212", trimws(out)); out[is.na(v)] <- ""; out }
-wb_cells <- function(w, params, states) {
-  out <- lapply(params, function(p) { k <- WB_COLS$col[match(p, WB_COLS$p)]
-    list(txt = htmltools::htmlEscape(wb_num(w[[k]], p)), cls = states[[p]]$state) })
-  list(txt = lapply(out, `[[`, "txt"), cls = lapply(out, `[[`, "cls"))
-}
+# wb_num() and wb_cells(), the grid's values and cells: core workbench.R.
 # Per selected column: how many cells, their mean, low and high.
 wb_rs_sel_table <- function(cc, g) {
   x <- cc[!p %in% WB_COLS[col %in% WB_TEXT, p], { k <- WB_COLS$col[match(p[1], WB_COLS$p)]; v <- suppressWarnings(as.numeric(g$w[[k]][r])); f <- v[is.finite(v)]
@@ -168,6 +160,7 @@ wb_server <- function(input, output, session, std) {
     tagList(lapply(unique(s$year), function(y) { x <- s[year == y]
       tagList(div(class = "wb-subsec", y), lapply(seq_len(nrow(x)), function(i) wb_row(x$label[i], key = x$key[i], input = "wb_table", n = format(x$n[i], big.mark = ","),
         on = identical(x$key[i], k) && on_data, warn = nzchar(x$qa[i] %|% ""), title = paste0(x$label[i], " \u00b7 ", x$sensor[i], " \u00b7 ", x$status[i], if (nzchar(x$qa[i] %|% "")) paste0(" \u00b7 ", x$qa[i]) else "")))) })) })
+  # safe: nothing picked yet
   output$wb_chips <- renderUI({ p0 <- tryCatch(part(), error = function(e) NULL); if (is.null(p0)) return(NULL)
     tagList(span(class = "wb-chip", p0$f$sensor %|% "sensor unknown"), span(class = "wb-chip", style = paste0("border-color:", STATUS_COL[p0$f$positioning_status] %|% PAL$gray), p0$f$positioning_status)) })
 
@@ -178,6 +171,7 @@ wb_server <- function(input, output, session, std) {
     paste0(if (g$n > nrow(g$w)) sprintf("first %s of %s images", num(nrow(g$w)), num(g$n)) else paste(num(g$n), "images"),
            if (nrow(cc)) paste0(" \u00b7 ", num(uniqueN(cc$r)), " selected") else "",
            " \u00b7 click, drag, shift-click; a number selects the image, a heading the column; cmd/ctrl adds; Esc clears") })
+  # safe: no grid yet: no cells selected
   cells <- reactive(wb_sel_cells(input$wb_grid_sel, tryCatch(grid(), error = function(e) NULL)))
   active <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); s <- input$wb_grid_sel
     a <- cc[r == as.integer(s$ar %||% 0) & c == as.integer(s$ac %||% 0)]; if (nrow(a)) a[1] else cc[1] })
@@ -218,8 +212,10 @@ wb_server <- function(input, output, session, std) {
   output$wb_inspector <- renderUI({ v <- view()
     if (identical(v, "wb-import")) return(wb_import_aside())
     if (!identical(v, "wb-data")) return(NULL)
+    # safe: nothing picked yet
     cc <- cells(); p0 <- tryCatch(part(), error = function(e) NULL)
     if (is.null(p0)) return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No data yet"), wb_empty_acts(NULL)), p(class = "wb-p", "Scan a source on the Sources page.")))
+    # safe: no data yet
     if (!nrow(cc)) { d <- tryCatch(dat(), error = function(e) NULL)
       return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No image selected"),
         div(class = "sub", "Click or drag in the grid; a number selects the image, a heading the column. On the positions, click a point or drag a box.")),
@@ -246,6 +242,7 @@ wb_server <- function(input, output, session, std) {
       flight_box())
   })
 
+  # safe: an output of the last run, only shown
   wb_import_aside <- function() { m <- tryCatch(fread(file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] else NA
     steps <- c(`Set-up` = "sources, flights, sites, links and file rules", Scan = "each source listed; image headers read once per folder, again only where a file changed",
@@ -258,6 +255,7 @@ wb_server <- function(input, output, session, std) {
           wb_kv("sources", v("sources") %|% "?"), wb_kv("files", v("files") %|% "?"), wb_kv("images", v("images") %|% "?"), wb_kv("flights", v("flights") %|% "?")))),
       p(class = "wb-p", style = "color:var(--wb-fg2)", "Sources are only read: nothing is written inside them.")) }
 
+  # safe: the status bar shows what it has
   output$wb_status <- renderUI({ std$rv$tick; cc <- cells(); g <- tryCatch(grid(), error = function(e) NULL)
     np <- nrow(run_problems_read(CFG$project_dir))                # listed on the Sources page, under the set-up check (pages/set_up_check.R)
     mid <- if (!identical(view(), "wb-data") || is.null(g)) NULL else if (nrow(cc)) span(paste(num(uniqueN(cc$r)), "images selected")) else span(paste(num(g$n), "images"))

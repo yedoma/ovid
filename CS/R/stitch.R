@@ -71,6 +71,7 @@ to_numeric_columns <- function(dt, cfg, stage) {
 # NA where it cannot be told (CR10X arrays: give their time-zone rows a file_pattern).
 peek_first_ts <- function(path, tob3_first = NA) {
   if (!is.na(tob3_first)) return(as.POSIXct(as.numeric(tob3_first), origin = "1970-01-01", tz = "UTC"))
+  # safe: a first-record time for ordering only; a file that cannot be read is reported when it is read in full
   l <- tryCatch(fix_enc(suppressWarnings(readLines(path, n = 12L, warn = FALSE, skipNul = TRUE, encoding = "latin1"))), error = function(e) character())
   if (length(l) < 5 || !grepl("^\"?TOA5", l[1])) return(as.POSIXct(NA, tz = "UTC"))
   for (x in l[5:length(l)]) {
@@ -105,31 +106,7 @@ zone_corrections <- function(g, tz, stations, sites, base_zone = BASE_OFFSET) {
   rbindlist(out)
 }
 
-# ---- clock corrections you have asked for (config/time_corrections.csv) ----
-# action "shift" moves timestamps by shift_minutes; action "remove" drops the
-# records. start/end refer to the timestamps as they are in the raw file.
-apply_time_corrections <- function(dt, tc) {
-  if (is.null(tc) || !nrow(tc)) return(dt)
-  for (i in seq_len(nrow(tc))) {
-    hit <- correction_span(dt$TIMESTAMP, tc$start[i], tc$end[i])$hit                       # core timestamps.R
-    if (nzchar(tc$source_file[i])) hit <- hit & grepl(tc$source_file[i], basename(dt$source_file), fixed = TRUE)
-    if (!any(hit)) next
-    why <- paste0(tc$reason[i], if (nzchar(tc$author[i])) paste0(" [", tc$author[i], "]") else "")
-    if (tolower(tc$action[i]) == "remove") {
-      dt <- remove_rows(dt, hit, "stitch", "clock_fix_removed", paste0("removed by a clock correction: ", why), detail = "summary")
-    } else {
-      mins <- suppressWarnings(as.numeric(tc$shift_minutes[i]))
-      if (is.na(mins) || mins == 0) { problem("time_corrections.csv", paste0("row ", i, ": shift_minutes is not a number; row ignored")); next }
-      sm <- dt[hit, .(n = .N, t0 = fmt_ts(min(TIMESTAMP)), t1 = fmt_ts(max(TIMESTAMP))), by = source_file]
-      set(dt, which(hit), "TIMESTAMP", shift_times(dt$TIMESTAMP[hit], mins))
-      audit_add("stitch", "clock_fix_shifted", "change", sm$n, logger_id = dt$logger_id[1], stream = dt$table[1],
-                timestamp = sm$t0, column = "TIMESTAMP",
-                reason = sprintf("%s records from %s to %s moved by %+g minutes: %s", sm$n, sm$t0, sm$t1, mins, why),
-                source_file = sm$source_file)
-    }
-  }
-  dt
-}
+# ---- clock corrections you have asked for (config/time_corrections.csv): core time_corrections.R ----
 
 # Station-table times back to the logger's own clock, the times time_corrections.csv takes: the shifts a run applies (shift
 # rows, as apply_time_corrections() applies them, in order) undone last first. files: the raw files the records came from;
@@ -150,15 +127,16 @@ logger_time <- function(t, tc, files = character()) {
 # for the files listed in the last run's file manifest.
 clock_shifts <- function(project_dir, logger_id, table, files = character()) {
   cdir <- file.path(path.expand(project_dir), "config"); rd <- function(f, cols) { p <- file.path(cdir, f)
-    ensure_cols(if (file.exists(p)) tryCatch(read_cfg(p), error = function(e) data.table()) else data.table(), cols) }
+    ensure_cols(if (file.exists(p)) try_or(read_cfg(p), data.table(), f) else data.table(), cols) }
   lg <- logger_id; tb <- table; files <- sub("#A[0-9_f]+$", "", files)                 # a CR10X array's records name their file with #A<n>
   tc <- rd("time_corrections.csv", TIME_COLS)[logger_id == lg & (table == "" | table == tb)]
   mf <- file.path(path.expand(project_dir), "output", "audit", "file_manifest.csv")
+  # safe: the last run's file manifest; without it no zone shifts are shown
   g <- if (file.exists(mf)) tryCatch(fread(mf, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
   if (nrow(g) && all(c("path", "logger_id", "table") %in% names(g))) {
     g <- g[logger_id == lg & table == tb & (!length(files) | basename(path) %in% basename(files))]
     if ("first_ts" %in% names(g)) g[, first_ts := as.numeric(parse_time(first_ts))]
-    z <- tryCatch(zone_corrections(g, rd("timezones.csv", TZ_COLS), rd("stations.csv", STATION_COLS), rd("station_info.csv", SITE_COLS)), error = function(e) NULL)
+    z <- try_or(zone_corrections(g, rd("timezones.csv", TZ_COLS), rd("stations.csv", STATION_COLS), rd("station_info.csv", SITE_COLS)), where = "timezones.csv")
     if (NROW(z)) tc <- rbind(tc, z, fill = TRUE)
   }
   tc
@@ -336,6 +314,7 @@ station_cache_key <- function(kk, piece_hashes, loggers, cfgs, cfg, cols = NULL)
   hits <- function(a) { a <- as.character(a); a[is.na(a)] <- ""
     vapply(strsplit(a, "|", fixed = TRUE), function(w) { w <- trim(w); !any(nzchar(w)) || any(w %in% who) }, logical(1)) }
   any_of <- function(rx, v) vapply(rx, function(p) { p <- if (is.na(p)) "" else p      # as apply_qc() matches; a bad pattern counts
+    # safe: an invalid pattern is listed by Check the data (preflight); here it matches, so nothing is dropped
     !nzchar(p) || isTRUE(tryCatch(any(grepl(p, v, ignore.case = TRUE, perl = TRUE)), error = function(e) TRUE)) }, logical(1), USE.NAMES = FALSE)
   qc <- cfgs$qc[hits(applies_to)]
   m <- cfgs$manual[hits(station) & (stream == "" | stream == sm)]

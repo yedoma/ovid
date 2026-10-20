@@ -2,12 +2,7 @@
 # =============================================================================
 #  Editable set-up table (one module for every config CSV)
 # =============================================================================
-current_user <- function(session) { u <- tryCatch(session$user, error = function(e) NULL); if (is.null(u) || !nzchar(u)) u <- Sys.info()[["user"]]; u }
 log_change <- function(path, new, who = "") backup_cfg(path, new, who)   # Ovid/config.R: keeps the old version in config/history
-# The table editor is shared by every app (Ovid/editor.R): the same table open in both interfaces and in several windows
-# stays one table (a copy with no unsaved edits takes up a newer saved version; one with unsaved edits asks first).
-editServer <- function(id, path, reload, locked = character(), on_change = function() NULL)
-  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt)
 
 # Every set-up table the interfaces edit: module id, the table (CONFIG_FILES), its file and what it holds. Both interfaces
 # build their editors from this list; a saved change to any of them needs a run to apply.
@@ -32,6 +27,7 @@ LOGGER_LIST_INTRO <- paste(DEPLOY_SHEET_INTRO, "Instead of (or as well as) a WL_
 
 # The Automatic corrections step's status line (ovid_steps): how many of the switched corrections are on, as the list shows them (core corrections.R).
 corrections_status <- function(cfg) {
+  # safe: the corrections' state is a label only
   t <- tryCatch(corrections_table(cfg), error = function(e) NULL); if (is.null(t) || !nrow(t)) return(list("off", ""))
   n_on <- sum(t$state == "on"); n_off <- sum(t$state == "off")
   if (!n_on && !n_off) list("info", "") else if (n_off) list("info", sprintf("%d on, %d off", n_on, n_off)) else list("ok", sprintf("All %d on", n_on))
@@ -53,13 +49,6 @@ run_redone <- function(pd) {
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   n <- v("water_loggers"); r <- v("water_loggers_reused"); if (anyNA(c(n, r))) return("")
   wb_redone(n - r, n, "water loggers")
-}
-# Started from Ovid_WLR.bat: closing the last browser tab, in either interface, stops the app.
-track_session <- function(session) {
-  if (!LOCAL) return(invisible())
-  OPEN_SESSIONS$n <- OPEN_SESSIONS$n + 1L
-  session$onSessionEnded(function() { OPEN_SESSIONS$n <- OPEN_SESSIONS$n - 1L
-    later::later(function() if (OPEN_SESSIONS$n <= 0L) { cat("Browser closed; stopping Ovid WLR.\n"); stopApp() }, 8) })
 }
 
 # set with setNames, not as "label" = value: R turns argument names into the native text encoding when it reads

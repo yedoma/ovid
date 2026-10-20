@@ -51,17 +51,6 @@ clock_checks <- function(d, cfg, logger_id) {
   list(data = d, events = ev)
 }
 
-# Shifts set by hand on the Clock checks page (minutes, for a serial, between start and end in base time).
-apply_time_corrections <- function(d, tc, serial) {
-  if (!nrow(tc) || !nrow(d)) return(list(data = d, n = 0L))
-  n <- 0L
-  for (i in which(norm_serial(tc$serial) == serial)) {
-    sh <- suppressWarnings(as.numeric(tc$shift_minutes[i])); if (is.na(sh)) next
-    k <- correction_span(d$TIMESTAMP, tc$start[i], tc$end[i])$hit                          # core timestamps.R
-    d[k, TIMESTAMP := shift_times(TIMESTAMP, sh)]; n <- n + sum(k)
-  }
-  list(data = d, n = n)
-}
 
 # All files of one logger into one record. Values the logger marked as errors leave first (audited with the logger's
 # own reason); then repeated readings across downloads are kept once (newest download wins where they disagree).
@@ -108,6 +97,7 @@ site_groups <- function(site) { u <- unique(site); ifelse(is.na(u), SITE_NONE, u
 # their loggers), so the next run reads them again. Sites are rebuilt only if their records changed.
 forget_gt_files <- function(project_dir, paths) {
   pd <- path.expand(project_dir); cd <- file.path(pd, "cache"); paths <- normalizePath(paths, winslash = "/", mustWork = FALSE)
+  # safe: the last run's file list, to find what to forget; with none there is nothing to forget
   fa <- tryCatch(fread(file.path(pd, "output", "audit", "files.csv"), colClasses = list(character = c("rel", "type", "serial"))), error = function(e) data.table())
   lids <- character()
   if (nrow(fa) && all(c("rel", "type", "serial") %in% names(fa))) {

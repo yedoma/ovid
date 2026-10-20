@@ -105,6 +105,7 @@ server <- function(input, output, session, embedded = FALSE) {
     if (isTRUE(input$f_checks)) { k <- fchk(); f <- f[flight_id %in% k$flight_id[checks_open(k)]] }   # as the summary counts them (pages/fct_checks.R)
     q <- tolower(trim(input$f_text %||% "")); if (nzchar(q)) f <- f[grepl(q, tolower(paste(name, site, project, folder, notes, sensor, aircraft)), fixed = TRUE)]
     f })
+  # safe: the calibration table's editor reports a read problem
   cal_rs <- reactive({ rv$tick; stamps(); tryCatch(load_configs(CFG)$calibration, error = function(e) NULL) })
   fchk_raw <- reactive(flight_checks(fl(), cal_rs()))            # placed, corrected and the five checks of every flight
   decisions <- reactive({ p <- file.path(path.expand(CFG$project_dir), "config", REVIEW_FILE); rv$tick; live_stamp(p); review_read(p) })   # core config.R

@@ -37,6 +37,7 @@
   output$bi_scan <- renderUI({ d <- trim(unlist(strsplit(input$raw_dirs %||% paste(SETTINGS$raw_dirs, collapse = "\n"), "\n"))); d <- d[nzchar(d)]
     if (!length(d)) return(p(class = "dim", "No data folder yet. Choose one above and this lists what is in it."))
     if (!any(dir.exists(path.expand(d)))) return(p(class = "dim", "None of the data folders exists."))
+    # safe: a folder that cannot be listed shows no files
     f <- tryCatch(raw_file_list(d, skip_dirs = c("output", "config", "library", "R-portable")), error = function(e) NULL); if (is.null(f) || !nrow(f)) return(p(class = "dim", "The folders are empty."))
     ext <- tolower(tools::file_ext(f$file)); kinds <- list(
       list(label = "RBR logger file (.hex)", ext = "hex", ok = TRUE, note = "Read directly."),

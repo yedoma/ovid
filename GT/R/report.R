@@ -127,18 +127,19 @@ gt_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
   s <- function(f) { x <- gt_read(project_dir, "summaries", f); if (nrow(x) && "site" %in% names(x)) x[x$site == st] else data.table() }
   an <- s("annual_stats.csv"); alt <- s("active_layer.csv"); ft <- s("freeze_thaw.csv"); zaa <- s("zero_annual_amplitude.csv")
   he <- gt_read(project_dir, "audit", "sensor_health.csv"); if (nrow(he)) he <- he[he$site == st]
+  # safe: no daily table yet means no freeze-thaw figure
   dd <- tryCatch(readRDS(out_dir(project_dir, "summaries", "daily.rds")), error = function(e) data.table()); if (nrow(dd)) dd <- dd[site == st]
   zs <- sort(unique(d$depth_m)); assumed <- if ("depth_source" %in% names(d)) sort(unique(d$depth_m[d$depth_source %in% c("default", "template")])) else numeric()
   yrs <- range(as.integer(format(d$TIMESTAMP, "%Y")))
   # the front of the report: the site, the instrument and what the loggers recorded about themselves
-  info <- tryCatch(gt_site_info(st, d, project_dir), error = function(e) NULL); lglog <- tryCatch(gt_logger_log(d, project_dir), error = function(e) NULL)
-  av <- tryCatch(gt_availability(d, MI), error = function(e) NULL)
-  ov <- if (nrow(dd)) tryCatch({ o <- dd[order(depth_m, date)]; band <- function(z) ifelse(z < 0, "Above ground", ifelse(z < 0.5, "Near surface (above 0.5 m)", ifelse(z < 2, "Shallow (0.5 to 2 m)", "Deep (2 m and below)")))
+  info <- try_or(gt_site_info(st, d, project_dir), where = paste("report", st, "logger log")); lglog <- try_or(gt_logger_log(d, project_dir), where = paste("report", st, "site information"))
+  av <- try_or(gt_availability(d, MI), where = paste("report", st, "availability"))
+  ov <- if (nrow(dd)) try_or({ o <- dd[order(depth_m, date)]; band <- function(z) ifelse(z < 0, "Above ground", ifelse(z < 0.5, "Near surface (above 0.5 m)", ifelse(z < 2, "Shallow (0.5 to 2 m)", "Deep (2 m and below)")))
     pf <- if (!is.null(lims)) lims$profiles$profile[match(st, lims$profiles$site)] else NA_character_
     ylim <- if (!is.null(lims$band)) { u <- unique(o[, .(depth_m)]); b <- lims$band[unit == st]; u[, key := paste(pf, gt_band(depth_m))]
       u <- merge(u, b, by = "key"); if (nrow(u)) u[, .(parameter = sprintf("ground_temp  %s m", format(depth_m)), lo, hi)] } else NULL
-    rpt_overview(o[, .(group = band(depth_m), parameter = sprintf("ground_temp  %s m", format(depth_m)), time = as.Date(date), value = temp)], MI, ylim = ylim, paste0("Daily mean ground temperature by depth  -  ", st)) }, error = function(e) NULL)
-  stt <- tryCatch(gt_depth_stats(d, an, ft), error = function(e) NULL)
+    rpt_overview(o[, .(group = band(depth_m), parameter = sprintf("ground_temp  %s m", format(depth_m)), time = as.Date(date), value = temp)], MI, ylim = ylim, paste0("Daily mean ground temperature by depth  -  ", st)) }, where = paste("report", st, "overview"))
+  stt <- try_or(gt_depth_stats(d, an, ft), where = paste("report", st, "statistics"))
   # quality control for this site's loggers
   idx <- gt_read(project_dir, "audit", "audit_index.csv"); if (nrow(idx)) idx <- idx[logger_id %in% unique(d$logger_id)]
   fl <- gt_read(project_dir, "audit", "flags.csv"); if (nrow(fl)) fl <- fl[site == st]
@@ -185,9 +186,9 @@ gt_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
     if (want("annual")) rpt_table(if (nrow(an)) an[year_type == "calendar"][order(year, depth_m), .(year, depth_m, mean, min, max, range, days, complete)] else NULL,
               "Calendar years; complete = enough days for the year to count.", 400),
     if (want("figures")) rpt_heading("Figures"),
-    if (want("figures")) rpt_plot(tryCatch(plot_heatmap(d, title = st, res = "day", caption = assumed_caption(d), lim = axis_of(lims$heat, st, pf$profile[1]), depth_lim = dl), error = function(e) NULL), 11, 6),
-    if (want("figures") && nrow(an)) rpt_plot(tryCatch(plot_trumpet(an, title = paste(st, "- trumpet curves"), xlim = axis_of(lims$trumpet, st, pf$profile[1]), depth_lim = dl), error = function(e) NULL), 11, 7),
-    if (want("figures") && nrow(dd)) rpt_plot(tryCatch(plot_freeze_thaw(dd, title = paste(st, "- frozen, zero curtain and thawed")), error = function(e) NULL), 11, 6)))
+    if (want("figures")) rpt_plot(try_or(plot_heatmap(d, title = st, res = "day", caption = assumed_caption(d), lim = axis_of(lims$heat, st, pf$profile[1]), depth_lim = dl), where = paste("report", st, "heat map")), 11, 6),
+    if (want("figures") && nrow(an)) rpt_plot(try_or(plot_trumpet(an, title = paste(st, "- trumpet curves"), xlim = axis_of(lims$trumpet, st, pf$profile[1]), depth_lim = dl), where = paste("report", st, "trumpet curves")), 11, 7),
+    if (want("figures") && nrow(dd)) rpt_plot(try_or(plot_freeze_thaw(dd, title = paste(st, "- frozen, zero curtain and thawed")), where = paste("report", st, "freeze-thaw")), 11, 6)))
 }
 
 # The one report picker of Reports and export: each report in HTML and in PDF, as "<format>|<what>", what being "" for the
@@ -203,7 +204,7 @@ report_pick <- function(v) {
 
 # Writes the run report and the chosen site reports into dir, in the chosen formats. Returns the files written.
 write_gt_reports <- function(project_dir, dir, sites = NULL, formats = c("html", "pdf"), run = TRUE, progress = function(i, n, what) NULL, opts = NULL) {
-  o <- report_opts(opts); lims <- tryCatch(gt_report_limits(project_dir, sites, o$axis), error = function(e) NULL)
+  o <- report_opts(opts); lims <- try_or(gt_report_limits(project_dir, sites, o$axis), where = "report axis limits")
   if (!length(formats)) return(character())
   dir.create(dir, recursive = TRUE, showWarnings = FALSE); out <- character()
   if (run) out <- c(out, report_write(gt_run_report_doc(project_dir), file.path(dir, "run_report"), formats, MI))

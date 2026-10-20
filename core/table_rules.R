@@ -19,6 +19,7 @@ RULE_PERIODS <- list(c("start", "end"), c("from", "to"), c("deployed", "removed"
 # A `known` source: the values of one column of a project file (a set-up table or an output of the last run); none when the file
 # is not there yet, so nothing is reported before the first run.
 known_from <- function(file, col) function(project_dir) { f <- file.path(path.expand(project_dir), file)
+  # safe: names to check against; a table that cannot be read gives none, so nothing is called unknown
   if (!file.exists(f)) return(character()); d <- tryCatch(fread(f, colClasses = "character", select = col), error = function(e) NULL)
   if (is.null(d) || !nrow(d)) character() else unique(c(d[[1]][nzchar(d[[1]])], if (exists("norm_serial", mode = "function")) norm_serial(d[[1]][nzchar(d[[1]])]))) }
 
@@ -71,6 +72,7 @@ table_check <- function(d, rules, project_dir = NULL) {
     dup <- live & duplicated(key) & nzchar(gsub("\r", "", key, fixed = TRUE))
     add(which(dup), rules$unique[1], "error", paste0("the same ", paste(rules$unique, collapse = " and "), " as row ", match(key[dup], key), "; only one is used")) }
   if (!is.null(project_dir)) for (k in intersect(names(rules$known), names(d))) {
+    # safe: as above, no known names means no "unknown name" finding
     kn <- tryCatch(as.character(rules$known[[k]](project_dir)), error = function(e) NULL); if (!length(kn)) next
     x <- v(k); bad <- live & nzchar(x) & !tolower(x) %in% tolower(kn) & x != "*"
     add(which(bad), k, "warning", paste0("'", x[bad], "' is not a ", k, " this project has (spelling?)")) }
@@ -84,7 +86,7 @@ table_check <- function(d, rules, project_dir = NULL) {
 declared_checks <- function(project_dir, files = get0("CONFIG_FILES", ifnotfound = list())) {
   pd <- path.expand(project_dir); out <- list()
   for (k in names(files)) { f <- files[[k]]; p <- file.path(pd, "config", f$file); if (!file.exists(p)) next
-    d <- tryCatch(read_cfg(p), error = function(e) NULL); if (is.null(d) || !nrow(d)) next
+    d <- try_or(read_cfg(p), where = f$file); if (is.null(d) || !nrow(d)) next
     x <- table_findings(d, f$file, pd)
     if (nrow(x)) out[[k]] <- cbind(data.table(table = f$file, label = f$label %||% f$file), x) }
   if (length(out)) rbindlist(out) else data.table(table = character(), label = character(), row = integer(), column = character(), level = character(), problem = character())
@@ -92,7 +94,7 @@ declared_checks <- function(project_dir, files = get0("CONFIG_FILES", ifnotfound
 # The declared checks added to an app's own set-up check (res: its table; cols: how it names the table and the row). A finding
 # for a table and row the app's own check already names is left out, so nothing is said twice.
 with_declared <- function(res, project_dir, area = "area", item = "item") {
-  x <- tryCatch(declared_checks(project_dir), error = function(e) NULL); if (is.null(x) || !nrow(x)) return(res)
+  x <- try_or(declared_checks(project_dir), where = "declared checks"); if (is.null(x) || !nrow(x)) return(res)
   where <- if (area == "table") x$table else x$label
   row_of <- function(s) suppressWarnings(as.integer(sub("^(row )?([0-9]+).*$", "\\2", s)))
   have <- if (nrow(res)) paste(res[[area]], row_of(as.character(res[[item]]))) else character()
@@ -106,7 +108,7 @@ with_declared <- function(res, project_dir, area = "area", item = "item") {
 # deployment sheet by its own check (core deployments.R). Used by the editor as the table is edited.
 table_findings <- function(d, file, project_dir = NULL) {
   if (identical(file, get0("DEPLOY_SHEET", ifnotfound = "")) && exists("dep_clean", mode = "function")) {
-    p <- tryCatch(dep_clean(d)$problems, error = function(e) NULL); if (is.null(p) || !nrow(p)) return(data.table(row = integer(), column = character(), level = character(), problem = character()))
+    p <- try_or(dep_clean(d)$problems, where = file); if (is.null(p) || !nrow(p)) return(data.table(row = integer(), column = character(), level = character(), problem = character()))
     return(p[, .(row, column = field, level = "warning", problem)]) }
   e <- Filter(function(x) identical(x$file, file), get0("CONFIG_FILES", ifnotfound = list()))
   table_check(d, table_rules(names(d), if (length(e)) e[[1]]$rules else NULL), project_dir)

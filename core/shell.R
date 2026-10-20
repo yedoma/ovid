@@ -132,6 +132,7 @@ ovid_area_start <- function(n, saved = NULL) { w <- names(n)[n > 0]             
 # counts: a reactive named number per side (what the last scan found); project_dir: a function giving the project folder.
 # A new project opens on the first side with data (the first side if none); the side the person picks is kept.
 ovid_areas_server <- function(counts, project_dir, session = shiny::getDefaultReactiveDomain()) {
+  # safe: no project open yet reads as none
   pd <- function() tryCatch(path.expand(project_dir() %||% ""), error = function(e) "")
   observe({ n <- counts(); p <- pd()
     session$sendCustomMessage("ovid-areas", list(counts = as.list(n), project = p, area = ovid_area_start(n, if (nzchar(p)) project_settings_read(p)$area))) })
@@ -255,10 +256,12 @@ OVID_FLOW_CSS <- paste(readLines(file.path(CORE_DIR, "www", "flow.css"), encodin
 ovid_guard <- function(expr) {
   stack <- NULL
   tryCatch(withCallingHandlers(expr, error = function(e) stack <<- sys.calls()),
+    # safe: shiny's silent errors (req()) are meant to show nothing
     shiny.silent.error = function(e) invisible(NULL),
     error = function(e) { if (inherits(e, "validation")) return(invisible(NULL)); ovid_guard_note(e, stack); invisible(NULL) })
 }
 ovid_guard_note <- function(e, stack = NULL) {
+  # safe: the error's reference code is extra; the message itself is shown
   msg <- sub("\\s+$", "", conditionMessage(e)); ref <- tryCatch(error_ref(msg), error = function(x) "")
   cl <- if (length(stack)) rev(utils::tail(vapply(stack, function(x) { f <- x[[1]]; substr(if (is.name(f)) as.character(f) else if (is.call(f)) paste(deparse(f), collapse = "") else "<fn>", 1, 60) }, ""), 14)) else character()
   cl <- cl[cl != "<fn>"]
@@ -285,6 +288,7 @@ observe <- function(x, env = parent.frame(), quoted = FALSE, ...) {
 output_stamp <- function(project_dir) { o <- file.path(path.expand(project_dir %||% ""), "output"); if (!dir.exists(o)) return("none")
   d <- c(o, list.dirs(o, recursive = FALSE)); paste(basename(d), as.numeric(file.mtime(d)), collapse = "|") }
 ovid_output_watch <- function(session, project_dir, every = 2500) {
+  # safe: no project open yet reads as none
   pd <- function() tryCatch(project_dir(), error = function(e) "")
   shiny::reactivePoll(every, session, function() output_stamp(pd()), function() output_stamp(pd())) }
 
@@ -339,14 +343,18 @@ setup_gate <- function(e, review_id, force_id, verb = "Run") {
 SUGGEST_KEEP <- 15L
 suggest_names <- function(project_dir, spec = get0("RENAMES", ifnotfound = list())) {
   out <- list(); add <- function(w, v) { v <- trim(as.character(v)); v <- v[!is.na(v) & nzchar(v)]; out[[w]] <<- unique(c(out[[w]], v)) }
+  # safe: names offered for typing only; a table that cannot be read offers none
   for (k in names(spec)) add(tolower(spec[[k]]$label), tryCatch(rename_names(project_dir, k, spec), error = function(e) character()))
+  # safe: as above, names offered for typing only
   d <- if (exists("dep_sheet", mode = "function")) tryCatch(dep_sheet(project_dir, report = FALSE), error = function(e) NULL)
   if (!is.null(d)) for (w in intersect(c("site", "station", "serial"), names(d))) add(w, d[[w]])
   out
 }
 suggest_server <- function(project_dir, settings_file = get0("SETTINGS_FILE"), session = shiny::getDefaultReactiveDomain()) {
   if (is.null(session)) return(invisible())
+  # safe: remembered typing is a convenience
   typed <- function() { t <- if (!is.null(settings_file)) tryCatch(settings_read(settings_file)$typed, error = function(e) NULL); if (is.list(t)) t else list() }
+  # safe: no project open yet: nothing to send
   send_names <- function() { pd <- tryCatch(project_dir(), error = function(e) NULL); if (is.null(pd) || !nzchar(pd)) return()
     nm <- suggest_names(pd); for (w in names(nm)) session$sendCustomMessage("ovid-suggest", list(word = w, values = as.list(nm[[w]]))) }
   session$onFlushed(function() { t <- typed()
@@ -357,6 +365,7 @@ suggest_server <- function(project_dir, settings_file = get0("SETTINGS_FILE"), s
     id <- as.character(x$id %||% ""); v <- trim(as.character(x$value %||% ""))
     if (length(id) != 1L || length(v) != 1L || !nzchar(id) || !nzchar(v) || nchar(v) > 200 || is.null(settings_file)) return()
     t <- typed(); old <- as.character(t[[id]] %||% character()); t[[id]] <- utils::head(c(v, old[tolower(old) != tolower(v)]), SUGGEST_KEEP)
+    # safe: remembering typed names is a convenience
     tryCatch(settings_save(settings_file, list(typed = t)), error = function(e) NULL) })
   invisible()
 }
@@ -371,6 +380,7 @@ time_zone_ui <- function(value = BASE_OFFSET) div(class = "panel-x", h3("Time zo
   numericInput("base_offset_h", "Time zone (UTC offset, hours): all records are stored in it. Applies at the next run.", value, step = 1, width = "220px"))
 time_zone_server <- function(input, settings_file = get0("SETTINGS_FILE"), on_change = function(z) NULL)
   observeEvent(input$base_offset_h, { z <- input$base_offset_h; if (is.null(z) || is.na(z)) return()
+    # safe: the zone applies in this session; only remembering it failed
     if (!is.null(settings_file)) try(settings_save(settings_file, list(base_offset_h = z)), silent = TRUE)
     BASE_OFFSET <<- z; on_change(z) }, ignoreInit = TRUE)
 
@@ -403,6 +413,7 @@ colours_ui <- function(choices = get0("APP_SCHEMES"), pal_of = get0("app_palette
 # Which view opens when the app starts: the "ui" setting that the app reads at start (core workbench.R wb_wanted(); ?ui= in
 # the address and OVID_UI still win). Shown with the colours, so every app's Settings has it.
 START_VIEWS <- c("Standard view" = "standard", "Workbench" = "workbench")
+# safe: no saved view means the default one
 saved_view <- function(settings_file = get0("SETTINGS_FILE")) { v <- if (!is.null(settings_file)) tryCatch(settings_read(settings_file)$ui, error = function(e) NULL)
   if (identical(v, "workbench")) "workbench" else "standard" }
 start_view_ui <- function() div(class = "mt-3", tags$b("Opens in"),
@@ -417,9 +428,11 @@ colours_server <- function(input, output, app, settings_file = get0("SETTINGS_FI
     paste0(if (identical(pick(), now)) paste0(app, " is using ", now, ".") else paste0("Saved. ", app, " opens in ", pick(), " the next time it starts."),
            if (length(made)) paste0(" ", pick(), " has no ", paste(made, collapse = ", "), " of its own, so those are made up from its other colours.") else "") })
   observeEvent(input$colour_scheme, if (isTRUE(input$colour_scheme %in% choices) && !identical(input$colour_scheme, saved_scheme(choices)))
+    # safe: the scheme applies in this session; only remembering it failed
     try(settings_save(settings_file, list(colour_scheme = input$colour_scheme)), silent = TRUE), ignoreInit = TRUE)
   if (!is.null(shiny::getDefaultReactiveDomain())) updateRadioButtons(shiny::getDefaultReactiveDomain(), "start_view", selected = saved_view(settings_file))   # the page was built at start
   observeEvent(input$start_view, if (!is.null(settings_file) && isTRUE(input$start_view %in% START_VIEWS) && !identical(input$start_view, saved_view(settings_file)))
+    # safe: the view applies in this session; only remembering it failed
     try(settings_save(settings_file, list(ui = input$start_view)), silent = TRUE), ignoreInit = TRUE)
 }
 # A small screen drawn in palette p: the top bar, the status chips and a plot.
@@ -465,12 +478,39 @@ OVID_SHELL_JS <- paste0(OVID_SHELL_JS, "\n", OVID_CTX_JS, "\n", OVID_FIELD_JS, "
 downloadHandler <- function(filename, content, contentType = NULL, outputArgs = list()) {
   shiny::downloadHandler(filename, function(file) {
     s <- shiny::getDefaultReactiveDomain()
+    # safe: a closed page cannot be told the download is done
     on.exit(if (!is.null(s)) try(s$sendCustomMessage("ovid-dl-done", list()), silent = TRUE), add = TRUE)
     content(file) }, contentType, outputArgs)
 }
 # A long action that runs in the window (a button with class d-once) is turned off by the click; call this when it ends
 # to turn the button back on (shell_menu.js).
 once_done <- function(id, session = shiny::getDefaultReactiveDomain()) {
+  # safe: a closed page cannot be told the action is done
   if (!is.null(session)) try(session$sendCustomMessage("ovid-once-done", list(id = id)), silent = TRUE)
   invisible()
+}
+
+# Who made a change, for the set-up history: the signed-in user (also of the session a module runs in), else the computer's.
+current_user <- function(session) {
+  # safe: no signed-in user: the computer's user is used below
+  u <- tryCatch(session$user, error = function(e) NULL)
+  # safe: as above
+  if (is.null(u) || !nzchar(u)) u <- tryCatch(session$rootScope()$user, error = function(e) NULL)
+  if (is.null(u) || !nzchar(u)) u <- Sys.info()[["user"]]
+  u
+}
+
+# Started from the app's launcher (LOCAL): closing the last browser tab, in either interface, stops the app. app: its short
+# name, for the console line. OPEN_SESSIONS is the app's counter (an environment with n).
+track_session <- function(session, app) {
+  if (!LOCAL) return(invisible())
+  OPEN_SESSIONS$n <- OPEN_SESSIONS$n + 1L
+  session$onSessionEnded(function() {
+    OPEN_SESSIONS$n <- OPEN_SESSIONS$n - 1L
+    later::later(function() {
+      if (OPEN_SESSIONS$n > 0L) return(invisible())
+      cat("Browser closed; stopping Ovid ", app, ".\n", sep = "")
+      stopApp()
+    }, 8)
+  })
 }

@@ -74,6 +74,7 @@ wb_views_server <- function(input, output, session, ctx) {
   output$wbn_missing <- renderPlot(bg = PAL$bg1, { f <- fl(); if (!nrow(f)) return(NULL); m <- rs_missing_counts(f)   # pages/fct_needs.R
     ggplot(m, aes(n, reorder(what, n))) + geom_col(fill = PAL$gold, width = 0.6) + geom_text(aes(label = n), hjust = -0.3, colour = PAL$fg4, size = 3.6) +
       scale_x_continuous(expand = expansion(mult = c(0, 0.15))) + labs(x = "flights", y = NULL) + theme_ovid(PAL_PLOT, base_size = 12) })
+  # safe: the calibration table's editor reports a read problem
   mod_checkpoint_server("wbckp", reactive({ std$rv$tick; tryCatch(load_configs(CFG)$calibration, error = function(e) NULL) }))
   invisible(ctx)
 }

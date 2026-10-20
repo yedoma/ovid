@@ -109,6 +109,7 @@ server <- function(input, output, session, embedded = FALSE) {
   source(file.path(APP_DIR, "pages", "map_and_transects.R"), local = TRUE)
   open_survey <- function(sid) { updateSelectInput(session, "survey", selected = sid); nav_select("nav", "Survey", session = session) }
   open_import <- function() { nav_select("nav", "Setup", session = session); nav_select("setup_tab", "transects", session = session) }   # transects.csv's Import
+  # safe: an output of the last scan, only shown
   stats <- reactive({ cat_s(); f <- file.path(CAT, "survey_stats.csv"); if (file.exists(f)) tryCatch(fread(f), error = function(e) NULL) })
   stack_pick <- reactiveVal("")
   mod_archive_server("archive", cat_s, transects, open_survey = open_survey)

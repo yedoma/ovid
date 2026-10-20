@@ -7,6 +7,7 @@
   site_shown <- display_server("disp", pd, site_all)
   output$flow_ctx <- renderUI({ live_stamp(display_path(pd())); display_context(pd(), site_all(), "sites") })
   zone_lab <- function() zone_text(SETTINGS$base_offset_h %||% BASE_OFFSET)
+  # safe: no precipitation file read: none shown
   precip <- reactive({ input$precip_file; tryCatch(flow_precip(input$precip_file %||% SETTINGS$precip_file), error = function(e) NULL) })
   output$precip_check <- renderUI({ f <- trim(input$precip_file %||% ""); if (!nzchar(f)) return(NULL); b <- precip()
     if (is.null(b)) div(class = "check bad", "Not read: a CSV with a time column and a column of millimetres is needed.")
@@ -68,6 +69,7 @@
   output$site_empty <- renderUI(if (!length(site_all())) {
     d <- trim(unlist(strsplit(paste(input$raw_dirs %||% "", collapse = "\n"), "\n"))); d <- d[nzchar(d) & dir.exists(path.expand(d))]
     nf <- nrow(raw_files_found(d))                                                     # R/discover.R: the files a run reads
+    # safe: a count for the flow only; the table's editor reports a read problem
     rows <- function(id) tryCatch(NROW(E[[id]]$data()), error = function(e) 0L)
     item <- function(ok, req, title, sub, go, tab = NULL) div(class = "wl-chk", span(class = if (ok) "ok" else if (req) "w" else "m", if (ok) "\u2713" else if (req) "\u25b2" else "\u25cb"),
       div(tags$b(title), span(class = if (req) "req" else "opt", if (req) " required" else " optional"), div(class = "dim", sub)),
@@ -133,6 +135,7 @@
   rl_flags <- reactive({ o <- outs(); f <- o$flags; if (is.null(f) || !nrow(f)) return(NULL); f <- copy(f)[site %in% site_shown()]
     f[, serial := as.character(logger_id)]; review_flag_items(f, "site", keep = "serial") })
   review <- review_list_server("rl", reactive(rbind(rl_flags(),
+      # safe: suggestions only
       tryCatch(gb$suggestions()[, .(kind = "moved", where = serial, what, serial, at)], error = function(e) NULL), wl_notes(), fill = TRUE)),
     reactive(review_path(pd())), period = if (!VIEWER) E$period, split = function(s, a) gb$accept(s, a),
     open = function(r) { updateSelectInput(session, "ex_site", selected = r$where); go("Explore") },

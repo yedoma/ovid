@@ -48,4 +48,3 @@ set_aside|Files of loggers set aside|file|The logger was set aside on the Statio
 group_failed|Logger tables that could not be stitched|file|An error stopped this logger table; the rest of the run carried on.|See Loggers and files, Problems.|Metadata
 station_failed|Stations that could not be written|file|An error stopped this station; the rest of the run carried on.|See Loggers and files, Problems.|Metadata
 ')
-rule_info <- function(r) { i <- match(r, RULE_INFO$rule); out <- RULE_INFO[i]; out[is.na(i), `:=`(rule = r[is.na(i)], title = r[is.na(i)], lost = "kept", meaning = "", action = "", page = "")]; out }

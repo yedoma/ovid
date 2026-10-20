@@ -85,6 +85,30 @@ hobo_csv_head <- function(lines) {
        serial = if (length(sn)) sub(".*: *", "", sn[1]) else NA_character_)
 }
 
+# The record lines of a HOBOware CSV export (h: hobo_csv_head()): blank lines (fread stops at one) and heading lines left
+# out. A second heading with other columns (two exports joined) ends the records when stop_at_change is TRUE (the rows after
+# it do not fit these columns; WLR and GT read up to it and report the rest). Returns the lines and header_change
+# (the second heading's line and the number of rows after it), NULL when there is none.
+hobo_csv_rows <- function(lines, h, stop_at_change = TRUE) {
+  hc <- which(grepl("Date Time", lines, fixed = TRUE) & trim(lines) != trim(lines[h$hi]))
+  hc <- hc[hc > h$hi]
+  body <- lines[-seq_len(h$hi)]
+  if (length(hc) && stop_at_change) body <- lines[(h$hi + 1L):(hc[1] - 1L)][seq_len(max(0L, hc[1] - h$hi - 1L))]
+  body <- body[nzchar(trim(body)) & !grepl("Date Time", body, fixed = TRUE)]
+  change <- if (length(hc)) list(line = hc[1], rows = sum(grepl("^\\s*[0-9]", lines[-seq_len(hc[1])])))
+  list(lines = body, header_change = change)
+}
+
+# The event columns (cols) of a HOBOware CSV export as an events table: each row with an entry in the column, at its time
+# (ts), named by the column heading (hdr) without its unit or "(LGR S/N ...)" part ("Coupler Detached", "Host Connected").
+hobo_csv_events <- function(d, cols, ts, hdr) {
+  ev <- rbindlist(lapply(cols, function(j) {
+    k <- which(!is.na(d[[j]]) & nzchar(trim(d[[j]])))
+    if (length(k)) data.table(TIMESTAMP = ts[k], event = trim(sub(",.*$", "", sub("\\(.*$", "", hdr[j]))))
+  }))
+  if (nrow(ev)) ev else empty_events()
+}
+
 # ---- Campbell Scientific TOA5 --------------------------------------------------------------------------------------------
 # The four header lines of a TOA5 table: the environment line (format, station name, model, serial, OS, program, signature,
 # table), the column names, units and processing, blank lines left aside (toa5_skip(): how many lines the data starts after).
@@ -123,3 +147,17 @@ gap_rows <- function(t, step, factor = 1.5) {
   if (!length(k)) return(NULL)
   data.table(gap_start = t[k], gap_end = t[k + 1L], gap_s = g[k], missing_records = round(g[k] / step) - 1)
 }
+
+# A text file that does not end with a line break was cut off (a copy or download that stopped), so its last row can hold a
+# value cut short; each app decides what to do with that row. Every logger and software export seen ends with a line break
+# (2,394 files checked).
+ends_cut <- function(path) {
+  n <- file.info(path)$size
+  if (is.na(n) || n == 0) return(FALSE)
+  con <- file(path, "rb")
+  on.exit(close(con))
+  seek(con, n - 1)
+  !identical(readBin(con, "raw", 1L), as.raw(10L))
+}
+# The events table of a reader (HOBO event columns, logger tags) when a file has none.
+empty_events <- function() data.table(TIMESTAMP = as.POSIXct(character(), tz = "UTC"), event = character())

@@ -5,6 +5,23 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (colours from the palette, 2026-10-20)**
+- theme.R: OVID_SCHEMES$Nord holds nord0 to nord15, WLR's status-line ground and grey (`named`); `nord_palette()` gives WLR's palette from it (WLR no longer keeps its own copy). New `col_rgba(col, a)` for plotly fills and legend grounds.
+- tests: apps draw no quoted hex or rgba() colour outside their palette, except the named scientific scales (Spectral, Viridis, RdBu, Grey, Blue-white-red) and two fixed whites (map labels on satellite imagery, the radargram cursor).
+- **Output changes:** none.
+
+**Changed (failures reported, not hidden; CONTRIBUTING rule 13, 2026-10-20)**
+- Every tryCatch() or try() that gave a default (NULL, FALSE, an empty table) was looked at: 16 now use try_or(), so the failure goes on the problem list with the table or part it concerns (period corrections, the logger-list fields, the dataset description, the scan list of the deployment sheet, a correction's on/off test and the corrections list, the change log, the migration record, the run history, config tables in the exported configuration, set-up table checks, a report figure); the other 121 have a comment saying why the default is safe (a probe, a cache, a convenience, or a value only shown).
+- **Output changes:** none for readable projects; a set-up table that cannot be read is now on the problem list.
+
+**Changed (one say(), maps open on the world, shared helpers moved to core, 2026-10-20)**
+- util.R: say() is the only one. It takes `log` (an environment whose `$lines` collects each message; default the app's LOG) and `steps` (default the app's SAY_STEPS: a "[k/N]" message moves the Shiny progress bar, say_progress()). CS, WLR and GT no longer define their own; core_shadows() now allows no replacement, so an app copy is reported again. metasheet.R meta_fold's local `say` is renamed note_problem. On a terminal (or RStudio) the CS, WLR and GT console lines now take the palette colours, as GS and RS already did; the Log page text is unchanged.
+- convert_page.R: the latitude, longitude and zone examples are a neutral place (45.4215, -75.6972, zone 18N), not a field site.
+- time_corrections.R (new): apply_time_corrections(), the one copy of CS, WLR and GT's (each had drifted). Rows are picked by the app (`rows`), and every row may shift, spread a drift (mode drift), or remove (action remove), limited to a file (source_file); `audit` and `dedupe` are the app's choices. Drift resolved by taking the fuller behaviour: a start or end that is not a date, and minutes that are not a number, are now a problem for every app (CS, GT used to apply or skip them silently); a shift of 0 minutes is skipped without a problem; a shift is audited per raw file as a change of TIMESTAMP (WLR counted it as records dropped). The number moved is attr(, "shifted").
+- logger_files.R: ends_cut() and empty_events() (were identical in WLR and GT); hobo_csv_rows() (the records of a HOBOware CSV: blank lines and repeated headings out, a second heading with other columns ends them and is returned as header_change; `stop_at_change`) and hobo_csv_events() (event columns as events), so WLR and GT read a HOBO CSV's rows and events one way.
+- shell.R: current_user() (CS's, which also asks the module's session) and track_session(session, app); editor.R: editServer(); table.R: rule_info(); workbench.R: wb_num() and wb_cells() (GS's, which marks a restored value; RS has no restored state, so the same cells). The app copies are gone.
+- **Output changes:** none.
+
 **Fixed (.hobo decoder: events mid-file, battery channel, time zone, 2026-10-20)**
 
 - hobo.R reads the data as the bit stream it is: 24-bit records (14-bit pressure count, 10-bit thermistor count, then 8 battery bits when that channel was logged, tag 0x0b) and events of 14 one bits, a 4-bit type (0 coupler detached, 1 attached, 3 stopped, 6 host connected), a 4-bit length n and 4n bits of seconds. Events are skipped exactly, a stopped event or erased memory ends the records, and the earlier rules (launch record packed apart, end mark, guessed resume points) are gone: they were the same records read at a 2-bit offset after an event. The interval is the last of tag 0x08's values; the clock's UTC offset comes from the launch time in UTC (tag 0x22 bytes 5-8) as attribute utc_offset_h.

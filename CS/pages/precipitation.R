@@ -12,12 +12,14 @@
   pr_key <- reactive({ req(input$pr_gauge, pr_sum()); strsplit(input$pr_gauge, "|||", fixed = TRUE)[[1]] })
   pr_info <- reactive({ k <- pr_key(); pr_sum()[station == k[1] & stream == k[2]][1] })
   pr_file <- function(kind) file.path(pd(), "output", "precip", paste0(safe_name(paste(pr_key(), collapse = "__")), "_", kind, ".csv"))
+  # safe: an output table that cannot be read shows as empty until the next run writes it
   pr_read <- function(kind, ...) { rv$tick; f <- pr_file(kind); if (!file.exists(f)) return(data.table()); tryCatch(fread(f, ...), error = function(e) data.table()) }
   pr_daily <- reactive({ d <- pr_read("daily", colClasses = list(character = "Date")); req(nrow(d) > 0)
     validate(need(all(c("Date", "precip_mm") %in% names(d)), paste0("The daily precipitation table for this gauge is not in the expected form (", basename(pr_file("daily")), " has columns: ", paste(utils::head(names(d), 6), collapse = ", "), "). Press Reprocess precipitation under Gauge set-up.")))
     d[, Date := as.Date(Date)]; d <- d[!is.na(Date)]; req(nrow(d) > 0); d })
   pr_iv <- reactive({ d <- pr_read("interval"); req(nrow(d) > 0); validate(need("TIMESTAMP" %in% names(d), "The record-level precipitation table for this gauge could not be read.")); if (!inherits(d$TIMESTAMP, "POSIXct")) d[, TIMESTAMP := as.POSIXct(TIMESTAMP, tz = "UTC")]; d })
   pr_faults <- reactive({ d <- pr_read("faulty_periods", colClasses = "character"); if (nrow(d)) d[, `:=`(Start = as.Date(Start), End = as.Date(End))]; d })
+  # safe: req() leaves the dates as they are
   observe({ d <- tryCatch(pr_daily(), error = function(e) NULL); req(d); r <- range(d$Date); updateDateRangeInput(session, "pr_dates", start = r[1], end = r[2], min = r[1], max = r[2]) })
   pr_win <- reactive({ req(input$pr_dates[1], input$pr_dates[2]); input$pr_dates })
   pr_names <- c(precip_mm = "Final", precip_acc_total_mm = "Running total (raw)", precip_bucket_mm = "Bucket cummax", precip_corrected_mm = "Wind-corrected")
@@ -95,7 +97,7 @@
                     caption = "Above the dashed line the running total reports more than the bucket gained. Runs of such days become a faulty period (red).")) }
     d[, M := as.Date(format(Date, "%Y-%m-01"))]; m <- d[, .N, by = .(M, Flag = qc_flag)]
     ggplot(m, aes(M, N, fill = Flag)) + geom_col(width = 28) +
-      scale_fill_manual(values = c(good = GB$aqua, partial_day = GB$yellow, acc_bucket_mismatch = GB$orange, low_confidence = GB$red, missing = GB$bg2 %||% "#504945",
+      scale_fill_manual(values = c(good = GB$aqua, partial_day = GB$yellow, acc_bucket_mismatch = GB$orange, low_confidence = GB$red, missing = GB$bg2,
                                    bucket_only_window = GB$green, servicing_day = GB$blue, power_or_outage_day = GB$purple, acc_jump = GB$yellow)) +
       labs(x = NULL, y = "days", subtitle = ttl)
   })
@@ -135,6 +137,7 @@
   observe({ o <- outs(); req(o, nrow(o$stations) > 0); updateSelectInput(session, "pg_station", choices = setNames(st_value(o), st_label(o))) })
   observe({ o <- outs(); req(o, input$pg_station); k <- strsplit(input$pg_station, "|||", fixed = TRUE)[[1]]
     p <- if (all(c("station", "stream", "parameter") %in% names(o$pstats))) o$pstats[station == k[1] & stream == k[2], parameter] else character()
+    # safe: a parameter list for choosing only
     if (!length(p)) p <- tryCatch(setdiff(names(load_station(k[1], k[2], pd())), META_COLS), error = function(e) character())
     def <- GAUGE_DEFAULTS[[input$pg_type]]
     pick <- function(want, rx) { if (nzchar(want) && want %in% p) want else { m <- grep(rx, p, ignore.case = TRUE, value = TRUE); if (length(m)) m[1] else "" } }

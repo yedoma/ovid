@@ -52,6 +52,7 @@ cb_num <- function(x, consts) {                 # a number, a Const, or simple a
   ids <- regmatches(x, gregexpr("[A-Za-z_][A-Za-z0-9_]*", x))[[1]]
   if (!grepl("^[A-Za-z0-9_.+*/() -]+$", x) || !all(tolower(ids) %in% names(consts))) return(NA_real_)
   x <- gsub("([A-Za-z_][A-Za-z0-9_]*)", "\\L\\1", x, perl = TRUE)
+  # safe: a program constant that is not a plain number is not known (NA)
   suppressWarnings(tryCatch(as.numeric(eval(parse(text = x), envir = list2env(consts, parent = baseenv()))), error = function(e) NA_real_))
 }
 cb_truthy <- function(x) { x <- tolower(trim(x)); nzchar(x) && !x %in% c("false", "0") }
@@ -265,10 +266,12 @@ load_programs <- function(cfg) {
   if (!length(f)) return(list())
   md5 <- unname(tools::md5sum(f)); f <- f[!duplicated(md5)]; md5 <- md5[!duplicated(md5)]
   cf <- file.path(path.expand(cfg$project_dir), "cache", "programs.rds")
+  # safe: a damaged cache is rebuilt
   old <- if (file.exists(cf)) tryCatch(readRDS(cf), error = function(e) list()) else list()
   key <- paste(md5, STEP_HASH$programs %||% "")
   out <- lapply(seq_along(f), function(i) { p <- old[[key[i]]]; if (is.null(p)) p <- read_program(f[i]); p$path <- f[i]; p$name <- basename(f[i]); p })
   dir.create(dirname(cf), recursive = TRUE, showWarnings = FALSE)
+  # safe: the cache only saves time
   try(saveRDS_safe(setNames(out, key), cf), silent = TRUE)
   out
 }
@@ -359,7 +362,7 @@ program_report <- function(cfg) {
   if (!length(files)) stop("No .dat files found in the raw folders.")
   progs <- load_programs(cfg)
   if (!length(progs)) stop("No program files yet. Add some first.")
-  man <- rbindlist(lapply(files, function(f) tryCatch(as.data.table(read_header(f)), error = function(e) NULL)), fill = TRUE)
+  man <- rbindlist(lapply(files, function(f) try_or(as.data.table(read_header(f)), where = basename(f))), fill = TRUE)
   cxf <- file.path(cfg$project_dir, "config", "cr10x.csv"); cx <- if (file.exists(cxf)) read_cfg(cxf) else data.table(file = character(), fsl = character())
   arr <- man$status == "unsupported_mixed_array"
   man[arr, `:=`(status = "ok", format = "mixed-array", table = "ARRAY", program = cx$fsl[match(path[arr], cx$file)] %|na|% "")]

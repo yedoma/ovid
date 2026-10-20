@@ -29,14 +29,17 @@ wb_stac_ui <- function() div(class = "wb-std d-tool", tags$h1(class = "wb-h1", "
 # ---- server -----------------------------------------------------------------------------------------------------------
 wb_project_server <- function(input, output, session, ctx) {
   E <- ctx$E; std <- ctx$std
+  # safe: the sources table's editor reports a read problem
   output$wb_scan <- renderUI({ std$rv$tick; x <- std$C(); live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
     plugged <- if (nrow(s)) sum(dir.exists(path.expand(s$path))) else 0
     tile <- function(v, k, cls = "") div(class = paste("wb-tile", cls), div(class = "v", v), div(class = "k", k))
+    # safe: an output of the last run, only shown
     m <- tryCatch(fread(file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] %|% "0" else "0"
     div(class = "wb-tiles", tile(num(nrow(s)), "sources"), tile(num(plugged), "plugged in now"), tile(num(as.numeric(v("files"))), "files"),
         tile(num(as.numeric(v("images"))), "images"), tile(num(if (is.null(x)) 0 else nrow(x$flights)), "flights"),
         tile(num(if (is.null(x) || is.null(x$unassigned)) 0 else nrow(x$unassigned)), "files tied to no flight", if (!is.null(x) && NROW(x$unassigned)) "hi")) })
+  # safe: no check result yet: nothing to show
   output$wb_check_short <- renderUI({ x <- tryCatch(std$chk(), error = function(e) NULL); if (is.null(x)) return(NULL)
     ne <- sum(x$level == "error"); nw <- sum(x$level == "warning")
     div(class = "wb-inline", if (!ne && !nw) span(class = "wb-good", "Safe to rebuild.") else span(class = if (ne) "wb-bad" else "wb-warnt",

@@ -37,9 +37,11 @@ live_store <- function(session = shiny::getDefaultReactiveDomain()) {
   if (is.null(session)) return(NULL)
   ud <- session$userData; if (!is.null(ud$ovid_live)) return(ud$ovid_live)
   w <- new.env(parent = emptyenv())                                   # key -> list(now = reactiveVal(stamp), stamp = function())
+  # safe: a table whose stamp cannot be read is checked again next time
   look <- function() for (k in ls(w, all.names = TRUE)) { x <- w[[k]]; s <- tryCatch(x$stamp(), error = function(e) "")
     if (!identical(s, shiny::isolate(x$now()))) x$now(s) }
   watch <- function(key, stamp) { x <- w[[key]]
+    # safe: as above
     if (is.null(x)) { x <- list(now = shiny::reactiveVal(tryCatch(stamp(), error = function(e) "")), stamp = stamp); assign(key, x, envir = w) }
     x$now() }
   shiny::isolate(observe({ shiny::invalidateLater(LIVE_EVERY, session); look() }, domain = session))
@@ -55,6 +57,7 @@ live_config <- function(project_dir) { if (length(project_dir) != 1 || is.na(pro
   if (is.null(st)) return(f()); st$watch(paste0("dir:", d), f) }
 live_table <- function(path) { live_stamp(path); p <- path.expand(path %||% "")
   if (length(p) != 1 || !nzchar(p) || !file.exists(p)) return(data.table())
+  # safe: a live view only; the editor reads the table itself and says when it cannot (edit_read() below)
   tryCatch(read_cfg(p), error = function(e) data.table()) }
 live_settings <- function(file = get0("SETTINGS_FILE")) { if (is.null(file)) return(list()); live_stamp(file); settings_read(file) }
 live_touch <- function() { st <- live_store(); if (!is.null(st)) st$look(); invisible() }
@@ -95,7 +98,9 @@ settings_autosave <- function(ids, save, keys = stats::setNames(ids, ids), sep =
   invisible()
 }
 
+# safe: no signed-in user: the computer's user is used below
 edit_user <- function(session) { u <- tryCatch(session$user, error = function(e) NULL)
+  # safe: as above
   if (is.null(u) || !nzchar(u)) u <- tryCatch(session$rootScope()$user, error = function(e) NULL)
   if (is.null(u) || !nzchar(u)) u <- Sys.info()[["user"]]; u }
 
@@ -116,7 +121,9 @@ ovid_edit_ui <- function(id, hint = "Double-click a cell to edit. Click rows to 
 # app's list of set-up tables: damaged, cut short, or saved by another program), is shown with those columns added empty
 # and a notice, so no page stops on it; the file itself is only changed when the table is saved.
 edit_cols <- function(p) { reg <- get0("CONFIG_FILES", inherits = TRUE); if (!is.list(reg)) return(NULL)
+  # safe: column hints for the editor; without them the table's own columns are shown
   for (x in reg) if (identical(x$file, basename(p))) { cc <- x$cols; cc <- if (is.function(cc)) tryCatch(cc(), error = function(e) NULL) else cc
+    # safe: as above
     op <- x$optional; if (is.function(op)) op <- tryCatch(op(), error = function(e) NULL)
     return(structure(cc, optional = op)) }                  # optional columns (an app's own) are added without a notice
   NULL }
@@ -202,6 +209,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     data(u[[length(u)]]); undo(u[-length(u)]); dirty(length(u) > 1L); bump() })   # back to the saved table: nothing to save
   # what the table's rules (core table_rules.R) find in the table as it stands, saved or not
   output$checks <- renderUI({ ver(); input$tbl_cell_edit; d <- data(); if (is.null(d) || !nrow(d) || !exists("table_check", mode = "function")) return(NULL)
+    # safe: findings shown beside the table; without a project folder the table's own checks still run
     f <- basename(isolate(path())); x <- table_findings(as.data.table(d), f, tryCatch(dirname(dirname(isolate(path()))), error = function(e) NULL))
     if (!nrow(x)) return(NULL)
     div(class = "edit-checks", style = "margin-top:8px", tags$b(sprintf("%d thing(s) to look at in this table", nrow(x))),
@@ -211,6 +219,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     p <- isolate(path()); was_dirty <- isolate(dirty())
     d <- d[rowSums(d != "") > 0, , drop = FALSE]
     dw <- yesno_as(d, basename(p), shown = FALSE)                                # Yes/No cells are written TRUE/FALSE
+    # safe: the save itself goes on; only the history copy is missed
     try(backup_cfg(p, dw, edit_user(session)), silent = TRUE)
     fwrite_safe(dw, p); data(d); dirty(FALSE); loaded(file_stamp(p)); undo(list()); live_touch()
     if (was_dirty) on_change()
@@ -274,3 +283,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
          data(rbind(d, rows[names(d)])); dirty(TRUE); save(quiet = TRUE); bump(); keep_undo(d); TRUE
        })
 })
+
+# The editor with the core table (table.R ovid_dt), as every app's set-up pages call it.
+editServer <- function(id, path, reload, locked = character(), on_change = function() NULL)
+  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt)

@@ -42,12 +42,7 @@ downloadHandler <- ovid_downloads("CS")                  # every download is nam
 
 # Route the pipeline's console messages into the app (log panel + progress bar)
 LOG <- new.env(); LOG$lines <- character()
-say <- function(..., col = "fg") {
-  msg <- paste0(...)
-  LOG$lines <- c(LOG$lines, msg); cat(msg, "\n", sep = "")
-  if (grepl("^\\[[0-9]/6\\]", msg) && !is.null(getDefaultReactiveDomain()))
-    try(setProgress((as.numeric(substr(msg, 2, 2)) - 0.5) / 6, detail = sub("^\\[[0-9]/6\\] ", "", msg)), silent = TRUE)
-}
+SAY_STEPS <- 6                                                    # core say(): "[k/6]" messages move the progress bar
 
 SETTINGS_FILE <- file.path(APP_DIR, "app_settings.json")
 SETTINGS <- settings_read(SETTINGS_FILE)                          # core util.R: the last good copy if this one is damaged
@@ -131,6 +126,7 @@ server <- function(input, output, session, embedded = FALSE) {
     showNotification(if (!isTRUE(ok)) "The table is not loaded yet." else if (n) sprintf("Filled %d blank cell(s). Run the pipeline to apply.", n) else "Nothing to fill: the standard rows already have spike and step limits.", type = "message") })
   info <- reactive({
     d <- m_pi$data(); d <- if (is.null(d) || !nrow(d)) default_parameter_info() else ensure_cols(as.data.table(d), INFO_COLS)
+    # safe: this tests whether the pattern is a valid regular expression
     ok <- vapply(d$pattern, function(p) nzchar(p) && !inherits(try(grepl(p, "x", perl = TRUE), silent = TRUE), "try-error"), logical(1))
     d[ok]
   })
@@ -198,6 +194,6 @@ server <- function(input, output, session, embedded = FALSE) {
 # the "ui" setting decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_cs.R"), local = TRUE)
 shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
-         server = function(input, output, session) { track_session(session)
+         server = function(input, output, session) { track_session(session, "CS")
            if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
            wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })

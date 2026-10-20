@@ -130,6 +130,7 @@ gnss_zone <- function(x) { m <- regexpr("(?i)zone ?[0-9]{1,2} ?[NS]\\b", x, perl
 # One file -> rows in GNSS_COLS. Errors become a note row-free empty table with attr "problem".
 read_gnss_file <- function(file, name = basename(file)) {
   if (grepl("\\.zip$", name, ignore.case = TRUE)) {   # Emlid Flow downloads logs and projects as zip archives
+    # safe: a zip that cannot be opened gives no files, and the caller says no rows were read
     x <- file.path(tempfile("gnsszip"), ""); inner <- tryCatch(utils::unzip(file, exdir = x), error = function(e) character())
     inner <- inner[!grepl("__MACOSX|/\\._", inner) & grepl("\\.(csv|txt|llh|pos|nmea|mrk)$", inner, ignore.case = TRUE)]
     if (!length(inner)) return(structure(data.table(), problem = paste(name, ": no point files or position logs inside (raw logs only?)")))
@@ -145,6 +146,7 @@ read_gnss_file <- function(file, name = basename(file)) {
   else if (grepl("\\.gsi$", name, ignore.case = TRUE)) { d <- read_leica_gsi(file); dev <- "Leica" }
   else if (grepl("\\.xml$", name, ignore.case = TRUE)) { d <- read_landxml_points(file); dev <- "Leica" }
   else {
+    # safe: the next line returns "no rows read" as the file's problem
     d <- tryCatch(fread(file, colClasses = "character", fill = TRUE, encoding = "UTF-8"), error = function(e) NULL)
     if (is.null(d) || !nrow(d)) return(structure(data.table(), problem = paste(name, ": no rows read")))
     hdr <- names(d)

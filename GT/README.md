@@ -82,7 +82,7 @@ GT/project/              the working folder: config/ (set-up tables, with histor
 |---|---|---|
 | RBR XR-420 | the `.hex` file itself (calibration from its header); else the Ruskin `.txt` (UTC) or `.xls` (logger clock) | the `.hex` is checked against its export when both exist; clock drift at download is read from the header |
 | GeoPrecision | the FG2-Shell `.csv` (the `.f2b` cannot be read; export it with FG2_Shell) | tags (`<NEW PAR>`, `<FIRMWARE RESET>` ...) become events; `(NoReply)` is a sensor error; battery is kept separately |
-| HOBO U12 | the HOBOware `.csv` (the `.hobo` gives only its identity; Bulk Export in HOBOware Pro writes CSVs for many files) | the zone stated in the header is used |
+| HOBO U12 | the HOBOware `.csv` (the `.hobo` gives only its identity; Bulk Export in HOBOware Pro writes CSVs for many files) | the zone stated in the header is used; a file holding two exports joined (a second heading with other columns) is read up to that heading and the rest listed as a problem: export them as files of their own |
 | EM50 | the ECH2O Utility `.xls` | raw counts 4094/4095 and VWC above 1 are errors; temperature, VWC and EC are kept apart |
 | Campbell | TOA5 `.dat` tables | columns matched by the patterns under Quality rules > Campbell columns |
 

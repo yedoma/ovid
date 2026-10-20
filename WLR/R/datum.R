@@ -176,6 +176,7 @@ offset_row <- function(serial, model, tab) {
   v <- suppressWarnings(as.numeric(tab$offset_m))
   k <- which(nzchar(tab$serial) & norm_serial(tab$serial) == serial & !is.na(v))
   if (!length(k) && !is.na(model)) k <- which(!nzchar(tab$serial) & nzchar(tab$model) & !is.na(v) &
+                                              # safe: a model pattern that is not a valid regular expression matches no logger
                                               vapply(tab$model, function(m) isTRUE(tryCatch(grepl(m, model, ignore.case = TRUE), error = function(e) FALSE)), logical(1)))
   if (length(k)) k[1] else NA_integer_
 }

@@ -7,6 +7,23 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (colours follow the colour scheme, 2026-10-20)**
+- Map: survey-year lines, the "no surveys" line, transect start and end, site markers and the legend ground take the scheme's colours (Settings > Colours); site names and GPR marker numbers on the map stay white on satellite imagery (MAP_LABEL_COL, M).
+- GPR: thaw-depth line and picks, field markers, A-scan and the GPS tracks (picked / other) take the scheme's gold, orange and blue.
+- Pseudosection: the scheme scale (was "Kanagawa") is named after the scheme in use and built from its colours; "Greys" runs from its panel ground to its text. Spectral and Viridis are unchanged. A flag reason drawn in white now takes the scheme's text colour.
+- **Output changes:** in the Kanagawa scheme red and violet are the lifted ones used elsewhere in GS (#E76B79, #9E88C2), springBlue is blue mixed with teal (#7CA2BC) and a flag reason once drawn white is the text colour (#DCD7BA); other schemes now draw these in their own colours. Exports and statistics unchanged.
+
+**Changed (failures reported, not hidden, 2026-10-20)**
+- 1 failure now reported (electrodes.csv in an export); 20 defaults commented as safe. Scanning shows a notice when the set-up check cannot run.
+- **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.
+
+**Changed (Workbench grid helpers to core, 2026-10-20)**
+- wb_num() and wb_cells() are core's (core/workbench.R). **Output changes:** none.
+
+**Changed (map with nothing located, 2026-10-20)**
+- The transect map opens on the picked transect, else all transects, else the project's sites, else the whole world (map_view() in R/maps.R; it used to fall back to a fixed field point). The "point not understood" message gives a neutral example. Test in tests/test_bad_files.R.
+- **Output changes:** none.
+
 **Added and fixed (tests: samples, damaged files, golden project, derived values, 2026-10-19)**
 - tests/samples: real files for every format GS reads: the AGI .cmd and .crs of the SCH-INV line, an IRIS Prosys export (60 of 1958 quadrupoles), a Res2DInv file, and a MALA GPR line (.rad, .rd3, .cor, .mrk); reference values from the raw files (the .rd3 values from its bytes, read apart from R) in reference.csv. tests/samples.R reads the companions and GPR files with their own readers.
 - tests/test_bad_files.R: every sample emptied, cut in half and cut to 3 lines; an .stg in feet, a line with an electrode never used, a record with no positions, GPR lines with no traces, no sample count or a cut data file, positions in UTM or swapped.

@@ -69,6 +69,7 @@ write_cfg <- function(dt, project_dir, what, who = "pipeline") {
 HIST_COLS <- c("time", "user", "table", "rows_before", "rows_after", "rows_added_or_changed", "rows_removed_or_changed", "backup")
 backup_cfg <- function(path, new = NULL, who = "", what = "") {
   if (!file.exists(path)) return(invisible(NULL))
+  # safe: a damaged old table is still kept, copied as it is below
   old <- tryCatch(as.data.frame(read_cfg(path), stringsAsFactors = FALSE), error = function(e) NULL)
   if (!is.null(old) && !nrow(old)) return(invisible(NULL))          # an empty starter table: nothing worth keeping
   key <- function(d) if (!nrow(d)) character() else do.call(paste, c(lapply(d, as.character), sep = "\r"))
@@ -87,10 +88,11 @@ backup_cfg <- function(path, new = NULL, who = "", what = "") {
                     rows_added_or_changed = if (both) sum(!kn %in% ko) else NA_integer_,
                     rows_removed_or_changed = if (both) sum(!ko %in% kn) else NA_integer_, backup = b)
   lf <- file.path(h, "change_log.csv")
+  # safe: an unreadable header is taken as an older log, which is rewritten below (and reported there)
   hdr <- if (file.exists(lf)) tryCatch(names(fread(lf, nrows = 0)), error = function(e) character()) else character()
   if (!file.exists(lf) || identical(hdr, HIST_COLS)) fwrite(row, lf, append = file.exists(lf))
   else {                                                   # an older, shorter log: rewrite it with every column
-    prev <- tryCatch(fread(lf, colClasses = "character", na.strings = NULL), error = function(e) data.table())
+    prev <- try_or(fread(lf, colClasses = "character", na.strings = NULL), data.table(), "config/history/change_log.csv")
     fwrite(rbind(prev, row[, lapply(.SD, as.character)], fill = TRUE)[, c(HIST_COLS, setdiff(names(prev), HIST_COLS)), with = FALSE], lf)
   }
   invisible(b)
@@ -139,6 +141,7 @@ read_config_import <- function(path, name = basename(path)) {
     out[[w]] <<- shape(d, w); TRUE }
   if (ext == "zip") {
     tmp <- tempfile("ovidimp_"); dir.create(tmp); on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+    # safe: a file that is not a zip stops on the next line with a message
     ok <- tryCatch({ zip::unzip(path, exdir = tmp); TRUE }, error = function(e) FALSE)
     if (!ok) stop(name, " is not a readable zip file. Choose a configuration exported from Ovid (a .zip), or a single set-up table (.csv).", call. = FALSE)
     for (f in list.files(tmp, "\\.csv$", recursive = TRUE, full.names = TRUE)) {
@@ -214,7 +217,7 @@ config_import_preview <- function(imp, project_dir, mode = "replace") {
 # <what to say, or NULL: where, problem>)); the core adds the logger splits (core grouping.R) to every app's.
 CFG_MIGRATED <- "migrated.json"
 cfg_migrated <- function(project_dir) { p <- file.path(path.expand(project_dir), "config", CFG_MIGRATED)
-  if (file.exists(p)) tryCatch(as.list(jsonlite::fromJSON(p)), error = function(e) list()) else list() }
+  if (file.exists(p)) try_or(as.list(jsonlite::fromJSON(p)), list(), CFG_MIGRATED) else list() }
 config_folds <- function() { f <- get0("CONFIG_FOLDS", ifnotfound = list()); if (exists("group_split_fold", mode = "function") && exists("dep_split_rows", mode = "function")) f <- c(f, list(group_split_fold())); f }
 config_migrate <- function(project_dir, who = "ovid") {
   if (length(project_dir) != 1 || is.na(project_dir) || !nzchar(trim(project_dir)) || isTRUE(get0("VIEWER", inherits = TRUE))) return(invisible(character()))
@@ -223,13 +226,14 @@ config_migrate <- function(project_dir, who = "ovid") {
   m <- cfg_migrated(project_dir)
   for (f in folds) { po <- file.path(cdir, f$from); if (!file.exists(po) || !is.null(m[[f$from]])) next
     old <- tryCatch(read_cfg(po), error = function(e) NULL); if (is.null(old)) next                 # damaged: left until it can be read
+    # safe: an unreadable target table is skipped on the next line and tried again at the next start
     pn <- file.path(cdir, f$into); cur <- if (file.exists(pn)) tryCatch(read_cfg(pn), error = function(e) NULL) else NULL
     if (file.exists(pn) && is.null(cur)) next                                                       # the table it goes into cannot be read
     r <- tryCatch(if ("project_dir" %in% names(formals(f$fold))) f$fold(old, cur, project_dir = project_dir) else f$fold(old, cur), error = function(e) { if (exists("problem", mode = "function")) problem(f$from, paste("its rows could not be moved into", f$into, ":", conditionMessage(e))); NULL })
     if (is.null(r)) next
-    ok <- tryCatch({ if (nrow(old) || !file.exists(pn)) { if (!is.null(cur)) backup_cfg(pn, as.data.frame(r$rows), who, paste("rows of", f$from)); fwrite_safe(r$rows, pn) }
+    ok <- try_or({ if (nrow(old) || !file.exists(pn)) { if (!is.null(cur)) backup_cfg(pn, as.data.frame(r$rows), who, paste("rows of", f$from)); fwrite_safe(r$rows, pn) }
       m[[f$from]] <- list(into = f$into, rows = nrow(old), at = format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
-      writeLines(jsonlite::toJSON(m, auto_unbox = TRUE, pretty = TRUE), file.path(cdir, CFG_MIGRATED)); TRUE }, error = function(e) FALSE)
+      writeLines(jsonlite::toJSON(m, auto_unbox = TRUE, pretty = TRUE), file.path(cdir, CFG_MIGRATED)); TRUE }, FALSE, f$from)
     if (!ok) next
     done <- c(done, f$from)
     lg <- r$log; if (!is.null(lg) && NROW(lg) && exists("problem", mode = "function")) for (i in seq_len(min(NROW(lg), 50))) problem(lg$where[i], lg$problem[i])

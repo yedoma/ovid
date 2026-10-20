@@ -13,6 +13,7 @@ gpr_flow_path <- function(project, line) file.path(gpr_cfg_dir(project), "gpr_fl
 
 # Every saved version of a line's flow (a list, oldest first); empty when none is saved.
 gpr_flow_history <- function(project, line) { p <- gpr_flow_path(project, line); if (!file.exists(p)) return(list())
+  # safe: a version list that cannot be read lists none
   x <- tryCatch(jsonlite::read_json(p, simplifyVector = FALSE), error = function(e) NULL); x$versions %||% list() }
 
 # Save the flow as the line's next version: steps (a list with GPR_FLOW_KEYS), the velocities and thaw depth used for depth,

@@ -5,6 +5,20 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (precipitation colours, 2026-10-20)**
+- The "missing" fill on the precipitation flag plot is the palette's bg2 with no hard-coded fall-back (bg2 is always set).
+- **Output changes:** none.
+
+**Changed (failures reported, not hidden, 2026-10-20)**
+- 4 failures now reported (a station plot, a set-up table and timezones.csv read for the Clock page, a program header); 61 defaults commented as safe. Run and Run anyway show a notice when the set-up check cannot run (it used to go on silently).
+- **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.
+
+**Changed (core say and shared helpers, station map, 2026-10-20)**
+- app.R uses core say() (it sets LOG and SAY_STEPS = 6) instead of its own copy.
+- Clock corrections, the set-up editor, rule_info(), current_user() and track_session() are core's (core/time_corrections.R, shell.R, editor.R, table.R). A correction row whose start or end is not a date is now listed as a problem and skipped (it used to apply from the first or to the last record); a shift of 0 minutes is skipped without a problem.
+- The Station map opens on the whole world until the stations are drawn and fitted (it used to open on a fixed region).
+- **Output changes:** only for a project with a clock correction whose start or end is not a date (now skipped and listed as a problem).
+
 **Changed (albedo daylight, 2026-10-20)**
 - Albedo is computed only while the sun is within 70° of the zenith (new calibration option albedo_max_zenith; PROMICE/GC-Net, Fausto et al. 2026; the limit used to compare albedo, Stroeve et al. 2006, Liu et al. 2009, Schaaf et al. 2011), at the middle of each record, for stations with latitude and longitude in Station details. Stations without them keep the 50 W/m2 test, and the set-up check says so. The sun's height now uses Spencer's (1971) declination and equation of time (also in the night-sunlight and BSRN limit checks; the old formula could be off by up to 4° in hour angle). **Output changes:** stations with coordinates: albedo_calc in records and in daily, monthly and water-year tables (low-sun records left out, dim high-sun records kept); sunlight_at_night and sw_above_physical_limit flags can move by a record near sunrise and sunset.
 

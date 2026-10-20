@@ -98,18 +98,7 @@ wb_states <- function(w, params, now, last) {
 wb_row_state <- function(ids, now, last) { hn <- ids %in% now$meas_id; hl <- ids %in% last$meas_id
   ifelse(hn & hl, "flag", ifelse(hn, "pend", ifelse(hl, "back", ""))) }
 
-# A value of column p as the grid shows it.
-wb_num <- function(v, p) { dg <- WB_COLS$digits[match(p, WB_COLS$p)]
-  if (!is.numeric(v)) { v <- as.character(v); v[is.na(v)] <- ""; return(v) }
-  out <- if (is.na(dg)) formatC(signif(v, 4), digits = 4, format = "fg") else formatC(v, format = "f", digits = as.integer(dg))
-  out <- sub("^-", "\u2212", trimws(out)); out[is.na(v)] <- ""; out }
-# The grid's cells: per column each cell's HTML and class (its state).
-wb_cells <- function(w, params, states) {
-  out <- lapply(params, function(p) { k <- WB_COLS$col[match(p, WB_COLS$p)]; s <- states[[p]]
-    txt <- htmltools::htmlEscape(wb_num(w[[k]], p))
-    list(txt = ifelse(s$state == "back", paste0('<span class="x">\u21ba</span>', txt), txt), cls = s$state) })
-  list(txt = lapply(out, `[[`, "txt"), cls = lapply(out, `[[`, "cls"))
-}
+# wb_num() and wb_cells(), the grid's values and cells: core workbench.R.
 # Per selected column: how many cells, their mean, low and high, and how many are flagged (or will be after a rebuild).
 wb_gs_sel_table <- function(cc, g) {
   x <- cc[!p %in% WB_COLS[col %in% WB_TEXT, p], { k <- WB_COLS$col[match(p[1], WB_COLS$p)]; v <- suppressWarnings(as.numeric(g$w[[k]][r])); f <- v[is.finite(v)]
@@ -217,6 +206,7 @@ wb_server <- function(input, output, session, std) {
       tagList(div(class = "wb-subsec", y), lapply(seq_len(nrow(x)), function(i) wb_row(x$label[i], key = x$key[i], input = "wb_table", n = format(x$n[i], big.mark = ","),
         on = identical(x$key[i], k) && on_data, level = if (x$kind[i] %in% c("original", "merged")) 0 else 1,
         title = paste0(x$label[i], " \u00b7 ", x$kind_lbl[i], if (!is.na(x$pct[i])) paste0(" \u00b7 ", round(x$pct[i]), "% kept") else "")))) })) })
+  # safe: nothing picked yet
   output$wb_chips <- renderUI({ p0 <- tryCatch(part(), error = function(e) NULL); if (is.null(p0)) return(NULL)
     tagList(span(class = "wb-chip", paste("profile", prof_now())), if (nzchar(p0$s1$array_lbl %|% "")) span(class = "wb-chip", p0$s1$array_lbl)) })
 
@@ -227,6 +217,7 @@ wb_server <- function(input, output, session, std) {
     paste0(if (g$n > nrow(g$w)) sprintf("first %s of %s measurements", num(nrow(g$w)), num(g$n)) else paste(num(g$n), "measurements"),
            if (nrow(cc)) paste0(" \u00b7 ", num(uniqueN(cc$r)), " selected") else "",
            " \u00b7 click, drag, shift-click; a number selects the measurement, a heading the column; cmd/ctrl adds; Esc clears") })
+  # safe: no grid yet: no cells selected
   cells <- reactive(wb_sel_cells(input$wb_grid_sel, tryCatch(grid(), error = function(e) NULL)))
   active <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); s <- input$wb_grid_sel
     a <- cc[r == as.integer(s$ar %||% 0) & c == as.integer(s$ac %||% 0)]; if (nrow(a)) a[1] else cc[1] })
@@ -290,9 +281,11 @@ wb_server <- function(input, output, session, std) {
     if (v %in% c("wb-stack", "wb-editdata")) return(wb_pick_aside(ctx))
     if (identical(v, "GPR processing")) return(mod_gpr_flow_aside_ui("gprflow"))   # the A-scan and map of GPR processing (pages/mod_gpr_flow.R)
     if (!identical(v, "wb-data")) return(NULL)
+    # safe: nothing picked yet
     cc <- cells(); p0 <- tryCatch(part(), error = function(e) NULL)
     if (is.null(p0)) return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No data yet"), wb_empty_acts(NULL)), p(class = "wb-p", "Set the folders under Import data and press Scan.")))
     if (!nrow(cc)) {
+      # safe: no grid or data yet
       g <- tryCatch(grid(), error = function(e) NULL); d <- tryCatch(dat(), error = function(e) NULL)
       rs <- if (!is.null(d)) wb_row_state(d$meas_id, now(), last()) else character()
       return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No measurement selected"),
@@ -330,6 +323,7 @@ wb_server <- function(input, output, session, std) {
       survey_box())
   })
 
+  # safe: an output of the last run, only shown
   wb_import_aside <- function() { m <- tryCatch(fread(file.path(PROJECT, "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] else NA
     steps <- c(Files = "every file under the archive folders, by what it contains; zip files opened, never changed", Surveys = "originals, copies, subsets, merged files and processed sets, linked",
@@ -344,7 +338,9 @@ wb_server <- function(input, output, session, std) {
       if (length(std$rv$log)) div(class = "wb-hr", span(class = "wb-eb", "Log of this scan"), tags$pre(class = "wb-log", paste(tail(std$rv$log, 40), collapse = "\n"))),
       p(class = "wb-p", style = "color:var(--wb-fg2)", "QC only adds flags; measurements and raw files are never changed.")) }
 
+  # safe: the status bar shows what it has
   output$wb_status <- renderUI({ std$rv$tick; cc <- cells(); g <- tryCatch(grid(), error = function(e) NULL)
+    # safe: a count for the status bar only
     pf <- file.path(PROJECT, "output", "audit", "problems.csv"); np <- if (file.exists(pf)) nrow(tryCatch(fread(pf), error = function(e) data.table())) else 0L
     mid <- if (!identical(view(), "wb-data") || is.null(g)) NULL else if (nrow(cc)) span(paste(num(uniqueN(cc$r)), "measurements selected")) else span(paste(num(g$n), "measurements"))
     tagList(span(style = paste0("color:", PAL$fg), if (np) tags$a(href = "#", `data-ovid-go` = "Settings", style = "color:inherit", paste(np, "problems")) else "No problems"),   # a number, no light

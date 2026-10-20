@@ -26,6 +26,7 @@ rename_review_plan <- function(project_dir, kind, old, new) {
   none <- data.table(file = character(), column = character(), row = integer(), before = character(), after = character())
   rp <- review_path(project_dir); f <- file.path(path.expand(project_dir), "output", "audit", "flags.csv")
   if (!file.exists(rp) || !file.exists(f)) return(none)
+  # safe: a review file that cannot be read has nothing to rename
   d <- review_read(rp); fl <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) NULL)
   pc <- intersect(c("parameter", "channel"), names(fl))[1]
   if (!nrow(d) || is.null(fl) || !kind %in% names(fl) || is.na(pc)) return(none)
@@ -39,6 +40,7 @@ rename_review_plan <- function(project_dir, kind, old, new) {
 rename_names <- function(project_dir, kind, spec = get0("RENAMES", ifnotfound = list())) {
   k <- spec[[kind]]; if (is.null(k)) return(character())
   rd <- function(f, col) { p <- file.path(path.expand(project_dir), "config", f); if (!file.exists(p)) return(character())
+    # safe: names offered for renaming; a table that cannot be read offers none
     d <- tryCatch(fread(p, colClasses = "character", na.strings = NULL, select = col), error = function(e) NULL); if (is.null(d) || !ncol(d)) character() else trim(d[[1]]) }
   v <- c(rd(k$main[1], k$main[2]), unlist(lapply(k$cols, function(x) rd(x[1], x[2]))))
   v <- v[nzchar(v)]; v[!duplicated(tolower(v))]
@@ -51,15 +53,18 @@ rename_plan <- function(project_dir, kind, old, new, spec = get0("RENAMES", ifno
   if (is.null(k) || !nzchar(old) || !nzchar(new) || identical(old, new)) return(none)
   same <- function(x) tolower(trim(x)) == tolower(old)
   for (x in c(list(k$main), k$cols)) { p <- file.path(path.expand(project_dir), "config", x[1]); if (!file.exists(p)) next
+    # safe: a table that cannot be read is left out of the plan, and the rename does not touch it
     d <- tryCatch(read_cfg(p), error = function(e) NULL); if (is.null(d) || !x[2] %in% names(d)) next
     i <- which(same(d[[x[2]]])); if (length(i)) out[[length(out) + 1L]] <- data.table(file = x[1], column = x[2], row = i, before = d[[x[2]]][i], after = new) }
   for (x in k$lists) { p <- file.path(path.expand(project_dir), "config", x[1]); if (!file.exists(p)) next
+    # safe: as above
     d <- tryCatch(read_cfg(p), error = function(e) NULL); if (is.null(d) || !x[2] %in% names(d)) next
     v <- as.character(d[[x[2]]]); v[is.na(v)] <- ""
     nv <- vapply(v, function(cell) { if (!nzchar(cell)) return(cell); parts <- strsplit(cell, "|", fixed = TRUE)[[1]]
       pre <- sub("^(\\s*[a-z_]+:)?.*$", "\\1", parts); body <- substring(parts, nchar(pre) + 1L)
       hit <- same(body); if (!any(hit)) return(cell); body[hit] <- new; paste0(pre, body, collapse = "|") }, "", USE.NAMES = FALSE)
     i <- which(nv != v); if (length(i)) out[[length(out) + 1L]] <- data.table(file = x[1], column = x[2], row = i, before = v[i], after = nv[i]) }
+  # safe: the review files' part of the plan is extra
   if (exists("review_path", mode = "function")) out[[length(out) + 1L]] <- tryCatch(rename_review_plan(project_dir, kind, old, new), error = function(e) NULL)
   if (length(out)) unique(rbindlist(out)) else none
 }
@@ -95,6 +100,7 @@ rename_server <- function(id, project_dir, on_change = function() NULL, who = fu
   rv <- reactiveValues(plan = NULL, undo = NULL, tick = 0)
   observe({ ch <- rename_kinds(spec); updateSelectInput(session, "kind", choices = setNames(names(ch), ch), selected = { k <- isolate(input$kind) %||% ""; if (k %in% names(ch)) k else names(ch)[1] }) })
   observe({ rv$tick; req(input$kind); pd <- project_dir(); if (exists("live_config", mode = "function")) live_config(pd)   # names added or changed on any page
+    # safe: names offered for renaming only
     nm <- tryCatch(rename_names(pd, input$kind, spec), error = function(e) character())
     keep <- isolate(input$old); updateSelectizeInput(session, "old", choices = nm, selected = if (!is.null(keep) && keep %in% nm) keep else character())
     # New name offers names of this kind the deployment sheet holds and the set-up tables do not yet (core shell.R)

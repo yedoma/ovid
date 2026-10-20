@@ -53,6 +53,7 @@ list_source <- function(root, rules = NULL) {
 }
 
 is_kml_tile <- function(path) {
+  # safe: sniffing only; a file that cannot be read is not that kind
   x <- tryCatch(readChar(path, 4096L, useBytes = TRUE), error = function(e) "")
   length(x) == 1L && !is.na(x) && grepl("<Lod>", x, fixed = TRUE) && grepl("<(GroundOverlay|NetworkLink)>", x) && !grepl("<(Placemark|gx:Track|LineString)>", x)
 }
@@ -79,6 +80,7 @@ read_source_images <- function(files, sdir, chunk = 250L) {
   im <- files[role %in% c("image", "image_raw") & status == ""]
   if (!nrow(im)) { unlink(cf); return(data.table()) }
   im[, k := paste(rel, size, as.numeric(mtime))]
+  # safe: a damaged cache is read again from the source
   old <- if (file.exists(cf)) tryCatch(readRDS(cf), error = function(e) NULL); have <- if (identical(old$key, key) && is.data.table(old$rows)) old$rows[k %in% im$k] else data.table()
   todo <- im[!k %in% have$k][order(folder, file)]; got <- list(have)
   keep <- function() { x <- rbindlist(got, fill = TRUE); tmp <- paste0(cf, ".part"); saveRDS(list(key = key, rows = x), tmp); file.rename(tmp, cf); x }
@@ -129,7 +131,7 @@ scan_source <- function(src, cfg, rules) {
 
 # Every source's last scan, stacked, with source_id in front of each relative path.
 load_sources <- function(sources, cfg) {
-  sc <- lapply(sources$source_id, function(sid) { f <- file.path(source_dir(cfg, sid), "scan.rds"); if (file.exists(f)) tryCatch(readRDS(f), error = function(e) NULL) })
+  sc <- lapply(sources$source_id, function(sid) { f <- file.path(source_dir(cfg, sid), "scan.rds"); if (file.exists(f)) try_or(readRDS(f), where = paste(sid, "scan.rds")) })
   names(sc) <- sources$source_id; sc <- Filter(Negate(is.null), sc)
   if (!length(sc)) return(NULL)
   tag <- function(what) rbindlist(lapply(names(sc), function(sid) { d <- copy(sc[[sid]][[what]]); if (!is.null(d) && nrow(d)) d[, source_id := sid] }), fill = TRUE)

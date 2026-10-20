@@ -108,6 +108,7 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
     L <- reactive({ g <- lines(); validate(need(nrow(g) > 0, "No GPR line can be viewed yet. Add the folder with the .rad and .rd3 files on the GPR Map page."))
       req(input$line); r <- g[line == input$line]; req(nrow(r) == 1L); x <- read_line(r)
       validate(need(ncol(x$m) >= 2L, sprintf("%s has %d trace(s) that can be read, too few to draw. The file is left as it is; pick another line, or copy the whole line from the instrument again.", r$line, ncol(x$m)))); x })
+    # safe: an antenna frequency not stated is not known (NA)
     mhz <- reactive(tryCatch(gpr_antenna_mhz(L()$h$antennas), error = function(e) NA))
     output$head <- renderUI({ x <- L(); r <- x$r; h <- x$h; n <- ncol(x$m)
       p(class = "muted", sprintf("%s: %d traces x %d samples, %s ns window, %s%s%s. %s", r$line, n, r$samples, format(round(h$timewindow_ns, 1)), if (nzchar(h$antennas)) h$antennas else "antenna not stated",
@@ -182,7 +183,7 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
     output$rg <- plotly::renderPlotly({ f <- fig(); p0 <- pk()
       if (nrow(p0) && !topo()) { twt <- as.numeric(p0$twt_ns); y <- if ((input$v %||% "depth") == "depth") gpr_depth(twt, vel(), thaw(), vtop()) else twt
         f <- plotly::add_markers(f, x = X()$at(as.integer(p0$trace)), y = y, inherit = FALSE, text = p0$layer, hoverinfo = "text", showlegend = FALSE,
-                                 marker = list(symbol = "circle-open", size = 10, color = "#E6C384", line = list(width = 2))) }
+                                 marker = list(symbol = "circle-open", size = 10, color = PAL$gold, line = list(width = 2))) }
       b <- plotly::plotly_build(f) |> plotly::event_register("plotly_hover") |> plotly::event_register("plotly_click")    # the caption goes into every image saved from the plot
       b$x$layout$annotations <- c(b$x$layout$annotations, list(list(xref = "paper", yref = "paper", x = 0, y = 0, yshift = -46, xanchor = "left", yanchor = "top", showarrow = FALSE,
                                   text = caption(), font = list(size = 10, color = PAL$fg))))
@@ -202,8 +203,8 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
       if (ok) bump() })
     output$ascan <- plotly::renderPlotly({ r <- R(); j <- { t <- isolate(tr_d()); if (is.null(t)) ceiling(ncol(r$m) / 2) else which.min(abs(r$tr - t)) }
       a <- r$m[, j]; tt <- (seq_len(nrow(r$m)) - 1) * r$dt_ns
-      plotly::plot_ly(x = pmax(a, 0), y = tt, type = "scatter", mode = "lines", fill = "tozerox", fillcolor = "rgba(230,195,132,0.55)", line = list(width = 0), hoverinfo = "skip") |>
-        plotly::add_trace(x = a, y = tt, mode = "lines", fill = "none", line = list(color = "#E6C384", width = 1), hoverinfo = "skip") |>
+      plotly::plot_ly(x = pmax(a, 0), y = tt, type = "scatter", mode = "lines", fill = "tozerox", fillcolor = col_rgba(PAL$gold, 0.55), line = list(width = 0), hoverinfo = "skip") |>
+        plotly::add_trace(x = a, y = tt, mode = "lines", fill = "none", line = list(color = PAL$gold, width = 1), hoverinfo = "skip") |>
         plotly::layout(showlegend = FALSE, xaxis = list(title = "Amplitude", zeroline = TRUE), yaxis = list(title = "Two-way time (ns)", autorange = "reversed"),
                        margin = list(l = 50, r = 6, t = 4, b = 36), paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", font = list(color = PAL$fg, size = 10)) |>
         plotly::config(displayModeBar = FALSE) })
@@ -220,7 +221,7 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
     map_n <- reactiveVal(0L)
     output$map <- plotly::renderPlotly({ k <- input$line %||% ""; t <- tracks()[[k]]; validate(need(!is.null(t) && nrow(t) > 0, "No GPS for this line."))
       g <- gpr_map(setNames(list(t), k), k) |> plotly::add_trace(type = "scattermapbox", mode = "markers", lat = t$lat[1], lon = t$lon[1], hoverinfo = "skip",
-                                                                 marker = list(size = 12, color = "#ffffff", opacity = 0), showlegend = FALSE)
+                                                                 marker = list(size = 12, color = PAL$fg, opacity = 0), showlegend = FALSE)
       b <- plotly::plotly_build(g |> plotly::config(displayModeBar = FALSE)); map_n(length(b$x$data) - 1L); b })
     observeEvent(at(), { g <- at()$g; if (is.null(g)) return()
       plotly::plotlyProxyInvoke(plotly::plotlyProxy("map", session), "restyle", list(lat = list(list(g$lat)), lon = list(list(g$lon)), `marker.opacity` = 1), list(map_n())) })

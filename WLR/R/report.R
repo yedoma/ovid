@@ -110,6 +110,7 @@ WLR_REPORT_SECTIONS <- c("Site, loggers and datum" = "info", "Deployments and ba
 # Water elevation keeps each site's own level and shares only the span, as sites stand at different heights.
 wlr_report_limits <- function(project_dir, sites, mode = "same") {
   if (identical(mode, "free") || !length(sites)) return(NULL)
+  # safe: no water-year table yet means no water-year page
   wy <- tryCatch(fread(out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (!nrow(wy)) return(NULL)
   wy <- wy[site %in% sites]; if (!nrow(wy)) return(NULL); x <- wy[, .(unit = rep(site, 2), key = rep(parameter, 2), value = c(min, max))]
   rbind(axis_limits(x[key != "elev_m"], mode), axis_limits(x[key == "elev_m"], "span"))
@@ -123,28 +124,29 @@ wlr_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
   fl <- read_out(project_dir, "flags.csv", colClasses = list(character = "logger_id")); if (nrow(fl)) fl <- fl[fl$site == st]
   air <- read_out(project_dir, "air_runs.csv"); if (nrow(air) && "site" %in% names(air)) air <- air[air$site == st] else air <- data.table()
   ms <- read_out(project_dir, "measurements.csv"); if (nrow(ms)) ms <- ms[ms$site == st]
+  # safe: no water-year table yet means no water-year rows
   wy <- tryCatch(fread(out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (nrow(wy)) wy <- wy[wy$site == st]
   plots <- list(); daily <- list(); allp <- list()
   for (i in seq_len(nrow(s))) { d <- load_deployment(s$deployment[i], project_dir); if (is.null(d) || !nrow(d)) next
     pp <- intersect(c("depth_m", "elev_m", "temp_c", "spc_uscm"), names(d)); pp <- pp[vapply(pp, function(p) any(!is.na(d[[p]])), logical(1))]
     if (!length(pp)) next
     allp[[length(allp) + 1L]] <- d[, c("TIMESTAMP", pp), with = FALSE]
-    daily[[length(daily) + 1L]] <- tryCatch(melt(d[, c(list(day = as.Date(TIMESTAMP)), .SD), .SDcols = pp][, lapply(.SD, function(x) if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)), by = day],
-                                                  id.vars = "day", variable.name = "parameter", value.name = "value")[, `:=`(parameter = as.character(parameter), time = day)][!is.na(value)], error = function(e) NULL)
+    daily[[length(daily) + 1L]] <- try_or(melt(d[, c(list(day = as.Date(TIMESTAMP)), .SD), .SDcols = pp][, lapply(.SD, function(x) if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)), by = day],
+                                                  id.vars = "day", variable.name = "parameter", value.name = "value")[, `:=`(parameter = as.character(parameter), time = day)][!is.na(value)], where = paste("report", st, "daily values"))
     rm <- removed_values(s$serial[i], project_dir); tp <- if (nrow(chk)) chk[chk$deployment == s$deployment[i]] else NULL
-    p <- tryCatch(plot_logger(d, pp, title = paste0(st, "  -  season ", s$year[i]), subtitle = paste("serial", s$serial[i]), removed = rm,
-                              visits = if (!is.null(tp)) tp$visit_time else NULL, tape = tp, meas = if (nrow(ms)) fix_ts_cols(copy(ms)) else NULL), error = function(e) NULL)
+    p <- try_or(plot_logger(d, pp, title = paste0(st, "  -  season ", s$year[i]), subtitle = paste("serial", s$serial[i]), removed = rm,
+                              visits = if (!is.null(tp)) tp$visit_time else NULL, tape = tp, meas = if (nrow(ms)) fix_ts_cols(copy(ms)) else NULL), where = paste("report", st, "plot"))
     plots[[length(plots) + 1L]] <- rpt_plot(p, 11, 1.6 + 2.2 * length(pp)) }
   stt <- NULL; ov <- NULL
   if (length(daily)) { l <- rbindlist(daily); l[, group := ifelse(parameter %in% c("depth_m", "elev_m"), "Water level", ifelse(parameter == "temp_c", "Temperature", "Conductivity"))]
     l <- l[order(group, parameter, time)]
-    ov <- tryCatch(rpt_overview(l, NORD, paste0("Daily means, all seasons  -  ", st), ylim = if (!is.null(lims)) lims[unit == st, .(parameter = key, lo, hi)]), error = function(e) NULL) }
+    ov <- try_or(rpt_overview(l, NORD, paste0("Daily means, all seasons  -  ", st), ylim = if (!is.null(lims)) lims[unit == st, .(parameter = key, lo, hi)]), where = paste("report", st, "overview")) }
   if (length(allp)) { al <- rbindlist(allp, fill = TRUE); pp <- intersect(c("depth_m", "elev_m", "temp_c", "spc_uscm"), names(al)); grp <- setNames(ifelse(pp %in% c("depth_m", "elev_m"), "Water level", ifelse(pp == "temp_c", "Temperature", "Conductivity")), pp)
-    stt <- tryCatch(rpt_stats(al, pp, grp, caption = "From every reading of every season (not daily means). depth_m: water above the sensor (m); elev_m: water elevation (m); temp_c: degrees C; spc_uscm: specific conductance."), error = function(e) NULL) }
-  info <- tryCatch(wlr_site_info(st, s, project_dir), error = function(e) NULL)
-  seams <- tryCatch(wlr_baro_seams(s, project_dir), error = function(e) NULL)
-  av <- tryCatch(wlr_availability(daily, fl, air, chk, NORD), error = function(e) NULL)
-  tp <- if (nrow(chk)) tryCatch(wlr_tape_plot(chk, NORD), error = function(e) NULL)
+    stt <- try_or(rpt_stats(al, pp, grp, caption = "From every reading of every season (not daily means). depth_m: water above the sensor (m); elev_m: water elevation (m); temp_c: degrees C; spc_uscm: specific conductance."), where = paste("report", st, "statistics")) }
+  info <- try_or(wlr_site_info(st, s, project_dir), where = paste("report", st, "site information"))
+  seams <- try_or(wlr_baro_seams(s, project_dir), where = paste("report", st, "barometric seams"))
+  av <- try_or(wlr_availability(daily, fl, air, chk, NORD), where = paste("report", st, "availability"))
+  tp <- if (nrow(chk)) try_or(wlr_tape_plot(chk, NORD), where = paste("report", st, "tape plot"))
   rem_t <- if (nrow(idx)) idx[, .(values = sum(n, na.rm = TRUE)), by = rule][order(-values)] else NULL
   flg_t <- if (nrow(fl)) fl[, .(values = sum(as.numeric(records), na.rm = TRUE)), by = check][order(-values)] else NULL
   tapes <- if (nrow(chk)) chk[!is.na(difference_m)] else data.table()
@@ -188,7 +190,7 @@ wlr_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
 
 # Writes the run report and the chosen site reports into dir, in the chosen formats. Returns the files written.
 write_wlr_reports <- function(project_dir, dir, sites = NULL, formats = c("html", "pdf"), run = TRUE, progress = function(i, n, what) NULL, opts = NULL) {
-  o <- report_opts(opts); lims <- tryCatch(wlr_report_limits(project_dir, sites, o$axis), error = function(e) NULL)
+  o <- report_opts(opts); lims <- try_or(wlr_report_limits(project_dir, sites, o$axis), where = "report axis limits")
   if (!length(formats)) return(character())
   dir.create(dir, recursive = TRUE, showWarnings = FALSE); out <- character()
   if (run) out <- c(out, report_write(wlr_run_report_doc(project_dir), file.path(dir, "run_report"), formats, NORD))

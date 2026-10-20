@@ -5,6 +5,19 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (scan table colours, 2026-10-20)**
+- The before-import scan table's ok / no words take the scheme's green and yellow (gold when it has none) instead of fixed fall-back colours (GT set no --yel variable).
+- **Output changes:** none (screen colour only).
+
+**Changed (failures reported, not hidden, 2026-10-20)**
+- 13 failures now reported (the calibration table, sensors.csv, the deployment sheet, each part of a site report, the report axis limits); 31 defaults commented as safe. Run and Run anyway show a notice when the set-up check cannot run.
+- **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.
+
+**Changed (core say and shared helpers, 2026-10-20)**
+- app.R uses core say() (it sets LOG and SAY_STEPS = 8) instead of its own copy.
+- Clock corrections (core/time_corrections.R), the HOBO CSV rows and events (core/logger_files.R), the set-up editor, rule_info(), current_user() and track_session() are core's. A correction row with an unreadable date or minutes is now listed as a problem. A HOBO CSV with a second heading of other columns (two exports joined) is read up to that heading and the rows after it are listed as a problem, as WLR does (M, 2026-10-20; it used to fail with a fread error and the whole file was left out); a repeated identical heading line is no longer read as a record.
+- **Output changes:** only for a project with an unreadable clock correction row or a HOBO CSV with two exports joined or a repeated heading.
+
 **Added (tests, 2026-10-19)**
 - Reader samples for every format GT reads: a second .f2b (the download behind the fg2_csv sample, decoded row for row the same as its FG2-Shell V3.93a export: 184,584 values, times, NoReply and battery), an EM50 workbook, a Campbell TOA5 table, a .hobo header and a Ruskin Excel export (its first 60 rows as .xlsx), with reference values from the raw files and vendor exports. tests/test_bad_files.R (damaged files), tests/test_golden.R with tests/golden (a whole run against accepted outputs), tests/test_formulas.R (derived values against worked cases); all run by tests/run_tests.R. **Output changes:** none.
 

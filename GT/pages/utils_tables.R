@@ -50,6 +50,5 @@ flat_line|Stuck readings|kept|The value did not change for longer than the limit
 manual|Values removed by hand|yes|Someone dragged across a plot, or added a removal under Corrections over a period, with the reason shown.|Review under Quality rules.|QC
 not_a_sensor|Channels that are not sensors|yes|A channel that is not temperature, moisture or conductivity (an unsupported RBR channel type).|Nothing to do.|
 ')
-rule_info <- function(r) { i <- match(r, RULE_INFO$rule); out <- RULE_INFO[i]; out[is.na(i), `:=`(rule = r[is.na(i)], title = r[is.na(i)], lost = "kept", meaning = "", action = "", page = "")]; out }
 kv <- function(...) { x <- list(...); x <- x[!vapply(x, function(v) is.null(v) || all(is.na(v)) || identical(v, ""), logical(1))]
   tags$dl(class = "kv", lapply(names(x), function(k) tagList(tags$dt(k), tags$dd(x[[k]])))) }

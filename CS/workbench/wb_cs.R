@@ -26,6 +26,7 @@ wb_removed <- function(pd, key) {
   f <- file.path(path.expand(pd), "output", "qc", paste0(safe_name(key), "_removed.csv"))
   empty <- data.table(timestamp = as.POSIXct(character(), tz = "UTC"), parameter = character(), rule = character(), old_value = numeric(), reason = character())
   if (!file.exists(f)) return(empty)
+  # safe: a table of the last run, only shown; none until a run writes it
   x <- tryCatch(fread(f, colClasses = "character", na.strings = ""), error = function(e) NULL)
   if (is.null(x) || !nrow(x)) return(empty)
   # parse_dt (core/util.R), not as.POSIXct(): that picks one format for the whole column and drops every time of day
@@ -48,6 +49,7 @@ wb_flags <- function(flags, station, stream) {
 wb_rule_for <- function(rules, param, station, logger) {
   if (is.null(rules) || !nrow(rules)) return(NULL)
   rules <- as.data.table(rules)
+  # safe: an invalid pattern matches nothing here; Check the data lists it
   hit <- which(vapply(rules$pattern, function(p) isTRUE(tryCatch(grepl(p, param, ignore.case = TRUE, perl = TRUE), error = function(e) FALSE)), NA))
   if (!length(hit)) return(NULL)
   ap <- if ("applies_to" %in% names(rules)) trim(rules$applies_to[hit]) else rep("", length(hit)); ap[is.na(ap)] <- ""
@@ -141,6 +143,7 @@ wb_server <- function(input, output, session, std) {
   observeEvent(tables(), { k <- isolate(key()); if (is.null(k) || !k %in% tables()$key) key(first_key(if (is.null(k)) q$station else NULL)) })
   observeEvent(input$wb_table, { key(input$wb_table); set_view("wb-data") })
   part <- reactive({ req(key()); wb_split(key()) })
+  # safe: a station that cannot be loaded shows no data; the run's problems say why
   dat <- reactive({ outs(); p <- part(); d <- tryCatch(load_station(p$station, p$stream, pd()), error = function(e) NULL)
     validate(need(!is.null(d) && nrow(d) > 0, "No station file for this table: run the pipeline to rebuild the output.")); d })
   params_all <- reactive({ d <- dat(); setdiff(names(d)[vapply(d, is.numeric, NA)], WB_META) })
@@ -190,12 +193,14 @@ wb_server <- function(input, output, session, std) {
   output$wb_grid <- renderUI({ g <- grid()
     vals <- lapply(g$params, function(p) { v <- suppressWarnings(as.numeric(g$w[[p]])); o <- g$states[[p]]$old; ifelse(is.na(v), o, v) })
     wb_grid(format(g$w$TIMESTAMP, "%Y-%m-%d %H:%M", tz = "UTC"), g$params, g$cells$txt, g$cells$cls, g$sig, corner = paste("time", zone()),
+            # safe: units are labels only
             times = as.numeric(g$w$TIMESTAMP), vals = vals, units = tryCatch(units(), error = function(e) NULL)) })
   output$wb_ginfo <- renderText({ g <- grid(); cc <- cells()
     paste0(if (g$n > nrow(g$w)) sprintf("first %s of %s rows; narrow the period, or zoom the chart and press Use as period", format(nrow(g$w), big.mark = ","), format(g$n, big.mark = ","))
            else paste(format(g$n, big.mark = ","), "rows"),
            if (nrow(cc)) paste0(" \u00b7 ", format(nrow(cc), big.mark = ","), " selected") else "",
            " \u00b7 click, drag, shift-click; a time selects the record, a heading the parameter; cmd/ctrl adds; Esc clears") })
+  # safe: no grid yet: no cells selected
   cells <- reactive(wb_sel_cells(input$wb_grid_sel, tryCatch(grid(), error = function(e) NULL)))
   active <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); s <- input$wb_grid_sel
     a <- cc[r == as.integer(s$ar %||% 0) & c == as.integer(s$ac %||% 0)]; if (nrow(a)) a[1] else cc[1] })
@@ -209,6 +214,7 @@ wb_server <- function(input, output, session, std) {
   rules <- reactive({ d <- E$qc$data(); if (is.null(d)) data.table() else as.data.table(d) })
   # each parameter's unit (parameter_info.csv, the Parameter guide) and range limits (its quality rule), for the grid and chart
   units <- reactive({ outs(); pi <- tryCatch(fread(file.path(pd(), "config", "parameter_info.csv"), colClasses = "character", na.strings = NULL), error = function(e) NULL)
+    # safe: without the default list the parameters keep their own names
     if (is.null(pi) || !all(c("pattern", "unit") %in% names(pi))) pi <- tryCatch(default_parameter_info(), error = function(e) NULL)
     ps <- params_all(); if (is.null(pi) || !length(ps)) return(NULL); wb_match(ps, pi$pattern, pi$unit, regex = TRUE) })
   limits <- reactive({ ps <- params_all(); p0 <- part(); r <- rules(); num <- function(x) if (is.null(x)) NA_real_ else suppressWarnings(as.numeric(x))
@@ -221,6 +227,7 @@ wb_server <- function(input, output, session, std) {
     x <- rbindlist(lapply(ps, function(p) data.table(p = p, t = as.numeric(d$TIMESTAMP), v = d[[p]])))[!is.na(v)]
     x[wb_manual_cover(E$manual$data(), p0$station, p0$stream, x$p, as.POSIXct(x$t, origin = "1970-01-01", tz = "UTC"))] }
   chart_base <- reactive({ d <- per(); ps <- plot_params(); req(length(ps) > 0, nrow(d) > 0); p0 <- part(); pr <- as.numeric(period())
+    # safe: units and limits are drawn when known; the data are drawn either way
     x <- wb_chart_data(d, ps, removed(), fl(), chart_pend(d, ps, p0), WB_CHART_MAX, units = tryCatch(units(), error = function(e) NULL), limits = tryCatch(limits(), error = function(e) NULL))
     c(list(type = "base", key = key(), sig = paste(key(), paste(ps, collapse = ","), pr[1], pr[2], x$n, sep = "|"), period = I(pr), zone = zone()), x) })
   view_d <- wb_chart_server(input, session, chart_base, function(a, z) { d <- per(); k <- as.numeric(d$TIMESTAMP)
@@ -268,6 +275,7 @@ wb_server <- function(input, output, session, std) {
   output$wb_inspector <- renderUI({ v <- view()
     if (identical(v, "wb-import")) return(wb_import_aside())
     if (!identical(v, "wb-data")) return(NULL)
+    # safe: nothing picked yet
     cc <- cells(); p <- tryCatch(part(), error = function(e) NULL); o <- outs()
     if (is.null(p)) return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No data yet"), wb_empty_acts("Raw files")), p(class = "wb-p", "Set the sources under Import data and press Run.")))
     meta <- if (!is.null(o) && nrow(o$meta)) o$meta[station == p$station & stream == p$stream] else data.table()
@@ -276,6 +284,7 @@ wb_server <- function(input, output, session, std) {
                               wb_kv("records", format(meta$records[1], big.mark = ",")), wb_kv("span", paste(substr(meta$start[1], 1, 10), "\u2192", substr(meta$end[1], 1, 10))),
                               wb_kv("complete", paste0(meta$complete_pct[1], " % \u00b7 ", meta$gaps[1], " gaps")), wb_kv("files", meta$files[1]))))
     if (!nrow(cc)) {
+      # safe: no grid yet
       g <- tryCatch(grid(), error = function(e) NULL)
       cnt <- function(k) if (is.null(g)) 0 else sum(vapply(g$states, function(x) sum(x$state == k), 0))
       return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No cell selected"),
@@ -317,6 +326,7 @@ wb_server <- function(input, output, session, std) {
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })
 
+  # safe: the status bar shows what it has
   output$wb_status <- renderUI({ o <- outs(); cc <- cells(); g <- tryCatch(grid(), error = function(e) NULL)
     np <- if (!is.null(o)) nrow(o$problems) else 0L
     rec <- if (!is.null(o) && nrow(o$file_audit) && "reconciles" %in% names(o$file_audit)) all(as.logical(o$file_audit$reconciles), na.rm = TRUE) else NA
@@ -328,6 +338,7 @@ wb_server <- function(input, output, session, std) {
             div(class = "wb-fill mono", style = "display:flex;justify-content:center;gap:16px", mid),
             span(style = "display:flex;align-items:center;gap:7px", HTML(paste0('<span style="width:7px;height:7px;border-radius:50%;background:', if (isTRUE(rec)) GB$green else GB$yellow, '"></span>')),
                  paste0(if (isTRUE(rec)) "Reconciled" else "Not checked", if (!is.null(last) && "run_id" %in% names(last)) paste0(" \u00b7 run ", last$run_id) else "")),
+            # safe: the zone is a label only
             span(class = "mono", paste0(tryCatch(paste(zone(), "\u00b7 "), error = function(e) ""), "CS ", PIPELINE_VERSION, " \u00b7 workbench ", OVID_WORKBENCH_VERSION)))
   })
   output$wb_export <- downloadHandler(function() paste0("cs_", safe_name(key()), "_", format(Sys.Date(), "%Y%m%d"), ".csv"),
@@ -335,14 +346,17 @@ wb_server <- function(input, output, session, std) {
 
   wb_project_server(input, output, session, ctx)
   wb_edit_server(input, output, session, ctx)
+  # safe: the stations table's editor reports a read problem
   wbgb_deps <- reactive({ s <- tryCatch(as.data.table(E$stations$data()), error = function(e) data.table())
     if (!nrow(s) || !all(c("logger_id", "station") %in% names(s))) NULL else unique(s[nzchar(station), .(serial = as.character(logger_id), from = as.character(start), to = as.character(end), name = station)]) })
+  # safe: an output of the last run, only shown; none until a run writes it
   group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "file_manifest.csv"), colClasses = "character"), error = function(e) NULL)
       if (is.null(f) || !nrow(f) || !"logger_id" %in% names(f)) NULL else f[nzchar(logger_id), .(serial = logger_id, file = path, first = first_ts, last = last_ts)] }), pd, wbgb_deps,
     open = function(r) { s <- wbgb_deps(); st <- if (!is.null(s) && nrow(s[serial == r$serial])) s[serial == r$serial]$name[1] else r$serial
       k <- first_key(st); if (is.null(k)) return(showNotification(paste(r$serial, "has no station table yet."), type = "message"))
       wb_jump_to(session, input, key, jump, set_view, k, NULL, format(r$first, "%Y-%m-%d"), format(r$last, "%Y-%m-%d")) })   # core grouping.R
   observe({ v <- tryCatch(part()$station, error = function(e) NULL); pr <- input$wb_period                 # what this view shows, for the switch (core shell.R)
+    # safe: the context bar shows what it has
     ovid_ctx(session, "station", v, input$wb_params, if (length(pr) == 2) pr[1], if (length(pr) == 2) pr[2], tryCatch(if (!is.null(sel()) && length(sel()$t)) format(min(sel()$t), "%Y-%m-%d %H:%M", tz = "UTC"), error = function(e) NULL), tryCatch(if (!is.null(sel()) && length(sel()$t)) format(max(sel()$t), "%Y-%m-%d %H:%M", tz = "UTC"), error = function(e) NULL)) })
   wb_needs_server(output, reactive(wb_needs_items(if (is.function(std$needs$check)) std$needs$check() else NULL, std$review$items())))   # core workbench.R
   qpreset <- reactiveVal(NULL)

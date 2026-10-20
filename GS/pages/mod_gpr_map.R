@@ -47,10 +47,11 @@ mod_gpr_map_server <- function(id, lines, tracks, flows, selected, markers, rada
     # ---- map, with a dot for the shared cursor as its last trace ----
     map_n <- reactiveVal(0L)
     output$map <- plotly::renderPlotly({ s <- shown(); trk <- tracks(); trk <- trk[intersect(s$line[s$fixes > 0], names(trk))]
+      # safe: no markers: none drawn
       sel <- selected() %||% ""; mk <- tryCatch(markers(), error = function(e) NULL)
       g <- gpr_map(trk, sel, input$base %||% "satellite", mk); t0 <- trk[[sel]]
       g <- plotly::add_trace(g, type = "scattermapbox", mode = "markers", lat = if (!is.null(t0) && nrow(t0)) t0$lat[1] else 0, lon = if (!is.null(t0) && nrow(t0)) t0$lon[1] else 0,
-                             hoverinfo = "skip", marker = list(size = 13, color = "#ffffff", opacity = 0), showlegend = FALSE, name = "cursor")
+                             hoverinfo = "skip", marker = list(size = 13, color = PAL$fg, opacity = 0), showlegend = FALSE, name = "cursor")
       g$x$source <- session$ns("map"); b <- plotly::plotly_build(g) |> plotly::event_register("plotly_click") |> plotly::event_register("plotly_hover"); map_n(length(b$x$data) - 1L); b })
     observeEvent(plotly::event_data("plotly_click", source = session$ns("map")), {
       cd <- plotly::event_data("plotly_click", source = session$ns("map"))$customdata; if (length(cd) && grepl("|", cd[1], fixed = TRUE)) select_line(sub("\\|.*$", "", cd[1])) })

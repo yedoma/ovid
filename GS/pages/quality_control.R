@@ -30,10 +30,12 @@
   output$eo_tr <- renderUI({ tr <- q1()$transect_id %||% ""; span(class = "muted mb-3 d-inline-block", if (nzchar(tr)) paste("Transect", tr) else "This survey is on no transect: set one on the Map or in Archive.") })
   observeEvent(input$qc_survey, { s <- q1(); d <- substr(as.character(s$date %||% ""), 1, 10); d <- if (grepl("^[0-9]{4}-", d)) d else ""
     updateTextInput(session, "eo_from", value = d); updateTextInput(session, "eo_to", value = d) })
+  # safe: when the append fails the rows are written whole on the next lines (write_cfg)
   eo_write <- function(rows) { ok <- tryCatch(isTRUE(E$electrodes$append(as.data.frame(rows))), error = function(e) FALSE)
     if (!ok) write_cfg(rbind(ensure_cols(eo_rows(), ELECTRODE_COLS)[, ..ELECTRODE_COLS], rows[, ..ELECTRODE_COLS]), CFG$project_dir, "electrodes", who = "app")
     eo_tick(eo_tick() + 1) }
   observeEvent(input$eo_add, { req(nzchar(trim(input$eo_list)), nzchar(input$qc_survey %||% ""))
+    # safe: an empty list is refused on the same line with a message
     el <- tryCatch(ids_from(gsub(" ", "", input$eo_list)), error = function(e) integer()); if (!length(el) || anyNA(el)) { ovid_field_error("eo_list", "Give electrode numbers such as 12, 15-17."); return() }
     scope <- input$eo_scope %||% "survey"; tr <- q1()$transect_id %||% ""
     if (scope == "transect") {

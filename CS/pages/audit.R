@@ -25,6 +25,7 @@
     unit <- ifelse(r$level == "cell", "values", ifelse(r$level == "file", "files", "records"))
     d <- data.table(`What happened` = r$title, `Data lost?` = unname(lab[r$lost]), Count = r$count, Unit = unit, `Stations or loggers` = r$where, `Rule name in the files` = r$rule)
     formatRound(ovid_dt(d, selection = "single", page = 40, escape = FALSE, opts = list(dom = "t", scrollY = NULL)), "Count", 0) })
+  # safe: nothing listed yet
   observeEvent(input$au_rules_rows_selected, { r <- tryCatch(au_rule_tbl(), error = function(e) NULL); i <- input$au_rules_rows_selected; if (is.null(r)) return(); rv$au_rule <- if (length(i) == 1 && i <= nrow(r)) r$rule[i] else NULL; rv$detail <- NULL }, ignoreNULL = FALSE)
   output$au_explain <- renderUI({ k <- rv$au_rule; if (is.null(k)) return(NULL); i <- rule_info(k)
     div(class = "explain", tags$b(i$title), tags$br(), i$meaning, tags$br(), span(class = "dim", tags$b("What to do: "), i$action),
@@ -40,6 +41,7 @@
     a
   })
   observe({ au_view(); rv$detail <- NULL })
+  # safe: nothing to plot yet
   output$au_plot_ui <- renderUI({ a <- tryCatch(au_view(), error = function(e) NULL); if (is.null(a)) return(NULL); n <- min(25, uniqueN(a$who)); plotOutput("au_plot", height = paste0(round((120 + 26 * n) * psz()), "px")) })
   output$au_plot <- renderPlot({
     a <- au_view()[level != "file"]; validate(need(nrow(a) > 0, "Nothing to chart for this choice."))

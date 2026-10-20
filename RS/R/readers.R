@@ -172,6 +172,7 @@ read_p4d <- function(path) {
 # A centimetre accuracy here is the corrected position; metres means the geotags were not corrected.
 read_geoinfo <- function(path) {
   L <- read_lines_any(path); L <- L[!startsWith(L, "#")]
+  # safe: a table that cannot be read gives no geotags, which the flight's summary shows
   d <- tryCatch(fread(text = L, sep = "\t", header = TRUE, fill = TRUE, colClasses = "character"), error = function(e) NULL)
   if (is.null(d) || !nrow(d)) return(list(geo_images = 0L, geo_acc_xy_median_m = NA_real_))
   n <- function(k) suppressWarnings(as.numeric(d[[k]]))

@@ -47,4 +47,3 @@ period_interpolate|Values filled in over a period|kept|A row of Corrections over
 hand_value|Values typed by hand|kept|A row of Corrections over a period (value typed by hand) gave a missing value; its reason is in the row and the audit trail.|Review under Quality rules, Corrections over a period.|Quality rules
 period_flag|Values flagged over a period|kept|A row of Corrections over a period flagged the values of its period; none was changed.|Review under Quality rules, Corrections over a period.|Quality rules
 ')
-rule_info <- function(r) { i <- match(r, RULE_INFO$rule); out <- RULE_INFO[i]; out[is.na(i), `:=`(rule = r[is.na(i)], title = r[is.na(i)], lost = "kept", meaning = "", action = "", page = "")]; out }

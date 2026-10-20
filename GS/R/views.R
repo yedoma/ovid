@@ -10,7 +10,8 @@ VAR_INFO <- data.table(
 RHOA_LIM <- log10(RHOA_RANGE)                     # apparent resistivity is drawn on RHOA_RANGE (R/plots.R; log10) so surveys compare
 to_log <- function(v, colour) { f <- VAR_INFO[var == colour]$floor; if (!is.na(f)) v <- pmax(v, f); ifelse(!is.na(v) & v > 0, log10(v), NA_real_) }
 PALETTES <- list(Spectral = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"), Viridis = c("#440154", "#3b528b", "#21908c", "#5dc963", "#fde725"),
-                 Kanagawa = c("#7E9CD8", "#7FB4CA", "#E6C384", "#FFA066", "#E46876"), Greys = c("#2A2A37", "#DCD7BA"))
+                 Kanagawa = c(PAL$blue, mix_col(PAL$blue, PAL$teal, 0.5), PAL$gold, PAL$orange, PAL$red), Greys = c(PAL$bg1, PAL$fg))
+names(PALETTES)[3] <- APP_SCHEME     # the scheme scale is named after the scheme in use (Settings > Colours); Spectral and Viridis are fixed
 
 # Measurements with their flags and the derived values the views use.
 view_data <- function(d, flags) {
@@ -65,7 +66,7 @@ view_pseudosection <- function(p, colour = "rhoa_ohmm", show = "all", flag_style
     marker = list(size = size, color = pmin(pmax(fl$cval, lim[1]), lim[2]), colorscale = cs, cmin = lim[1], cmax = lim[2], line = list(width = 0)))
   if (flag_style == "reason" && show != "passed") {                  # flagged points on top, one colour and legend entry per reason
     fr <- base[flagged == TRUE][, reason := sub(",.*", "", flag)]
-    cols <- distinct_cols(c(PAL$red, PAL$gold, PAL$purple, PAL$orange, PAL$teal, PAL$green, "#ffffff", PAL$blue), PAL)   # told apart with colour blindness too (core/theme.R)
+    cols <- distinct_cols(c(PAL$red, PAL$gold, PAL$purple, PAL$orange, PAL$teal, PAL$green, PAL$fg, PAL$blue), PAL)   # told apart with colour blindness too (core/theme.R)
     rs <- names(sort(table(fr$reason), decreasing = TRUE))
     for (i in seq_along(rs)) { q <- fr[reason == rs[i]]
       g <- plotly::add_markers(g, data = q, x = ~px, y = ~pz, text = ~hover, hoverinfo = "text", name = paste0(rs[i], " (", nrow(q), ")"),

@@ -25,6 +25,7 @@ tz_match <- function(tz, serial, rel, model = NA, first_ts = NA) {
     s <- g("serial", i); md <- g("model", i); p <- g("file_pattern", i); a <- g("start", i); b <- g("end", i)
     if (nzchar(s) && !identical(ns(s), ns(tz_str(serial)))) next
     if (nzchar(md) && !(!is.na(model) && grepl(md, model, ignore.case = TRUE, fixed = FALSE))) next
+    # safe for the run: a pattern that is not a valid regular expression matches no file
     if (nzchar(p) && !isTRUE(tryCatch(grepl(p, rel, ignore.case = TRUE), error = function(e) FALSE))) next
     if ((nzchar(a) || nzchar(b)) && is.na(first_ts)) next
     if (nzchar(a) && !isTRUE(first_ts >= tz_dt(a))) next
@@ -44,6 +45,7 @@ tz_rows_for <- function(tz, serial, rel, model = NA) {
   keep <- vapply(seq_len(nrow(tz)), function(i) { s <- g("serial", i); md <- g("model", i); p <- g("file_pattern", i)
     any(vapply(seq_along(rel), function(j) (!nzchar(s) || identical(ns(s), ns(tz_str(serial[j])))) &&
       (!nzchar(md) || (!is.na(model[j]) && grepl(md, model[j], ignore.case = TRUE))) &&
+      # safe for the run: as above, an invalid pattern matches no file
       (!nzchar(p) || isTRUE(tryCatch(grepl(p, rel[j], ignore.case = TRUE), error = function(e) FALSE))), NA)) }, NA)
   tz[keep]
 }

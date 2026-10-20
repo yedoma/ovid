@@ -151,6 +151,7 @@ emotion_geotags <- function(g) {
 # kept per flight, named by the flight's log file) and json (the full decoded file).
 read_emotion_plan <- function(path) {
   txt <- emotion_decrypt(path)
+  # safe: stops on the next line with a message
   j <- tryCatch(jsonlite::fromJSON(txt, simplifyVector = FALSE)$root, error = function(e) NULL)
   if (is.null(j)) stop("not an eMotion 3 file, or a different key: ", basename(path))
   num <- function(x) if (is.null(x)) NA_real_ else as.numeric(x)

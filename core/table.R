@@ -44,3 +44,12 @@ ovid_dt <- function(d, ..., page = 15, opts = list(), wrap = 48, limits = NULL) 
   if (nrow(d) > 8) base <- c(base, list(scrollY = paste0(36 * min(page, 14) + 4, "px"), scrollCollapse = FALSE))
   do.call(DT::datatable, c(list(d, rownames = FALSE, class = paste("hover d-tbl", if (cells) "d-cells")), a, list(options = utils::modifyList(base, opts))))
 }
+
+# The plain-words entry of each audit rule r from the app's RULE_INFO table (rule, title, lost, meaning, action, page); a
+# rule the table does not list is shown under its own name.
+rule_info <- function(r) {
+  i <- match(r, RULE_INFO$rule)
+  out <- RULE_INFO[i]
+  out[is.na(i), `:=`(rule = r[is.na(i)], title = r[is.na(i)], lost = "kept", meaning = "", action = "", page = "")]
+  out
+}

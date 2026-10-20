@@ -4,6 +4,7 @@
 
   # ---- Barometric --------------------------------------------------------------------------------------------------------
   baros_disk <- reactive({ rv$tick; tryCatch(load_baro(pd()), error = function(e) list()) })
+  # safe: an output of the last run, only shown
   stations_disk <- reactive({ rv$tick; st <- tryCatch(load_baro_stations(pd()), error = function(e) list()); b <- m_bstn$data()
     nm <- if (!is.null(b) && nrow(b)) unique(b$station) else character(); k <- match(names(st), safe_name(nm)); names(st)[!is.na(k)] <- nm[k[!is.na(k)]]; st })
   output$bo_empty <- renderUI(if (is.null(outs())) empty_msg() else if (!length(baros_disk())) empty_msg("No barologger records were found. Put them in baro/<year> inside the data folder, or mark a file as a barologger on the Raw files page."))

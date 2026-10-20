@@ -20,6 +20,7 @@ cs_scan_types <- function(dirs, stations = NULL, max_files = 4000, manifest = NU
                                        Notes = c("Waiting for a folder", "", "", "Listed, never read")))
   f <- utils::head(unlist(lapply(path.expand(dirs), list.files, recursive = TRUE, full.names = TRUE, all.files = FALSE)), max_files)
   f <- f[!grepl("(^|/)\\._", f)]
+  # safe: shown on the Home page only; a file whose first line cannot be read is listed without it
   head1 <- vapply(f, function(p) tryCatch(paste(readLines(p, n = 1L, warn = FALSE), collapse = ""), error = function(e) NA_character_), "", USE.NAMES = FALSE)
   ty <- ifelse(is.na(head1), "Other files", ifelse(grepl("^\"?TOA5", head1), "Campbell TOA5", ifelse(grepl("^\"?TOB3", head1), "Campbell TOB3",
         ifelse(grepl("\\.dat$", f, ignore.case = TRUE) & grepl("^[0-9]+,", head1), "CR10X (no header)", "Other files"))))
@@ -60,6 +61,7 @@ CS_HOME_CSS <- paste(readLines(file.path(APP_DIR, "www", "home.css"), encoding =
 
 # cur(): the station picked on the strip; st_shown(): the stations shown; settings(): the app's settings (raw folders, projects).
 cs_home_server <- function(input, output, session, outs, pd, cur, st_shown, E, settings) {
+  # safe: the recent-projects list is a convenience
   output$hm_recent <- renderUI({ s <- settings(); r <- tryCatch(projects_known(s), error = function(e) character())
     if (!length(r)) return(p(class = "dim", "No projects yet."))
     p(class = "dim", "Recent: ", paste(utils::head(basename(r), 4), collapse = " \u00b7 ")) })
@@ -68,11 +70,13 @@ cs_home_server <- function(input, output, session, outs, pd, cur, st_shown, E, s
   tab <- reactive({ o <- outs(); s <- st(); req(o, s); x <- o$stations[station == s]; req(nrow(x))
     hits <- vapply(seq_len(nrow(x)), function(i) { m <- o$pstats; if (is.null(m) || !nrow(m)) return(0L); sum(grepl(CS_HOME_RX$air[3], m[station == s & stream == x$stream[i]]$parameter)) }, 0L)
     x[order(-hits, -records)][1] })
+  # safe: req() below shows nothing for a station whose output cannot be read; the run's problems say why
   dat <- reactive({ k <- tab(); d <- tryCatch(load_station(k$station, k$stream, pd()), error = function(e) NULL); req(!is.null(d), nrow(d)); d })
   cols <- reactive({ d <- dat(); nm <- setdiff(names(d)[vapply(d, is.numeric, NA)], c(WB_META, "RECORD")); lapply(CS_HOME_RX, function(rx) cs_home_pick(nm, rx)) })
   # the mean of the same parameter at the other shown stations, hour by hour, at this record's times
   nbr <- reactive({ k <- tab(); a <- cols()$air; if (is.null(a)) return(NULL); o <- outs(); others <- setdiff(st_shown(), k$station); if (!length(others)) return(NULL)
     xs <- rbindlist(lapply(others, function(s) { y <- o$stations[station == s][order(-records)]; if (!nrow(y)) return(NULL)
+      # safe: as above, the Home summary leaves out a station it cannot read
       d <- tryCatch(load_station(s, y$stream[1], pd()), error = function(e) NULL); if (is.null(d)) return(NULL); p <- cs_home_pick(names(d), CS_HOME_RX$air); if (is.null(p)) return(NULL)
       data.table(h = floor(as.numeric(d$TIMESTAMP) / 3600), v = as.numeric(d[[p]]), s = s)[!is.na(v)][, .(v = mean(v)), by = .(h, s)] }), fill = TRUE)
     if (!nrow(xs)) return(NULL); m <- xs[, .(v = mean(v), n = uniqueN(s)), by = h]
@@ -130,12 +134,17 @@ cs_home_server <- function(input, output, session, outs, pd, cur, st_shown, E, s
   output$hm_daily_dl <- downloadHandler(function() paste0("cs_daily_", safe_name(tab()$station), ".csv"), function(file) fwrite(daily(), file))
 
   output$hm_station <- renderUI({ k <- tab(); o <- outs(); m <- if (nrow(o$meta)) o$meta[station == k$station] else data.table()
+    # safe: counted on this summary only; the table's own page reports a read problem
     si <- tryCatch(as.data.table(E$sites$data()), error = function(e) data.table()); si <- if (nrow(si) && "station" %in% names(si)) si[station == k$station] else data.table()
+    # safe: counted on this summary only; the table's own page reports a read problem
     lg <- tryCatch(as.data.table(E$fieldlog$data()), error = function(e) data.table()); lg <- if (nrow(lg) && "station" %in% names(lg)) lg[station == k$station & type %in% c("site visit", "data downloaded", "gauge serviced")] else data.table()
+    # safe: counted on this summary only; the table's own page reports a read problem
     cal <- tryCatch(as.data.table(E$cal$data()), error = function(e) data.table()); ncal <- if (nrow(cal)) sum(vapply(strsplit(as.character(cal$applies_to), "|", fixed = TRUE), function(w) { w <- trim(w); !any(nzchar(w)) || k$station %in% w || any(m$logger_id %in% w) }, NA)) else 0
+    # safe: counted on this summary only; the table's own page reports a read problem
     pc <- tryCatch(as.data.table(E$period$data()), error = function(e) data.table()); npc <- if (nrow(pc) && "target" %in% names(pc)) sum(!nzchar(pc$target) | pc$target == k$station) else 0
     a <- o$index; rm <- if (!is.null(a) && nrow(a) && "station" %in% names(a) && "n" %in% names(a)) a[station == k$station] else data.table()
     kv <- function(a, b) div(class = "kv", span(a), span(b))
+    # safe: summary text only
     sensors <- tryCatch(paste(utils::head(setdiff(names(dat())[vapply(dat(), is.numeric, NA)], c(WB_META, "RECORD")), 6), collapse = ", "), error = function(e) "")
     tagList(h4(k$station), div(class = "dim", style = "margin-bottom:6px", k$stream),
       kv("Logger", if (nrow(m)) paste(unique(paste(m$model, m$logger_id)), collapse = ", ") else "\u2014"),

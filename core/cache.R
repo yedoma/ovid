@@ -71,8 +71,8 @@ code_names <- function(dirs, extra = character()) {
 
 # App functions that replace a core function of the same name. An app's copy wins for every caller, core's own included,
 # so a fix made in core would silently not reach that app. Each app checks at start-up (and in its tests) and says which;
-# `allow` names the replacements meant on purpose: say(), which each app routes to its own progress display.
-core_shadows <- function(app_files, allow = "say") {
+# `allow` names any replacement meant on purpose (none now: say() is core's only, with the app's log and steps).
+core_shadows <- function(app_files, allow = character()) {
   fdefs <- function(f) unique(unlist(lapply(f[file.exists(f)], function(p) { x <- tryCatch(parse(p, keep.source = FALSE), error = function(e) expression())
     unlist(lapply(x, function(e) if (is.call(e) && is.symbol(e[[1]]) && as.character(e[[1]]) %in% c("<-", "=") && is.symbol(e[[2]]) &&
                                      is.call(e[[3]]) && identical(e[[3]][[1]], as.name("function"))) as.character(e[[2]]))) })))
@@ -84,6 +84,7 @@ core_shadows <- function(app_files, allow = "say") {
 app_code_files <- function(dir) c(list.files(file.path(dir, "R"), pattern = "\\.R$", full.names = TRUE), list.files(dir, pattern = "_pipeline\\.R$", full.names = TRUE),
                                   file.path(dir, "app.R"), list.files(file.path(dir, "pages"), pattern = "\\.R$", full.names = TRUE),
                                   list.files(file.path(dir, "workbench"), pattern = "\\.R$", full.names = TRUE))
+# safe: a note for developers only; the app runs the same without it
 warn_core_shadows <- function(dir) { s <- tryCatch(core_shadows(app_code_files(dir)), error = function(e) character())
   if (length(s)) say("  note for developers: ", paste(s, collapse = ", "), " in this app replace", if (length(s) == 1) "s" else "", " the core function", if (length(s) > 1) "s", " of the same name; rename the app's copy", col = "yellow")
   invisible(s) }
@@ -103,6 +104,7 @@ cache_file <- function(dir, name, key) file.path(dir, paste0(safe_name(name), "_
 cache_read <- function(dir, name, key) {
   f <- cache_file(dir, name, key)
   if (!file.exists(f)) return(NULL)
+  # safe: a damaged cache file is read again from the raw files
   tryCatch(readRDS(f), error = function(e) NULL)
 }
 

@@ -10,6 +10,7 @@
     updateSelectInput(session, "fsl_pick", choices = c("(none)" = "", fsl_files()), selected = if (!is.null(want)) want else cur)
   })
   matches <- reactive({ rv$tick; rv$fsl_tick
+    # safe: an output of the last run, only shown
     f <- file.path(pd(), "config", "cr10x_fsl_matches.csv"); live_stamp(f); if (file.exists(f)) tryCatch(fread(f, na.strings = ""), error = function(e) NULL) else NULL })
   observeEvent(input$cx_match, {
     if (VIEWER) return()
@@ -48,6 +49,7 @@
     if (!m_cx$set_selected("logger_id", id)) note("Select one or more rows in the table below first.", type = "warning")
   })
   output$fsl_preview <- renderTable({
+    # safe: a program that cannot be parsed shows no columns
     req(nzchar(input$fsl_pick)); f <- tryCatch(parse_fsl(file.path(fsl_dir(), input$fsl_pick)), error = function(e) list())
     validate(need(length(f) > 0, "No output arrays found in this file. Is it an Edlog .FSL, .CSI or .DLD?"))
     data.frame(Array = names(f), Fields = lengths(f), Labels = vapply(f, paste, "", collapse = ", "))

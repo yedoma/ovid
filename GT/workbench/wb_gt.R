@@ -198,6 +198,7 @@ wb_server <- function(input, output, session, std) {
       tagList(div(class = "wb-subsec", ins), lapply(unique(x$site), function(st) { y <- x[site == st]; open <- identical(st, cur) && nrow(y) > 1
         tagList(wb_row(st, key = y$key[1], input = "wb_table", n = format(y$records[1], big.mark = ","), on = identical(y$key[1], k) && identical(view(), "wb-data") && !open),
                 if (open) lapply(seq_len(nrow(y)), function(i) wb_row(y$label[i], key = y$key[i], input = "wb_table", on = identical(y$key[i], k) && identical(view(), "wb-data"), level = 1))) })) })) })
+  # safe: a title only
   output$wb_params_title <- renderText(tryCatch(if (identical(part()$kind, "temp")) "temperature" else "soil", error = function(e) ""))
   output$wb_chips <- renderUI(tagList(lapply(plot_params(), function(p) span(class = "wb-chip", p)),
     if (length(sel_params()) > length(plot_params())) span(class = "wb-chip", style = "opacity:.7", paste0("+", length(sel_params()) - length(plot_params()), " in the table"))))
@@ -206,12 +207,14 @@ wb_server <- function(input, output, session, std) {
   output$wb_grid <- renderUI({ g <- grid()
     vals <- lapply(g$params, function(p) { v <- suppressWarnings(as.numeric(g$w[[p]])); o <- g$states[[p]]$old; ifelse(is.na(v), o, v) })
     wb_grid(format(g$w$TIMESTAMP, "%Y-%m-%d %H:%M", tz = "UTC"), g$params, g$cells$txt, g$cells$cls, g$sig, corner = paste("time", zone()),
+            # safe: units are labels only
             times = as.numeric(g$w$TIMESTAMP), vals = vals, units = tryCatch(units(), error = function(e) NULL)) })
   output$wb_ginfo <- renderText({ g <- grid(); cc <- cells()
     paste0(if (g$n > nrow(g$w)) sprintf("first %s of %s rows; narrow the period, or zoom the chart and press Use as period", format(nrow(g$w), big.mark = ","), format(g$n, big.mark = ","))
            else paste(format(g$n, big.mark = ","), "rows"),
            if (nrow(cc)) paste0(" \u00b7 ", format(nrow(cc), big.mark = ","), " selected") else "",
            " \u00b7 click, drag, shift-click; a time selects the record, a heading the depth; cmd/ctrl adds; Esc clears") })
+  # safe: no grid yet: no cells selected
   cells <- reactive(wb_sel_cells(input$wb_grid_sel, tryCatch(grid(), error = function(e) NULL)))
   active <- reactive({ cc <- cells(); if (!nrow(cc)) return(NULL); s <- input$wb_grid_sel
     a <- cc[r == as.integer(s$ar %||% 0) & c == as.integer(s$ac %||% 0)]; if (nrow(a)) a[1] else cc[1] })
@@ -231,7 +234,9 @@ wb_server <- function(input, output, session, std) {
   # each column's unit (by its variable) and range limits (Quality rules, qc_rules.csv: a row for this site first, then for all)
   units <- reactive({ w <- attr(dat(), "where"); if (is.null(w)) return(NULL)
     u <- unname(c(temp = "\u00b0C", vwc = "m\u00b3/m\u00b3", ec = "mS/cm")[w$variable]); u[is.na(u)] <- ""; stats::setNames(u, w$col) })
+  # safe: the QC table's editor reports a read problem
   limits <- reactive({ w <- attr(dat(), "where"); r <- tryCatch(as.data.table(E$qc$data()), error = function(e) data.table()); if (is.null(w) || !nrow(r) || !all(c("variable", "min", "max") %in% names(r))) return(NULL)
+    # safe: no site picked yet
     ap <- trim(as.character(r$applies_to %||% rep("", nrow(r)))); ap[is.na(ap)] <- ""; site <- tryCatch(wb_split(key())$id, error = function(e) "")
     mine <- vapply(strsplit(ap, "|", fixed = TRUE), function(a) any(trim(a) %in% site), NA)
     r <- rbind(r[mine], r[!mine & ap %in% c("all", "")]); lv <- wb_limits(unique(w$variable), r$variable, r$min, r$max)
@@ -241,6 +246,7 @@ wb_server <- function(input, output, session, std) {
       data.table(p = p, t = as.numeric(d$TIMESTAMP[k]), v = d[[p]][k]) })) }
   chart_rem <- reactive({ r <- removed(); r[, .(timestamp = TIMESTAMP, parameter = col, old_value)] })
   chart_base <- reactive({ d <- per(); ps <- plot_params(); req(length(ps) > 0, nrow(d) > 0); pr <- as.numeric(period())
+    # safe: units and limits are drawn when known; the data are drawn either way
     x <- wb_chart_data(d, ps, chart_rem(), flagruns(), chart_pend(d, ps), WB_CHART_MAX, units = tryCatch(units(), error = function(e) NULL), limits = tryCatch(limits(), error = function(e) NULL))
     c(list(type = "base", key = key(), sig = paste(key(), paste(ps, collapse = ","), pr[1], pr[2], x$n, sep = "|"), period = I(pr), zone = zone()), x) })
   view_d <- wb_chart_server(input, session, chart_base, function(a, z) { d <- per(); k <- as.numeric(d$TIMESTAMP)
@@ -294,9 +300,11 @@ wb_server <- function(input, output, session, std) {
   output$wb_inspector <- renderUI({ v <- view()
     if (identical(v, "wb-import")) return(wb_import_aside())
     if (!identical(v, "wb-data")) return(NULL)
+    # safe: nothing picked yet
     cc <- cells(); p <- tryCatch(part(), error = function(e) NULL)
     if (is.null(p)) return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No data yet"), wb_empty_acts("Files")), p(class = "wb-p", "Set the folders under Import data and press Run.")))
     if (!nrow(cc)) {
+      # safe: no grid yet
       g <- tryCatch(grid(), error = function(e) NULL)
       cnt <- function(k) if (is.null(g)) 0 else sum(vapply(g$states, function(x) sum(x$state == k), 0))
       return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No cell selected"),
@@ -333,6 +341,7 @@ wb_server <- function(input, output, session, std) {
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })
 
+  # safe: the status bar shows what it has
   output$wb_status <- renderUI({ o <- outs(); cc <- cells(); g <- tryCatch(grid(), error = function(e) NULL)
     np <- if (!is.null(o)) nrow(o$problems) else 0L
     rec <- if (!is.null(o) && nrow(o$recon) && "reconciles" %in% names(o$recon)) all(as.logical(o$recon$reconciles), na.rm = TRUE) else NA
@@ -352,11 +361,13 @@ wb_server <- function(input, output, session, std) {
   wb_project_server(input, output, session, ctx)
   wb_edit_server(input, output, session, ctx)
   wbgb_deps <- reactive({ s <- live_table(cfg_path(pd(), "sensors")); if (!nrow(s) || !all(c("serial", "site") %in% names(s))) NULL else unique(s[nzchar(site), .(serial = as.character(serial), from = as.character(start %||% ""), to = as.character(end %||% ""), name = site)]) })
+  # safe: an output of the last run, only shown
   group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)
       if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = rel, first = first_ts, last = last_ts)] }), pd, wbgb_deps,
     open = function(r) { k <- { s <- wbgb_deps(); site <- if (!is.null(s) && nrow(s[serial == r$serial])) s[serial == r$serial]$name[1] else r$serial; tb <- tables(); x <- tb[tb$site == site & tb$kind == "temp"]; if (nrow(x)) x$key[1] else NA_character_ }; if (is.na(k)) return(showNotification(paste(r$serial, "has no table in this view yet."), type = "message"))
       wb_jump_to(session, input, key, jump, set_view, k, NULL, format(r$first, "%Y-%m-%d"), format(r$last, "%Y-%m-%d")) })   # core grouping.R
   observe({ v <- tryCatch(wb_split(key())$id, error = function(e) NULL); pr <- input$wb_period                 # what this view shows, for the switch (core shell.R)
+    # safe: the context bar shows what it has
     ovid_ctx(session, "site", v, input$wb_params, if (length(pr) == 2) pr[1], if (length(pr) == 2) pr[2], tryCatch(if (!is.null(sel()) && length(sel()$t)) format(min(sel()$t), "%Y-%m-%d %H:%M", tz = "UTC"), error = function(e) NULL), tryCatch(if (!is.null(sel()) && length(sel()$t)) format(max(sel()$t), "%Y-%m-%d %H:%M", tz = "UTC"), error = function(e) NULL)) })
   wb_needs_server(output, reactive(wb_needs_items(if (is.function(std$needs$check)) gt_needs_check(std$needs$check(), pd()) else NULL, std$review$items())))   # core workbench.R; loggers GT places (R/metadata.R) are not listed
   qpreset <- reactiveVal(NULL)

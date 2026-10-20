@@ -12,7 +12,6 @@
 
 empty_data <- function() data.table(TIMESTAMP = as.POSIXct(character(), tz = "UTC"), ord = integer(), channel = character(), variable = character(),
                                     value = numeric(), err = character())
-empty_events <- function() data.table(TIMESTAMP = as.POSIXct(character(), tz = "UTC"), event = character())
 
 # wide (TIMESTAMP, ord, one column per channel) -> long
 melt_channels <- function(w, chans, variable, err = NULL) {
@@ -25,12 +24,9 @@ melt_channels <- function(w, chans, variable, err = NULL) {
   out
 }
 
-# A text file that does not end with a line break was cut off (a copy or download that stopped): its last row can hold a value
-# cut short ("23.5" of 23.52), so that row's values are marked, not read as whole. Every logger and software export seen ends
-# with a line break (2,394 files checked).
+# A text file that does not end with a line break was cut off (core logger_files.R ends_cut()): its last row can hold a value
+# cut short ("23.5" of 23.52), so GT marks that row's values, not read as whole.
 CUT_ERR <- "last row cut short (the file ends inside a row)"
-ends_cut <- function(path) { n <- file.info(path)$size; if (is.na(n) || n == 0) return(FALSE)
-  con <- file(path, "rb"); on.exit(close(con)); seek(con, n - 1); !identical(readBin(con, "raw", 1L), as.raw(10L)) }
 mark_cut <- function(long, path) { if (nrow(long) && ends_cut(path)) long[ord == max(ord) & is.na(err), `:=`(value = NA_real_, err = CUT_ERR)]; long }
 
 # ---- what kind of file is this? -------------------------------------------------
@@ -39,6 +35,7 @@ sniff_format <- function(path) {
   if (is.na(size)) return("unreadable")
   if (size == 0) return("empty_file")
   if (file.access(path, 4L) != 0L) return("unreadable")                           # no permission, or the drive went away
+  # safe: sniffing only; a file that cannot be read is reported when it is read in full
   first <- tryCatch(read_lines_any(path, 3), error = function(e) character())
   f1 <- if (length(first)) first[1] else ""
   switch(ext,
@@ -53,8 +50,10 @@ sniff_format <- function(path) {
     csv  = if (startsWith(f1, "<FG2")) "fg2_csv" else if (grepl("Plot Title", f1, fixed = TRUE) || grepl("Date Time", f1, fixed = TRUE) ||
                (length(first) > 1 && grepl("Date Time", first[2], fixed = TRUE))) "hobo_csv" else "unrecognised_format",
     xls  = , xlsx = {
+      # safe: sniffing only; a workbook that cannot be opened is "unreadable" below
       sh <- tryCatch(readxl::excel_sheets(path), error = function(e) character())
       if (any(grepl("^Em50|Unprocessed Data", sh))) "em50_xls"
+      # safe: sniffing only; a first cell that cannot be read is not an RBR heading
       else if (length(sh)) { a <- tryCatch(readxl::read_excel(path, sheet = 1, col_names = FALSE, n_max = 1, .name_repair = "minimal"), error = function(e) NULL)
         if (!is.null(a) && ncol(a) && grepl("RBR", as.character(a[[1]][1]))) "rbr_xls" else "unrecognised_format" }
       else "unreadable" },
@@ -254,16 +253,19 @@ read_hobo_csv <- function(path, header_only = FALSE) {
                rows = length(l) - hi, download = NA, water = water)
   if (header_only) return(list(meta = meta))
   if (hi >= length(l)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))   # the header only
-  d <- fread(text = l[(hi + 1):length(l)], header = FALSE, sep = h$sep, colClasses = "character", fill = TRUE, na.strings = NULL)
+  rows <- hobo_csv_rows(l, h)                                          # core logger_files.R
+  hc <- rows$header_change                                             # two exports joined: read up to it, the rest reported (as WLR)
+  if (!is.null(hc)) problem(basename(path), sprintf("a second header with other columns at line %d: the %d rows after it were left out (export them as a file of their own)",
+                                                    hc$line, hc$rows))
+  if (!length(rows$lines)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))
+  d <- fread(text = rows$lines, header = FALSE, sep = h$sep, colClasses = "character", fill = TRUE, na.strings = NULL)
   if (!nrow(d)) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))
   tt <- parse_dt(d[[dcol]])
   wide <- data.table(TIMESTAMP = tt, ord = seq_len(nrow(d)))
   ti <- which(is_t); lbl <- sub(".*LBL: *([^)]*)\\).*", "\\1", hdr[ti]); lbl[lbl == hdr[ti]] <- paste0("T", seq_along(ti))[lbl == hdr[ti]]
   fahr <- grepl("\u00b0F|\\bF\\b", hdr[ti])
   for (k in seq_along(ti)) { v <- num_cells(d[[ti[k]]]); if (fahr[k]) v <- convert_unit(v, "degF", "degC"); set(wide, j = lbl[k], value = v) }
-  evt <- rbindlist(lapply(which(is_ev), function(j) { k <- which(nzchar(trim(d[[j]])))
-    if (!length(k)) return(NULL); data.table(TIMESTAMP = tt[k], event = sub(" *\\(.*$", "", hdr[j])) }))
-  if (!nrow(evt)) evt <- empty_events()
+  evt <- hobo_csv_events(d, which(is_ev), tt, hdr)                     # core logger_files.R
   meta$interval_s <- step_of(head(tt, 500)); meta$channels <- length(ti)
   list(meta = meta, data = mark_cut(melt_channels(wide, lbl, rep("temp", length(ti))), path), events = evt)
 }

@@ -29,6 +29,7 @@
   rl_flags <- reactive({ o <- outs(); f <- o$flags; if (is.null(f) || !nrow(f)) return(NULL); f <- copy(f)[station %in% st_shown()]
     f[, key := paste0(station, "__", stream)]; review_flag_items(f, "station", keep = "key") })
   review <- review_list_server("rl", reactive(rbind(rl_flags(),
+      # safe: suggestions only
       tryCatch(gb$suggestions()[, .(kind = "moved", where = serial, what, serial, at)], error = function(e) NULL), cs_notes(), fill = TRUE)),
     reactive(review_path(pd())), period = if (!VIEWER) E$period, split = function(s, a) gb$accept(s, a), goto = cs_note_go,
     open = function(r) { strip_cur(r$where); updateSelectInput(session, "ex_station", selected = r$where)
@@ -43,6 +44,7 @@
 
   # the information panel and the status line of each step
   output$flow_info <- renderUI({ o <- outs(); s <- st_all()
+    # safe: an empty history means "not run yet"
     h <- tryCatch(fread(file.path(pd(), "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) data.table())
     x <- review$items(); n_iss <- sum(x$kind == "flag")
     gp <- if (!is.null(o) && nrow(o$gaps)) { g <- copy(o$gaps)[order(-as.numeric(gap_hours))][as.numeric(gap_hours) >= 24]

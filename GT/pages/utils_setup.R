@@ -2,11 +2,6 @@
 # =============================================================================
 #  Editable set-up table (one module for every config CSV)
 # =============================================================================
-current_user <- function(session) { u <- tryCatch(session$user, error = function(e) NULL); if (is.null(u) || !nzchar(u)) u <- Sys.info()[["user"]]; u }
-# The table editor is shared by every app (Ovid/editor.R): the same table open in both interfaces and in several windows
-# stays one table (a copy with no unsaved edits takes up a newer saved version; one with unsaved edits asks first).
-editServer <- function(id, path, reload, locked = character(), on_change = function() NULL)
-  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt)
 
 # Every set-up table the interfaces edit: module id, the table (CONFIG_FILES) and its file. Both interfaces build their
 # editors from this list; a saved change to any of them needs a run to apply.
@@ -31,13 +26,6 @@ run_redone <- function(pd) {
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   n <- v("loggers_checked"); r <- v("loggers_reused"); if (anyNA(c(n, r))) return("")
   wb_redone(n - r, n, "loggers")
-}
-# Started from Ovid_GT.bat: closing the last browser tab, in either interface, stops the app.
-track_session <- function(session) {
-  if (!LOCAL) return(invisible())
-  OPEN_SESSIONS$n <- OPEN_SESSIONS$n + 1L
-  session$onSessionEnded(function() { OPEN_SESSIONS$n <- OPEN_SESSIONS$n - 1L
-    later::later(function() if (OPEN_SESSIONS$n <= 0L) { cat("Browser closed; stopping Ovid GT.\n"); stopApp() }, 8) })
 }
 
 res_choices <- c("Every reading" = "raw", "Hourly mean" = "hour", "Daily mean" = "day", "Weekly mean" = "week", "Monthly mean" = "month")

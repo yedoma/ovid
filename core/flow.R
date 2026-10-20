@@ -47,6 +47,7 @@ unsaved_server <- function(id, editors, extra = list(), on_apply = function() NU
 # ---- what shows ----------------------------------------------------------------------------------------------------------------
 display_path <- function(pd) file.path(path.expand(pd), "config", DISPLAY_FILE)
 display_read <- function(pd) { p <- display_path(pd)
+  # safe: a table that cannot be read shows nothing here; its editor says why
   d <- if (file.exists(p)) tryCatch(data.table::fread(p, colClasses = "character"), error = function(e) NULL) else NULL
   if (is.null(d) || !"name" %in% names(d)) return(data.table::data.table(name = character(), shown = character()))
   if (!"shown" %in% names(d)) d[["shown"]] <- ""
@@ -59,6 +60,7 @@ display_set <- function(pd, name, shown = NULL) {
     if (!length(i)) { d <- rbind(d, data.table::data.table(name = nm, shown = "TRUE")); i <- nrow(d) }
     if (!is.null(shown)) d$shown[i] <- if (isTRUE(shown)) "TRUE" else "FALSE" }
   p <- display_path(pd); dir.create(dirname(p), showWarnings = FALSE, recursive = TRUE)
+  # safe: the save goes on; only the history copy is missed
   if (exists("backup_cfg", mode = "function") && file.exists(p)) try(backup_cfg(p, d, "display"), silent = TRUE)
   if (exists("fwrite_safe", mode = "function")) fwrite_safe(d, p) else data.table::fwrite(d, p)
   if (exists("live_touch", mode = "function")) live_touch()
@@ -94,6 +96,7 @@ flow_aside <- function(project = list(), gaps = NULL, sources = NULL, precedence
 # precip, rain; else the first numeric column). NULL when there is no file or it cannot be read.
 flow_precip <- function(path) {
   path <- trimws(path %||% ""); if (!nzchar(path) || !file.exists(path.expand(path))) return(NULL)
+  # safe: a preview only; nothing is shown for a file that cannot be read
   d <- tryCatch(data.table::fread(path.expand(path)), error = function(e) NULL); if (is.null(d) || !nrow(d)) return(NULL)
   nm <- names(d); tk <- grep("time|date|^ts$", nm, ignore.case = TRUE)[1]; if (is.na(tk)) tk <- 1L
   num <- which(vapply(d, is.numeric, NA)); vk <- intersect(grep("mm|precip|rain", nm, ignore.case = TRUE), num)[1]; if (is.na(vk)) vk <- setdiff(num, tk)[1]
@@ -106,6 +109,7 @@ flow_precip <- function(path) {
 # link to for every change, or NULL.
 flow_saved <- function(pd, n = 8, more = NULL) {
   f <- file.path(path.expand(pd), "config", "history", "change_log.csv")
+  # safe: as for line 50: its editor says why
   d <- if (file.exists(f)) tryCatch(data.table::fread(f, colClasses = "character"), error = function(e) NULL) else NULL
   if (is.null(d) || !nrow(d)) return(p(class = "dim", "Nothing saved yet."))
   d <- d[order(-seq_len(nrow(d)))][seq_len(min(n, nrow(d)))]
@@ -196,6 +200,7 @@ review_list_ui <- function(id) { ns <- NS(id)
 review_list_server <- function(id, items, file, open = NULL, remove = NULL, period = NULL, split = NULL, goto = NULL) moduleServer(id, function(input, output, session) {
   ns <- session$ns; h <- new.env(); h$open <- open; h$preset <- NULL
   done <- reactive({ p <- file(); live_stamp(p); review_read(p) })
+  # safe: nothing to list yet
   rows <- reactive({ x <- tryCatch(items(), error = function(e) NULL); if (is.null(x) || !NROW(x)) return(data.table())
     x <- copy(as.data.table(x)); for (v in c("detail", "parameter", "start", "end", "check", "qids", "serial", "at", "go")) if (!v %in% names(x)) x[, (v) := ""]
     x[, id := ifelse(kind == "flag", review_hash(paste(qids)), ifelse(kind == "moved", paste("moved", serial, at), review_hash(paste(where, what))))]

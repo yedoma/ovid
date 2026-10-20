@@ -30,20 +30,22 @@
     if (VIEWER) return(); cfg <- current_cfg()
     if (!length(cfg$raw_dirs) || !any(dir.exists(path.expand(cfg$raw_dirs)))) { note("Set the data folders ", if (embedded) "under Import data" else "on 1 Project", " first.", type = "warning"); go("Project"); return() }
     for (m in all_tables()) if (isTRUE(isolate(m$dirty()))) try(m$save(quiet = TRUE), silent = TRUE)   # unsaved edits in any table, as Apply saves them
-    p <- tryCatch(setup_check(cfg), error = function(e) NULL); e <- if (is.null(p)) NULL else p[level == "error"]
+    p <- tryCatch(setup_check(cfg), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); e <- if (is.null(p)) NULL else p[level == "error"]
     if (!is.null(e) && nrow(e)) return(showModal(setup_gate(e, "run_review", "run_force")))   # core shell.R
     do_run(cfg)
   })
   observeEvent(input$run_review, { removeModal(); go("Preflight") })
   observeEvent(input$run_force, { removeModal(); cfg <- current_cfg()          # the run's log records what the set-up check found
-    p <- tryCatch(setup_check(cfg), error = function(e) NULL); cfg$run_anyway <- setup_problem_lines(if (is.null(p)) NULL else p[level == "error"]); do_run(cfg) })
+    p <- tryCatch(setup_check(cfg), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); cfg$run_anyway <- setup_problem_lines(if (is.null(p)) NULL else p[level == "error"]); do_run(cfg) })
   out_seen <- ovid_output_watch(session, pd)                    # the output folder deleted or replaced outside the app (core shell.R)
   applied_server("applied", pd, out_seen, edit = if (!VIEWER) "QC")   # the corrections applied, in the top bar (core applied.R)
+  # safe: shown as no output yet; a run writes it again
   outs <- reactive({ rv$tick; out_seen(); tryCatch(load_outputs(pd()), error = function(e) NULL) })
   wl_files <- reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
     if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = path, first = first_ts, last = last_ts)] })
   wl_deps <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$summary)) NULL else o$summary[, .(serial = as.character(serial), from = fmt_ts(start), to = fmt_ts(end), name = site)] })
   wl_level <- function(serial) { f <- list.files(file.path(pd(), "output", "sites"), paste0("^", rx_escape(serial), "__.*\\.csv$"), full.names = TRUE)   # water above the sensor, for moves
+    # safe: a file that cannot be read adds nothing to this preview
     if (!length(f)) return(NULL); d <- rbindlist(lapply(f, function(x) tryCatch(fread(x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)), fill = TRUE)
     if (!nrow(d)) NULL else d[, .(t = parse_dt(TIMESTAMP), v = depth_m)] }
   gb <- group_by_server("gb", wl_files, pd, wl_deps, level = wl_level, jump_min = 0.05, unit = "m", open = function(r) { s <- wl_deps(); s <- if (!is.null(s)) s[serial == r$serial] else NULL

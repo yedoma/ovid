@@ -192,6 +192,7 @@ season_year <- function(t) { y <- as.integer(format(t, "%Y")); y + (t > as.POSIX
 # may set another start (setting water_year_start). The deployment (processing) year above stays on the download sweep.
 WATER_YEAR_START <- "10-01"
 water_year_start_valid <- function(start) { start <- trimws(as.character(start %||% ""))[1]
+  # safe: this tests whether start is a valid month-day
   !is.na(start) && grepl("^[0-9]{1,2}-[0-9]{1,2}$", start) && !is.na(tryCatch(as.Date(paste0("2001-", start)), error = function(e) NA)) }
 water_year_start_ok <- function(start) if (water_year_start_valid(start)) format(as.Date(paste0("2001-", trimws(start[1]))), "%m-%d") else WATER_YEAR_START
 water_year_of <- function(t, start = WATER_YEAR_START) { start <- water_year_start_ok(start)

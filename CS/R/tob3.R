@@ -130,6 +130,7 @@ tob3_span <- function(path) {
 # read_header() for a TOB3 file: the same identity fields as TOA5, plus the time span from a few frames
 tob3_manifest_row <- function(out, path) {
   out$format <- "TOB3"
+  # safe: a header that cannot be read is reported as unsupported_binary_TOB on the next line
   h <- tryCatch(tob3_header(path), error = function(e) NULL)
   if (is.null(h) || !length(h$fields) || anyNA(h$sizes)) { out$status <- "unsupported_binary_TOB"; return(out) }
   env <- c(h$env, rep("", 8))[1:8]

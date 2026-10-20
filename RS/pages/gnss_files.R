@@ -16,8 +16,10 @@
       if (any(nzchar(d$note))) p(class = "text-warning", sum(nzchar(d$note)), " rows reuse a point name with other coordinates (see the note column)")) })
   # the base of each file (config/gnss_bases.csv) and its check; the full message shows on hover and goes into the export
   gb <- reactive({ d <- gd(); live_stamp(cfg_path(CFG$project_dir, "gnss_bases")); live_stamp(cfg_path(CFG$project_dir, "calibration"))
+    # safe: the set-up tables' editors report a read problem; the base check is skipped without them
     if (is.null(d) || !nrow(d)) return(data.table()); cf <- tryCatch(load_configs(CFG), error = function(e) NULL); gnss_base_check(d, cf$gnss_bases, cf$calibration) })
   output$g_quality <- renderDT({ d <- gd(); if (is.null(d) || !nrow(d)) return(ovid_dt(data.table()))
+    # safe: as above
     cf <- tryCatch(load_configs(CFG), error = function(e) NULL); q <- gnss_quality(d)
     q <- merge(merge(q, gnss_limit_check(q, cf$calibration, cf$gnss_bases), by = "source_file", all.x = TRUE, sort = FALSE), gb(), by = "source_file", all.x = TRUE, sort = FALSE)
     q[, base_post_processed := fifelse(base_post_processed %in% c("yes", "y", "true"), paste0("yes", fifelse(nzchar(base_service), paste0(" (", base_service, ")"), "")), fifelse(nzchar(base_post_processed), base_post_processed, "\u2013"))]

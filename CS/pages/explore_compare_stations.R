@@ -27,6 +27,7 @@
     req(input$cp_param, length(input$cp_stations) > 0); p <- input$cp_param; rv$tick
     validate(need(length(input$cp_stations) <= 12, "Choose 12 stations or fewer."))
     rbindlist(lapply(input$cp_stations, function(v) {
+      # safe: a station that cannot be loaded is left out of the comparison
       d <- tryCatch(load_station_all(v, pd(), columns = p), error = function(e) NULL)
       if (is.null(d) || !p %in% names(d) || !is.numeric(d[[p]])) return(NULL)
       d <- d[!is.na(get(p))]; if (!nrow(d)) return(NULL); d[, `:=`(station = v, stream = "", logger_id = "")]

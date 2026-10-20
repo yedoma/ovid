@@ -34,6 +34,7 @@ wb_project_server <- function(input, output, session, ctx) {
       data.table(rel = f, size = file.size(file.path(r, f))) })) })
   output$wb_scan <- renderUI({ std$rv$tick; f <- found(); if (!nrow(f)) f <- data.table(rel = character(), size = numeric())
     cf <- file.path(PROJECT, "output", "catalogue", "files.csv")
+    # safe: an output of the last run, only shown
     m <- if (file.exists(cf)) tryCatch(fread(cf, colClasses = "character", na.strings = NULL)[!grepl("!/", rel, fixed = TRUE)], error = function(e) NULL) else NULL
     i <- if (!is.null(m)) match(f$rel, m$rel) else rep(NA_integer_, nrow(f))
     new <- sum(is.na(i)); changed <- sum(!is.na(i) & suppressWarnings(as.numeric(m$size[i])) != f$size, na.rm = TRUE)
@@ -42,6 +43,7 @@ wb_project_server <- function(input, output, session, ctx) {
     div(class = "wb-tiles", tile(num(nrow(f)), "files in the folders"), tile(num(new), "new since the last scan", if (new) "hi"), tile(num(changed), "changed size", if (changed) "hi"),
         tile(num(nrow(o)), "surveys"), tile(num(sum(o$n_read, na.rm = TRUE)), "measurements"),
         tile(num(sum(s$status %in% c("needs_reader", "unreadable"), na.rm = TRUE)), "files not read", if (any(s$status %in% c("needs_reader", "unreadable"))) "hi")) })
+  # safe: no check result yet: nothing to show
   output$wb_check_short <- renderUI({ x <- tryCatch(std$chk(), error = function(e) NULL); if (is.null(x)) return(NULL)
     ne <- sum(x$level == "error"); nw <- sum(x$level == "warning")
     div(class = "wb-inline", if (!ne && !nw) span(class = "wb-p", "Nothing to fix before a scan.") else span(class = "wb-p",   # plain text: no colours (no lights in ERT)

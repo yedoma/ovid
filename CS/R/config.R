@@ -211,6 +211,7 @@ param_group <- function(x, groups) vapply(fix_enc(x), function(p) {
 # Rows whose pattern is not a valid regular expression are left out and reported.
 valid_patterns <- function(dt, what) {
   if (!nrow(dt)) return(dt)
+  # safe: this tests whether the pattern is a valid regular expression
   ok <- vapply(dt$pattern, function(p) nzchar(p) && !inherits(try(grepl(p, "x", perl = TRUE), silent = TRUE), "try-error"), logical(1))
   for (p in dt$pattern[!ok & nzchar(dt$pattern)]) problem(what, paste0("pattern '", p, "' is not a valid regular expression and was ignored"))
   dt[ok]

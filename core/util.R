@@ -10,12 +10,29 @@ seg_id <- function(t, step = NULL, tol = 1.5) { g <- c(0, diff(as.numeric(t)))
 # Console colours come from the app's palette: each app sets PAL (a named list of hex colours with at least fg).
 .ansi <- function(hex) { v <- col2rgb(hex); sprintf("\033[38;2;%d;%d;%dm", v[1], v[2], v[3]) }
 
-say <- function(..., col = "fg") {
+# One say() for every app. log: an environment whose $lines collects each message (an app's LOG, for its Log page);
+# steps: the number of pipeline steps, so a "[k/N]" message moves the Shiny progress bar. Both default to the app's
+# LOG and SAY_STEPS when it sets them; a pipeline run on its own has neither and only prints.
+say <- function(..., col = "fg", log = get0("LOG", ifnotfound = NULL),
+                steps = get0("SAY_STEPS", ifnotfound = 0L)) {
   tty <- isatty(stdout()) || nzchar(Sys.getenv("RSTUDIO"))
   msg <- paste0(...)
+  if (is.environment(log)) log$lines <- c(log$lines, msg)
+  say_progress(msg, steps)
   if (tty) { pal <- get0("PAL", ifnotfound = list()); hex <- pal[[col]]; if (is.null(hex)) hex <- pal$fg
     if (!is.null(hex)) msg <- paste0(.ansi(hex), msg, "\033[0m") }
   cat(msg, "\n", sep = "")
+}
+
+# "[k/N] what" moves the progress bar of the Shiny session to the middle of step k. Outside a session, or with no steps,
+# nothing happens; try() because a message sent while no progress bar is open is not an error.
+say_progress <- function(msg, steps) {
+  pat <- paste0("^\\[[0-9]+/", steps, "\\] ?")
+  if (!steps || !grepl(pat, msg)) return(invisible())
+  if (!requireNamespace("shiny", quietly = TRUE) || is.null(shiny::getDefaultReactiveDomain())) return(invisible())
+  k <- as.numeric(sub("^\\[([0-9]+)/.*", "\\1", msg))
+  try(shiny::setProgress((k - 0.5) / steps, detail = sub(pat, "", msg)), silent = TRUE)
+  invisible()
 }
 
 fmt_ts <- function(x) if (inherits(x, "POSIXct")) format(x, "%Y-%m-%d %H:%M:%S", tz = "UTC") else as.character(x)
@@ -42,6 +59,7 @@ num <- function(x) format(x, big.mark = ",", trim = TRUE)
 
 parse_csv_line <- function(l, sep = ",") tryCatch(
   fix_enc(scan(text = fix_enc(l), what = character(), sep = sep, quote = "\"", quiet = TRUE, na.strings = NULL)),
+  # safe: a line that cannot be split gives no cells, which the caller treats as no heading
   error = function(e) character())
 
 drop_trailing_blank <- function(x) { while (length(x) && (is.na(x[length(x)]) || !nzchar(x[length(x)]))) x <- x[-length(x)]; x }
@@ -184,6 +202,7 @@ settings_unjson <- function(x) {
   rd <- function() {
     if (grepl("\\.rds(\\.bak)?$", f)) readRDS(f) else settings_unjson(jsonlite::read_json(f, simplifyVector = TRUE))
   }
+  # safe: a damaged settings file reads as none; settings_read() then takes the last good copy
   x <- tryCatch(rd(), error = function(e) NULL)
   if (is.list(x)) x else NULL
 }

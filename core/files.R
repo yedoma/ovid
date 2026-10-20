@@ -52,6 +52,7 @@ ovid_pick_folder <- function(start = "", prompt = "Choose a folder") {
   if (Sys.info()[["sysname"]] == "Darwin") {
     cmd <- sprintf('POSIX path of (choose folder with prompt "%s"%s)', gsub('"', "'", prompt),
                    if (nzchar(start) && dir.exists(start)) sprintf(' default location (POSIX file "%s")', start) else "")
+    # safe: a folder dialog that cannot open returns nothing chosen
     r <- suppressWarnings(tryCatch(system2("osascript", c("-e", shQuote(cmd)), stdout = TRUE, stderr = FALSE), error = function(e) character()))
     return(if (length(r) && nzchar(r[1])) sub("(.)/$", "\\1", r[1]) else NA_character_) }
   if (.Platform$OS.type == "windows") {
@@ -59,6 +60,7 @@ ovid_pick_folder <- function(start = "", prompt = "Choose a folder") {
                  "$d.Description = '", gsub("'", "", prompt), "'; ",
                  if (nzchar(start) && dir.exists(start)) paste0("$d.SelectedPath = '", gsub("/", "\\\\", start), "'; ") else "",
                  "if ($d.ShowDialog() -eq 'OK') { $d.SelectedPath }")
+    # safe: a folder dialog that cannot open returns nothing chosen
     r <- suppressWarnings(tryCatch(system2("powershell", c("-NoProfile", "-STA", "-Command", shQuote(ps)), stdout = TRUE), error = function(e) character()))
     return(if (length(r) && nzchar(r[1])) gsub("\\\\", "/", r[1]) else NA_character_) }
   NULL
@@ -78,6 +80,7 @@ ovid_browse <- function(input, output, session, ids, add = character(), prompts 
   all_places <- function() {
     v <- Sys.glob("/Volumes/*"); w <- Sys.glob("[A-Z]:/")
     p <- c(stats::setNames(v, basename(v)), Home = "~", Desktop = "~/Desktop", Documents = "~/Documents", Downloads = "~/Downloads",
+           # safe: the shortcuts to the app's folders are a convenience
            stats::setNames(w, w), if (is.function(places)) tryCatch(places(), error = function(e) NULL))
     p <- vapply(p, path.expand, ""); p[dir.exists(p) & !duplicated(p)] }
   jsgo <- function(x) sprintf("Shiny.setInputValue('d_fb_go', %s, {priority: 'event'}); var f=document.getElementById('d_fb_filter'); if (f) f.value=''; return false;",

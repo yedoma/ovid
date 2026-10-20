@@ -89,6 +89,7 @@ run_where <- function(lines) {
 # The run has ended (or its process is gone): the result, the job cleared, on_done called in the window that started it.
 run_finish <- function() {
   j <- RUNNER$job; if (is.null(j)) return(invisible())
+  # safe: a run that ended without a result is reported as failed from its log below
   lines <- run_lines(j); r <- tryCatch(j$proc$get_result(), error = function(e) NULL)
   if (is.null(r)) r <- if (!is.null(j$cancelled_at)) list(status = "cancelled", message = "cancelled by the user")
                        else list(status = "failed", message = paste("the run's R process ended unexpectedly", utils::tail(lines, 1)))
@@ -96,6 +97,7 @@ run_finish <- function() {
   RUNNER$job <- NULL; RUNNER$tick <- RUNNER$tick + 1; unlink(j$dir, recursive = TRUE)
   if (!identical(r$status, "finished")) {                                                         # core manifest.R: the output kept before the run
     rec <- tryCatch(output_recover(j$project_dir), error = function(e) "")                        # a process that was killed did not put it back itself
+    # safe: the note about restored output is extra
     r$restored <- if (nzchar(rec)) rec else tryCatch(run_restored(j$project_dir), error = function(e) "")
     if (nzchar(r$restored)) shiny::withReactiveDomain(j$session, showNotification(r$restored, type = "message", duration = 15)) }
   if (is.function(j$on_done)) shiny::withReactiveDomain(j$session, j$on_done(r))
@@ -112,6 +114,7 @@ run_server <- function(input, output, session, busy_ids = "run") {
       if (j$session$isClosed()) { j$session <- session; RUNNER$job <- j }                # the window that started it was closed: this one finishes it
       if (identical(j$session, session)) {
         if (!j$proc$is_alive()) run_finish()
+        # safe: the run is already ending; a process that is gone cannot be stopped
         else if (!is.null(j$cancelled_at) && difftime(Sys.time(), j$cancelled_at, units = "secs") > RUN_KILL_AFTER) try(j$proc$kill_tree(), silent = TRUE) }
     }
     t <- RUNNER$tick %||% 0
@@ -136,6 +139,7 @@ run_server <- function(input, output, session, busy_ids = "run") {
   observeEvent(input$ovid_run_cancel, run_cancel())
   pd0 <- get0("CFG")$project_dir; rec <- if (is.null(RUNNER$job)) tryCatch(output_recover(pd0), error = function(e) "") else ""   # core manifest.R
   if (nzchar(rec)) showNotification(rec, type = "warning", duration = NULL)
+  # safe: a note about an unfinished run is extra
   inc <- tryCatch(run_incomplete(pd0), error = function(e) "")
   if (nzchar(inc)) showNotification(paste0("The last run on this project did not finish (", inc, "). Some outputs may be from before it: run again to bring them all up to date."),
                                     type = "warning", duration = NULL)

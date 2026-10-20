@@ -24,13 +24,16 @@ ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout =
   p <- processx::process$new(file.path(R.home("bin"), "Rscript"), c("-e", sprintf("shiny::runApp(%s, port = %d, launch.browser = FALSE)", deparse(normalizePath(app_dir)), port)),
                              env = c("current", env), stdout = "|", stderr = "2>&1", wd = app_dir)
   on.exit(p$kill(), add = TRUE)
+  # safe: test tool; output of an app already stopped
   log <- character(); grab <- function() if (p$is_alive() || TRUE) log <<- c(log, tryCatch(p$read_output_lines(), error = function(e) character()))
   t0 <- Sys.time()
+  # safe: test tool; asking whether the app is up yet
   up <- function() { con <- url(url); r <- tryCatch(suppressWarnings(length(readLines(con, n = 1, warn = FALSE)) > 0), error = function(e) FALSE); try(close(con), silent = TRUE); isTRUE(r) }
   repeat { grab(); if (up()) break
     if (!p$is_alive()) stop("the app stopped before it started:\n", paste(utils::tail(log, 20), collapse = "\n"))
     if (difftime(Sys.time(), t0, units = "secs") > 3 * timeout) stop("the app did not start within ", 3 * timeout, " s"); Sys.sleep(0.5) }
   op <- options(chromote.timeout = max(60, getOption("chromote.timeout", 10)))   # Chrome itself may take a while to start on a busy computer
+  # safe: test tool; closing a browser already closed
   b <- own_draw(chromote::ChromoteSession$new(width = 1400, height = 900)); options(op); on.exit(try(b$close(), silent = TRUE), add = TRUE)
   js_err <- character(); b$Runtime$enable()
   b$Runtime$exceptionThrown(callback_ = function(m) { e <- m$exceptionDetails$exception$description %||% m$exceptionDetails$text %||% "JavaScript error"
@@ -43,6 +46,7 @@ ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout =
   # the page connecting to the app, waited for in the same time.
   connected <- function() isTRUE(tryCatch(js("!!(window.Shiny && Shiny.shinyapp && Shiny.shinyapp.isConnected())"), error = function(e) FALSE))
   open <- function(u, wait = timeout, must = FALSE) { t1 <- Sys.time(); b$Page$navigate(u, wait_ = FALSE)
+    # safe: test tool; a page that does not signal its load is checked by what it shows
     tryCatch(b$Page$loadEventFired(timeout_ = wait), error = function(e) NULL)
     while (!connected() && difftime(Sys.time(), t1, units = "secs") < wait) Sys.sleep(0.3)
     if (must && !connected()) stop("the page did not connect to the app within ", wait, " s")

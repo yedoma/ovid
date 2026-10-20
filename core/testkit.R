@@ -34,9 +34,11 @@ make_reader_samples <- function(files, dest, kind_of, read, trim = character(), 
   dir.create(file.path(dest, "expected"), recursive = TRUE, showWarnings = FALSE)
   files <- files[file.exists(files) & !startsWith(basename(files), ".")]
   files <- files[order(file.size(files))]
+  # safe: test kit; a file whose kind cannot be told is listed with none
   kinds <- vapply(files, function(f) { k <- tryCatch(kind_of(f), error = function(e) NA_character_); if (length(k) != 1 || is.na(k)) "" else as.character(k) }, "")
   out <- character()
   for (k in setdiff(unique(kinds), c("", "unknown", "empty"))) for (f in files[kinds == k]) {
+    # safe: test kit; a sample that cannot be read counts as unreadable, which the check reports
     ok <- function(p) isTRUE(tryCatch({ r <- read(p, k); rows_of(r) > 0 || (k %in% no_rows && length(r) > 0) }, error = function(e) FALSE))
     to <- file.path(dest, paste0(k, "__", gsub("[^A-Za-z0-9_.-]+", "_", basename(f))))
     if (k %in% trim) { l <- readLines(f, warn = FALSE); writeLines(utils::head(l, max_lines), to)
@@ -129,6 +131,7 @@ damaged_file_runs <- function(samples_dir, run, work = tempfile("damage"), damag
   nm <- function(f) sub("^.*?__", "", basename(f)); dir.create(work, recursive = TRUE); out <- list(); k <- 0L
   for (f in s) for (v in damage) { k <- k + 1L; raw <- file.path(work, paste0("raw", k)); dir.create(raw)
     for (g in setdiff(s, f)) file.copy(g, file.path(raw, nm(g)))
+    # safe: test kit; a damage that cannot be made to this file is left out
     o <- file.path(raw, nm(f)); tryCatch(DAMAGE[[v]](f, o), error = function(e) NULL)
     r <- tryCatch({ run(raw, file.path(work, paste0("p", k))); "ok" }, error = function(e) conditionMessage(e))
     Sys.chmod(o, "644"); out[[k]] <- data.table(file = nm(f), damage = v, result = r) }

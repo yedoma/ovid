@@ -17,6 +17,7 @@ depth_ramp <- function(n) if (n <= 1) MI$orange else colorRampPalette(c(MI$orang
 STATE_COLS <- c(frozen = MI$blue, `zero curtain` = MI$sand, thawed = MI$orange)
 
 gt_save <- function(p, file, w = 11, h = 6) tryCatch({ ggsave(file, p, width = w, height = min(h, 45), dpi = 120, bg = MI$bg, limitsize = FALSE); TRUE },
+  # safe: the caller lists a figure that could not be saved
   error = function(e) FALSE)
 
 msg_plot <- function(txt) ggplot() + annotate("text", x = 0, y = 0, label = txt, colour = MI$fg4, size = 5) + theme_void() +

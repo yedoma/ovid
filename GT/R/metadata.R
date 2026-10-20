@@ -14,6 +14,7 @@ xlsx_files <- function(dir) { if (!length(dir) || is.na(dir) || !dir.exists(path
 
 # A sheet as text, with the header row found among the first rows (the first row holding one of the wanted names).
 read_sheet_header <- function(path, sheet, want) {
+  # safe: looking for a registry; a sheet that cannot be read is not one
   d <- tryCatch(as.data.table(readxl::read_excel(path, sheet = sheet, col_names = FALSE, col_types = "text", .name_repair = "minimal")), error = function(e) NULL)
   if (is.null(d) || nrow(d) < 2) return(NULL)
   for (r in seq_len(min(6, nrow(d)))) { h <- trim(unlist(d[r])); if (any(tolower(h) %in% tolower(want), na.rm = TRUE)) {
@@ -24,6 +25,7 @@ read_sheet_header <- function(path, sheet, want) {
 }
 
 find_registry <- function(dir) {
+  # safe: looking for a registry; a workbook that cannot be read has none
   for (f in xlsx_files(dir)) for (s in tryCatch(readxl::excel_sheets(f), error = function(e) character())) {
     b <- read_sheet_header(f, s, c("Name", "SN"))
     if (!is.null(b) && all(c("name", "sn") %in% tolower(names(b))) && any(tolower(names(b)) == "type")) {
@@ -34,6 +36,7 @@ find_registry <- function(dir) {
 # Every workbook in the folder, one row per site, sheet and field, for the Site details page.
 index_metadata <- function(dir) {
   out <- list()
+  # safe: looking for a registry; a workbook that cannot be read has none
   for (f in xlsx_files(dir)) for (s in tryCatch(readxl::excel_sheets(f), error = function(e) character())) {
     b <- read_sheet_header(f, s, c("Site ID", "Name", "Site"))
     if (is.null(b)) next
@@ -62,6 +65,7 @@ read_field_notes <- function(dir) {
         x <- gsub("</w:p>", "\n", x); x <- gsub("<w:tab/>", "\t", x); x <- gsub("<[^>]+>", "", x)
         x <- gsub("&amp;", "&", gsub("&gt;", ">", gsub("&lt;", "<", x)))
         strsplit(x, "\n", fixed = TRUE)[[1]]
+      # safe: a field-note file that cannot be read gives no notes
       } else read_lines_any(p) }, error = function(e) character())
     txt <- trim(txt); k <- which(nzchar(txt))
     if (!length(k)) NULL else data.table(file = basename(p), para = k, text = txt[k]) }), fill = TRUE)
@@ -107,15 +111,15 @@ gt_deploy_rows <- function(r) data.table(serial = r$serial, site = dep_where(r),
 # hand or from the registry; not the site named after the logger when nothing was known). The Workbench's Needs you leaves
 # them out of "found in the files, in no row of the deployment sheet".
 gt_placed_serials <- function(project_dir) {
-  se <- tryCatch(read_cfg(cfg_path(project_dir, "sensors")), error = function(e) data.table())
+  se <- try_or(read_cfg(cfg_path(project_dir, "sensors")), data.table(), "sensors.csv")
   a <- if (nrow(se) && all(c("serial", "site", "logger_type") %in% names(se))) se[nzchar(site) & site != auto_site(logger_type, norm_serial(serial)), serial] else character()
-  ms <- tryCatch(meta_sheet(project_dir, META_FIELDS, report = FALSE, map = GT_MAP), error = function(e) NULL)
+  ms <- try_or(meta_sheet(project_dir, META_FIELDS, report = FALSE, map = GT_MAP), where = "deployment sheet")
   b <- if (!is.null(ms) && "serial" %in% names(ms)) as.character(ms$serial) else character()
   x <- norm_serial(c(a, b)); unique(x[!is.na(x) & nzchar(x)])
 }
 # Where a logger the deployment sheet does not list is now (Split here on Needs you, core grouping.R): its site in sensors.csv.
 dep_split_place <- function(project_dir, serial) {
-  se <- tryCatch(read_cfg(cfg_path(project_dir, "sensors")), error = function(e) data.table())
+  se <- try_or(read_cfg(cfg_path(project_dir, "sensors")), data.table(), "sensors.csv")
   s <- if (nrow(se) && all(c("serial", "site") %in% names(se))) se$site[norm_serial(se$serial) == norm_serial(serial) & nzchar(se$site)] else character()
   if (length(s)) list(site = s[1]) else list()
 }

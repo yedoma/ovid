@@ -76,6 +76,15 @@ local({
   ut <- file.path(work, "utm.csv"); fwrite(data.table(Name = c("E1", "E2"), Easting = c(500000, 500001), Northing = c(6800000, 6800000)), ut)
   e <- tryCatch(elevation_file_rows(ut, "S1"), error = function(e) conditionMessage(e))
   check(is.character(e) && grepl("elevation", e), "a GNSS file with eastings and northings and no elevation is refused, saying it needs an elevation column")
+
+  # where the map opens: nothing located shows the whole world (no region assumed); sites, then transects, take over
+  lay0 <- data.table(transect_id = character(), start_lat = numeric(), end_lat = numeric(), start_lon = numeric(), end_lon = numeric())
+  v0 <- map_view(lay0)
+  vs <- map_view(lay0, data.table(site = "A", latitude = c("45.4", "45.6"), longitude = c("-75.6", "-75.8")))
+  vt <- map_view(data.table(transect_id = "T1", start_lat = 50, end_lat = 50.001, start_lon = 10, end_lon = 10.002), NULL, "T1")
+  check(identical(v0, list(center = list(lat = 0, lon = 0), zoom = 0)) && vs$zoom == 6 &&
+          isTRUE(all.equal(unlist(vs$center), c(lat = 45.5, lon = -75.7))) && vt$zoom == 16 && isTRUE(all.equal(vt$center$lat, 50.0005)),
+        "the map opens on the whole world with nothing located, on the sites with sites only, and on a picked transect")
   unlink(work, recursive = TRUE)
 })
 if (exists("BF_ALONE")) { if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green") }

@@ -7,6 +7,7 @@
   xp_sites <- function() { o <- outs(); if (length(input$cd_sites)) input$cd_sites else if (!is.null(o)) sort(unique(o$summary$site)) else character() }
   # the report layout (core report_options.R): titles, file names, sections and axes shared by the sites exported together
   rpo <- report_options_server("rpo", sections = WLR_REPORT_SECTIONS, names_for = function(o) {
+    # safe: a site list for choosing only
     s <- tryCatch({ x <- read_out(pd(), "summary.csv"); if (length(input$cd_sites)) x <- x[site %in% input$cd_sites]; unique(x$site) }, error = function(e) character()); if (!length(s)) return(NULL)
     data.table(name = s, title = vapply(s, function(x) report_title(o, paste0(x, ": water level and temperature"), name = x, app = "WLR"), ""),
                file = vapply(s, function(x) report_file(o, safe_name(x), name = x, app = "WLR"), "")) })
@@ -18,6 +19,7 @@
     corrected_data(pd(), st, input$cd_values, input$cd_res, ft[[1]], ft[[2]], input$cd_layout, isTRUE(input$cd_flags), input$cd_scheme %||% "wmo", input$cd_versions %||% "both") }
   output$cd_count <- renderText({ if (!length(xp_sites())) return("Run the pipeline first.")
     if (!(input$xp_fmt %||% "package") %in% c("csv", "sites")) return(sprintf("%d site(s)", length(xp_sites())))
+    # safe: nothing to export yet
     d <- tryCatch(cd_get(), error = function(e) NULL)
     if (is.null(d) || !nrow(d)) "Nothing to export for this choice." else sprintf("%s rows, %d columns", num(nrow(d)), ncol(d)) })
   observeEvent(input$cd_all, { o <- outs(); req(o); updateSelectizeInput(session, "cd_sites", selected = sort(unique(o$summary$site))) })

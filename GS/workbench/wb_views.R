@@ -100,6 +100,7 @@ wb_views_server <- function(input, output, session, ctx) {
     r <- rc()[i]; f <- ctx$flags_now(); ids <- unique(f[rule == r$rule & (if ("rule_id" %in% names(f)) rule_id == r$rule_id else TRUE)]$meas_id)
     pick(list(ids = ids, electrodes = integer(), what = paste("caught by", r$rule_id))) })
   output$wbe_profiles <- renderUI({ d <- ctx$dat(); s1 <- ctx$part()$s1; cf <- ctx$cfg_now(); prof <- unique(stats::na.omit(cf$qc$profile)); prof <- prof[nzchar(prof)]
+    # safe: a QC chip that cannot be worked out is left off
     chips <- lapply(prof, function(p) { f <- tryCatch(qc_survey(d, s1$survey_id, s1$type, cf$qc, p, cf$manual, s1, cf$electrodes), error = function(e) NULL)
       n <- if (is.null(f) || !nrow(f)) 0L else uniqueN(f$meas_id)
       span(class = paste("wb-chip", if (identical(p, ctx$prof_now())) "on"), title = paste(n, "of", nrow(d), "measurements flagged with this profile"),
@@ -122,6 +123,7 @@ wb_views_server <- function(input, output, session, ctx) {
 
 # The right panel for Stack and Edit data: what was picked, its electrodes on the line, its contact and flags, and Decide.
 wb_pick_aside <- function(ctx) {
+  # safe: nothing picked yet
   p <- ctx$pick(); p0 <- tryCatch(ctx$part(), error = function(e) NULL)
   if (is.null(p0)) return(div(class = "wb-insp", div(span(class = "wb-eb", "Selection"), tags$h2("No data yet")), p(class = "wb-p", "Set the folders under Import data and press Scan.")))
   btn <- function(lbl, target, cls = "", title = NULL) tags$button(type = "button", class = paste("wb-btn sm", cls), title = title, onclick = sprintf("$('#%s').click()", target), HTML(lbl))

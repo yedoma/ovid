@@ -30,17 +30,19 @@
   observeEvent(input$run, {
     if (VIEWER) return()
     cfg <- current_cfg(); if (!folders_ok(cfg)) return()
+    # safe: each table's editor reports its own save problem
     for (m in all_tables()) try(m$save(quiet = TRUE), silent = TRUE)
-    p <- tryCatch(preflight(cfg), error = function(e) NULL); rv$pf_tick <- (rv$pf_tick %||% 0) + 1
+    p <- tryCatch(preflight(cfg), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); rv$pf_tick <- (rv$pf_tick %||% 0) + 1
     e <- if (is.null(p)) NULL else p[level == "error"]
     if (!is.null(e) && nrow(e)) return(showModal(setup_gate(e, "run_review", "run_force")))   # core shell.R
     do_run(cfg)
   })
   observeEvent(input$run_review, { removeModal(); go("Preflight") })
   observeEvent(input$run_force, { removeModal(); cfg <- current_cfg()          # the run's log records what the set-up check found
-    p <- tryCatch(preflight(cfg), error = function(e) NULL); cfg$run_anyway <- setup_problem_lines(if (is.null(p)) NULL else p[level == "error"]); do_run(cfg) })
+    p <- tryCatch(preflight(cfg), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); cfg$run_anyway <- setup_problem_lines(if (is.null(p)) NULL else p[level == "error"]); do_run(cfg) })
   out_seen <- ovid_output_watch(session, pd)                    # the output folder deleted or replaced outside the app (core shell.R)
   applied_server("applied", pd, out_seen, edit = if (!VIEWER) "Quality rules")   # the corrections applied, in the top bar (core applied.R)
+  # safe: shown as no output yet; a run writes it again
   outs <- reactive({ rv$tick; out_seen(); tryCatch(load_outputs(pd()), error = function(e) NULL) })
   output$d_context <- renderUI(switch(input$nav %||% "",
     Explore = ovid_context(input$ex_tab, if (!identical(input$ex_tab, "Compare stations")) input$ex_station), NULL))

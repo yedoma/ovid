@@ -21,7 +21,7 @@
   const restyle = () => { Object.entries(items).forEach(([g, a]) => a.forEach(it => style1(g, it))); drawLegend(); };
   const clear = g => { lay[g].clearLayers(); items[g] = []; };
   function init() {
-    map = L.map('rsmap', { preferCanvas: true, zoomControl: true }).setView([60.1, -120.1], 3);   // fitted to the data once it is drawn
+    map = L.map('rsmap', { preferCanvas: true, zoomControl: true }).setView([0, 0], 2);   // the world; fitted to the data once it is drawn
     base = {
       'Satellite (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, maxNativeZoom: 19, attribution: 'Esri World Imagery' })
     };
@@ -162,7 +162,7 @@
   let gmap, glay, glegend;
   function gnss(d) {
     if (typeof L === 'undefined') return;
-    if (!gmap) { gmap = L.map('gnssmap').setView([60.1, -120.1], 3);
+    if (!gmap) { gmap = L.map('gnssmap').setView([0, 0], 2);   // the world until points are drawn
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, maxNativeZoom: 19, attribution: 'Esri World Imagery' }).addTo(gmap);
       glay = L.layerGroup().addTo(gmap);
       glegend = L.control({ position: 'bottomright' }); glegend.onAdd = () => L.DomUtil.create('div', 'map-legend'); glegend.addTo(gmap);

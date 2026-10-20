@@ -4,6 +4,12 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Changed (2026-10-20).** Colours follow the colour scheme: GS map, GPR and pseudosection colours and GT's scan table take the palette of the scheme picked in Settings > Colours; WLR's Nord colours come from core. GS's Greys pseudosection scale runs from the scheme's panel ground to its text; the scientific scales (Spectral, Viridis, GPR Grey and Blue-white-red) stay fixed and map labels on satellite imagery stay white. A core test fails on any other fixed colour. **Output changes:** none in each app's own scheme (GS red and violet as lifted for contrast); other schemes draw in their own colours.
+
+**Changed (2026-10-20).** Read failures that used to be silent are reported: core and every app now put a failed read of a set-up table or a missing report part on the problem list (try_or), the Run buttons say when the set-up check could not run, and every remaining silent default has a comment saying why it is safe. **Output changes:** none for readable projects.
+
+**Changed (2026-10-20).** One say() in core for every app (CS, WLR and GT dropped their copies). Maps with nothing to show open on the whole world instead of a fixed field region (CS station map, GS transect map, RS flight and GNSS maps), and example coordinates in the apps are a neutral place. Helpers the apps had copied are in core once: clock corrections (CS, WLR, GT), the HOBO CSV rows and events (WLR, GT), and set-up and Workbench helpers (CS, WLR, GT, GS, RS). **Output changes:** none for the test projects; a clock correction with an unreadable date or minutes is now listed as a problem in CS and GT, WLR no longer counts shifted readings as dropped, and GT reads a joined HOBO CSV up to its second heading, as WLR does, listing the rest as a problem.
+
 **Changed (2026-10-17).** GS has a new icon (a GPR trace above an ERT section) in both interfaces, browser tabs, platform icons and documentation banners. The other four app icons are unchanged. **Output changes:** none.
 
 **Renamed.** ERT is now GS (geophysical surveys), since it covers GPR as well as resistivity. Projects made as ERT open

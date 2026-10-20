@@ -41,7 +41,7 @@ period_on <- function(x) { x <- tolower(trim(as.character(x))); !x %in% c("off",
 # skip: actions an app applies itself (its removal step, its own actions): left out here, rows and problems alike. The app's
 # own columns (output ...) come along as text.
 period_read <- function(path, skip = character()) {
-  d <- if (length(path) == 1 && file.exists(path)) tryCatch(read_cfg(path), error = function(e) NULL) else NULL
+  d <- if (length(path) == 1 && file.exists(path)) try_or(read_cfg(path), where = basename(path)) else NULL
   empty <- data.table(row = integer(), target = character(), parameter = character(), action = character(), value = numeric(),
                       t0 = as.POSIXct(character(), tz = "UTC"), t1 = as.POSIXct(character(), tz = "UTC"), note = character())
   if (is.null(d) || !nrow(d)) return(list(rows = empty, bad = data.table(row = integer(), problem = character())))
@@ -110,7 +110,7 @@ period_load <- function(path, skip = character()) { x <- period_read(path, skip)
 # The rows an app applies itself (actions), as written (text, every column), switched on, with their row number in the file
 # (row) and the action as its key. The app reads them as it read its old table (period_view()), problems and all.
 period_own_rows <- function(path, actions) {
-  d <- if (length(path) == 1 && file.exists(path)) tryCatch(read_cfg(path), error = function(e) NULL) else NULL
+  d <- if (length(path) == 1 && file.exists(path)) try_or(read_cfg(path), where = basename(path)) else NULL
   if (is.null(d) || !nrow(d)) return(cbind(empty_cfg(PERIOD_COLS), data.table(row = integer())))
   d <- ensure_cols(as.data.table(d), PERIOD_COLS); d[, row := .I]; d[, action := period_action(action)]
   d[period_on(on) & action %in% actions]

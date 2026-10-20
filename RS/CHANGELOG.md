@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (failures reported, not hidden, 2026-10-20)**
+- 1 failure now reported (a source's scan.rds); 27 defaults commented as safe. The Sources page shows a notice when the set-up check cannot run.
+- **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.
+
+**Changed (Workbench grid helpers to core, 2026-10-20)**
+- wb_num() and wb_cells() are core's (core/workbench.R). **Output changes:** none.
+
+**Changed (maps before data, 2026-10-20)**
+- The flight map and the GNSS map open on the whole world until data are drawn and fitted (they used to open on a fixed region).
+- **Output changes:** none.
+
 **Added and fixed (tests: samples, damaged files, golden project, derived values, 2026-10-19)**
 - tests/samples: a trimmed, neutralized real file for every format RS reads but eMotion .mis3 (DJI JPG with XMP, SODA JPG, MRK, RPT, eMotion geoinfo, DJI WPML KMZ, RINEX observation header, GeoTIFF), with reference values from the raw files in reference.csv (tests/samples.R).
 - tests/test_bad_files.R: every sample emptied, cut in half and cut to 1,000 bytes beside a good flight; photos with no GPS, an MRK that matches no photo, a camera clock in local time, the same photos stored twice.

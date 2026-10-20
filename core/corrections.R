@@ -20,11 +20,12 @@ CORRECTION_KINDS <- c(removes = "Removes values", changes = "Changes values", fi
 correction_state <- function(x, cfg, project_dir = cfg$project_dir) {
   if (nzchar(x$table %||% "")) {
     f <- file.path(path.expand(project_dir %||% ""), "config", x$table)
+    # safe: an unreadable table is shown as "by table, unreadable"
     n <- if (nzchar(project_dir %||% "") && file.exists(f)) tryCatch(nrow(fread(f, colClasses = "character", na.strings = NULL)), error = function(e) NA_integer_) else 0L
     return(if (is.na(n)) "by table, unreadable" else if (n) paste0("by table, ", n, " row", if (n != 1) "s") else "by table, none") }
   if (!nzchar(x$setting %||% "")) return("always")
   if (length(x$choices)) { v <- cfg[[x$setting]] %||% x$default %||% x$choices[[1]]; return(names(x$choices)[match(v, x$choices)] %|% as.character(v)) }
-  on <- if (is.function(x$on)) isTRUE(tryCatch(x$on(cfg), error = function(e) FALSE)) else isTRUE(cfg[[x$setting]] %||% x$default %||% TRUE)
+  on <- if (is.function(x$on)) isTRUE(try_or(x$on(cfg), FALSE, paste("correction", x$id %||% ""))) else isTRUE(cfg[[x$setting]] %||% x$default %||% TRUE)
   if (on) "on" else "off"
 }
 
@@ -44,7 +45,7 @@ corrections_cfg <- function(cfg, settings = get0("SETTINGS", ifnotfound = list()
 
 # Lines for the run log: what the run changes on its own, by state.
 corrections_log <- function(cfg, corr = get0("CORRECTIONS", ifnotfound = list())) {
-  t <- tryCatch(corrections_table(cfg, corr), error = function(e) NULL); if (is.null(t) || !nrow(t)) return(character())
+  t <- try_or(corrections_table(cfg, corr), where = "corrections list"); if (is.null(t) || !nrow(t)) return(character())
   grp <- function(lab, i) if (any(i)) paste0("  ", lab, ": ", paste(t$id[i], collapse = ", "))
   ch <- !t$state %in% c("on", "off", "always") & !startsWith(t$state, "by table")
   c("Automatic corrections (see the Automatic corrections step of the set-up):", grp("on", t$state == "on"), grp("always", t$state == "always"),
@@ -64,6 +65,7 @@ corrections_server <- function(id, cfg_now, settings_file = get0("SETTINGS_FILE"
     now <- function() { v <- corrections_cfg(cfg_now())[[k]] %||% x$default %||% (if (length(x$choices)) x$choices[[1]] else TRUE); if (length(x$choices)) as.character(v) else isTRUE(v) }
     observeEvent(input[[k]], ignoreInit = TRUE, {
       if (identical(val(), now())) return()                                                         # drawn, not changed: nothing saved
+      # safe: the switch applies in this session; only remembering it failed
       if (!is.null(settings_file)) tryCatch(settings_save(settings_file, setNames(list(val()), k)), error = function(e) NULL)
       if (exists("live_touch", mode = "function")) live_touch()
       e <- env_with("SETTINGS", environment(corrections_server))                                  # the app's own settings, where its code reads them

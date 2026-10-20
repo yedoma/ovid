@@ -78,6 +78,7 @@
   })
   rf_data <- reactive({ r <- rf_sel(); req(r); one <- r[1]; req(one$status == "ok", !is.na(one$station)); rv$tick
     st <- strsplit(one$station, " | ", fixed = TRUE)[[1]][1]; sm <- strsplit(one$stream, " | ", fixed = TRUE)[[1]][1]
+    # safe: req() shows nothing for a station that cannot be loaded
     d <- tryCatch(load_station(st, sm, pd()), error = function(e) NULL); req(d)
     mine <- basename(d$source_file) == one$file; pad <- max(86400, as.numeric(diff(range(d$TIMESTAMP[mine], na.rm = TRUE))) * 0.15)
     w <- if (any(mine)) range(d$TIMESTAMP[mine]) + c(-pad, pad) else range(d$TIMESTAMP)
@@ -121,6 +122,7 @@
     cfg <- current_cfg(); if (!folders_ok(cfg)) return()
     n <- forget_files(pd(), r$path, r$logger_id, r$table)
     if (!isTRUE(cfg$incremental)) note("Reusing unchanged loggers is switched off on the Project step, so this is a full run.", type = "warning")
+    # safe: a note after the run only
     do_run(cfg, stay = TRUE, after = function() if (isTRUE(cfg$incremental)) { m <- tryCatch(fread(file.path(pd(), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
       if (!is.null(m)) note(sprintf("Rescanned %s. %s of %s logger tables and %s of %s station tables were reused unchanged.", if (nrow(r) > 1) paste(nrow(r), "files") else r$file[1],
         m[key == "tables_reused", value], m[key == "logger_tables", value], m[key == "stations_reused", value], m[key == "station_tables", value]), duration = 10) }) })

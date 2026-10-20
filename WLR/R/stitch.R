@@ -60,24 +60,5 @@ stitch_serial <- function(files, cfg) {
 
 # Clock corrections from the Clock checks page: shift a span of one logger's records by a number of minutes (mode shift, or
 # blank), or spread a clock error found at download over the span (mode drift: no shift at start, shift_minutes at end, linear
-# in between; the USGS proration, as GT does for RBR loggers).
+# in between; the USGS proration, as GT does for RBR loggers). Applied by core time_corrections.R.
 TIME_COLS <- c("serial", "start", "end", "shift_minutes", "reason", "author", "mode")
-apply_time_corrections <- function(dt, tc) {
-  if (is.null(tc) || !nrow(tc)) return(dt)
-  tc <- tc[norm_serial(serial) == dt$logger_id[1]]
-  for (k in seq_len(nrow(tc))) {
-    sp <- correction_span(dt$TIMESTAMP, tc$start[k], tc$end[k])                             # core timestamps.R
-    if ((nzchar(tc$start[k]) && is.na(sp$a)) || (nzchar(tc$end[k]) && is.na(sp$b))) { problem("time_corrections.csv", paste0("serial ", tc$serial[k], ": start or end is not a date; that row was skipped")); next }
-    a <- if (is.na(sp$a)) min(dt$TIMESTAMP) else sp$a; b <- if (is.na(sp$b)) max(dt$TIMESTAMP) else sp$b
-    hit <- sp$hit; mins <- as.numeric(tc$shift_minutes[k])
-    if (!any(hit) || is.na(mins)) next
-    drift <- identical(tolower(trim(tc$mode[k] %||% "")), "drift")
-    audit_add("stitch", if (drift) "clock_fix_drift" else "clock_fix_shifted", "row", sum(hit), logger_id = dt$logger_id[1], timestamp = a, column = "<record>",
-              reason = if (drift) sprintf("clock drift spread over the span, up to %+g min at its end: %s", mins, tc$reason[k]) else sprintf("moved %+g min: %s", mins, tc$reason[k]))
-    dt[hit, TIMESTAMP := shift_times(TIMESTAMP, mins, if (drift) "drift" else "shift", a, b)]
-  }
-  setorder(dt, TIMESTAMP)
-  clash <- duplicated(dt$TIMESTAMP)
-  if (any(clash)) dt <- remove_rows(dt, which(clash), "stitch", "clock_fix_overlap", "a clock correction moved a record onto an existing one")
-  dt
-}

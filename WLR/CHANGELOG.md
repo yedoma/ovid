@@ -5,6 +5,19 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Nord from core, 2026-10-20)**
+- R/plots.R takes its Nord colours from core (`nord_palette()`, OVID_SCHEMES$Nord) instead of its own copy; the values are the same.
+- **Output changes:** none.
+
+**Changed (failures reported, not hidden, 2026-10-20)**
+- 10 failures now reported (approvals.csv, each part of a station report, the report axis limits); 29 defaults commented as safe. Check the data lists a deployment sheet or set-up table it cannot read (it used to stop quietly); Run and Run anyway show a notice when the set-up check cannot run.
+- **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.
+
+**Changed (core say and shared helpers, 2026-10-20)**
+- app.R uses core say() (it sets LOG and SAY_STEPS = 7) instead of its own copy.
+- Clock corrections (core/time_corrections.R), the HOBO CSV rows and events (core/logger_files.R), the set-up editor, rule_info() and track_session() are core's. A correction with minutes that are not a number is now listed as a problem; a shift is audited as a change of the time, so the Audit page no longer counts shifted readings as dropped.
+- **Output changes:** only for a project with a clock correction (its audit rows) or an unreadable correction row (now a problem).
+
 **Fixed (decoded .hobo times, 2026-10-20)**
 - A decoded .hobo file's clock offset now comes from the file itself (core hobo.R utc_offset_h, the launch time in UTC), then from its zone name. Files whose zone name was Eastern (or another the name list does not hold) were placed 2 to 3 hours off. **Output changes:** decoded .hobo files from loggers launched in a zone parse_offset does not know: times now right.
 

@@ -65,6 +65,7 @@ wb_project_server <- function(input, output, session, ctx) {
     div(class = "wb-tiles", tile(num(nrow(f)), "files in the folders"), tile(num(new), "new since the last run", if (new) "hi"), tile(num(changed), "changed size", if (changed) "hi"),
         tile(num(sum(m$use %in% TRUE)), "read in the last run"), tile(num(if (!is.null(o)) nrow(o$loggers) else 0), "loggers"),
         tile(num(if (!is.null(o)) nrow(o$ss) else 0), "sites"), tile(num(nb), "downloads need an export", if (nb) "hi")) })
+  # safe: no check result yet: nothing to show
   output$wb_check_short <- renderUI({ p <- tryCatch(std$pf(), error = function(e) NULL); if (is.null(p)) return(NULL)
     ne <- sum(p$level == "error"); nw <- sum(p$level == "warning")
     div(class = "wb-inline", if (!ne && !nw) span(class = "wb-good", "Safe to run.") else span(class = if (ne) "wb-bad" else "wb-warnt",

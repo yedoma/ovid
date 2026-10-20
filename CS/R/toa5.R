@@ -48,6 +48,7 @@ discover_files <- function(cfg) {
   if (!length(files)) stop("No .dat files found under: ", paste(dirs, collapse = ", "))
   # headers and checksums of files that have not changed since the last run (same size and time) are taken from the cache
   hc_file <- if (isTRUE(cfg$incremental) && nzchar(cfg$project_dir %||% "")) file.path(cfg$project_dir, "cache", "headers.rds") else ""
+  # safe: a damaged header cache is rebuilt
   hc <- if (nzchar(hc_file) && file.exists(hc_file)) tryCatch(readRDS(hc_file), error = function(e) list()) else list()
   sig <- paste(files, file.size(files), as.numeric(file.mtime(files)), STEP_HASH$headers, sep = "|")
   hdr <- lapply(seq_along(files), function(i) { h <- hc[[sig[i]]]; if (!is.null(h)) return(h$row)

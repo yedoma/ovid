@@ -11,6 +11,7 @@
       report_opts = rpo(), depth_positive = set_now("depth_positive"))) })
   # the report layout (core report_options.R): titles, file names, sections and axes shared by the sites exported together
   rpo <- report_options_server("rpo", sections = GT_REPORT_SECTIONS, names_for = function(o) { s <- input$xp_sites; if (!length(s)) s <- site_names(); if (!length(s)) return(NULL)
+    # safe: no profiles: the export has no profile column
     pr <- tryCatch(gt_profiles(pd(), s), error = function(e) NULL)
     data.table(name = paste0(s, if (!is.null(pr)) paste0("  (", pr$profile[match(s, pr$site)], " profile)") else ""),
                title = vapply(s, function(x) report_title(o, paste0(x, ": ground temperature"), name = x, app = "GT"), ""),

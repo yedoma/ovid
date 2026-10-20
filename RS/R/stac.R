@@ -90,6 +90,7 @@ stac_time <- function(t) {
   t <- sub("Z$", "", sub("^(\\d{4}-\\d{2}-\\d{2})T", "\\1 ", t))
   if (grepl("^\\d{4}$", t)) t <- paste0(t, "-01-01") else if (grepl("^\\d{4}-\\d{2}$", t)) t <- paste0(t, "-01")
   x <- tryCatch(suppressWarnings(as.POSIXct(t, tz = "UTC", tryFormats = c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%Y/%m/%d %H:%M:%OS", "%Y/%m/%d"))),
+                # safe: a time that is not a date is not known (NA)
                 error = function(e) NA)
   if (is.na(x)) NULL else format(x, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC") }
 # A year alone (inferred from a folder or file name) is a span: the whole year, as STAC start and end times.

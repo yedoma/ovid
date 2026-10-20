@@ -56,8 +56,10 @@ report_options_server <- function(id, names_for = function(o) NULL, sections = N
   keep <- debounce(opts, 1500)
   observeEvent(keep(), ignoreInit = TRUE, { o <- keep()
     old <- if (is.null(e)) NULL else get("SETTINGS", envir = e)[[key]]; if (identical(report_opts(old), o)) return()
+    # safe: the choice applies in this session; only remembering it for the next failed
     if (!is.null(settings_file)) tryCatch(settings_save(settings_file, setNames(list(o), key)), error = function(err) NULL)
     if (!is.null(e)) { s <- get("SETTINGS", envir = e); s[[key]] <- o; assign("SETTINGS", s, envir = e) } })
+  # safe: no preview of the names while the options are incomplete
   output$names <- renderUI({ x <- tryCatch(names_for(opts()), error = function(err) NULL); if (is.null(x) || !nrow(x)) return(NULL)
     tagList(p(class = "dim", style = "margin:6px 0 2px", "The reports would be called:"),
             tags$table(class = "table table-sm", tags$thead(tags$tr(tags$th("Site or station"), tags$th("Title"), tags$th("File"))),

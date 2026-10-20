@@ -6,6 +6,7 @@
   # each source with its status, drone photos and flights, and Remove with a confirm in its row (the folder is never touched)
   src_counts <- reactive({ C(); rv$tick
     im <- tryCatch(fread(file.path(CAT(), "images.csv"), select = c("source_id", "lat")), error = function(e) data.table(source_id = character(), lat = numeric()))
+    # safe: an output of the last scan, only shown
     rd0 <- function(f) { p <- file.path(CAT(), f); if (file.exists(p)) tryCatch(fread(p, colClasses = "character"), error = function(e) data.table()) else data.table() }
     list(photos = im[, .N, by = source_id], positioned = sum(is.finite(im$lat)), n_photos = nrow(im), other = rd0("other_photos.csv"), dup = rd0("duplicates.csv")) })
   rm_ask <- reactiveVal("")
@@ -14,6 +15,7 @@
     if (run_busy()) return(showNotification("Wait for the scan or cancel it", type = "warning"))
     r <- tryCatch(remove_source(CFG$project_dir, sid), error = function(e) { showNotification(paste("Not removed:", conditionMessage(e)), type = "error"); NULL })
     if (!is.null(r)) { reload(); showNotification(sprintf("Source %s removed: %d flight(s) left the catalogue; its files are as they were", sid, r$flights), type = "message") } })
+  # safe: the sources table's editor reports a read problem
   output$src_list <- renderUI({ live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
     if (!nrow(s)) return(p(class = "muted", "No source yet: add a folder or drive below and scan it."))
     sc <- if (is.null(C())) data.table() else C()$sources; fl <- if (is.null(C())) data.table() else C()$flights; k <- src_counts()$photos
@@ -62,7 +64,7 @@
   # run anyway, cancel); a run anyway is logged.
   pending <- reactiveVal(NULL)
   start_scan <- function(what, args, force = FALSE, done = paste(what, "done"), then = NULL, verb = "Scan") {
-    e <- tryCatch(setup_check(CFG), error = function(x) NULL); e <- if (is.null(e)) NULL else e[level == "error"]
+    e <- tryCatch(setup_check(CFG), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); e <- if (is.null(e)) NULL else e[level == "error"]
     if (!force && !is.null(e) && nrow(e)) { pending(list(what = what, args = args, done = done, then = then))
       return(showModal(setup_gate(e, "scan_review", "scan_force", verb))) }
     cfg <- CFG; if (force) cfg$run_anyway <- setup_problem_lines(e)
@@ -73,6 +75,7 @@
   scan_new <- function(p) { start_scan(paste("Scanning", basename(p)), list(scan = p, source_id = trim(input$s_id))); updateTextInput(session, "s_id", value = "") }
   scan_pending <- reactiveVal(NULL)
   observeEvent(input$s_scan, { p <- trim(input$s_path); if (!nzchar(p) || !dir.exists(path.expand(p))) return(showNotification("That folder was not found", type = "error"))
+    # safe: the sources table's editor reports a read problem
     p <- normalizePath(path.expand(p), winslash = "/"); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
     np <- if (nrow(s)) normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE) else character()
     if (p %in% np) return(scan_new(p))

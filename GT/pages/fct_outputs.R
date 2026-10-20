@@ -3,8 +3,10 @@ load_outputs <- function(pd) {
   a <- file.path(pd, "output", "audit"); s <- file.path(pd, "output", "summaries")
   if (!file.exists(file.path(a, "summary.csv"))) return(NULL)
   rd <- function(dir, f) { p <- file.path(dir, f)
+    # safe: an output table that cannot be read shows as empty until the next run writes it
     d <- if (file.exists(p) && file.info(p)$size > 0) tryCatch(fread(p, na.strings = c("", "NA"), colClasses = list(character = intersect(c("serial", "channel", "sensor", "site", "logger_id"), names(fread(p, nrows = 0))))), error = function(e) data.table()) else data.table()
     d }
+  # safe: as above
   dd <- tryCatch(readRDS(file.path(s, "daily.rds")), error = function(e) data.table())
   list(files = rd(a, "files.csv"), fa = rd(a, "file_audit.csv"), bundles = rd(a, "bundles.csv"), loggers = rd(a, "loggers.csv"), ss = rd(a, "sites_summary.csv"), health = rd(a, "sensor_health.csv"),
        gaps = rd(a, "gaps.csv"), flags = rd(a, "flags.csv"), between = rd(a, "between_sites.csv"), index = rd(a, "audit_index.csv"), problems = rd(a, "problems.csv"), recon = rd(a, "reconciliation.csv"),

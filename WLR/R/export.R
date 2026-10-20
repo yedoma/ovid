@@ -203,7 +203,7 @@ corrected_data_zip <- function(project_dir, sites, zipfile, values = c("depth_m"
 
 # ---- approvals and NetCDF --------------------------------------------------------------------------------------------------
 read_approvals <- function(project_dir) { f <- file.path(path.expand(project_dir), "config", "approvals.csv")
-  if (file.exists(f)) tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) NULL) else NULL }
+  if (file.exists(f)) try_or(fread(f, colClasses = "character", na.strings = NULL), where = "approvals.csv") else NULL }
 
 # What each value is in CF terms. Only names from the CF standard name table are given; the rest have a long name only.
 NC_WLR <- list(

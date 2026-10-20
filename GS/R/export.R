@@ -18,7 +18,7 @@ export_survey <- function(s1, meas, flags, rules, profile, zipfile, project_dir 
   setcolorder(m, c("survey_id", "transect_id", "meas_id", "qc_pass", "qc_flags"))
   fwrite(m, file.path(tmp, "measurements_all.csv")); fwrite(m[qc_pass == TRUE], file.path(tmp, "measurements_passed.csv"))
   sd <- file.path(path.expand(project_dir), "output", "surveys", s1$survey_id)
-  fwrite(electrodes_with_status(electrodes_of(meas), tryCatch(load_configs(CFG)$electrodes, error = function(e) NULL), s1$survey_id, s1), file.path(tmp, "electrodes.csv"))
+  fwrite(electrodes_with_status(electrodes_of(meas), try_or(load_configs(CFG)$electrodes, where = "electrodes.csv"), s1$survey_id, s1), file.path(tmp, "electrodes.csv"))
   for (f in c("extra.csv", "contact.csv", "cmd_geometry.csv")) if (file.exists(file.path(sd, f)))
     file.copy(file.path(sd, f), file.path(tmp, if (f == "extra.csv") "instrument_fields.csv" else f))
   meta <- lapply(s1, function(v) if (length(v) && !is.na(v[1])) v[1] else NULL); meta <- meta[!vapply(meta, is.null, TRUE)]

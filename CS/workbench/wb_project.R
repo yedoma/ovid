@@ -55,6 +55,7 @@ wb_import_ui <- function() div(class = "wb-std d-tool wb-import",
 # ctx: the environment of wb_server (std, E, pd, outs, view, key).
 wb_project_server <- function(input, output, session, ctx) {
   E <- ctx$E; std <- ctx$std
+  # safe: no check result yet: nothing to show
   output$wb_check_short <- renderUI({ p <- tryCatch(std$pf(), error = function(e) NULL); if (is.null(p)) return(NULL)
     ne <- sum(p$level == "error"); nw <- sum(p$level == "warning")
     div(class = "wb-inline", if (!ne && !nw) span(class = "wb-good", "Safe to run.") else span(class = if (ne) "wb-bad" else "wb-warnt",

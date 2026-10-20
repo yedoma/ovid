@@ -135,7 +135,11 @@ x <- bf[damage == "nan_and_codes" & !is.na(temp_expected)]
 check("NaN and the logger's no-value codes are values with a reason, never numbers", nrow(x) > 0 && all(x$temp_flagged >= x$n_bad | grepl("missing_value", x$rules)) && all(grepl("sensor_error|missing_value", x$rules)))
 x <- bf[damage == "header_changed" & !is.na(temp_expected)]; kn <- BF_KNOWN$header_changed
 check("a header that changes partway (an FG2-Shell export over a new parameter set): each row read by the header above it, values in their own channels, or the file reported",
-      nrow(x[!kind %in% names(kn)]) > 0 && all(x[!kind %in% names(kn), (temp_read == temp_expected & same_last %in% TRUE) | (nzchar(problem) & used != "TRUE")]))
+      nrow(x[!kind %in% names(kn)]) > 0 && all(x[!kind %in% names(kn), (temp_read == temp_expected & same_last %in% TRUE) | (nzchar(problem) & used != "TRUE") |
+                                                (kind == "hobo_csv" & nzchar(problem) & temp_read > 0 & temp_read < temp_expected)]))
+x <- bf[damage == "header_changed" & kind == "hobo_csv"]
+check("a HOBOware CSV with two exports joined: the rows up to the second heading are read and the rest are listed as a problem (as WLR)",
+      nrow(x) == 1 && x$temp_read > 0 && x$temp_read < x$temp_expected && grepl("second header with other columns", x$problem, fixed = TRUE))
 for (k in intersect(names(kn), x$kind)) cat("  known ", k, ": ", kn[[k]], "\n", sep = "")
 x <- bf[damage == "truncated" & !is.na(temp_expected)]
 check("a text file cut off inside a row: the cut row is flagged or reported, not read as a whole value", nrow(x) > 0 && all(x$last_row_flagged %in% TRUE | nzchar(x$problem)))

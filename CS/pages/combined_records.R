@@ -53,9 +53,11 @@
     if (!nzchar(nm)) return(note("Give the combined record a name first.", type = "warning"))
     d <- cb_rows(); if (!nrow(d)) return(note("Add at least one source first.", type = "warning"))
     all <- rbind(comp_all()[composite != nm], d)[, COMPOSITE_COLS, with = FALSE]
+    # safe: the save goes on; only the history copy is missed
     try(log_change(comp_file(), all, current_user(session)), silent = TRUE); fwrite_safe(all, comp_file()); rv$cb <- rv$cb_read <- d; rv$cb_tick <- rv$cb_tick + 1; mark()
     note("Saved. It is rebuilt into output/composites on every run; Export CSV gives it now.") })
   observeEvent(input$cb_delete, { if (VIEWER) return(); nm <- input$cb_name %||% ""; req(nzchar(nm), nm %in% comp_all()$composite)
+    # safe: the save goes on; only the history copy is missed
     all <- comp_all()[composite != nm]; try(log_change(comp_file(), all, current_user(session)), silent = TRUE); fwrite_safe(all, comp_file()); mark()
     rv$cb <- NULL; rv$cb_tick <- rv$cb_tick + 1; updateSelectizeInput(session, "cb_name", selected = ""); note("Deleted ", nm, ".") })
   output$cb_dl <- downloadHandler(function() paste0("ovid_cs_combined_", safe_name(input$cb_name %||% "record"), "_", format(Sys.Date()), ".csv"),

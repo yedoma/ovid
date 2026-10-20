@@ -109,7 +109,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
   if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
-for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "hobo", "cache", "timezones", "timestamps", "config", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
+for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "hobo", "cache", "timezones", "timestamps", "time_corrections", "config", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
 for (.f in c("util", "plots", "readers", "units", "discover", "metadata", "stitch", "baro", "baro_check", "qc", "datum", "summaries", "drift", "hydro", "config", "export", "preflight", "report"))
@@ -245,7 +245,8 @@ run_pipeline_steps <- function(cfg = CFG) {
   stitch_one <- function(s, g) {
     r <- tryCatch(stitch_serial(g, cfg), error = function(e) { problem(paste("logger", s), conditionMessage(e)); NULL })
     if (is.null(r)) return(NULL)
-    dt <- apply_time_corrections(r$data, cfgs$time); al <- list()
+    tcr <- if (NROW(cfgs$time)) which(norm_serial(cfgs$time$serial) == r$data$logger_id[1]) else integer()   # core time_corrections.R
+    dt <- apply_time_corrections(r$data, cfgs$time, tcr, dedupe = TRUE); al <- list()
     # units: pressure to kPa, temperature to deg C, file by file (a logger's files can be in different units)
     if (!"pres" %in% names(dt)) dt[, pres := NA_real_]
     dt[, pres_raw := pres]

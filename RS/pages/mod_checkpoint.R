@@ -16,6 +16,7 @@ mod_checkpoint_ui <- function(id) {
 mod_checkpoint_server <- function(id, cal) {
   moduleServer(id, function(input, output, session) {
     observe({ k <- cal(); updateNumericInput(session, "sh", value = cal_num(k, "checkpoint_survey_rmse_h_cm")); updateNumericInput(session, "sv", value = cal_num(k, "checkpoint_survey_rmse_v_cm")) })
+    # safe: a file that cannot be read gives nothing to import
     rd <- reactive({ f <- input$file; req(f); x <- tryCatch(meta_import_read(f$datapath, NULL, f$name), error = function(e) NULL)
       validate(need(!is.null(x) && nrow(x) > 0, "Could not read that file.")); checkpoint_read(x) })
     res <- reactive({ r <- rd(); req(r$ok); checkpoint_accuracy(r$rows, (input$sh %||% 0) / 100, (input$sv %||% 0) / 100) })

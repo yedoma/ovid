@@ -37,11 +37,7 @@ downloadHandler <- ovid_downloads("GT")                  # every download is nam
 
 # The pipeline's console messages go to the app (log panel and progress bar).
 LOG <- new.env(); LOG$lines <- character()
-say <- function(..., col = "fg") {
-  msg <- paste0(...); LOG$lines <- c(LOG$lines, msg); cat(msg, "\n", sep = "")
-  if (grepl("^\\[[0-9]/8\\]", msg) && !is.null(getDefaultReactiveDomain()))
-    try(setProgress((as.numeric(substr(msg, 2, 2)) - 0.5) / 8, detail = sub("^\\[[0-9]/8\\] ", "", msg)), silent = TRUE)
-}
+SAY_STEPS <- 8                                                    # core say(): "[k/8]" messages move the progress bar
 
 SETTINGS_FILE <- file.path(APP_DIR, "app_settings.json")
 SETTINGS <- settings_read(SETTINGS_FILE)                          # core util.R: the last good copy if this one is damaged
@@ -174,6 +170,6 @@ server <- function(input, output, session, embedded = FALSE) {
 # the "ui" setting decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_gt.R"), local = TRUE)
 shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
-         server = function(input, output, session) { track_session(session)
+         server = function(input, output, session) { track_session(session, "GT")
            if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
            wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })

@@ -12,7 +12,7 @@ geo_line <- function(lat1, lon1, lat2, lon2) {
   list(length_m = 2 * R * asin(sqrt(a)), bearing = brg)
 }
 
-# Accepts "60.1, -120.1", "60.1 -120.1" or "60°06'N 120°06'W" style text; returns c(lat, lon) or NULL.
+# Accepts "45.42, -75.70", "45.42 -75.70" or "45°25'N 75°42'W" style text; returns c(lat, lon) or NULL.
 parse_latlon <- function(txt) {
   if (is.null(txt) || !nzchar(trim(txt))) return(NULL)
   t <- toupper(trim(txt))
@@ -31,7 +31,29 @@ BASEMAPS <- list(
   satellite = list(style = "white-bg", layers = list(list(below = "traces", sourcetype = "raster", sourceattribution = "Imagery: Esri, Maxar, Earthstar Geographics",
                    source = list("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")))),
   streets = list(style = "open-street-map", layers = list()))
-YEAR_COLS <- c("#E6C384", "#7E9CD8", "#E46876", "#98BB6C", "#957FB8", "#7FB4CA", "#FFA066", "#DCD7BA", "#D27E99", "#7AA89F")   # kanagawa
+# Survey-year line colours from the scheme in use (PAL, R/config.R); kanagawa's springBlue, which has no palette key, is blue mixed with teal.
+YEAR_COLS <- c(PAL$gold, PAL$blue, PAL$red, PAL$green, PAL$accent, mix_col(PAL$blue, PAL$teal, 0.5), PAL$orange, PAL$fg, PAL$purple, PAL$teal)
+MAP_LABEL_COL <- "#ffffff"          # text on the map (site names, GPR markers) stays white on satellite imagery (M, 2026-10-20); PAL$fg would follow the scheme
+MAP_LEGEND_BG <- col_rgba(PAL$bg1, 0.85)   # legend ground: bg1 at 85 % (core/theme.R)
+
+# Where the map opens: on the selected transect, else on all transects, else on the project's sites, else the whole world
+# (no region is assumed). Returns list(center = list(lat, lon), zoom) for the mapbox layout.
+map_view <- function(lay, sites = NULL, selected = "") {
+  pick <- nzchar(selected) && selected %in% lay$transect_id
+  pts <- if (pick) lay[transect_id == selected] else lay
+  if (nrow(pts)) {
+    la <- c(pts$start_lat, pts$end_lat)
+    lo <- c(pts$start_lon, pts$end_lon)
+    span <- max(diff(range(la, na.rm = TRUE)), diff(range(lo, na.rm = TRUE)) / 2, 1e-4)
+    zoom <- if (pick) 16 else max(3, min(16, floor(log2(360 / span)) - 2))
+    return(list(center = list(lat = mean(la, na.rm = TRUE), lon = mean(lo, na.rm = TRUE)), zoom = zoom))
+  }
+  sl <- matrix(numeric(), 0, 2)
+  if (!is.null(sites) && nrow(sites)) sl <- cbind(num_or_na(sites$latitude), num_or_na(sites$longitude))
+  sl <- sl[stats::complete.cases(sl), , drop = FALSE]
+  if (nrow(sl)) return(list(center = list(lat = mean(sl[, 1]), lon = mean(sl[, 2])), zoom = 6))
+  list(center = list(lat = 0, lon = 0), zoom = 0)
+}
 
 # One line per transect and survey year (a transect surveyed in 2018 and 2025 has two layers), so years can be switched
 # off from the legend. Transects without surveys form their own layer.
@@ -46,30 +68,27 @@ transect_map <- function(tr, surveys, sites = NULL, selected = "", years = NULL,
   lay[is.na(year), `:=`(year = "no surveys", n = 0L, names = "", project = "")]; lay[is.na(project), project := ""]
   if (!is.null(years)) lay <- lay[year %in% years]
   if (!is.null(projects)) lay <- lay[vapply(strsplit(project, ", "), function(p) any(c(if (!length(p) || all(p == "")) "none" else p) %in% projects), TRUE)]
-  yrs <- sort(unique(lay$year)); cols <- distinct_cols(setNames(rep(YEAR_COLS, length.out = length(yrs)), yrs), PAL); cols["no surveys"] <- "#DCD7BA"
+  yrs <- sort(unique(lay$year)); cols <- distinct_cols(setNames(rep(YEAR_COLS, length.out = length(yrs)), yrs), PAL); cols["no surveys"] <- PAL$fg4
   g <- plotly::plot_ly()
   for (i in seq_len(nrow(lay))) { t <- lay[i]; sel <- t$transect_id == selected
     lat <- c(t$start_lat, if (!is.na(t$end_lat)) t$end_lat); lon <- c(t$start_lon, if (!is.na(t$end_lon)) t$end_lon)
     hv <- sprintf("<b>%s</b><br>%s%s<br>%s", t$label, ifelse(nzchar(t$site), paste0(t$site, " \u00b7 "), ""), t$year,
                   if (t$n) sprintf("%d survey%s: %s%s", t$n, ifelse(t$n == 1, "", "s"), t$names, ifelse(nzchar(t$project), paste0("<br>", t$project), "")) else "no surveys linked")
     g <- plotly::add_trace(g, type = "scattermapbox", mode = if (length(lat) > 1) "lines+markers" else "markers", lat = lat, lon = lon,
-      line = list(width = if (sel) 7 else 4, color = cols[[t$year]]), marker = list(size = c(11, 9)[seq_along(lat)], color = c("#98BB6C", "#E46876")[seq_along(lat)]),
+      line = list(width = if (sel) 7 else 4, color = cols[[t$year]]), marker = list(size = c(11, 9)[seq_along(lat)], color = c(PAL$green, PAL$red)[seq_along(lat)]),
       text = c(paste(hv, "<br>start"), paste(hv, "<br>end"))[seq_along(lat)], hoverinfo = "text",
       name = t$year, legendgroup = t$year, showlegend = !t$year %in% lay$year[seq_len(i - 1)]) }
   if (!is.null(sites) && nrow(sites)) { st <- copy(sites)[, `:=`(la = num_or_na(latitude), lo = num_or_na(longitude))][!is.na(la) & !is.na(lo)]
     if (nrow(st)) g <- plotly::add_trace(g, type = "scattermapbox", mode = "markers+text", lat = st$la, lon = st$lo, text = st$site, textposition = "top right",
-      marker = list(size = 10, color = "#957FB8"), hoverinfo = "text", name = "sites", legendgroup = "sites", textfont = list(color = "#ffffff")) }
-  pts <- if (nzchar(selected) && selected %in% lay$transect_id) lay[transect_id == selected] else lay
-  ctr <- if (nrow(pts)) list(lat = mean(c(pts$start_lat, pts$end_lat), na.rm = TRUE), lon = mean(c(pts$start_lon, pts$end_lon), na.rm = TRUE)) else {                    # no transects: centre on the sites, else a neutral point
-    sl <- if (!is.null(sites) && nrow(sites)) cbind(num_or_na(sites$latitude), num_or_na(sites$longitude)) else matrix(numeric(), 0, 2); sl <- sl[stats::complete.cases(sl), , drop = FALSE]
-    if (nrow(sl)) list(lat = mean(sl[, 1]), lon = mean(sl[, 2])) else list(lat = 60.1, lon = -120.1) }
-  span <- if (nrow(pts)) max(diff(range(c(pts$start_lat, pts$end_lat), na.rm = TRUE)), diff(range(c(pts$start_lon, pts$end_lon), na.rm = TRUE)) / 2, 1e-4) else 1
-  zoom <- if (nzchar(selected) && selected %in% lay$transect_id) 16 else max(3, min(16, floor(log2(360 / span)) - 2))
+      marker = list(size = 10, color = PAL$accent), hoverinfo = "text", name = "sites", legendgroup = "sites", textfont = list(color = MAP_LABEL_COL)) }
+  v <- map_view(lay, sites, selected)
+  ctr <- v$center
+  zoom <- v$zoom
   if (!nrow(lay)) g <- plotly::add_trace(g, type = "scattermapbox", mode = "markers", lat = ctr$lat, lon = ctr$lon, hoverinfo = "none",   # keeps the map when nothing is located yet
                                          marker = list(size = 1, opacity = 0), showlegend = FALSE)
   b <- BASEMAPS[[basemap]] %||% BASEMAPS$satellite
   plotly::layout(g, mapbox = list(style = b$style, layers = b$layers, center = ctr, zoom = zoom), margin = list(l = 0, r = 0, t = 0, b = 0),
-                 paper_bgcolor = PAL$bg1, font = list(color = PAL$fg), showlegend = isTRUE(legend), legend = list(title = list(text = "Survey year"), bgcolor = "rgba(34,38,45,0.85)", x = 0.01, y = 0.99)) |>
+                 paper_bgcolor = PAL$bg1, font = list(color = PAL$fg), showlegend = isTRUE(legend), legend = list(title = list(text = "Survey year"), bgcolor = MAP_LEGEND_BG, x = 0.01, y = 0.99)) |>
     plotly::config(displaylogo = FALSE)
 }
 

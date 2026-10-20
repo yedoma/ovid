@@ -7,6 +7,7 @@
     l[, `:=`(first = parse_time(substr(as.character(first), 1, 19)), last = parse_time(substr(as.character(last), 1, 19)))]
     l[, n_log := .N, by = station]; l[, n_st := uniqueN(station), by = logger_id]
     switch(input$lg_show %||% "multi", multi = l[n_log > 1], moved = l[station %in% l[n_st > 1, station]], l) })
+  # safe: nothing to plot yet
   output$lg_plot_ui <- renderUI({ l <- tryCatch(lg_data(), error = function(e) NULL); if (is.null(l) || !nrow(l)) return(NULL)
     div(class = "scrollbox", style = "max-height:760px", plotOutput("lg_plot", height = paste0(round((110 + 30 * uniqueN(l$station)) * psz()), "px"))) })
   output$lg_plot <- renderPlot({ l <- lg_data(); validate(need(nrow(l) > 0, "No station matches this view."))

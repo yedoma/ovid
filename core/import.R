@@ -71,6 +71,7 @@ imp_sep <- function(text) {
   if (!length(ln)) return(",")
   best <- NULL; bs <- -1
   for (s in c(",", ";", "\t", "|")) {
+    # safe: probing the separator; one that fails to count is ruled out
     n <- tryCatch(suppressWarnings(utils::count.fields(textConnection(ln), sep = s, quote = "\"", blank.lines.skip = FALSE, comment.char = "")), error = function(e) NULL)
     n <- n[!is.na(n)]; if (!length(n)) next
     m <- as.integer(names(sort(table(n), decreasing = TRUE))[1]); if (m < 2) next
@@ -82,6 +83,7 @@ imp_sep <- function(text) {
 # Every cell as text, no heading yet: a data.table of V1..Vn.
 imp_grid_text <- function(text) {
   s <- imp_sep(text); ln <- strsplit(text, "\r\n|\n|\r")[[1]]
+  # safe: probing the quoting; a count that fails is ruled out
   cf <- function(q) tryCatch(suppressWarnings(utils::count.fields(textConnection(utils::head(ln, 5000L)), sep = s, quote = q, blank.lines.skip = FALSE, comment.char = "")), error = function(e) NA_integer_)
   nc <- suppressWarnings(max(c(cf("\""), cf("")), na.rm = TRUE))                                  # a stray quote makes the count NA with quoting on: count without it too
   if (!is.finite(nc) || nc < 1) nc <- 1L
@@ -167,6 +169,7 @@ meta_import_read <- function(path, sheet = NULL, name = path, spec = NULL, heade
   } else {
     sh <- tryCatch(suppressWarnings(readxl::excel_sheets(path)), error = function(e) stop("This Excel file could not be opened (it may be password-protected, damaged, or not really an Excel file). Open it in Excel, save a copy as .xlsx or CSV, and import that.", call. = FALSE))
     if (!length(sh)) stop("The Excel file has no sheets.", call. = FALSE)
+    # safe: a sheet that cannot be read counts as empty and is not picked
     info <- lapply(sh, function(s) { gg <- tryCatch(imp_grid_excel(path, s), error = function(e) NULL)
       if (is.null(gg) || !nrow(gg)) return(list(n = 0L, score = -Inf, g = NULL))
       for (v in names(gg)) set(gg, j = v, value = imp_text(gg[[v]])); gg <- gg[rowSums(as.matrix(gg) != "") > 0]
@@ -368,12 +371,14 @@ imp_check <- function(prep, map, spec, existing = NULL, mode = "add") {
 # config/import_memory.csv in the project: target, heading, field.
 imp_memory_path <- function(project_dir) file.path(path.expand(project_dir), "config", "import_memory.csv")
 imp_memory_get <- function(project_dir, tg) { p <- imp_memory_path(project_dir)
+  # safe: the remembered column matches are a convenience; without them the columns are matched by name
   d <- tryCatch(if (file.exists(p)) fread(p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
   if (is.null(d) || !all(c("target", "heading", "field") %in% names(d))) return(data.table(heading = character(), field = character()))
   d[target == tg, .(heading, field)] }
 imp_memory_put <- function(project_dir, tg, headings, map) { p <- imp_memory_path(project_dir); if (!length(headings)) return(invisible(FALSE))
   k <- nzchar(map) & !startsWith(map, "+"); if (!any(k)) return(invisible(FALSE))
   new <- data.table(target = tg, heading = headings[k], field = map[k])
+  # safe: a damaged memory file is replaced by a new one
   old <- tryCatch(if (file.exists(p)) fread(p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
   keep <- if (!is.null(old) && all(c("target", "heading", "field") %in% names(old))) old[!(target == tg & imp_norm(heading) %in% imp_norm(new$heading)), .(target, heading, field)] else NULL
   tryCatch({ dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE); fwrite(rbind(keep, new), p); invisible(TRUE) }, error = function(e) invisible(FALSE)) }

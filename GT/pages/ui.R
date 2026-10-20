@@ -332,7 +332,7 @@ nb_ui <- function() tagList(
 # The before-import screen (Standard, Project page, while there is no run yet): three equal choices and what the folders hold.
 gt_before_ui <- function() conditionalPanel("!output.has_out", div(class = "bi",
   tags$style(HTML(".bi-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 12px}.bi-choice{display:flex;flex-direction:column;gap:6px}.bi-choice .btn{align-self:flex-start}
-.bi-choice .d-browse,.bi-choice .btn{margin-top:4px}@media (max-width:1100px){.bi-three{grid-template-columns:1fr}}.bi-scan td,.bi-scan th{padding:3px 10px}.bi-scan .ok{color:var(--green,#7fbf7f)}.bi-scan .no{color:var(--yel,#e0a030)}")),
+.bi-choice .d-browse,.bi-choice .btn{margin-top:4px}@media (max-width:1100px){.bi-three{grid-template-columns:1fr}}.bi-scan td,.bi-scan th{padding:3px 10px}.bi-scan .ok{color:var(--green)}.bi-scan .no{color:var(--yellow)}")),
   div(class = "bi-three",
     div(class = "d-cardx bi-choice", tags$b("Choose a data folder"), p(class = "dim", "GeoPrecision .f2b and CSV, RBR .hex and .txt, HOBO CSV, EM50 .xls, Campbell .dat. Repeat downloads of a logger are joined. Nothing in your folder is changed."),
         tags$a(class = "btn btn-default", href = "#", onclick = "var t=document.getElementById('raw_dirs'); if(t){t.scrollIntoView({block:'center'}); t.focus();} return false;", icon("folder-open"), " Choose folder…")),

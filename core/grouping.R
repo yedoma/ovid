@@ -88,6 +88,7 @@ group_level_jumps <- function(files, level, jump_min = 0, unit = "", splits = NU
   if (is.null(files) || !nrow(files) || !is.function(level)) return(out)
   f <- data.table(serial = trim(as.character(files$serial)), first = parse_date_cell(files$first))[!is.na(first)]
   res <- list()
+  # safe: a serial whose records cannot be read gets no split suggestion
   for (s in unique(f$serial)) { d <- tryCatch(level(s), error = function(e) NULL); if (is.null(d) || nrow(d) < 20) next
     d <- data.table(t = as.numeric(d$t), v = as.numeric(d$v))[is.finite(t) & is.finite(v)][order(t)]; if (nrow(d) < 20) next
     sc <- stats::median(abs(diff(d$v)), na.rm = TRUE); thr <- max(jump_min, 8 * sc)
@@ -104,24 +105,29 @@ group_split_write <- function(project_dir, serial, at, note = "") {
   if (!exists("dep_split", mode = "function")) return(invisible(FALSE))              # an app with no deployment sheet
   pl <- get0("dep_split_place", mode = "function")                                 # an app's own place for a logger the sheet does not list yet
   dep_split(project_dir, serial, at, paste(c(if (nzchar(note)) note, "split here: looks moved; check the station"), collapse = ": "), who = "Needs you",
+            # safe: where a logger was placed is extra detail in the list
             place = if (is.function(pl)) tryCatch(pl(project_dir, serial), error = function(e) list()) else list())
 }
 # The splits: the serials with more than one row in the deployment sheet, at the start of each row after the first.
 group_splits_read <- function(project_dir) { if (!exists("dep_sheet_raw", mode = "function") || !length(project_dir) || !nzchar(project_dir %||% "")) return(NULL)
+  # safe: the deployment sheet's own page reports a read problem
   d <- tryCatch(dep_sheet_raw(project_dir), error = function(e) NULL); x <- dep_splits(d); if (nrow(x)) x else NULL }
 # Splits an older version kept in config/logger_splits.csv (serial, at), into the sheet once (core config.R config_migrate()).
 group_split_fold <- function() list(from = GROUP_SPLIT_FILE, into = "deployment_sheet.csv", fold = function(old, cur, project_dir = NULL) {
   d <- if (is.null(cur)) empty_cfg(DEPLOY_COLS) else { x <- copy(as.data.table(cur)); setnames(x, dep_names(names(x))); x }
   pl <- get0("dep_split_place", mode = "function")
   for (i in seq_len(nrow(old))) d <- dep_split_rows(d, old$serial[i], old$at[i], paste(c(if (nzchar(old$note[i] %||% "")) old$note[i], "split here: looks moved; check the station"), collapse = ": "),
+                                                    # safe: as for line 107
                                                     if (is.function(pl) && length(project_dir)) tryCatch(pl(project_dir, old$serial[i]), error = function(e) list()) else list())
   list(rows = d, log = NULL) })
 
 # The choice per project, in config/view.json.
 group_by_read <- function(project_dir) { p <- file.path(path.expand(project_dir %||% ""), "config", "view.json")
+  # safe: no saved grouping means the default one
   x <- if (file.exists(p)) tryCatch(jsonlite::fromJSON(p), error = function(e) list()) else list()
   if (isTRUE(x$group_by %in% GROUP_BY)) x$group_by else "serial" }
 group_by_write <- function(project_dir, by) { p <- file.path(path.expand(project_dir), "config", "view.json"); if (!dir.exists(dirname(p))) return(invisible(FALSE))
+  # safe: a damaged choices file is replaced
   x <- if (file.exists(p)) tryCatch(jsonlite::fromJSON(p), error = function(e) list()) else list(); x$group_by <- by
   writeLines(jsonlite::toJSON(x, auto_unbox = TRUE, pretty = TRUE), p); invisible(TRUE) }
 
@@ -140,8 +146,10 @@ group_by_server <- function(id, files, project_dir, deployments = function() NUL
                             empty = "No loggers yet: run once.") moduleServer(id, function(input, output, session) {
   tick <- reactiveVal(0)
   observeEvent(project_dir(), updateSelectInput(session, "by", selected = group_by_read(project_dir())))
+  # safe: the grouping applies in this session; only remembering it failed
   observeEvent(input$by, { pd <- project_dir(); if (!identical(input$by, group_by_read(pd))) try(group_by_write(pd, input$by), silent = TRUE) }, ignoreInit = TRUE)
   splits <- reactive({ tick(); live_stamp(file.path(path.expand(project_dir()), "config", "deployment_sheet.csv")); group_splits_read(project_dir()) })
+  # safe: nothing to group yet
   rows <- reactive(group_index(tryCatch(files(), error = function(e) NULL), input$by %||% "serial", tryCatch(deployments(), error = function(e) NULL), splits()))
   output$list <- renderUI({ x <- rows(); if (!nrow(x)) return(div(class = "dim", style = "font-size:12px;padding:4px 0", empty))
     fmt <- function(t) ifelse(is.na(t), "", format(t, "%Y-%m-%d", tz = "UTC"))
@@ -150,6 +158,7 @@ group_by_server <- function(id, files, project_dir, deployments = function() NUL
       span(class = "l", x$label[i]), span(class = "n", paste0(fmt(x$first[i]), " \u2013 ", fmt(x$last[i]))))),
       if (nrow(x) > 400) div(class = "dim", paste("and", nrow(x) - 400, "more"))) })
   observeEvent(input$pick, { r <- rows()[key == input$pick]; if (nrow(r)) open(r[1]) })
+  # safe: nothing to suggest yet
   sugg <- reactive({ f <- tryCatch(files(), error = function(e) NULL); g <- group_split_suggestions(f, splits())
     j <- if (is.function(level)) group_level_jumps(f, level, jump_min, unit, splits()) else NULL
     x <- rbind(g, j, fill = TRUE); if (nrow(x)) unique(x, by = c("serial", "at")) else x })

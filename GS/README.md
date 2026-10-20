@@ -35,7 +35,7 @@ Catalogues electrical resistivity survey files (AGI SuperSting, IRIS Syscal), re
 <summary><b>About</b></summary>
 
 Catalogue, metadata, QA/QC and viewing for electrical resistivity tomography surveys (AGI SuperSting, IRIS Syscal). Not an inversion tool.
-Raw files are never changed; QC only adds flags; failed and unreadable surveys stay in the catalogue. Theme: kanagawa.nvim (wave) from vimcolorschemes. Full detail: [docs/GS_reference_guide.md](docs/GS_reference_guide.md) (also .html and .pdf); design: [docs/DESIGN.md](docs/DESIGN.md).
+Raw files are never changed; QC only adds flags; failed and unreadable surveys stay in the catalogue. Theme: kanagawa.nvim (wave) from vimcolorschemes; map, GPR and pseudosection colours follow the scheme picked in Settings > Colours (Spectral, Viridis and the GPR Grey and Blue-white-red scales stay fixed; map labels stay white on imagery). Full detail: [docs/GS_reference_guide.md](docs/GS_reference_guide.md) (also .html and .pdf); design: [docs/DESIGN.md](docs/DESIGN.md).
 
 </details>
 

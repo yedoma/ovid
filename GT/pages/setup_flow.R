@@ -15,6 +15,7 @@
     f[, key := paste0(ifelse(variable == "temp", "temp:", "soil:"), site)]                  # the Workbench's table of the record
     review_flag_items(f, "site", "channel", keep = c("key", "sensor", "variable"), join = c("sensor", "variable")) })
   review <- review_list_server("rl", reactive(rbind(rl_flags(),
+      # safe: suggestions only
       tryCatch(gb$suggestions()[, .(kind = "moved", where = serial, what, serial, at)], error = function(e) NULL), gt_notes(), fill = TRUE)),
     reactive(review_path(pd())), period = if (!VIEWER) E$period, split = function(s, a) gb$accept(s, a),
     open = function(r) { updateSelectInput(session, "ex_site", selected = r$where)

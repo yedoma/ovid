@@ -38,6 +38,7 @@ read_ahead <- function(m) {
 # Rescan: forgets the selected files as read (and the files paired with them), and their loggers as stitched and
 # compensated, so the next run reads and redoes them.
 forget_wlr_files <- function(project_dir, rels) {
+  # safe: forgetting files needs the last run's list; with none there is nothing to forget
   pd <- path.expand(project_dir); fa <- tryCatch(fread(file.path(pd, "output", "audit", "files.csv"), colClasses = "character"), error = function(e) data.table())
   if (!nrow(fa) || !all(c("rel", "md5", "path", "pair") %in% names(fa))) return(invisible(0L))
   hit <- fa[rel %in% rels]; hit <- rbind(hit, fa[path %in% hit$pair | pair %in% hit$path])

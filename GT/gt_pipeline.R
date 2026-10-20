@@ -103,7 +103,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
   if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
-for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
+for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
 for (.f in c("util", "readers", "f2b", "config", "metadata", "discover", "stitch", "qc", "derived", "plots", "export", "preflight", "report"))
@@ -246,8 +246,10 @@ run_pipeline_steps <- function(cfg = CFG) {
     }
     if (!length(parts)) next
     d <- stitch_logger(parts, lid)
-    tc <- apply_time_corrections(d, cfgs$time, src[logger_id == lid, serial][1]); d <- tc$data
-    if (tc$n) clock[[length(clock) + 1L]] <- data.table(rule = "clock_shift_by_hand", first = NA_integer_, last = NA_integer_, n = tc$n, t0 = min(d$TIMESTAMP), t1 = max(d$TIMESTAMP), logger_id = lid, source_file = NA_character_)
+    tcr <- if (NROW(cfgs$time)) which(norm_serial(cfgs$time$serial) == src[logger_id == lid, serial][1]) else integer()
+    d <- apply_time_corrections(d, cfgs$time, tcr, audit = FALSE)    # core time_corrections.R; GT lists the shifts in clock.csv
+    n_shift <- attr(d, "shifted")
+    if (n_shift) clock[[length(clock) + 1L]] <- data.table(rule = "clock_shift_by_hand", first = NA_integer_, last = NA_integer_, n = n_shift, t0 = min(d$TIMESTAMP), t1 = max(d$TIMESTAMP), logger_id = lid, source_file = NA_character_)
     ty <- fr$type[1]
     d[, `:=`(logger_type = ty, serial = fr$serial[1], sensor = sensor_of(channel, ty))]
     loggers[[lid]] <- d; seen_l[[lid]] <- seen_of(d)

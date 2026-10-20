@@ -25,17 +25,20 @@ setup_check <- function(cfg) {
   mf <- find_metadata_file(cfg$metadata_dir)
   md <- if (is.na(mf)) NULL else tryCatch(read_metadata(mf), error = function(e) { add("error", "Metadata", basename(mf), conditionMessage(e)); NULL })
   config_migrate(pd, "preflight")                                                          # older tables moved in once (core config.R)
-  ms <- tryCatch(meta_sheet(cfg$project_dir, META_FIELDS, report = FALSE, deploy = wlr_deploy_rows), error = function(e) NULL)
+  ms_bad <- FALSE
+  ms <- tryCatch(meta_sheet(cfg$project_dir, META_FIELDS, report = FALSE, deploy = wlr_deploy_rows),
+                 error = function(e) { ms_bad <<- TRUE; add("error", "Deployment sheet", "reading", conditionMessage(e), "Fix the table named in the message"); NULL })
   cf0 <- attr(ms, "conflicts"); for (i in seq_len(NROW(cf0))) { z <- cf0[i]                  # core metasheet.R: the typed column wins, and says so
     add("warning", "Deployment sheet", z$item, paste0("From and To give ", z$field, " '", z$sheet, "', the ", z$field, " column '", z$list, "', which is used"),
         "Change the one that is wrong on the Deployment sheet.") }
-  if (is.na(mf) && is.null(ms)) add("info", "Metadata", "optional", "no metadata workbook and no deployment sheet: each logger is processed under its serial",
+  if (is.na(mf) && is.null(ms) && !ms_bad) add("info", "Metadata", "optional", "no metadata workbook and no deployment sheet: each logger is processed under its serial",
                                     "To name loggers or give sites, years and hang lengths, fill in the Deployment sheet (Loggers and metadata), or put a WL_Metadata workbook in the metadata folder.")
   if (!is.null(ms)) { p <- meta_sheet_problems(cfg$project_dir, META_FIELDS, wlr_deploy_rows)
     for (i in seq_len(nrow(p))) add("warning", DEPLOY_SHEET, paste("row", p$row[i] + 1L), paste0(p$field[i], " '", p$value[i], "': ", p$problem[i]), "Fix it on the Deployment sheet; the value is left blank meanwhile.") }
-  sm <- tryCatch(sheet_metadata(ms), error = function(e) NULL); md <- if (is.null(md) && is.null(sm)) NULL else merge_metadata(md, sm)
+  sm <- tryCatch(sheet_metadata(ms), error = function(e) { add("error", "Deployment sheet", "reading", conditionMessage(e), "Fix the row named in the message"); NULL })
+  md <- if (is.null(md) && is.null(sm)) NULL else merge_metadata(md, sm)
   if (!dir.exists(path.expand(cfg$dgps_dir %||% ""))) add("info", "dGPS", "optional", "no dGPS folder: water levels are given below the T-coupler, with no elevations", "Set the folder on the Home page to add elevations.")
-  cf <- tryCatch(load_configs(cfg), error = function(e) NULL)
+  cf <- tryCatch(load_configs(cfg), error = function(e) { add("error", "Set-up tables", "reading", conditionMessage(e), "Fix the table named in the message"); NULL })
   if (is.null(cf)) return(chk$result())
   bad_dt <- function(x) bad_date(x)                     # cell by cell, as the pipeline reads them (parse_date_cell)
   for (w in c("oow", "time")) { t <- cf[[w]]; if (!nrow(t)) next
@@ -56,6 +59,7 @@ setup_check <- function(cfg) {
     if (is.na(suppressWarnings(as.numeric(ms$value[i])))) add("error", "manual_measurements.csv", paste("row", i), "value is not a number", "Fix it on the Field visits page.") }
   fr <- cf$file_rules; for (i in seq_len(nrow(fr))) if (!tolower(fr$action[i]) %in% c("ignore", "serial", "use", "tz", "baro", "water")) add("error", "file_rules.csv", paste("row", i), "action must be ignore, serial, use, tz, baro or water")
   last <- file.path(pd, "output", "audit", "deployments.csv")
+  # safe: the last run's deployments, for hang lengths only
   deps <- if (file.exists(last)) tryCatch(fix_ts_cols(fread(last, colClasses = list(character = "serial"))), error = function(e) NULL) else NULL
   if (!is.null(md)) {
     h <- hang_lengths(md, deps)

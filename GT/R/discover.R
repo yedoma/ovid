@@ -29,6 +29,7 @@ discover_files <- function(cfg, rules = NULL) {
   m[, root := NULL][, dir := dirname(path)]; setcolorder(m, c("path", "file", "rel", "dir"))   # the order files.csv has always had
   # what is known about a file that has not changed since the last run (same size and time) comes from the cache
   hc_file <- if (isTRUE(cfg$incremental) && nzchar(cfg$project_dir %||% "")) file.path(path.expand(cfg$project_dir), "cache", "files.rds") else ""
+  # safe: a damaged header cache is rebuilt
   hc <- if (nzchar(hc_file) && file.exists(hc_file)) tryCatch(readRDS(hc_file), error = function(e) list()) else list()
   m[, sig := paste(path, size, as.numeric(mtime), STEP_HASH$files, sep = "|")]
   known <- m$sig %in% names(hc)

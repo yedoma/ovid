@@ -5,7 +5,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function make() {
     const el = document.getElementById('cs_map'); if (!el || typeof L === 'undefined') return false;
-    map = L.map(el, { zoomControl: true, attributionControl: true, preferCanvas: false }).setView([60.1, -120.1], 3)   // until the stations are drawn and fitted;
+    map = L.map(el, { zoomControl: true, attributionControl: true, preferCanvas: false }).setView([0, 0], 2)   // the world until the stations are drawn and fitted;
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19, maxNativeZoom: 18, crossOrigin: 'anonymous', attribution: 'Imagery &copy; Esri' }).addTo(map);
     layer = L.featureGroup().addTo(map);

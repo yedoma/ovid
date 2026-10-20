@@ -17,11 +17,8 @@ wlr_read_lines <- function(path) {
   strsplit(gsub("\r", "", txt, fixed = TRUE), "\n", fixed = TRUE)[[1]]
 }
 
-# A text file that does not end with a line break was cut off (a copy or download that stopped): its last row can hold a value
-# cut short ("108.2" of 108.277), so that row is left out and the file reported (meta$cut_last). Every logger and software
-# export seen ends with a line break.
-ends_cut <- function(path) { n <- file.info(path)$size; if (is.na(n) || n == 0) return(FALSE)
-  con <- file(path, "rb"); on.exit(close(con)); seek(con, n - 1); !identical(readBin(con, "raw", 1L), as.raw(10L)) }
+# A text file that does not end with a line break was cut off (core logger_files.R ends_cut()): its last row can hold a value
+# cut short ("108.2" of 108.277), so WLR leaves that row out and reports the file (meta$cut_last).
 
 # Cells the logger wrote as NaN (no reading): left empty, and counted per column so the run can audit them with that reason.
 is_nan_cell <- function(x) !is.na(x) & grepl("^\\s*-?nan\\s*$", x, ignore.case = TRUE)
@@ -30,14 +27,13 @@ nan_cells <- function(t, cols) { x <- rbindlist(lapply(names(cols), function(k) 
 
 split_cells <- function(l, sep) trim(scan(text = l, what = character(), sep = sep, quote = "\"", quiet = TRUE, na.strings = NULL))
 
-empty_events <- function() data.table(TIMESTAMP = as.POSIXct(character(), tz = "UTC"), event = character())
-
 # ---- what kind of file is this? -------------------------------------------------
 sniff_format <- function(path) {
   ext <- tolower(tools::file_ext(path))
   if (ext == "hobo") return("hobo_binary")
   if (ext == "xle") return("solinst_xle")
   if (ext %in% c("csv", "txt")) {
+    # safe: sniffing only; a file that cannot be read is reported when it is read in full
     l <- tryCatch(wlr_read_lines(path)[1:3], error = function(e) character())
     l <- l[!is.na(l)]
     if (!length(l)) return("empty")
@@ -73,9 +69,8 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   model <- NA_character_
   if (header_only) return(list(meta = list(format = "hobo_csv", serial = serial, model = model, title = title, location = title,
                                            offset_hours = offset, units = units), header = hdr))
-  hc <- which(grepl("Date Time", L, fixed = TRUE) & trim(L) != trim(L[h$hi])); hc <- hc[hc > h$hi]     # a second heading with other columns: read up to it, and report it
-  body <- L[-seq_len(h$hi)]; if (length(hc)) body <- L[(h$hi + 1L):(hc[1] - 1L)][seq_len(max(0L, hc[1] - h$hi - 1L))]
-  body <- body[nzchar(trim(body)) & !grepl("Date Time", body, fixed = TRUE)]   # no blank lines (fread stops at one) or repeated headings
+  rows <- hobo_csv_rows(L, h)                                          # core logger_files.R: up to a second heading, which is reported
+  body <- rows$lines
   cut <- ends_cut(path) && length(body) > 0; if (cut) body <- body[-length(body)]
   d <- fread(text = body, sep = sep, header = FALSE, colClasses = "character", fill = TRUE, na.strings = c("", "NA"), quote = "\"")
   if (!nrow(d)) stop("no records")
@@ -83,9 +78,7 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   bad <- is.na(ts)
   out <- data.table(TIMESTAMP = ts)
   nan <- list(); for (j in which(!is.na(role) & !startsWith(role, "derived_"))) { nan[[role[j]]] <- is_nan_cell(d[[j]]); set(out, j = role[j], value = num_cells(gsub(",", ".", d[[j]], fixed = TRUE))) }
-  ev <- rbindlist(lapply(which(is_event), function(j) { k <- which(!is.na(d[[j]]) & nzchar(d[[j]]))
-    if (length(k)) data.table(TIMESTAMP = ts[k], event = name[j]) else NULL }))
-  if (!nrow(ev)) ev <- empty_events()
+  ev <- hobo_csv_events(d, which(is_event), ts, hdr)                   # core logger_files.R
   vals <- intersect(c("pres", "temp", "ec_low", "ec_full", "ec_spc"), names(out))
   has_val <- if (length(vals)) rowSums(!is.na(out[, ..vals])) > 0 else rep(FALSE, nrow(out))
   out <- out[!bad & has_val]                                          # event-only lines carry no reading
@@ -97,7 +90,7 @@ read_hobo_csv <- function(path, header_only = FALSE) {
        data = out, events = ev)
   if (cut) res$meta$cut_last <- TRUE                                   # only when present, so a whole file reads as it always has
   if (!is.null(nc)) res$meta$nan_cells <- nc
-  if (length(hc)) res$meta$header_change <- list(line = hc[1], rows = sum(grepl("^\\s*[0-9]", L[-seq_len(hc[1])])))
+  if (!is.null(rows$header_change)) res$meta$header_change <- rows$header_change
   res
 }
 

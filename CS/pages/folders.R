@@ -9,6 +9,7 @@
     d <- trim(strsplit(raw_dirs_d() %||% "", "\n")[[1]]); d <- d[nzchar(d)]
     if (!length(d)) return(div(class = "check bad", "Add at least one folder."))
     ok <- dir.exists(path.expand(d))
+    # safe: the folder summary is shown when it can be made
     o <- outs(); x <- tryCatch(cs_scan_types(d, m_st$data(), manifest = if (!is.null(o)) o$manifest), error = function(e) NULL)
     tagList(if (!all(ok)) div(class = "check bad", "Not found: ", paste(d[!ok], collapse = ", ")),
             h4("What the scan will show"),
@@ -28,6 +29,7 @@
   # what the last run found that needs a person, for the Needs you list (setup_flow.R): each with the page that settles it
   cs_notes <- reactive({
     o <- outs(); if (is.null(o) || VIEWER) return(NULL)
+    # safe: nothing listed yet
     s <- tryCatch(st_sources(), error = function(e) NULL)
     n <- c(st = if (is.null(s)) 0 else uniqueN(s[station == "", logger_id]), al = uniqueN(o$dict[parameter == raw_column, raw_column]),
            fl = sum(!o$manifest$status %in% c("ok", "duplicate_file", "skipped_table")), md = if (nrow(o$gaps)) sum(o$gaps$gap_hours > 24) else 0,

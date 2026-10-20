@@ -21,6 +21,7 @@
   viewer_zip <- reactiveVal(NULL)
   show_title <- function(v) for (k in c("x_title", "wb_x_title")) if (!identical(trim(isolate(input[[k]]) %||% ""), v)) updateTextInput(session, k, value = v)
   set_title <- function(v) { v <- trim(v %||% ""); if (!nzchar(v) || identical(v, CFG$viewer_title)) return(invisible())
+    # safe: the title applies in this session; only remembering it failed
     CFG$viewer_title <<- v; try(settings_save(SETTINGS_FILE, list(viewer_title = v)), silent = TRUE)
     # a project folder not made yet: the title is kept in the app's settings and goes to the project when it is left (projects_server)
     try(project_settings_save(CFG$project_dir, utils::modifyList(project_settings_read(CFG$project_dir), list(viewer_title = v))), silent = TRUE)

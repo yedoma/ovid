@@ -44,7 +44,7 @@ gt_calib_years <- function(d) {
 gt_permafrost_years <- function(value, project_dir = NULL) {
   v <- suppressWarnings(as.integer(value)); if (length(v) == 1 && !is.na(v) && v %in% PERMAFROST_YEARS) return(v)
   p <- if (length(project_dir) == 1 && !is.na(project_dir) && nzchar(project_dir)) file.path(path.expand(project_dir), "config", CALIB_FILE) else ""
-  if (nzchar(p) && file.exists(p)) { v <- tryCatch(gt_calib_years(read_cfg(p)), error = function(e) NA_integer_); if (!is.na(v)) return(v) }
+  if (nzchar(p) && file.exists(p)) { v <- try_or(gt_calib_years(read_cfg(p)), NA_integer_, CALIB_FILE); if (!is.na(v)) return(v) }
   PERMAFROST_YEARS_DEFAULT
 }
 

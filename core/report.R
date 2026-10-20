@@ -63,7 +63,9 @@ rpt_availability <- function(dt, params, group, time = "TIMESTAMP", pal, per_pag
     g <- cumsum(c(TRUE, diff(d) > tol_days)); r <- data.table::data.table(d, g)[, .(s = min(d), e = max(d)), by = g]; r[, parameter := p]; r[, g := NULL]; r }))
   info <- data.table::data.table(parameter = params, group = unname(group[params]))
   info[, pct := round(100 * vapply(params, function(p) length(unique(day[!is.na(dt[[p]])])), 0L) / span)]
+  # safe: colours only; the accent colour is used
   kc <- tryCatch(kind_colours(pal), error = function(e) NULL)
+  # safe: colours only; the accent colour is used
   col_of <- function(p) { k <- tryCatch(unname(kc[param_kind(p)]), error = function(e) NULL); if (length(k) && !is.na(k)) k else pal$accent }
   cols <- stats::setNames(vapply(params, col_of, ""), params)
   groups <- unique(info$group); pages <- list(); cur <- character()
@@ -172,6 +174,7 @@ rpt_overview <- function(x, pal, title = "Parameter overview", per_page = 20L, n
   x[, `:=`(group = as.character(group), parameter = as.character(parameter))]
   tr <- range(x$time); is_date <- inherits(x$time, "Date")
   kc <- tryCatch(kind_colours(pal), error = function(e) NULL)                  # one colour per kind of measurement, not shaded apart: the overview shows the kind
+  # safe: colours only; the accent colour is used
   col_of <- function(p) { k <- tryCatch(unname(kc[param_kind(p)]), error = function(e) NULL); if (length(k) && !is.na(k)) k else pal$accent }
   num <- function(v) vapply(v, function(z) if (abs(z) >= 1000) format(round(z), big.mark = ",", trim = TRUE) else format(signif(z, 3), trim = TRUE), "")
   fix <- function(d, p) {                                  # one parameter: bin, find gaps
@@ -288,7 +291,7 @@ html_table <- function(dt, max_rows = 200) {
 # Figures are embedded as PNG at 110 dpi, so one tall figure cannot make the file huge (height is capped at 45 in).
 plot_png_uri <- function(p, w, h, pal) {
   f <- tempfile(fileext = ".png"); on.exit(unlink(f))
-  ok <- tryCatch({ ggplot2::ggsave(f, p, width = w, height = min(h, 45), dpi = 110, bg = pal$bg, limitsize = FALSE); TRUE }, error = function(e) FALSE)
+  ok <- try_or({ ggplot2::ggsave(f, p, width = w, height = min(h, 45), dpi = 110, bg = pal$bg, limitsize = FALSE); TRUE }, FALSE, "report figure")
   if (!ok || !file.exists(f)) return(NULL)
   paste0("data:image/png;base64,", base64enc::base64encode(f))
 }
@@ -321,8 +324,10 @@ render_html <- function(doc, file, pal = PAL) {
 # non-Latin names). A Mac without XQuartz has no Cairo: its own Quartz PDF device draws them too. Elsewhere without Cairo the
 # plain pdf() device is used and text is reduced to Latin-1.
 PDF_CAIRO <- isTRUE(capabilities("cairo")) &&                # capabilities() can say yes while cairo.so fails to load (a Mac without XQuartz)
+  # safe: probing which PDF device this computer has
   tryCatch({ f <- tempfile(fileext = ".pdf"); on.exit(unlink(f)); suppressWarnings(grDevices::cairo_pdf(f)); grDevices::dev.off(); file.exists(f) }, error = function(e) FALSE)   # opens one to be sure
 PDF_QUARTZ <- !PDF_CAIRO && identical(Sys.info()[["sysname"]], "Darwin") &&
+  # safe: probing which PDF device this computer has
   tryCatch({ f <- tempfile(fileext = ".pdf"); on.exit(unlink(f)); grDevices::quartz(type = "pdf", file = f); grDevices::dev.off(); file.exists(f) }, error = function(e) FALSE)
 PDF_UNICODE <- PDF_CAIRO || PDF_QUARTZ
 pdf_str <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; if (PDF_UNICODE) return(enc2utf8(x))
@@ -388,6 +393,7 @@ render_pdf <- function(doc, file, pal = PAL) {
       st$y <- st$y - 0.01 },
     plot    = if (isTRUE(b$inline)) { hh <- b$h / 8.5; avail <- st$y - 0.115; if (st$page > 0L && hh > avail && avail >= 0.26) hh <- avail      # shrink to the room left rather than start a page
       need(hh + 0.02)
+      # safe: the page says "(figure could not be drawn)" instead
       ok <- tryCatch({ print(b$plot, vp = grid::viewport(0.5, st$y - hh / 2, 0.88, hh)); TRUE }, error = function(e) FALSE)
       if (!ok) line("(figure could not be drawn)", 9, pal$fg4, 0.03)
       st$y <- st$y - hh - 0.012
@@ -398,6 +404,7 @@ render_pdf <- function(doc, file, pal = PAL) {
             grid::grid.lines(c(0.06, 0.94), y + 0.004, gp = gp(col = pal$accent, lwd = 1)); y <- y - 0.014 }
           else for (p in q$text) { for (s in strwrap(p, 150)) { grid::grid.text(pdf_str(s), 0.06, y, just = c("left", "top"), gp = gp(col = pal$fg, fontsize = 10.5)); y <- y - 0.024 }; y <- y - 0.008 }
         top <- y; st$pend <- list() }
+      # safe: the page says the figure could not be drawn instead
       ok <- tryCatch({ print(b$plot, vp = grid::viewport(0.5, (0.07 + top) / 2, 1, top - 0.07)); TRUE }, error = function(e) FALSE)
       if (!ok) { grid::grid.newpage(); grid::grid.text("(figure could not be drawn)", gp = gp(col = pal$fg4)) }
       foot()

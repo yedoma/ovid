@@ -13,6 +13,7 @@
   stn_names <- function(o) sort(unique(o$stations$station))
   # a station is ONE record: every logger table it has is read and joined into one continuous series per parameter
   ex_key <- reactive({ req(input$ex_station); input$ex_station })
+  # safe: a station that cannot be loaded shows no data; the run's problems say why
   ex_data <- reactive({ rv$tick; k <- ex_key(); tryCatch(load_station_all(k, pd()), error = function(e) NULL) })
   ex_numeric <- reactive({
     dt <- ex_data(); req(dt); v <- setdiff(names(dt), META_COLS)
@@ -57,6 +58,7 @@
     if (!is.null(col)) x <- dt[, .(TIMESTAMP, v = get(col))]
     else { o <- outs(); if (!is.null(o) && all(c("station", "stream", "parameter") %in% names(o$pstats))) { c2 <- o$pstats[station == k[1] & grepl("batt", parameter, ignore.case = TRUE)]
         if (nrow(c2)) { col <- pick(c2$parameter); sm <- c2[parameter == col, stream][1]
+          # safe: a station that cannot be loaded adds no line
           x <- tryCatch(load_station(k[1], sm, pd(), columns = col)[, .(TIMESTAMP, v = get(col))], error = function(e) NULL) } } }
     if (is.null(x) || !is.numeric(x$v)) return(NULL)
     i <- which(!is.na(x$v) & x$v < thr); if (!length(i)) return(data.table(t0 = as.POSIXct(character(), tz = "UTC"), t1 = as.POSIXct(character(), tz = "UTC")))

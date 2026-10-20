@@ -22,6 +22,7 @@ APPLIED_DOES <- c(removes = "removed", changes = "changed", fills = "filled", fl
 APPLIED_PERIOD <- c(remove = "removed", offset = "changed", scale = "changed", drift = "changed", interpolate = "filled", flag = "flagged")
 
 .applied_row <- function(group, item, does, n, detail = "") data.table(group = group, item = as.character(item), does = as.character(does), n = as.numeric(n), detail = as.character(detail))
+# safe: an output of the last run, only shown; an unreadable one shows as nothing applied until the next run writes it
 .applied_read <- function(f) if (file.exists(f)) tryCatch(fread(f, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
 .applied_label <- function(x) { x <- gsub("_", " ", as.character(x)); paste0(toupper(substring(x, 1, 1)), substring(x, 2)) }
 .applied_names <- function(d) { v <- intersect(c("variable", "column", "parameter"), names(d)); if (!length(v)) return("")
@@ -32,6 +33,7 @@ APPLIED_PERIOD <- c(remove = "removed", offset = "changed", scale = "changed", d
 # reasons name the row ("row N of period_corrections.csv"); read from the files so a run made in parallel workers counts too.
 applied_period_rows <- function(adir) {
   f <- list.files(file.path(adir, "detail"), pattern = "\\.csv$", full.names = TRUE)
+  # safe: as above, the detail files of the last run are only shown
   d <- rbindlist(lapply(f, function(x) tryCatch(fread(x, select = c("rule", "reason", "n"), colClasses = "character"), error = function(e) NULL)), fill = TRUE)
   if (!nrow(d)) return(data.table(row = integer(), rule = character(), n = numeric()))
   d <- d[grepl(paste0("row [0-9]+ of ", PERIOD_FILE), reason)]
@@ -48,6 +50,7 @@ applied_write <- function(cfg, corr = get0("CORRECTIONS", ifnotfound = list()), 
     r <- x$rules %||% character(); used <- c(used, r)
     n <- if (length(r) || !is.null(counts[[x$id]])) sum(idx[rule %in% r, n], fl[check %in% r, k], counts[[x$id]], na.rm = TRUE) else NA
     out[[length(out) + 1L]] <- .applied_row(APPLIED_GROUPS[1], x$label %||% sub("\\.$", "", x$what), paste(c(if (!identical(x$unit %||% "values", "values")) x$unit, APPLIED_DOES[[x$does]]), collapse = " "), n, if (st %in% c("on", "always")) "" else paste("set to", st)) }
+  # safe: period_read() puts an unreadable table on the problem list itself
   pf <- file.path(pd, "config", PERIOD_FILE); pr <- tryCatch(period_read(pf)$rows, error = function(e) NULL); pn <- applied_period_rows(adir)
   fn <- fl[grepl(paste0("row [0-9]+ of ", PERIOD_FILE), detail)][, row := suppressWarnings(as.integer(sub(".*row ([0-9]+) of .*", "\\1", detail)))]
   if (!is.null(pr) && nrow(pr)) { raw <- ensure_cols(as.data.table(read_cfg(pf)), PERIOD_COLS)
@@ -104,6 +107,7 @@ applied_ui <- function(id) tagList(tags$style(HTML(APPLIED_CSS)), uiOutput(NS(id
 # project_dir: a function giving the project folder; seen: a reactive that changes when the output folder does (core shell.R
 # ovid_output_watch()); edit: the tool the "Edit corrections" link opens.
 applied_server <- function(id, project_dir, seen = NULL, edit = NULL) moduleServer(id, function(input, output, session) {
+  # safe: an output of the last run, only shown
   a <- reactive({ if (is.function(seen)) seen(); tryCatch(applied_read(project_dir()), error = function(e) data.table()) })
   output$chip <- renderUI({ a <- a(); if (!nrow(a)) return(NULL); tot <- function(w) applied_total(a, w); num <- function(w) .applied_num(tot(w))
     li <- a[group != "Totals"]; when <- sub("^(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2}).*", "\\1-\\2-\\3 \\4:\\5", a$run_id[1] %|% "")

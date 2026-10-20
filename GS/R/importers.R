@@ -14,6 +14,7 @@ TYPE_INFO <- data.table(type = c("agi", "syscal", "other"),
                         manufacturer = c("Advanced Geosciences Inc. (AGI)", "IRIS Instruments", ""),
                         model_unknown = c("AGI SuperSting (model unknown)", "IRIS Instruments (model unknown)", ""))
 
+# safe: sniffing only; a file that cannot be read is reported when it is read in full
 head_of <- function(path, n = 4L) tryCatch(suppressWarnings(readLines(path, n = n, warn = FALSE, encoding = "latin1")), error = function(e) character())
 
 FORMATS <- list(
@@ -50,6 +51,7 @@ FORMAT_INFO <- rbindlist(lapply(FORMATS, function(f) f[c("format", "type", "role
 
 sniff_format <- function(path) {
   h <- head_of(path)
+  # safe: sniffing only; a format whose test fails does not claim the file
   for (f in FORMATS) if (isTRUE(tryCatch(f$sniff(path, h), error = function(e) FALSE))) return(f$format)
   if (!length(h)) "empty_or_binary" else "unrecognised"
 }

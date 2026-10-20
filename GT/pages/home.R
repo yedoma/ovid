@@ -12,6 +12,7 @@
   output$meta_check <- renderUI({ d <- input$metadata_dir %||% ""
     if (!nzchar(d)) return(div(class = "check", style = "opacity:.8", icon("circle-info"), " No metadata folder: that is fine, it is optional."))
     if (!dir.exists(path.expand(d))) return(div(class = "check bad", "Folder not found (it is optional: leave it blank to go without)."))
+    # safe: looking for a registry; none found is a valid answer
     r <- tryCatch(find_registry(d), error = function(e) NULL)
     if (is.null(r)) div(class = "check", style = "opacity:.8", icon("circle-info"), " No registry here. That is fine: sites are named after their loggers, and the logger list (Sensors and depths) can name them and give sites and depths.")
     else div(class = "check good", icon("check"), " registry: ", basename(r$file), " / ", r$sheet, " (", nrow(r$data), " rows)") })

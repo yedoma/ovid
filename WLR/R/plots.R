@@ -2,13 +2,8 @@
 # Part of Ovid Core // WLR. Sourced by wlr_pipeline.R; not meant to be run on its own.
 
 # Nord (arcticicestudio): Polar Night backgrounds, Snow Storm text, Frost blues as accents, Aurora for data and warnings.
-# These are the same colours as Nord in iTerm2-Color-Schemes (OVID_SCHEMES$Nord in Ovid/theme.R), plus nord10 and nord12.
-NORD <- list(nord0 = "#2E3440", nord1 = "#3B4252", nord2 = "#434C5E", nord3 = "#4C566A", nord4 = "#D8DEE9", nord5 = "#E5E9F0",
-             nord6 = "#ECEFF4", nord7 = "#8FBCBB", nord8 = "#88C0D0", nord9 = "#81A1C1", nord10 = "#5E81AC", nord11 = "#BF616A",
-             nord12 = "#D08770", nord13 = "#EBCB8B", nord14 = "#A3BE8C", nord15 = "#B48EAD")
-NORD <- c(NORD, list(bg_hard = "#242933", bg = NORD$nord0, bg1 = NORD$nord1, bg2 = NORD$nord2, bg3 = NORD$nord3, gray = "#7B88A1",
-                     fg4 = NORD$nord4, fg = NORD$nord6, accent = NORD$nord8, blue = NORD$nord9, aqua = NORD$nord7, frost = NORD$nord8,
-                     deep = NORD$nord10, red = NORD$nord11, orange = NORD$nord12, yellow = NORD$nord13, green = NORD$nord14, purple = NORD$nord15))
+# The colours and their role names are OVID_SCHEMES$Nord and nord_palette() in Ovid/theme.R.
+NORD <- nord_palette()
 # Settings > Colours offers these schemes (M, 2026-10-08; OVID_ALT_SCHEMES in Ovid/theme.R); the first is WLR's own,
 # and in the others the accent is the scheme's cyan. APP_SCHEME is the one picked (app_settings.json), read at the start.
 APP_SCHEMES <- c("Nord", "Iceberg", "Spacedust", "Aurora")

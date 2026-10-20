@@ -54,7 +54,8 @@
   observeEvent(input$t_save, {
     id <- safe_name(trim(input$t_id)); if (!nzchar(id)) return(ovid_field_error("t_id", "Give the transect an id."))
     a <- parse_latlon(input$t_start); b <- parse_latlon(input$t_end)
-    if ((nzchar(input$t_start) && is.null(a)) || (nzchar(input$t_end) && is.null(b))) return(showNotification("A point is not understood: use 60.1089, -120.1045", type = "error"))
+    if ((nzchar(input$t_start) && is.null(a)) || (nzchar(input$t_end) && is.null(b))) return(showNotification("A point is not understood: write latitude, longitude, for example 45.4215, -75.6972",
+                                                                                                    type = "error"))
     t <- copy(transects()); old <- input$t_pick
     if (nzchar(old) && old != id) t <- t[transect_id != old]
     if (!id %in% t$transect_id) t <- rbind(t, ensure_cols(data.table(transect_id = id), TRANSECT_COLS)[, ..TRANSECT_COLS])
@@ -96,7 +97,7 @@
     CFG$raw_dirs <<- trim(strsplit(input$set_raw, "\n")[[1]]); CFG$raw_dirs <<- CFG$raw_dirs[nzchar(CFG$raw_dirs)]; CFG$project_dir <<- ovid_project_dir(input$set_project)   # none set: the default folder (core util.R)
     SETTINGS <<- utils::modifyList(SETTINGS, list(raw_dirs = CFG$raw_dirs, project_dir = CFG$project_dir)); settings_save(SETTINGS_FILE, SETTINGS[c("raw_dirs", "project_dir")]); set_paths()   # only what changed: other keys (ui, time zone) may have been saved since start
     HOME_PROJECT <<- CFG$project_dir; proj(CFG$project_dir)                  # the folder set here is the user's own catalogue
-    e <- tryCatch(setup_check(CFG), error = function(x) NULL); e <- if (is.null(e)) NULL else e[level == "error"]
+    e <- tryCatch(setup_check(CFG), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); e <- if (is.null(e)) NULL else e[level == "error"]
     if (!force && !is.null(e) && nrow(e)) return(showModal(setup_gate(e, "rebuild_review", "rebuild_force", "Scan")))
     cfg <- CFG; if (force) cfg$run_anyway <- setup_problem_lines(e)
     run_start(session, cfg, label = "Scanning the archive", function(r) {             # in the background (core runner.R)

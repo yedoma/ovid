@@ -14,6 +14,7 @@ meta_ensure_file <- function(project_dir, spec, who = "app") {
   p <- cfg_path_meta(project_dir, "sheet"); dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   if (!dir.exists(dirname(p)) || file.access(dirname(p), 2) != 0) return(invisible(FALSE))
   if (!file.exists(p)) { fwrite(empty_cfg(spec$field), p); return(invisible(TRUE)) }
+  # safe: returns FALSE, which the caller shows as not saved
   d <- tryCatch(read_cfg(p), error = function(e) NULL); if (is.null(d)) return(invisible(FALSE))
   nm <- names(d); if (basename(p) == DEPLOY_SHEET) setnames(d, dep_names(nm, spec$field))          # headings as the sheet reads them, so none is doubled
   miss <- setdiff(spec$field, names(d)); if (length(miss) || !identical(nm, names(d))) { backup_cfg(p, ensure_cols(d, spec$field), who); fwrite_safe(ensure_cols(d, spec$field), p) }
@@ -109,6 +110,7 @@ table_import_server <- function(input, output, session, spec, put, modes = c("ad
   MODE_LAB <- c(add = "Add the rows", update = "Update rows with the same key, add the rest", replace = paste("Use them instead of", target))
   mode_ui <- function() radioButtons(ns("imp_mode"), NULL, stats::setNames(modes, MODE_LAB[modes]), if ("update" %in% modes) "update" else "add", inline = TRUE)
   go <- function() tagList(modalButton("Cancel"), actionButton(ns("imp_go"), paste("Put them in", target), class = "btn-primary"))
+  # safe: the remembered column matches are a convenience
   mem <- function() if (is.null(memory)) NULL else tryCatch(memory$get(), error = function(e) NULL)
   fail <- function(e) { trouble(conditionMessage(e)); incoming(NULL); src(NULL); guess(NULL) }
   # a table read: its matches are worked out once, from the headings and what was matched last time
@@ -116,6 +118,7 @@ table_import_server <- function(input, output, session, spec, put, modes = c("ad
   # rows pasted: headings if the first line has any that match; else every line is data, columns taken in the table's order
   read_paste <- function(txt, hdr = NULL) { s <- spec(); x <- tryCatch(meta_import_text(txt, s, hdr), error = function(e) e)
     if (!inherits(x, "error") && ncol(x) && (!is.null(hdr) || any(imp_guess(names(x), s, stages = c("exact", "units"))$field != ""))) return(take(x))
+    # safe: fail() on the same line says nothing could be read
     g <- tryCatch(imp_grid_text(txt), error = function(e) NULL); if (is.null(g)) return(fail(if (inherits(x, "error")) x else simpleError("Nothing could be read from the pasted text.")))
     for (v in names(g)) set(g, j = v, value = imp_text(g[[v]])); g <- g[rowSums(as.matrix(g) != "") > 0]; g <- g[, vapply(g, function(z) any(nzchar(z)), NA), with = FALSE]
     if (!nrow(g) || !ncol(g)) return(fail(simpleError("Nothing could be read from the pasted text.")))
@@ -160,6 +163,7 @@ table_import_server <- function(input, output, session, spec, put, modes = c("ad
   output$imp_dates_ui <- renderUI({ x <- incoming(); if (is.null(x) || !isTRUE(has_dates())) return(NULL)
     div(class = "imp-hdr-body", selectInput(ns("imp_dates"), "Dates written like 03/04/2024 are", c("Work it out from the file" = "auto", "Day / month / year" = "dmy", "Month / day / year" = "mdy"), isolate(input$imp_dates) %||% "auto", width = "260px"),
         span(class = "dim", "Only matters when a date's order cannot be seen in the file. 2024-08-31 is never ambiguous.")) })
+  # safe: the existing rows are for comparing only
   checked <- reactive({ x <- incoming(); req(x); m <- current_map(x); mode <- input$imp_mode %||% modes[1]; ex <- if (is.null(existing)) NULL else tryCatch(existing(), error = function(e) NULL)
     pr <- imp_prepare(x, m, spec(), input$imp_dates %||% "auto"); list(prep = pr, issues = imp_check(pr, m, spec(), ex, mode), map = m) })
   output$imp_check <- renderUI({ x <- incoming(); if (is.null(x)) return(NULL); r <- checked(); iss <- r$issues; e <- iss[severity == "error"]; w <- iss[severity == "warning"]; n <- iss[severity == "note"]
@@ -175,6 +179,7 @@ table_import_server <- function(input, output, session, spec, put, modes = c("ad
     mode <- input$imp_mode %||% modes[1]; map <- r$map
     rr <- tryCatch(meta_from_import(r$prep$x, map, spec()), error = function(e) { showNotification(conditionMessage(e), type = "error", duration = 10); NULL }); if (is.null(rr)) return()
     if (isTRUE(put(rr$rows, mode, rr$spec))) { removeModal(); incoming(NULL); src(NULL)
+      # safe: remembering the column matches is a convenience
       if (!is.null(memory)) tryCatch(memory$put(names(x), map), error = function(e) NULL)
       nw <- nrow(r$issues[severity == "warning"])
       showNotification(paste0(sprintf("%d row(s) %s.", nrow(rr$rows), c(add = "added", update = "added or updated", replace = paste("now make up", target))[[mode]]), if (nw) paste0(" ", nw, " thing", if (nw == 1) "" else "s", " to check were noted: see the Problems list.") else ""), type = if (nw) "warning" else "message", duration = if (nw) 10 else 5) } })

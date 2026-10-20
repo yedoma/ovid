@@ -148,6 +148,7 @@ wb_unit_html <- function(cols, units) { if (is.null(units)) return(""); u <- unn
 # the rule's parameter names (exact) or patterns (regex = TRUE, case ignored); the first rule that matches and sets a
 # limit gives it. wb_match(params, keys, values) gives one value per parameter the same way.
 wb_match <- function(params, keys, values, regex = FALSE) { keys <- as.character(keys); values <- as.character(values)
+  # safe: an invalid pattern matches nothing here; Check the data lists it
   stats::setNames(vapply(params, function(p) { k <- which(nzchar(values) & !is.na(values) & (if (regex) vapply(keys, function(x) isTRUE(tryCatch(grepl(x, p, ignore.case = TRUE, perl = TRUE), error = function(e) FALSE)), NA) else keys == p))
     if (length(k)) values[k[1]] else NA_character_ }, ""), params) }
 wb_limits <- function(params, keys, lo, hi, regex = FALSE) { num <- function(x) suppressWarnings(as.numeric(x))
@@ -387,6 +388,7 @@ wb_tabs_server <- function(input, output, session, pages, data_label, home = "Ov
   fixed <- vapply(pipeline %||% list(), function(x) x$go, "")
   observeEvent(input$nav, { v <- input$nav; if (!grepl("^wb-", v) && !v %in% fixed) recent(utils::head(unique(c(v, recent())), 5)) })
   observeEvent(input$wb_close, { recent(setdiff(recent(), input$wb_close)); if (identical(input$nav, input$wb_close)) updateTabsetPanel(session, "nav", selected = "wb-data") })
+  # safe: a tab label only
   output$wb_tabbar <- renderUI({ v <- input$nav %||% "wb-data"; lab <- tryCatch(data_label(), error = function(e) NULL)
     data_tab <- function(l) wb_tab(if (length(lab) && nzchar(lab)) paste0(l, " \u00b7 ", lab) else l, "wb-data", on = identical(v, "wb-data"))
     tagList(wb_tab(HTML("&#10515; Import"), "wb-import", on = identical(v, "wb-import")),
@@ -458,6 +460,7 @@ wb_period_server <- function(input, output, session, ed, sel, target, params, op
     showModal(modalDialog(title = "Correct a period", size = "l", easyClose = TRUE,
       div(class = "wb-p", style = "color:var(--wb-fg2)", lead %||% "Type the period (a date without a time runs to the end of that day), or close this, select cells or drag across the chart, and open it again."),
       div(class = "wb-form2", textInput("wb_pc_target", "On (station, site or logger; blank for all)", tg %||% "", width = "100%"),
+          # safe: parameter choices only
           selectizeInput("wb_pc_params", "Parameters (blank for every value)", choices = unique(c(ps, tryCatch(params(), error = function(e) character()))), selected = ps, multiple = TRUE, width = "100%")),
       div(class = "wb-form2", textInput("wb_pc_from", "From", from, width = "100%"), textInput("wb_pc_to", "To", to, width = "100%")),
       div(class = "wb-form2", selectInput("wb_pc_action", "Action", stats::setNames(names(PERIOD_ACTIONS), PERIOD_ACTIONS), selected = action, width = "100%"), textInput("wb_pc_value", "Value (for offset, scale and drift)", "", width = "100%")),
@@ -469,6 +472,7 @@ wb_period_server <- function(input, output, session, ed, sel, target, params, op
       footer = tagList(actionLink("wb_pc_list", "Open the list"), modalButton("Cancel"), actionButton("wb_do_period", "Add to corrections", class = "btn-primary")))) }
   observeEvent(input$wb_act_period, { if (isTRUE(get0("VIEWER"))) return(); s <- sel(); has <- !is.null(s) && length(s$t)
     if (has) dialog(target(), unique(s$p), f(min(s$t)), f(max(s$t)), lead = paste0("The selected stretch: ", f(min(s$t)), " to ", f(max(s$t)), ", ", length(s$t), " values. Change the dates to type another period."))
+    # safe: no target picked yet
     else dialog(tryCatch(target(), error = function(e) ""), NULL, "", "") })
   # from the Needs you list: list(target, parameter, from, to, action, note)
   if (!is.null(preset)) observeEvent(preset(), { x <- preset(); req(x); if (isTRUE(get0("VIEWER"))) return()
@@ -523,6 +527,7 @@ wb_needs_items <- function(check = NULL, items = NULL) {
 wb_needs_ui <- function() uiOutput("wb_needs", inline = TRUE)
 # by: group the list by place (default) or by what to do (input wb_needs_by)
 wb_needs_server <- function(output, items, input = shiny::getDefaultReactiveDomain()$input) output$wb_needs <- renderUI({
+  # safe: nothing to count yet
   x <- tryCatch(items(), error = function(e) NULL); n <- if (is.null(x)) 0L else sum(x$n)
   by <- if (identical(input$wb_needs_by, "fix")) "fix" else "group"
   body <- if (!n) div(class = "wb-needs-none", "Nothing waits for you.") else {
@@ -567,6 +572,7 @@ wb_jump_take <- function(jump, pa, want, r, from, to) {
 # or not); keys, the names the record answers to; names, the value's column (and sensor or channel); t, its time.
 wb_period_steps <- function(tab, keys, names, t) {
   if (is.null(tab) || !NROW(tab) || is.null(t) || is.na(t)) return(NULL)
+  # safe: rows of the period table that cannot be read are shown by its editor
   r <- tryCatch(period_read_rows(ensure_cols(as.data.table(tab), PERIOD_COLS))$rows, error = function(e) NULL); if (is.null(r) || !nrow(r)) return(NULL)
   k <- tolower(trim(as.character(keys[!is.na(keys)]))); nm <- trim(as.character(names[!is.na(names)]))
   hit <- (!nzchar(r$target) | r$target == "*" | tolower(r$target) %in% k) &
@@ -580,3 +586,27 @@ wb_period_steps <- function(tab, keys, names, t) {
 wb_empty_acts <- function(raw = NULL) div(class = "wb-inline", style = "margin:8px 0",
   tags$a(class = "wb-btn sm primary", href = "#", `data-ovid-go` = "wb-import", HTML("&#10515; Go to Import")),
   if (!is.null(raw)) tags$a(class = "wb-btn sm", href = "#", `data-ovid-go` = raw, title = "Open a raw file and look at it as it is, before any run", "Open a raw file"))
+
+# ---- the grid of a viewer's Workbench (GS, RS): the app's WB_COLS gives each column p its data column and digits ----
+# A value of column p as the grid shows it.
+wb_num <- function(v, p) {
+  dg <- WB_COLS$digits[match(p, WB_COLS$p)]
+  if (!is.numeric(v)) {
+    v <- as.character(v)
+    v[is.na(v)] <- ""
+    return(v)
+  }
+  out <- if (is.na(dg)) formatC(signif(v, 4), digits = 4, format = "fg") else formatC(v, format = "f", digits = as.integer(dg))
+  out <- sub("^-", "\u2212", trimws(out))
+  out[is.na(v)] <- ""
+  out
+}
+# The grid's cells: per column each cell's HTML and class (its state; a value restored since the last run is marked).
+wb_cells <- function(w, params, states) {
+  out <- lapply(params, function(p) {
+    k <- WB_COLS$col[match(p, WB_COLS$p)]
+    s <- states[[p]]
+    txt <- htmltools::htmlEscape(wb_num(w[[k]], p))
+    list(txt = ifelse(s$state == "back", paste0('<span class="x">\u21ba</span>', txt), txt), cls = s$state) })
+  list(txt = lapply(out, `[[`, "txt"), cls = lapply(out, `[[`, "cls"))
+}

@@ -775,4 +775,118 @@ local({   # not deployed: the time between a place's deployments (deployments.R 
         nrow(g) == 1 && g$t0 == as.numeric(t[2]) && g$t1 == as.numeric(t[3]) && g$kind == "absent" && grepl("(18 days), between A and B", g$label, fixed = TRUE))
   check("overlapping or single deployments leave no span", !nrow(absent_spans(t[c(1, 5)], t[c(4, 4)])) && !nrow(absent_spans(t[1], t[2]))) })
 
+cat("say(): one, in core\n")
+local({ source(file.path(CORE_DIR, "cache.R"), local = TRUE)
+  repo <- dirname(CORE_DIR)
+  own <- unlist(lapply(c("CS", "WLR", "GT", "GS", "RS"), function(a) if ("say" %in% core_shadows(app_code_files(file.path(repo, a)))) a))
+  check("no app defines its own say() (each uses core's, with its LOG and SAY_STEPS)", !length(own))
+  lg <- new.env(); lg$lines <- character()
+  out <- capture.output(say("[2/6] ", "reading", log = lg, steps = 6), say("plain", log = NULL, steps = 0))
+  check("say() prints, adds the message to the log it is given, and with steps but no Shiny session moves nothing",
+        identical(lg$lines, "[2/6] reading") && length(out) == 2 && grepl("plain", out[2], fixed = TRUE))
+  had <- exists("LOG", envir = globalenv(), inherits = FALSE)
+  out <- capture.output(say("no log"))
+  assign("LOG", lg, envir = globalenv())
+  capture.output(say("app log"))
+  if (!had) rm("LOG", envir = globalenv())
+  check("by default say() writes to the app's LOG when there is one, and only prints when there is none",
+        !had && identical(out, "no log") && identical(lg$lines, c("[2/6] reading", "app log"))) })
+
+cat("clock corrections (time_corrections.R), shared by CS, WLR and GT\n")
+local({ for (.f in c("timestamps", "time_corrections")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  say <- function(...) invisible(); audit_reset()
+  t0 <- as.POSIXct("2025-06-01 00:00", tz = "UTC")
+  one <- function() data.table(logger_id = "123", TIMESTAMP = t0 + 0:10 * 3600, source_file = rep(c("a.csv", "b.csv"), c(5, 6)))
+  wlr <- data.table(serial = "123", start = "2025-06-01 02:00", end = "2025-06-01 04:00", shift_minutes = "30", reason = "fast", author = "t", mode = "")
+  gt <- wlr[, .(serial, start, end, shift_minutes, reason)]
+  cs <- data.table(logger_id = "123", table = "", source_file = "", start = wlr$start, end = wlr$end, action = "shift", shift_minutes = "30", reason = "fast", author = "t")
+  w <- apply_time_corrections(one(), wlr, 1L, dedupe = TRUE); g <- apply_time_corrections(one(), gt, 1L, audit = FALSE); c1 <- apply_time_corrections(one(), cs)
+  check("the same correction moves the same records the same way, whatever the app's table columns",
+        identical(sort(w$TIMESTAMP), sort(g$TIMESTAMP)) && identical(g$TIMESTAMP, c1$TIMESTAMP) && attr(g, "shifted") == 3L && g$TIMESTAMP[3] == t0 + 2.5 * 3600)
+  dr <- apply_time_corrections(one(), wlr[, `:=`(start = "2025-06-01 00:00", end = "2025-06-01 10:00", shift_minutes = "-10", mode = "drift")], 1L)
+  check("a drift is spread over the span: none at its start, all of it at its end",
+        dr$TIMESTAMP[1] == t0 && dr$TIMESTAMP[11] == t0 + 10 * 3600 - 600 && dr$TIMESTAMP[6] == t0 + 5 * 3600 - 300)
+  cl <- apply_time_corrections(one(), data.table(serial = "123", start = "2025-06-01 02:00", end = "2025-06-01 02:00", shift_minutes = "60", reason = ""), 1L, dedupe = TRUE)
+  check("with dedupe a record moved onto another's time is dropped and the rest are in time order", nrow(cl) == 10 && !is.unsorted(cl$TIMESTAMP))
+  long <- one()[rep(1:11, each = 2)]
+  check("without dedupe two channels at one time both stay (GT's long table)", nrow(apply_time_corrections(long, gt, 1L, audit = FALSE)) == 22)
+  rm1 <- apply_time_corrections(one(), cs[, `:=`(action = "remove", source_file = "a.csv")])
+  check("action remove drops the records, and a source_file limits the row to that file", nrow(rm1) == 8 && !any(rm1$TIMESTAMP %in% (t0 + 2:4 * 3600)))
+  np <- length(AUDIT$problems)
+  bad <- apply_time_corrections(one(), cs[, `:=`(action = "shift", source_file = "", shift_minutes = "x")])
+  bad2 <- apply_time_corrections(one(), cs[, `:=`(shift_minutes = "30", start = "June-ish")])
+  check("a row whose minutes or dates are not readable is listed as a problem and moves nothing",
+        length(AUDIT$problems) == np + 2 && identical(bad$TIMESTAMP, one()$TIMESTAMP) && identical(bad2$TIMESTAMP, one()$TIMESTAMP))
+  a <- audit_table()
+  check("a shift is audited per raw file, as a change of TIMESTAMP (not as records dropped)",
+        nrow(a[rule == "clock_fix_shifted" & level == "change" & column == "TIMESTAMP"]) >= 2 && nrow(a[rule == "clock_fix_drift"]) == 2) })
+
+cat("HOBOware CSV records and events (logger_files.R), shared by WLR and GT\n")
+local({ source(file.path(CORE_DIR, "logger_files.R"), local = TRUE)
+  repo <- dirname(CORE_DIR)
+  one <- function(f) { a <- read_lines_any(f); a <- a[nzchar(trim(a))]                      # GT reads lines this way
+    b <- strsplit(gsub("\r", "", rawToChar(readBin(f, "raw", file.size(f))), fixed = TRUE), "\n", fixed = TRUE)[[1]]   # WLR keeps the bytes as they are
+    ra <- hobo_csv_rows(a, hobo_csv_head(a)); rb <- hobo_csv_rows(b, hobo_csv_head(b)); h <- hobo_csv_head(a)
+    da <- fread(text = ra$lines, header = FALSE, sep = h$sep, colClasses = "character", fill = TRUE, na.strings = NULL)
+    db <- fread(text = rb$lines, header = FALSE, sep = h$sep, colClasses = "character", fill = TRUE, na.strings = c("", "NA"))
+    ev <- which(seq_along(h$header) > h$dcol & !grepl("^(Temp|Abs Pres)", h$header)); ts <- parse_dt(da[[h$dcol]])
+    list(same_rows = identical(fix_enc(ra$lines), fix_enc(rb$lines)) && is.null(ra$header_change), n = length(ra$lines),
+         ea = hobo_csv_events(da, ev, ts, h$header), eb = hobo_csv_events(db, ev, ts, h$header), cut = ends_cut(f)) }
+  w <- one(file.path(repo, "WLR", "tests", "samples", "hobo_csv__10000005_SiteA_2024.csv"))
+  g <- one(file.path(repo, "GT", "tests", "samples", "hobo_csv__1000004_SiteA20240921.csv"))
+  check("WLR's and GT's HOBO samples give the same record lines whichever way the app reads the file",
+        w$same_rows && g$same_rows && w$n > 0 && g$n > 0)
+  check("... and the same events, named without the logger's serial", identical(w$ea, w$eb) && nrow(w$ea) > 0 && !any(grepl("S/N", w$ea$event)) &&
+          identical(g$ea, g$eb))
+  check("neither sample ends inside a row", !w$cut && !g$cut)
+  j <- c("\"Plot Title: X\"", "\"#\",\"Date Time, GMT-07:00\",\"Temp, \u00b0C\"", "1,09/27/23 03:00:00 PM,1.5", "", "\"#\",\"Date Time, GMT-07:00\",\"Temp, \u00b0C\"",
+         "2,09/27/23 03:30:00 PM,1.6", "\"#\",\"Date Time, GMT-07:00\",\"RH, %\"", "3,09/27/23 04:00:00 PM,80", "4,09/27/23 04:30:00 PM,81")
+  r <- hobo_csv_rows(j, hobo_csv_head(j))
+  check("a blank line and a repeated heading are left out; a heading with other columns ends the records and is reported",
+        length(r$lines) == 2 && identical(r$header_change, list(line = 7L, rows = 2L)))
+  check("... or, when the app asks, the rows after it are kept",
+        length(hobo_csv_rows(j, hobo_csv_head(j), stop_at_change = FALSE)$lines) == 4)
+  cf <- tempfile(fileext = ".csv"); writeBin(charToRaw("a,b\n1,2"), cf)
+  check("a file that ends inside a row is found", ends_cut(cf) && !nrow(hobo_csv_events(data.table(), integer(), NULL, character()))) })
+
+cat("a set-up table that cannot be read is reported, not taken as empty (CONTRIBUTING rule 13)\n")
+local({ for (.f in c("periods", "corrections")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  say <- function(...) invisible()
+  bad <- file.path(tempfile("cfg"), "period_corrections.csv"); dir.create(bad, recursive = TRUE)   # a folder where the table should be: read_cfg() fails
+  n0 <- length(AUDIT$problems)
+  r <- period_read(bad)
+  pr <- rbindlist(AUDIT$problems[-seq_len(n0)])
+  check("period corrections that cannot be read: none applied, and the table is named on the problem list",
+        !nrow(r$rows) && nrow(pr) >= 1 && any(pr$where == "period_corrections.csv"))
+  n1 <- length(AUDIT$problems)
+  lg <- corrections_log(list(), list(list(id = "x", what = "x", on = function(cfg) stop("no such setting"))))
+  check("a correction whose on/off test fails is listed as off and the failure is on the problem list",
+        length(AUDIT$problems) > n1) })
+
+
+# Item 4 colours: every colour an app draws comes from its palette (app_palette(), core/theme.R), except the named
+# scientific scales and fixed values listed here with their reason. A quoted hex colour or rgba() anywhere else fails.
+local({ source(file.path(CORE_DIR, "theme.R"), local = TRUE)
+  n <- nord_palette()
+  check("nord_palette() gives WLR's Nord roles from OVID_SCHEMES$Nord", n$bg == "#2E3440" && n$fg == "#ECEFF4" && n$deep == "#5E81AC" &&
+        n$orange == "#D08770" && n$bg_hard == "#242933" && n$gray == "#7B88A1" && identical(n$frost, n$accent))
+  check("col_rgba() writes a colour at an opacity", col_rgba("#1F1F28", 0.85) == "rgba(31,31,40,0.85)")
+  allowed <- c(
+    "GS/R/plots.R" = "c(\"#2c7bb6\", \"#abd9e9\"", "GS/R/views.R" = "Spectral = c(", "GS/pages/fct_stack.R" = "c(\"#2c7bb6\", \"#abd9e9\"",   # Spectral, Viridis
+    "GS/pages/fct_stack.R" = "#2166ac", "GS/pages/fct_workbench.R" = "#2166ac",                        # RdBu change in resistivity
+    "GS/pages/fct_workbench.R" = "ELECTRODE_COL", "GS/R/gpr.R" = "GPR_SCALES",                         # Spectral ends; Grey, Blue-white-red
+    "GS/R/maps.R" = "MAP_LABEL_COL <-",                                                                # white on satellite imagery (M)
+    "GS/pages/mod_gpr_map.R" = "line = list(color = \"#ffffff\"")                                     # cursor on the radargram image
+  apps <- file.path(dirname(CORE_DIR), c("CS", "WLR", "GT", "GS", "RS"))
+  files <- unlist(lapply(apps, list.files, pattern = "[.]R$", recursive = TRUE, full.names = TRUE))
+  files <- files[!grepl("/tests/", files)]
+  bad <- character()
+  for (f in files) { rel <- sub(paste0("^", dirname(CORE_DIR), "/"), "", f); ln <- readLines(f, warn = FALSE)
+    hit <- grep("\"#[0-9A-Fa-f]{6}\"|\"rgba\\([0-9]", ln)
+    ok <- vapply(hit, function(i) any(vapply(allowed[names(allowed) == rel], function(a) grepl(a, ln[i], fixed = TRUE), TRUE)) ||
+                                    grepl("\"rgba(0,0,0,0)\"", ln[i], fixed = TRUE), TRUE)
+    bad <- c(bad, sprintf("%s:%d", rel, hit[!ok])) }
+  if (length(bad)) cat("    colours outside the palette:", paste(bad, collapse = ", "), "\n")
+  check("apps draw no hex or rgba colour outside their palette, except the named scientific scales", !length(bad)) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

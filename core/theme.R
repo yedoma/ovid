@@ -17,7 +17,11 @@ OVID_SCHEMES <- list(
     extra = c(current_line = "#282a2e", comment = "#969896", orange = "#de935f")),   # from the Tomorrow theme the scheme comes from
   Nord = list(bg = "#2e3440", fg = "#d8dee9", selection = "#eceff4", cursor = "#eceff4",
     ansi = c("#3b4252", "#bf616a", "#a3be8c", "#ebcb8b", "#81a1c1", "#b48ead", "#88c0d0", "#e5e9f0",
-             "#4c566a", "#bf616a", "#a3be8c", "#ebcb8b", "#81a1c1", "#b48ead", "#8fbcbb", "#eceff4")),
+             "#4c566a", "#bf616a", "#a3be8c", "#ebcb8b", "#81a1c1", "#b48ead", "#8fbcbb", "#eceff4"),
+    # nord0 to nord15 as arcticicestudio names them (used by WLR, nord_palette() below), with WLR's darker status-line ground and its grey
+    named = c(nord0 = "#2E3440", nord1 = "#3B4252", nord2 = "#434C5E", nord3 = "#4C566A", nord4 = "#D8DEE9", nord5 = "#E5E9F0",
+              nord6 = "#ECEFF4", nord7 = "#8FBCBB", nord8 = "#88C0D0", nord9 = "#81A1C1", nord10 = "#5E81AC", nord11 = "#BF616A",
+              nord12 = "#D08770", nord13 = "#EBCB8B", nord14 = "#A3BE8C", nord15 = "#B48EAD", bg_hard = "#242933", gray = "#7B88A1")),
   `Squirrelsong Dark` = list(bg = "#352a21", fg = "#ad9c8b", selection = "#574131", cursor = "#ad9c8b",
     ansi = c("#352a21", "#ac493e", "#558240", "#ceb250", "#5993c2", "#7f61b3", "#4f9593", "#cfbaa5",
              "#6b503c", "#ce574a", "#719955", "#e2c358", "#63a2d6", "#9672d4", "#72aaa8", "#edd5be")),
@@ -82,6 +86,15 @@ olive_crt_palette <- function() { r <- as.list(OVID_SCHEMES$`olive-crt`$roles)
        red = r$red, green = r$teal, yellow = r$amber, gold = r$amber, blue = r$cyan, cyan = r$cyan, teal = r$teal, purple = r$violet,
        aqua = r$sand, sand = r$sand, orange = r$rust, accent = r$olive, acc2 = r$olive_bright, olive = r$olive, lime = r$olive_bright,
        error_bg = r$error_bg, warn_bg = r$warn_bg, info_bg = r$info_bg, hint_bg = r$hint_bg) }
+
+# Nord as WLR's palette: Polar Night grounds, Snow Storm text, Frost blues as accents, Aurora for data and warnings.
+nord_palette <- function() { n <- as.list(OVID_SCHEMES$Nord$named)
+  c(n[sprintf("nord%d", 0:15)], list(bg_hard = n$bg_hard, bg = n$nord0, bg1 = n$nord1, bg2 = n$nord2, bg3 = n$nord3, gray = n$gray,
+    fg4 = n$nord4, fg = n$nord6, accent = n$nord8, blue = n$nord9, aqua = n$nord7, frost = n$nord8, deep = n$nord10, red = n$nord11,
+    orange = n$nord12, yellow = n$nord13, green = n$nord14, purple = n$nord15)) }
+
+# A colour at opacity a (0 to 1) as CSS rgba(), for plotly fills and legend grounds.
+col_rgba <- function(col, a) { v <- grDevices::col2rgb(col)[, 1]; sprintf("rgba(%d,%d,%d,%s)", v[1], v[2], v[3], format(a)) }
 
 # A colour part way from a to b (t = 0 is a, 1 is b), for the in-between greys a scheme does not define.
 mix_col <- function(a, b, t) {
@@ -342,6 +355,7 @@ scheme_palette <- function(name, like, accent) {
 # The colour scheme an app was saved with (Settings > Colours: colour_scheme in app_settings.json beside the app), if it is
 # one of choices; else choices[1], the app's own.
 saved_scheme <- function(choices, dir = get0("PIPELINE_DIR", ifnotfound = getwd())) {
+  # safe: no saved scheme means the app's own
   s <- tryCatch(settings_read(file.path(dir, "app_settings.json"))$colour_scheme, error = function(e) NULL)
   if (is.character(s) && length(s) == 1L && s %in% choices) s else choices[[1]]
 }
