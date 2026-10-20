@@ -327,8 +327,21 @@ local({ source(file.path(CORE_DIR, "hobo.R"), local = TRUE)
   check("its temperature and pressure follow the logger's calibration (Steinhart-Hart; psi to kPa)",
         abs(d$temp_c[2] - 2.4099) < 0.001 && abs(d$pres_kpa[2] / HOBO_PSI_KPA - 15.81) < 0.05 && attr(d, "serial") == "10279609")
   writeBin(charToRaw("not a hobo file"), f); check("a file that is not a .hobo, or another model, gives NULL (its CSV export is needed)", is.null(hobo_decode(f)))
+  # a real U20 file against its HOBOware export (WLR's sample): the launch record (packed apart) and the last record (end mark in bit 0)
+  hs <- file.path(dirname(CORE_DIR), "WLR", "tests", "samples", "hobo_decoded__10000006.hobo")
+  if (file.exists(hs)) { r <- hobo_decode(hs)
+    check("a real U20 .hobo: first and last pressure as HOBOware exports them (14.3473 psi = 98.92 kPa, 16.1953 psi = 111.66 kPa), all 1,564 records",
+          nrow(r) == 1564L && abs(r$pres_kpa[1] - 14.3473 * HOBO_PSI_KPA) < 0.01 && abs(r$pres_kpa[nrow(r)] - 16.1953 * HOBO_PSI_KPA) < 0.01) }
 })
 
+
+cat("reader samples: times compared to the millisecond (testkit.R)\n")
+local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE)
+  x <- data.table(t = as.POSIXct("2024-09-21 18:15:29", tz = "UTC"), v = 1); y <- copy(x)[, t := t + 18]
+  check("an 18 s shift in a time column is a different result (all.equal alone let it pass)", isTRUE(all.equal(x, y, check.attributes = FALSE)) && !sample_times_same(x, y))
+  check("the same times, nested in a list, and a 0.4 ms difference, are the same", sample_times_same(list(meta = list(a = 1), d = x), list(meta = list(a = 1), d = copy(x))) &&
+        sample_times_same(x, copy(x)[, t := t + 4e-4]))
+})
 
 cat("corrections over a period (periods.R)\n")
 local({ source(file.path(CORE_DIR, "periods.R"), local = TRUE)

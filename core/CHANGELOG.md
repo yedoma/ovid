@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (.hobo decoder; reader-sample time check, 2026-10-19)**
+
+- hobo.R: the U20 launch record is packed apart (pressure high 12 bits, then 2 low bits and a 10-bit temperature) and the last record carries an end mark in bit 0; both are now decoded. WLR's U20 sample matches its HOBOware export at both ends (98.92 and 111.66 kPa, all 1,564 records); of 30 real U20 pairs, 9 decode fully right (0 before), and mid-file event chains still stop or shift some files (open). Test in tests/run_tests.R.
+- testkit.R: check_reader_samples compares time columns to the millisecond (sample_times_same); all.equal alone let about 26 s through, so an 18 s shift passed unseen. Test in tests/run_tests.R.
+
+**Output changes:** decoded U20 .hobo files (WLR): the first and last record's pressure and temperature are now right (they were wrong in every file). Reader-sample checks only: no output change.
+
 **Changed (GS icon, 2026-10-17)**
 
 - Updated only the GS entry in `OVID_ICONS` to the new ERT/GPR trace-and-section artwork, shared by Standard and Workbench. Other app icons are unchanged. **Output changes:** none.

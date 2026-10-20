@@ -69,6 +69,17 @@ read_sample_table <- function(f, cols) {
   x <- if (file.exists(f) && file.size(f) > 0) fread(f, colClasses = "character", na.strings = character()) else data.table()
   for (k in setdiff(cols, names(x))) set(x, j = k, value = character(nrow(x))); x[, cols, with = FALSE] }
 
+# Times compared to the millisecond: all.equal() treats a POSIXct as a plain number with a relative tolerance of 1.5e-8, which
+# lets about 26 s through at today's dates (an 18 s shift once passed unseen). Walks lists and tables; other values are left to all.equal().
+sample_times_same <- function(x, y) {
+  tm <- function(v) inherits(v, c("POSIXt", "Date"))
+  if (tm(x) || tm(y)) return(tm(x) && tm(y) && length(x) == length(y) && isTRUE(all(is.na(x) == is.na(y))) &&
+                             all(abs(as.numeric(x[!is.na(x)]) - as.numeric(y[!is.na(y)])) <= if (inherits(x, "Date")) 0 else 1e-3))
+  if (is.list(x) && is.list(y)) { k <- if (!is.null(names(x)) && !is.null(names(y))) intersect(names(x), names(y)) else seq_len(min(length(x), length(y)))
+    return(all(vapply(k, function(i) sample_times_same(x[[i]], y[[i]]), NA))) }
+  TRUE
+}
+
 # Read every sample twice and against its expected result. One row per sample: rerun_identical, matches_expected (NA where
 # the expected result was just written), accepted (named in accepted.csv with the md5 of its expected .rds as it is now)
 # and reference_ok (every reference.csv value for it matches; NA where it has none).
@@ -82,7 +93,7 @@ check_reader_samples <- function(dir, read, update = identical(Sys.getenv("OVID_
     a <- tryCatch(sample_strip(read(p, k), dir), error = function(e) structure(list(conditionMessage(e)), class = "read_error"))
     b <- tryCatch(sample_strip(read(p, k), dir), error = function(e) structure(list(conditionMessage(e)), class = "read_error"))
     ef <- file.path(dir, "expected", paste0(basename(p), ".rds")); bad <- inherits(a, "read_error")
-    same <- !bad && file.exists(ef) && isTRUE(all.equal(readRDS(ef), a, check.attributes = FALSE))
+    same <- !bad && file.exists(ef) && { e <- readRDS(ef); isTRUE(all.equal(e, a, check.attributes = FALSE)) && sample_times_same(e, a) }
     m <- if (bad) FALSE else if (same) TRUE else if (update || !file.exists(ef)) { saveRDS(a, ef, version = 2); NA } else FALSE   # an unchanged result is not saved again, so it stays accepted
     ar <- acc[file == basename(p)]
     ok_acc <- file.exists(ef) && nrow(ar) == 1 && identical(ar$expected_md5, unname(tools::md5sum(ef)))

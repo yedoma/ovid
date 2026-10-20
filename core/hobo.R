@@ -13,8 +13,9 @@
 #   t = (v2 >> 2) + 0.5, L = ln(t / (1023 - t)), T = 1 / (3.35371024e-3 + 2.78596313e-4 L + 4.15849337e-6 L^2 + 1.35850424e-7 L^3) - 273.15
 #   (the Steinhart-Hart form; Steinhart and Hart 1968), and absolute pressure in psi from the logger's own calibration
 #   x = v1 + 4096 (v2 & 3), P = f0 + f1 T + f2 x + f3 T^2 + f4 x^2 + f5 x T, then kPa = 6.894757 psi.
-# Other models are not read yet (their files keep needing the CSV export). The first record of a download is often taken
-# before the logger settles and is kept as read.
+# The launch record (the first) is packed apart: the pressure count's high 12 bits, then its 2 low bits and the 10-bit
+# temperature count. The last record carries an end mark in bit 0 of its second value. (Both checked against HOBOware exports.)
+# Other models are not read yet (their files keep needing the CSV export).
 
 HOBO_DECODE_MODELS <- "U20"
 HOBO_PSI_KPA <- 6.894757
@@ -38,12 +39,15 @@ hobo_decode <- function(path) {
   iv <- hobo_be(h[["8"]][[1]]); delay <- if (!is.null(h[["34"]]) && length(h[["34"]][[1]]) >= 11) hobo_be(h[["34"]][[1]][9:11]) else 0
   cr <- h[["49"]][[1]]; cal <- readBin(cr, "numeric", n = length(cr) %/% 4, size = 4, endian = "big")
   nib <- paste(sprintf("%02x", as.integer(b[hh$data_start:length(b)])), collapse = ""); N <- nchar(nib)
-  val <- function(q) { if (q + 5 > N) return(NULL); s <- substr(nib, q, q + 5); if (substr(s, 1, 3) == "fff") return(NULL)
-    v1 <- strtoi(substr(s, 1, 3), 16L); v2 <- strtoi(substr(s, 4, 6), 16L); t <- bitwShiftR(v2, 2) + 0.5; if (!(t > 0 && t < 1023)) return(NULL)
-    L <- log(t / (1023 - t)); Tc <- 1 / (3.35371024e-3 + 2.78596313e-4 * L + 4.15849337e-6 * L^2 + 1.35850424e-7 * L^3) - 273.15
-    x <- v1 + 4096 * bitwAnd(v2, 3L); c(cal[1] + cal[2] * Tc + cal[3] * x + cal[4] * Tc^2 + cal[5] * x^2 + cal[6] * x * Tc, Tc) }
+  phys <- function(x, t) { L <- log(t / (1023 - t)); Tc <- 1 / (3.35371024e-3 + 2.78596313e-4 * L + 4.15849337e-6 * L^2 + 1.35850424e-7 * L^3) - 273.15
+    c(cal[1] + cal[2] * Tc + cal[3] * x + cal[4] * Tc^2 + cal[5] * x^2 + cal[6] * x * Tc, Tc) }
+  val <- function(q, kind = "record") { if (q + 5 > N) return(NULL); s <- substr(nib, q, q + 5); if (substr(s, 1, 3) == "fff") return(NULL)
+    v1 <- strtoi(substr(s, 1, 3), 16L); v2 <- strtoi(substr(s, 4, 6), 16L)
+    if (kind == "first") { t <- bitwAnd(v2, 1023L) + 0.5; x <- v1 * 4 + bitwShiftR(v2, 10) }   # the launch record: the pressure count's high 12 bits, then its 2 low bits and the 10-bit temperature count
+    else { t <- bitwShiftR(v2, 2) + 0.5; x <- v1 + 4096 * bitwAnd(v2, if (kind == "last") 2L else 3L) }   # the last record carries an end mark in bit 0
+    if (!(t > 0 && t < 1023)) return(NULL); phys(x, t) }
   p <- 1L; while (p <= N && substr(nib, p, p) == "f") p <- p + 1L
-  P <- numeric(); Tt <- numeric(); prev <- NULL; stopped <- FALSE; chain <- 0
+  P <- numeric(); Tt <- numeric(); prev <- NULL; stopped <- FALSE; chain <- 0; first <- TRUE; lastp <- NA_integer_
   while (p + 5 <= N) {
     if (substr(nib, p, p + 2) == "fff") {                            # an escape: resume where the records carry on
       best <- NA
@@ -57,8 +61,11 @@ hobo_decode <- function(path) {
         best <- L; break }
       if (is.na(best)) break                                            # the end of the records (what follows is old memory)
       chain <- chain + 1; p <- p + best; next }                      # after a chain of events (a download) the level may jump
-    v <- val(p); if (is.null(v)) { stopped <- TRUE; break }
-    P <- c(P, v[1]); Tt <- c(Tt, v[2]); prev <- v; chain <- 0; p <- p + 6L }
+    v <- val(p, if (first) "first" else "record"); if (is.null(v)) { stopped <- TRUE; break }
+    P <- c(P, v[1]); Tt <- c(Tt, v[2]); prev <- v; chain <- 0; lastp <- p; p <- p + 6L
+    if (first) { k <- regexpr("fff", substr(nib, p, p + 4)); if (k > 1) p <- p + k - 1L }   # a launch record can be followed by a nibble or two before the first event
+    first <- FALSE }
+  if (length(P) > 1 && !is.na(lastp)) { v <- val(lastp, "last"); if (!is.null(v)) { P[length(P)] <- v[1]; Tt[length(Tt)] <- v[2] } }
   out <- data.table::data.table(TIMESTAMP = launch + delay + (seq_along(P) - 1) * iv, pres_kpa = P * HOBO_PSI_KPA, temp_c = Tt)
   attr(out, "model") <- model; attr(out, "serial") <- txt("6"); attr(out, "zone") <- txt("20"); attr(out, "interval_s") <- iv; attr(out, "stopped") <- stopped
   out }
