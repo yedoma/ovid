@@ -77,11 +77,14 @@ derive_products <- function(dt, cfgs, cfg) {
   d[, Date := as.Date(TIMESTAMP)]
   dirc <- grepl(WIND_DIR_RX, cols)
   f_val <- function(x, is_tot, is_dir = FALSE) if (all(is.na(x))) NA_real_ else if (is_tot) sum(x, na.rm = TRUE) else if (is_dir) circ_mean_deg(x) else mean(x, na.rm = TRUE)
+  # 6 significant digits, after 12: a mean on a rounding boundary (1.293875) differs in its last bits between x86_64 and arm64, and
+  # signif(x, 6) alone then flips the last digit; rounding to 12 first takes those bits off on every processor
+  signif_stable <- function(x, d) signif(signif(x, 12), d)
   agg <- function(x, by, need) {
     n <- x[, lapply(.SD, function(v) sum(!is.na(v))), by = by, .SDcols = cols]
     v <- x[, Map(f_val, .SD, tot, dirc), by = by, .SDcols = cols]
     for (j in cols) set(v, which(n[[j]] < need(n) * cfg$min_complete), j, NA_real_)
-    for (j in cols) set(v, j = j, value = signif(v[[j]], 6))
+    for (j in cols) set(v, j = j, value = signif_stable(v[[j]], 6))
     list(v = v, n = n)
   }
   day <- agg(d, "Date", function(n) per_day)
@@ -100,7 +103,7 @@ derive_products <- function(dt, cfgs, cfg) {
   if (has("wind_speed", "wind_dir")) {                          # the spread and the resultant of the wind, from the records of each day
     w <- d[!is.na(wind_speed) & !is.na(wind_dir), .(wind_dir_sd_calc = yamartino_sd(wind_dir), wind_speed_resultant_calc = wind_resultant(wind_speed, wind_dir)[["speed"]],
                                                      wind_dir_resultant_calc = wind_resultant(wind_speed, wind_dir)[["dir"]], n = .N), by = Date][n >= per_day * cfg$min_complete][, n := NULL]
-    if (nrow(w)) { dv[w, on = "Date", `:=`(wind_dir_sd_calc = signif(i.wind_dir_sd_calc, 6), wind_speed_resultant_calc = signif(i.wind_speed_resultant_calc, 6), wind_dir_resultant_calc = signif(i.wind_dir_resultant_calc, 6))]
+    if (nrow(w)) { dv[w, on = "Date", `:=`(wind_dir_sd_calc = signif_stable(i.wind_dir_sd_calc, 6), wind_speed_resultant_calc = signif_stable(i.wind_speed_resultant_calc, 6), wind_dir_resultant_calc = signif_stable(i.wind_dir_resultant_calc, 6))]
       made <- c(made, "wind_dir_sd_calc", "wind_speed_resultant_calc", "wind_dir_resultant_calc") } }
   # evapotranspiration, where the station has what it needs (latitude in Station details; wind_height_m, else 2 m)
   si <- cfgs$sites[station == dt$station[1]][1]; lat <- suppressWarnings(as.numeric(si$latitude)); z <- suppressWarnings(as.numeric(si$elevation_m))
@@ -127,7 +130,7 @@ derive_products <- function(dt, cfgs, cfg) {
   mon <- agg(dv, "Month", function(n) dim(n$Month))$v
   wy0 <- cfg$water_year_start_month %||% 10; dv[, WY := year(Date) + (month(Date) >= wy0 & wy0 > 1)]
   wyl <- melt(dv[, c("WY", cols), with = FALSE], id.vars = "WY", variable.name = "parameter", variable.factor = FALSE)
-  wy <- wyl[, .(value = signif(f_val(value, grepl(TOTAL_RX, parameter[1], ignore.case = TRUE), grepl(WIND_DIR_RX, parameter[1])), 6), days_with_value = sum(!is.na(value))), by = .(water_year = WY, parameter)]
+  wy <- wyl[, .(value = signif_stable(f_val(value, grepl(TOTAL_RX, parameter[1], ignore.case = TRUE), grepl(WIND_DIR_RX, parameter[1])), 6), days_with_value = sum(!is.na(value))), by = .(water_year = WY, parameter)]
   wy[, `:=`(statistic = ifelse(grepl(TOTAL_RX, parameter, ignore.case = TRUE), "total", "mean"), complete = days_with_value >= 365 * cfg$min_complete)]
   dv[, c("Month", "WY") := NULL]; setcolorder(dv, c("Date", "records"))
   list(daily = dv, monthly = mon, water_year = wy[!is.na(value)], made = made, totals = cols[tot])

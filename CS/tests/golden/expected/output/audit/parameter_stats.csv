@@ -1,6 +1,6 @@
 station,stream,parameter,values,missing_pct,min,p01,median,p99,max,group,topic,typical_min,typical_max,outside_typical
 46001,Table1,battery_v,480,0,12.53,12.53,12.57,12.61,12.61,Power,Battery voltage,11.5,14.8,FALSE
-46001,Table1,int_rt,480,0,0,0,0,0.308399999999999,0.77,Other,"","","",FALSE
+46001,Table1,int_rt,480,0,0,0,0,0.3084,0.77,Other,"","","",FALSE
 46001,Table1,acc_rtnrt,480,0,0,0,0,0.3,0.7,Other,"","","",FALSE
 46001,Table1,acc_nrt,480,0,0,0,0,0.33,0.48,Other,"","","",FALSE
 46001,Table1,acc_total,480,0,68.16,68.71,242.6,372.7,372.9,Other,"","","",FALSE
@@ -15,12 +15,12 @@ station,stream,parameter,values,missing_pct,min,p01,median,p99,max,group,topic,t
 52001,ThirtyMinute,sw_in,83,0,-3.249,-3.08746,0.628,418.708,439.7,Radiation,Incoming shortwave (solar) radiation,-10,1200,FALSE
 52001,ThirtyMinute,sw_out,83,0,-0.469,-0.40586,1.77,38.4716,38.57,Radiation,Reflected shortwave radiation,-10,900,FALSE
 52001,ThirtyMinute,lw_in_raw,83,0,-91.7,-90.798,-19.79,0.58278,0.6,Radiation,"Longwave radiation, raw thermopile signal",-200,80,FALSE
-52001,ThirtyMinute,lw_out_raw,83,0,-20.59,-19.4994,-2.341,2.92399999999999,3.539,Radiation,"Longwave radiation, raw thermopile signal",-200,80,FALSE
+52001,ThirtyMinute,lw_out_raw,83,0,-20.59,-19.4994,-2.341,2.924,3.539,Radiation,"Longwave radiation, raw thermopile signal",-200,80,FALSE
 52001,ThirtyMinute,radiometer_temp,83,0,0.989,1.05132,6.401,19.1196,19.3,Radiation,"","","",FALSE
 52001,ThirtyMinute,cnr4_T_K_Avg,83,0,268.8,273.146,279.5,292.254,292.5,Radiation,"","","",FALSE
 52001,ThirtyMinute,sw_net,83,0,-3.796,-3.7714,-0.05,381.888,403.7,Radiation,Net shortwave radiation,-10,1000,FALSE
-52001,ThirtyMinute,lw_net,83,0,-85.9,-85.244,-18.86,0.611599999999997,0.997,Radiation,Net longwave radiation,-200,50,FALSE
-52001,ThirtyMinute,albedo,83,0,-35.42,-12.9233,0.113,9.14299999999998,11.07,Radiation,Albedo,0,1,TRUE
+52001,ThirtyMinute,lw_net,83,0,-85.9,-85.244,-18.86,0.6116,0.997,Radiation,Net longwave radiation,-200,50,FALSE
+52001,ThirtyMinute,albedo,83,0,-35.42,-12.9233,0.113,9.143,11.07,Radiation,Albedo,0,1,TRUE
 52001,ThirtyMinute,net_rad,83,0,-46.65,-46.568,-5.796,297.526,318.6,Radiation,Net radiation,-200,900,FALSE
 52001,ThirtyMinute,lw_in,83,0,279,279.328,318.6,367,367,Radiation,Longwave radiation (temperature corrected),100,550,FALSE
 52001,ThirtyMinute,lw_out,83,0,312.5,313.402,344.1,408.18,409,Radiation,Longwave radiation (temperature corrected),100,550,FALSE

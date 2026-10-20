@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (CI again, 2026-10-20)**
+- Daily, monthly, wind and water-year values are rounded to 6 significant digits after 12 (signif_stable, R/derived.R): a mean on a rounding boundary (wind_speed_max 1.293875 on 2024-07-04 in the golden project) differed in its last bits between x86_64 and arm64, so its sixth digit flipped (Mac 1.29387, GitHub 1.29388). run_all_tests.R now also prints the golden test's differing files in the failed-log excerpt. **Output changes:** a value lying on a 6-digit boundary can move by one in its last digit (one cell in the golden project).
+
 **Fixed (CI, 2026-10-19)**
 - parameter_stats.csv percentiles (p01, median, p99) are kept to 10 significant digits: the interpolated values differed in their last bits between x86_64 (the GitHub runner) and arm64 (the Mac), which failed the golden test on CI. tests/test_golden.R also compares numbers to 1e-9 of their size. **Output changes:** percentiles that carried floating-point noise (0.308399999999999) read 0.3084.
 

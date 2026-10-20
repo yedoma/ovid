@@ -106,7 +106,7 @@ if (length(bad)) {
   cat("Failed:", paste(bad, collapse = ", "), "\n")
   for (l in res$log[res$result == "FAILED"]) {
     lines <- readLines(file.path(log_dir, l), warn = FALSE)
-    hit <- grep("FAIL|Error", lines)
+    hit <- grep("FAIL|Error|differs:|gone:|new: |run stopped", lines)
     cat(sprintf("\n-- %s --\n", l), lines[unique(pmin(length(lines), sort(c(hit, hit + 1, hit + 2))))], sep = "\n")
   }
   quit(status = 1)
