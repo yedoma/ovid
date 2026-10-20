@@ -19,11 +19,23 @@ add_flag <- function(dt, col, idx, check, detail, rule_id = check) {
   flag_ranges(dt$station[1], dt$stream[1], col, dt$TIMESTAMP[r$start], dt$TIMESTAMP[r$end], r$end - r$start + 1L, check, detail, rule_id)
 }
 
-# Sun elevation in degrees. Logger time minus the UTC offset is UTC; accurate to about a degree, which is enough to tell night from day.
+# Sun elevation in degrees. Logger time minus the UTC offset is UTC. Declination and equation of time from Spencer's Fourier series
+# (Spencer 1971, Search 2(5), 172; Iqbal 1983, An Introduction to Solar Radiation, ch. 1): within about 0.05 degrees and half a minute.
 sun_elevation <- function(t, lat, lon, utc_offset = 0) {
-  u <- as.numeric(t) - utc_offset * 3600; doy <- as.POSIXlt(u, origin = "1970-01-01", tz = "UTC")$yday + 1
-  dec <- 23.44 * pi / 180 * sin(2 * pi * (284 + doy) / 365); h <- ((u %% 86400) / 3600 + lon / 15 - 12) * 15 * pi / 180; la <- lat * pi / 180
+  u <- as.numeric(t) - utc_offset * 3600; lt <- as.POSIXlt(u, origin = "1970-01-01", tz = "UTC"); hr <- (u %% 86400) / 3600
+  g <- 2 * pi * (lt$yday + (hr - 12) / 24) / 365
+  dec <- 0.006918 - 0.399912 * cos(g) + 0.070257 * sin(g) - 0.006758 * cos(2 * g) + 0.000907 * sin(2 * g) - 0.002697 * cos(3 * g) + 0.00148 * sin(3 * g)
+  eot <- 229.18 * (0.000075 + 0.001868 * cos(g) - 0.032077 * sin(g) - 0.014615 * cos(2 * g) - 0.040849 * sin(2 * g))   # minutes
+  h <- ((hr * 60 + 4 * lon + eot) / 4 - 180) * pi / 180; la <- lat * pi / 180
   asin(sin(la) * sin(dec) + cos(la) * cos(dec) * cos(h)) * 180 / pi
+}
+
+# Solar zenith angle (degrees) at a station from its latitude, longitude and UTC offset in Station details (else the offset of its
+# longitude), or NULL when the station has no coordinates.
+site_zenith <- function(t, site) {
+  lat <- suppressWarnings(as.numeric(site$latitude)); lon <- suppressWarnings(as.numeric(site$longitude)); off <- suppressWarnings(as.numeric(site$utc_offset_hours))
+  if (length(lat) != 1 || length(lon) != 1 || !is.finite(lat) || !is.finite(lon)) return(NULL)
+  90 - sun_elevation(t, lat, lon, if (length(off) == 1 && is.finite(off)) off else round(lon / 15))
 }
 
 cross_checks <- function(dt, site) {

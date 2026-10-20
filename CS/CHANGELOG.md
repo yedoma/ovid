@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (albedo daylight, 2026-10-20)**
+- Albedo is computed only while the sun is within 70° of the zenith (new calibration option albedo_max_zenith; PROMICE/GC-Net, Fausto et al. 2026; the limit used to compare albedo, Stroeve et al. 2006, Liu et al. 2009, Schaaf et al. 2011), at the middle of each record, for stations with latitude and longitude in Station details. Stations without them keep the 50 W/m2 test, and the set-up check says so. The sun's height now uses Spencer's (1971) declination and equation of time (also in the night-sunlight and BSRN limit checks; the old formula could be off by up to 4° in hour angle). **Output changes:** stations with coordinates: albedo_calc in records and in daily, monthly and water-year tables (low-sun records left out, dim high-sun records kept); sunlight_at_night and sw_above_physical_limit flags can move by a record near sunrise and sunset.
+
 **Fixed (CI again, 2026-10-20)**
 - Daily, monthly, wind and water-year values are rounded to 6 significant digits after 12 (signif_stable, R/derived.R): a mean on a rounding boundary (wind_speed_max 1.293875 on 2024-07-04 in the golden project) differed in its last bits between x86_64 and arm64, so its sixth digit flipped (Mac 1.29387, GitHub 1.29388). run_all_tests.R now also prints the golden test's differing files in the failed-log excerpt. **Output changes:** a value lying on a 6-digit boundary can move by one in its last digit (one cell in the golden project).
 

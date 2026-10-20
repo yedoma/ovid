@@ -634,7 +634,7 @@ filed twice under two names.
 | Added             | Needs                                      | Formula                                                                 |
 |-------------------|--------------------------------------------|-------------------------------------------------------------------------|
 | `vpd_kpa`         | air_temp, rh                               | 0.6108 · exp(17.27 T / (T + 237.3)) · (1 − RH/100), RH clipped to 0–100 |
-| `albedo_calc`     | sw_in, sw_out (no albedo column)           | sw_out / sw_in when sw_in \> 50 and 0 ≤ sw_out ≤ sw_in; daily: Σ sw_out / Σ sw_in over those records [26] |
+| `albedo_calc`     | sw_in, sw_out; latitude and longitude for the sun's height | sw_out / sw_in in daylight and 0 ≤ sw_out ≤ sw_in; daily: Σ sw_out / Σ sw_in over those records [26]. Daylight: the sun within `albedo_max_zenith` (70°) of the zenith at the middle of the record [35, 36]; with no coordinates, sw_in \> 50 W/m² |
 | `net_rad_calc`    | sw_in, sw_out, lw_in, lw_out (no net_rad)  | sw_in − sw_out + lw_in − lw_out                                         |
 | `snow_depth_calc` | distance column and `snow_sensor_height_m` | height − distance                                                       |
 | `et0_fao56_mm`    | air_temp, rh, wind_speed, sw_in or net_rad, latitude | FAO-56 Penman-Monteith, daily, Tmean = (Tmax + Tmin)/2; in the polar night the last day's cloudiness Rs/Rso is carried forward [30] |
@@ -827,7 +827,7 @@ changed, and should be reported as such.
 
 | Value | Default | Where to change it |
 |---|---|---|
-| Albedo only when incoming shortwave is above | 50 W/m² | code (derived values) |
+| Albedo daylight at a station with no coordinates: incoming shortwave above | 50 W/m² | code (derived values) |
 | Phase without humidity: snow below, rain above | −2 °C, +2 °C | code (weighing gauges) |
 | Phase bins on the rain fraction: snow below, rain above | 0.05, 0.95 | code (weighing gauges) |
 | Pluvio2 running total vs bucket: mismatch, jump, bridge | 2 mm, 10 mm, 3 days | Gauge set-up |
@@ -1143,3 +1143,5 @@ The pop-up can also be grouped by what to do.
 32.  ARM (Atmospheric Radiation Measurement). *Data file formatting and naming protocols* (data levels 00, a0, a1, b1, c1). [arm.gov](https://armgov.svcs.arm.gov/guidance/datause/formatting-and-file-naming-protocols)
 33.  Horsburgh J.S., Tarboton D.G., Maidment D.R., Zaslavsky I. (2008). A relational model for environmental and water resources data. *Water Resources Research* 44, W05406.
 34.  Estévez J., Gavilán P., Giráldez J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. *Journal of Hydrology* 402, 144–154. doi:10.1016/j.jhydrol.2011.02.031
+35.  Fausto R.S. et al. (2026). PROMICE | GC-NET automatic weather station data. *Earth System Science Data* 18, 2829–2873. doi:10.5194/essd-18-2829-2026 (albedo only with the sun within 70° of the zenith).
+36.  Spencer J.W. (1971). Fourier series representation of the position of the sun. *Search* 2(5), 172 (declination and equation of time for the sun's height).

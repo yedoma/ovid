@@ -84,7 +84,7 @@ preflight <- function(cfg = CFG) {
   if (!is.null(si) && nrow(si)) { la <- suppressWarnings(as.numeric(si$latitude)); lo <- suppressWarnings(as.numeric(si$longitude))
     for (i in which(numbad(si$latitude) | (!is.na(la) & abs(la) > 90))) add("error", "station_info.csv", i, paste0("latitude '", si$latitude[i], "' is not between -90 and 90"), "Use decimal degrees.")
     for (i in which(numbad(si$longitude) | (!is.na(lo) & abs(lo) > 180))) add("error", "station_info.csv", i, paste0("longitude '", si$longitude[i], "' is not between -180 and 180"), "Use decimal degrees, west negative.")
-    for (i in which(xor(nzchar(si$latitude), nzchar(si$longitude)))) add("warning", "station_info.csv", i, "only one of latitude and longitude is given, so the night-time sunlight check is off for this station", "Fill in both.") }
+    for (i in which(xor(nzchar(si$latitude), nzchar(si$longitude)))) add("warning", "station_info.csv", i, "only one of latitude and longitude is given, so the night-time sunlight check is off for this station and albedo uses sunlight above 50 W/m2 for daylight", "Fill in both.") }
   fl <- rd("field_log.csv"); if (!is.null(fl) && nrow(fl)) for (i in which(datebad(fl$date) | !nzchar(fl$date))) add("error", "field_log.csv", i, paste0("date '", fl$date[i], "' is not a date"), "Use YYYY-MM-DD, with a time if you have one.")
   res <- with_declared(chk$result(), cfg$project_dir, area = "table", item = "row")       # with every table's declared rules (core table_rules.R)
   res[order(match(level, c("error", "warning")), table)]

@@ -63,7 +63,17 @@ derive_products <- function(dt, cfgs, cfg) {
   if (has("air_temp", "rh")) { d[, vpd_kpa := round(0.6108 * exp(17.27 * air_temp / (air_temp + 237.3)) * (1 - pmin(pmax(rh, 0), 100) / 100), 4)]; made <- c(made, "vpd_kpa") }
   if (has("air_temp", "rh") && !"dew_point" %in% nv) {                          # Magnus formula, Alduchov and Eskridge (1996) constants
     g <- log(pmin(pmax(d$rh, 0.1), 100) / 100) + 17.625 * d$air_temp / (243.04 + d$air_temp); d[, dew_point_calc := round(243.04 * g / (17.625 - g), 2)]; made <- c(made, "dew_point_calc") }
-  if (has("sw_in", "sw_out")) { d[, albedo_calc := ifelse(sw_in > 50 & sw_out >= 0 & sw_out <= sw_in, round(sw_out / sw_in, 3), NA_real_)]; made <- c(made, "albedo_calc") }   # also beside a logger's own albedo column
+  si <- cfgs$sites[station == dt$station[1]][1]
+  # Albedo only in daylight, also beside a logger's own albedo column. Daylight is the sun less than albedo_max_zenith from the zenith
+  # (70 degrees: PROMICE/GC-Net, Fausto et al. 2026; the limit for comparing albedo, Stroeve et al. 2006, Liu et al. 2009, Schaaf
+  # et al. 2011), at the middle of each record's averaging interval; with no station coordinates, sunlight above 50 W/m2 (an ovid default).
+  if (has("sw_in", "sw_out")) {
+    st <- stats::median(diff(as.numeric(d$TIMESTAMP))); zen <- site_zenith(d$TIMESTAMP - if (is.finite(st) && st > 0) st / 2 else 0, si)
+    zm <- calib_get(cfgs$calib, CS_CALIBRATION, "albedo_max_zenith", dt$station[1]); if (nzchar(zm$note)) problem("calibration_options.csv", zm$note)
+    zmax <- suppressWarnings(as.numeric(zm$number)); if (length(zmax) != 1 || !is.finite(zmax) || zmax <= 0 || zmax > 90) zmax <- 70
+    lit <- if (is.null(zen)) d$sw_in > 50 else zen < zmax & d$sw_in > 0
+    d[, albedo_calc := ifelse(lit & sw_out >= 0 & sw_out <= sw_in, round(sw_out / sw_in, 3), NA_real_)]
+    made <- c(made, if (is.null(zen)) "albedo_calc (sunlight above 50 W/m2: no station coordinates)" else sprintf("albedo_calc (sun within %g degrees of the zenith, %s)", zmax, zm$choice)) }
   if (has("sw_in", "sw_out", "lw_in", "lw_out") && !"net_rad" %in% nv) { d[, net_rad_calc := round(sw_in - sw_out + lw_in - lw_out, 2)]; made <- c(made, "net_rad_calc") }
   # Snow depth = sensor height - distance to the snow. The SR50A's distance assumes sound at 0 C, so the raw distance (DT) must be
   # scaled by sqrt((Ta + 273.15) / 273.15) with the air temperature (Campbell Scientific SR50A manual, "Temperature correction").
@@ -89,11 +99,10 @@ derive_products <- function(dt, cfgs, cfg) {
   }
   day <- agg(d, "Date", function(n) per_day)
   dv <- day$v; dv[, records := d[, .N, by = Date]$N]
-  # A day's albedo is the day's reflected over its incoming shortwave, summed over its daylight records (Oke 1987, Boundary Layer
-  # Climates; Wang et al. 2015, JGR Atmospheres, daily mean albedo from daytime totals), not the mean of each record's ratio, which
-  # weights low sun too much, and not the mean of a logger's own albedo column (it holds night and low-sun ratios). Daylight is
-  # sunlight above 50 W/m2 (an Ovid default: published stations gate on the sun's height instead, e.g. PROMICE under 70 degrees
-  # zenith, Fausto et al. 2026), on days with SW in and out complete.
+  # A day's albedo is the day's reflected over its incoming shortwave, summed over its daylight records (above; Oke 1987, Boundary
+  # Layer Climates; Wang et al. 2015, JGR Atmospheres, daily mean albedo from daytime totals), not the mean of each record's ratio,
+  # which weights low sun too much, and not the mean of a logger's own albedo column (it holds night and low-sun ratios), on days
+  # with SW in and out complete.
   if ("albedo_calc" %in% names(dv)) {
     a <- d[!is.na(albedo_calc), .(albedo_day = round(sum(sw_out) / sum(sw_in), 3)), by = Date]
     dv[, albedo_calc := NA_real_]
@@ -106,7 +115,7 @@ derive_products <- function(dt, cfgs, cfg) {
     if (nrow(w)) { dv[w, on = "Date", `:=`(wind_dir_sd_calc = signif_stable(i.wind_dir_sd_calc, 6), wind_speed_resultant_calc = signif_stable(i.wind_speed_resultant_calc, 6), wind_dir_resultant_calc = signif_stable(i.wind_dir_resultant_calc, 6))]
       made <- c(made, "wind_dir_sd_calc", "wind_speed_resultant_calc", "wind_dir_resultant_calc") } }
   # evapotranspiration, where the station has what it needs (latitude in Station details; wind_height_m, else 2 m)
-  si <- cfgs$sites[station == dt$station[1]][1]; lat <- suppressWarnings(as.numeric(si$latitude)); z <- suppressWarnings(as.numeric(si$elevation_m))
+  lat <- suppressWarnings(as.numeric(si$latitude)); z <- suppressWarnings(as.numeric(si$elevation_m))
   zu <- suppressWarnings(as.numeric(si$wind_height_m %||% NA)); if (!length(zu) || is.na(zu)) zu <- 2
   al <- calib_get(cfgs$calib, CS_CALIBRATION, "pt_alpha", dt$station[1]); if (nzchar(al$note)) problem("calibration_options.csv", al$note)
   if (has("air_temp", "rh") && (has("sw_in") || has("net_rad")) && length(lat) && is.finite(lat)) {

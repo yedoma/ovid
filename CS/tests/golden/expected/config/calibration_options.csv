@@ -1,3 +1,4 @@
 app,value,applies_to,choice,number,source,notes
 CS,pt_alpha,*,default,1.26,"Priestley, C.H.B., Taylor, R.J. (1972). Mon. Weather Rev. 100, 81-92 (open water and wet surfaces)","Priestley-Taylor alpha. Scotty Creek option: 0.69 (Connon, R.F., Quinton, W.L., Craig, J.R., Hanisch, J., Sonnentag, O. (2015). Hydrol. Process. 29 (bog); 0.68-0.91 on plateaus (Quinton and Baltzer 2013))"
 CS,sr50_temp_correction,*,default,auto,Campbell Scientific SR50A manual: distance x sqrt((Ta + 273.15) / 273.15); a TCDT column is already corrected,SR50 temperature correction. Allowed: auto;none
+CS,albedo_max_zenith,*,default,70,"Fausto, R.S., et al. (2026). Earth Syst. Sci. Data 18, 2829-2873 (PROMICE/GC-Net); Stroeve, J., Box, J.E., Haran, T. (2006). Remote Sens. Environ. 105, 155-171",Albedo: largest solar zenith angle (degrees)

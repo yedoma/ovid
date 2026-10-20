@@ -533,15 +533,17 @@ retired_rows <- function(d) { def <- default_aliases(); lg <- if ("logger_id" %i
 # Calibration options (core calibration.R): values fixed in code that a project may change in config/calibration_options.csv,
 # per station (applies_to) or for all (*). Sources: _hub/Derived_values_references.md, sections 3 and 11.
 CS_CALIBRATION <- data.table(app = "CS",
-  value = c("pt_alpha", "sr50_temp_correction"),
-  label = c("Priestley-Taylor alpha", "SR50 temperature correction"), unit = c("", ""),
-  default_number = c("1.26", "auto"),
+  value = c("pt_alpha", "sr50_temp_correction", "albedo_max_zenith"),
+  label = c("Priestley-Taylor alpha", "SR50 temperature correction", "Albedo: largest solar zenith angle"), unit = c("", "", "degrees"),
+  default_number = c("1.26", "auto", "70"),
   default_source = c("Priestley, C.H.B., Taylor, R.J. (1972). Mon. Weather Rev. 100, 81-92 (open water and wet surfaces)",
-                     "Campbell Scientific SR50A manual: distance x sqrt((Ta + 273.15) / 273.15); a TCDT column is already corrected"),
-  scotty_number = c("0.69", ""),                                                # Scotty Creek only where a calibration is published
-  scotty_source = c("Connon, R.F., Quinton, W.L., Craig, J.R., Hanisch, J., Sonnentag, O. (2015). Hydrol. Process. 29 (bog); 0.68-0.91 on plateaus (Quinton and Baltzer 2013)", ""),
-  allowed = c("", "auto;none"),
-  notes = c("Daily ET by Priestley-Taylor (et_pt_mm).", "auto: TCDT if logged, else DT corrected with air_temp; none: the distance as logged. as in Haynes et al. (2019)."))
+                     "Campbell Scientific SR50A manual: distance x sqrt((Ta + 273.15) / 273.15); a TCDT column is already corrected",
+                     "Fausto, R.S., et al. (2026). Earth Syst. Sci. Data 18, 2829-2873 (PROMICE/GC-Net); Stroeve, J., Box, J.E., Haran, T. (2006). Remote Sens. Environ. 105, 155-171"),
+  scotty_number = c("0.69", "", ""),                                            # Scotty Creek only where a calibration is published
+  scotty_source = c("Connon, R.F., Quinton, W.L., Craig, J.R., Hanisch, J., Sonnentag, O. (2015). Hydrol. Process. 29 (bog); 0.68-0.91 on plateaus (Quinton and Baltzer 2013)", "", ""),
+  allowed = c("", "auto;none", ""),
+  notes = c("Daily ET by Priestley-Taylor (et_pt_mm).", "auto: TCDT if logged, else DT corrected with air_temp; none: the distance as logged. as in Haynes et al. (2019).",
+            "Albedo only while the sun is closer to the zenith than this (needs latitude and longitude in Station details; else SW in above 50 W/m2). 85 at Thule (Meloni et al. 2024)."))
 
 # Every set-up table, for exporting and importing the whole configuration as one zip (export_config / read_config_import /
 # apply_config_import in Ovid/config.R). CS still reads the tables itself in cs_load_configs() above.

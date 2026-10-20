@@ -3,8 +3,8 @@
 # Derived_values_references.md, section 2 (CS).
 #   Rscript tests/test_formulas.R              (from the CS folder; also run by tests/run_tests.R)
 # No published source, so only what the code does is checked (the hub lists them as gaps): the phase from air temperature alone
-# (snow below -2 C, rain above 2 C), the Pluvio2 and Geonor bucket rules, the 50 W/m2 daylight cut-off for albedo (published
-# stations gate on the sun's height), the completeness shares.
+# (snow below -2 C, rain above 2 C), the Pluvio2 and Geonor bucket rules, the 50 W/m2 daylight floor for albedo at a station
+# with no coordinates (with them, the sun within 70 degrees of the zenith, as published), the completeness shares.
 
 if (!exists("check")) {
   Sys.setenv(CS_NO_RUN = "1", OVID_RUN_SYNC = "1")
@@ -39,6 +39,16 @@ local({
   aa <- derive_products(da, cf, CFG)$daily
   check("with a logger albedo column too, the day's albedo is the sum of SW out over the sum of SW in on daylight records, above 50 W/m2 (hand: 1920 / 9600 = 0.2; the logger column's mean, -0.05, is not used)",
         eq(aa$albedo_calc, 0.2, 1e-9) && !"albedo" %in% names(aa))
+  # sun position by Spencer (1971): at 61.3 N, 121.3 W on 20 June 2024 the sun is highest at 20:07 UTC (hand: 12:00 + 121.3 x 4 min
+  # - the equation of time, -1.6 min), at 90 - 61.3 + 23.44 = 52.1 degrees; daylight for albedo is the sun within 70 degrees of the
+  # zenith (Fausto et al. 2026), at the middle of each record, so a dim record at high sun counts and a bright one at low sun does not
+  el <- sun_elevation(as.POSIXct("2024-06-20 20:07", tz = "UTC") + c(-600, 0, 600), 61.3, -121.3, 0)
+  check("the sun's height by Spencer's series: 52.1 degrees at local noon on the June solstice at 61.3 N, highest at 20:07 UTC (hand)", eq(el[2], 52.1, 0.1) && el[2] > el[1] && el[2] > el[3])
+  tz <- as.POSIXct("2024-06-20", tz = "UTC") + (0:47) * 1800; st <- data.table(station = "S", latitude = "61.3", longitude = "-121.3", utc_offset_hours = "-7", snow_sensor_height_m = NA_character_)
+  zn <- site_zenith(tz - 900, st); si_ <- ifelse(zn < 70, 400, ifelse(zn < 90, 200, 0)); si_[which(zn < 70)[1]] <- 30; so_ <- ifelse(zn < 70, 0.2 * si_, 0.75 * si_)
+  az <- derive_products(data.table(station = "S", stream = "T", TIMESTAMP = tz, logger_id = "1", sw_in = si_, sw_out = so_), list(sites = st, calib = NULL), CFG)
+  check("with station coordinates, the day's albedo uses the records with the sun within 70 degrees of the zenith, also below 50 W/m2 (hand: 0.2; low-sun records at 0.75 left out)",
+        sum(zn < 70) > 10 && sum(zn >= 70 & zn < 90) > 4 && eq(az$daily$albedo_calc[1], 0.2, 1e-9))
   check("wind direction 350 and 10 degrees: the mean is 0 (north), not 180; the resultant 2 m/s from the north, spread small (Yamartino)",
         eq(min(dv$wind_dir %% 360, 360 - dv$wind_dir %% 360), 0, 1e-6) && eq(dv$wind_speed_resultant_calc, 2 * cos(10 * pi / 180), 1e-4) && dv$wind_dir_sd_calc < 11 && dv$wind_dir_sd_calc > 9)
 

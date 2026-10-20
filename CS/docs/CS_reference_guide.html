@@ -594,7 +594,7 @@ between stations:  d = daily value − median(other stations that day)   (3 or m
 <table>
 <tr><th>Added</th><th>Needs</th><th>Formula</th></tr>
 <tr><td><code>vpd_kpa</code></td><td>air_temp, rh</td><td>0.6108 · exp(17.27 T / (T + 237.3)) · (1 − RH/100), RH clipped to 0–100</td></tr>
-<tr><td><code>albedo_calc</code></td><td>sw_in, sw_out (no albedo column)</td><td>sw_out / sw_in when sw_in &gt; 50 and 0 ≤ sw_out ≤ sw_in</td></tr>
+<tr><td><code>albedo_calc</code></td><td>sw_in, sw_out; latitude and longitude for the sun's height</td><td>sw_out / sw_in in daylight and 0 ≤ sw_out ≤ sw_in; daily: Σ sw_out / Σ sw_in over those records. Daylight: the sun within <code>albedo_max_zenith</code> (70°) of the zenith at the middle of the record (Fausto et al. 2026; Spencer 1971); with no coordinates, sw_in &gt; 50 W/m²</td></tr>
 <tr><td><code>net_rad_calc</code></td><td>sw_in, sw_out, lw_in, lw_out (no net_rad)</td><td>sw_in − sw_out + lw_in − lw_out</td></tr>
 <tr><td><code>snow_depth_calc</code></td><td>distance column and <code>snow_sensor_height_m</code></td><td>height − distance</td></tr>
 </table>
@@ -982,6 +982,8 @@ Hydrology and Earth System Sciences 24, 4025–4043.
 <li>ARM (Atmospheric Radiation Measurement). <em>Data file formatting and naming protocols</em> (data levels 00, a0, a1, b1, c1). <a href="https://armgov.svcs.arm.gov/guidance/datause/formatting-and-file-naming-protocols">arm.gov</a></li>
 <li>Horsburgh J.S., Tarboton D.G., Maidment D.R., Zaslavsky I. (2008). A relational model for environmental and water resources data. <em>Water Resources Research</em> 44, W05406.</li>
 <li>Estévez J., Gavilán P., Giráldez J.V. (2011). Guidelines on validation procedures for meteorological data from automatic weather stations. <em>Journal of Hydrology</em> 402, 144–154. doi:10.1016/j.jhydrol.2011.02.031</li>
+<li>Fausto R.S. et al. (2026). PROMICE | GC-NET automatic weather station data. <em>Earth System Science Data</em> 18, 2829–2873. doi:10.5194/essd-18-2829-2026 (albedo only with the sun within 70° of the zenith).</li>
+<li>Spencer J.W. (1971). Fourier series representation of the position of the sun. <em>Search</em> 2(5), 172 (declination and equation of time for the sun's height).</li>
 </ol>
 
 </main></body>

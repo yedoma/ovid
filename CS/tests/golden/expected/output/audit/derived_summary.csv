@@ -1,3 +1,3 @@
 station,stream,derived,totals,days
 46001,Table1,"","",10
-52001,ThirtyMinute,"vpd_kpa, dew_point_calc, albedo_calc, wind_dir_sd_calc, wind_speed_resultant_calc, wind_dir_resultant_calc, et0_fao56_mm (wind at 2 m), et_pt_mm (wind at 2 m), alpha 1.26 (default), vwc_5cm_liquid_only, vwc_10cm_liquid_only, vwc_20cm_liquid_only, vwc_30cm_liquid_only, vwc_40cm_liquid_only, vwc_50cm_liquid_only","precip, rain_tips, et0_fao56_mm, et_pt_mm",3
+52001,ThirtyMinute,"vpd_kpa, dew_point_calc, albedo_calc (sun within 70 degrees of the zenith, default), wind_dir_sd_calc, wind_speed_resultant_calc, wind_dir_resultant_calc, et0_fao56_mm (wind at 2 m), et_pt_mm (wind at 2 m), alpha 1.26 (default), vwc_5cm_liquid_only, vwc_10cm_liquid_only, vwc_20cm_liquid_only, vwc_30cm_liquid_only, vwc_40cm_liquid_only, vwc_50cm_liquid_only","precip, rain_tips, et0_fao56_mm, et_pt_mm",3
