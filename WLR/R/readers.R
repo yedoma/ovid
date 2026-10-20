@@ -112,7 +112,8 @@ read_hobo_binary_header <- function(path) { id <- hobo_bin_identity(path)       
 read_hobo_decoded <- function(path, header_only = FALSE) { meta <- read_hobo_binary_header(path); meta$format <- "hobo_decoded"
   meta$units <- c(pres = "kPa", temp = "\u00b0C", ec = NA_character_); if (header_only) return(list(meta = meta))
   d <- hobo_decode(path); if (is.null(d) || !nrow(d)) stop("no records could be read from this .hobo file")
-  off <- meta$offset_hours %||% NA_real_
+  off <- attr(d, "utc_offset_h") %||% NA_real_; if (is.na(off)) off <- meta$offset_hours %||% NA_real_   # the file's own offset first (its zone name may be one parse_offset does not know)
+  meta$offset_hours <- off
   out <- data.table(TIMESTAMP = to_base(d$TIMESTAMP, off), pres = d$pres_kpa, temp = d$temp_c)
   meta <- c(meta, list(interval_s = attr(d, "interval_s"), first = min(out$TIMESTAMP), last = max(out$TIMESTAMP), rows = nrow(out)))
   list(meta = meta, data = out, events = empty_events()) }

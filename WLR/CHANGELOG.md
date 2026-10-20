@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (decoded .hobo times, 2026-10-20)**
+- A decoded .hobo file's clock offset now comes from the file itself (core hobo.R utc_offset_h, the launch time in UTC), then from its zone name. Files whose zone name was Eastern (or another the name list does not hold) were placed 2 to 3 hours off. **Output changes:** decoded .hobo files from loggers launched in a zone parse_offset does not know: times now right.
+
 **Added (tests, 2026-10-19)**
 - Reader samples for every format WLR reads: a Solinst .xle (a Levelogger Edge, first 48 records), and a HOBO U20 .hobo read directly and as its header, with its HOBOware export kept beside it: the .hobo decoder gives HOBOware's 1,564 times and every reading but the first and last within the export's rounding. tests/test_bad_files.R (damaged files, and a barologger with a gap, a late start, another time zone or interval, a logger in the air), tests/test_golden.R with tests/golden (a Levelogger and its Barologger, a tape check and drift applied: a whole run against accepted outputs), tests/test_formulas.R (water density against Tanaka et al. 2001; the compensation against Solinst's own software, within 3 mm; the rest hand-computed); all run by tests/run_tests.R. **Output changes:** none.
 

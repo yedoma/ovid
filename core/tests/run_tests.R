@@ -317,16 +317,25 @@ local({ source(file.path(CORE_DIR, "hobo.R"), local = TRUE)
   hdr <- c(charToRaw("HOBO"), tlv(0x05, charToRaw("HOBO U20-001-04 Water Level")), tlv(0x06, charToRaw("10279609")),
            tlv(0x07, as.raw(c(20, 21, 8, 27, 10, 19, 53, 0))), tlv(0x08, as.raw(c(0, 0, 7, 8))),
            tlv(0x22, as.raw(c(1, 0, 0, 16, 40, 187, 219, 57, 0, 178, 39))), tlv(0x31, f32(cal)))
-  rec <- "459b9a"                                                       # 2.41 C, 15.81 psi
-  nib <- paste0("ffff", "9142e6", "fffc02", strrep(rec, 6), "fff12efffffc0967", strrep("459b9a", 5), "fffd8bf7")
-  if (nchar(nib) %% 2) nib <- paste0(nib, "f")
-  f <- tempfile(fileext = ".hobo"); writeBin(c(hdr, as.raw(strtoi(substring(nib, seq(1, nchar(nib), 2), seq(2, nchar(nib), 2)), 16L))), f)
+  bits <- function(v, n) rev(as.integer(intToBits(v))[1:n])
+  rec <- c(bits(9305, 14), bits(742, 10))                            # 2.41 C, 15.81 psi
+  ev <- function(type, secs, n) c(rep(1L, 14), bits(type, 4), bits(n, 4), if (n) bits(secs, 4 * n))
+  st <- c(rep(1L, 16), rep(rec, 6), ev(1, 5, 1), ev(6, 0, 0), ev(0, 34, 2), rep(rec, 6), ev(3, 63, 2), rec, rep(1L, 40))   # 6 records, a download, 6 more, stopped, old memory
+  st <- c(st, rep(1L, (-length(st)) %% 8))
+  f <- tempfile(fileext = ".hobo"); writeBin(c(hdr, packBits(as.integer(matrix(st, 8)[8:1, ]), "raw")), f)
   d <- hobo_decode(f)
-  check("a U20 .hobo is read: launch + start delay + i x interval, events take no slot, the stream ends at old memory",
-        nrow(d) == 12 && identical(format(d$TIMESTAMP[1], "%Y-%m-%d %H:%M"), "2021-08-27 23:00") && identical(format(d$TIMESTAMP[12], "%Y-%m-%d %H:%M"), "2021-08-28 04:30"))
+  check("a U20 .hobo is read as a bit stream: launch + start delay + i x interval, events (14 one bits, type, length, seconds) skipped and take no slot, stopped ends it",
+        nrow(d) == 12 && identical(format(d$TIMESTAMP[1], "%Y-%m-%d %H:%M"), "2021-08-27 23:00") && identical(format(d$TIMESTAMP[12], "%Y-%m-%d %H:%M"), "2021-08-28 04:30") && !attr(d, "stopped"))
   check("its temperature and pressure follow the logger's calibration (Steinhart-Hart; psi to kPa)",
         abs(d$temp_c[2] - 2.4099) < 0.001 && abs(d$pres_kpa[2] / HOBO_PSI_KPA - 15.81) < 0.05 && attr(d, "serial") == "10279609")
   writeBin(charToRaw("not a hobo file"), f); check("a file that is not a .hobo, or another model, gives NULL (its CSV export is needed)", is.null(hobo_decode(f)))
+  # a real U20 file with events mid-file (a download: coupler attached and detached, host connected), then stopped, against its
+  # HOBOware export (serial neutralized): events skipped bit for bit, every record and value as HOBOware gives it, old memory left out
+  ef <- file.path(CORE_DIR, "tests", "data", "hobo_events__10000007.hobo"); e <- hobo_decode(ef)
+  x <- fread(file.path(CORE_DIR, "tests", "data", "hobo_events__10000007.csv"), skip = 1, header = TRUE, select = 1:4, col.names = c("n", "time", "psi", "degF"))[!is.na(psi)]
+  check("a .hobo with seven events mid-file and a stop: all 1,498 records, every pressure and temperature as HOBOware exports them, on its 30-minute grid",
+        nrow(e) == nrow(x) && nrow(x) == 1498L && max(abs(e$pres_kpa / HOBO_PSI_KPA - x$psi)) < 2e-4 && max(abs(e$temp_c * 1.8 + 32 - x$degF)) < 2e-3 &&
+        all(diff(as.numeric(e$TIMESTAMP)) == 1800) && !attr(e, "stopped"))
   # a real U20 file against its HOBOware export (WLR's sample): the launch record (packed apart) and the last record (end mark in bit 0)
   hs <- file.path(dirname(CORE_DIR), "WLR", "tests", "samples", "hobo_decoded__10000006.hobo")
   if (file.exists(hs)) { r <- hobo_decode(hs)

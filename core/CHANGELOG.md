@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (.hobo decoder: events mid-file, battery channel, time zone, 2026-10-20)**
+
+- hobo.R reads the data as the bit stream it is: 24-bit records (14-bit pressure count, 10-bit thermistor count, then 8 battery bits when that channel was logged, tag 0x0b) and events of 14 one bits, a 4-bit type (0 coupler detached, 1 attached, 3 stopped, 6 host connected), a 4-bit length n and 4n bits of seconds. Events are skipped exactly, a stopped event or erased memory ends the records, and the earlier rules (launch record packed apart, end mark, guessed resume points) are gone: they were the same records read at a 2-bit offset after an event. The interval is the last of tag 0x08's values; the clock's UTC offset comes from the launch time in UTC (tag 0x22 bytes 5-8) as attribute utc_offset_h.
+- Checked against HOBOware: all 826 U20 files in the consolidation archive that have a CSV export: 808 match in every record, value and time; 15 differ only below about -17 C, by 0.01 to 0.035 C (the thermistor curve, not the events); 1 has corrupt memory where HOBOware shows 749 F (decoding stops there, flagged); 2 exports hold no records. Of the 30 files compared before, 30 now read every record (9 before). Test in tests/run_tests.R with a real file holding seven events mid-file (tests/data, serial neutralized), and a bit-stream test in place of the old nibble one.
+
+**Output changes:** decoded U20 .hobo files (WLR): records after any event chain, and every record of loggers that also logged battery voltage, are now right and complete (they stopped early or were shifted before); a file holding an earlier interval in its header gets the right times.
+
 **Fixed (.hobo decoder; reader-sample time check, 2026-10-19)**
 
 - hobo.R: the U20 launch record is packed apart (pressure high 12 bits, then 2 low bits and a 10-bit temperature) and the last record carries an end mark in bit 0; both are now decoded. WLR's U20 sample matches its HOBOware export at both ends (98.92 and 111.66 kPa, all 1,564 records); of 30 real U20 pairs, 9 decode fully right (0 before), and mid-file event chains still stop or shift some files (open). Test in tests/run_tests.R.
