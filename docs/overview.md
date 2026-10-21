@@ -52,8 +52,8 @@ viewer mode.
 ovid Core is one folder of R files that every app sources before its
 own `R/` folder; a fix made there reaches all five apps. The apps find
 it through the `OVID_CORE` environment variable, a `core/` folder
-inside the app (portable copies), `../core` beside the app (the
-Ovid_Apps bundle), or `~/Desktop/Ovid`.
+inside the app (portable copies), or `../core` beside the app (the
+Ovid_Apps bundle).
 
 | Part | What it does |
 |---|---|

@@ -98,8 +98,9 @@ APP_NAME <- "Ovid Core // GT"
 APP_VERSION <- GT_VERSION
 
 # The shared Ovid Core files (audit trail, helpers, set-up tables, run manifest, set-up check): from OVID_CORE if
-# set, else core/ beside this file (a portable copy), else ~/Desktop/Ovid. They are sourced first; R/ holds what is GT's own.
-CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "core"), file.path(dirname(PIPELINE_DIR), "core"), "~/Desktop/Ovid")
+# set, else core/ beside this file (a portable copy), else ../core (the Ovid_Apps bundle).
+# They are sourced first; R/ holds what is GT's own.
+CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "core"), file.path(dirname(PIPELINE_DIR), "core"))
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
   if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })

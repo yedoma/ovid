@@ -7,6 +7,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (finding the core, 2026-10-21)**
+- The launcher and pipeline look for the shared core in OVID_CORE, core/ inside the app and ../core beside it only; the old
+  ~/Desktop/Ovid fallback (and its Windows Desktop\\Ovid twin) is gone. The launcher's not-found message says to keep the app beside
+  core/ or run Make_Portable.bat.
+- Set-up: a core kept only at ~/Desktop/Ovid is no longer found; put core/ beside the app or set OVID_CORE.
+- **Output changes**: none.
+
 **Fixed (stale problems, 2026-10-21)**
 - audit/problems.csv is removed by a clean run instead of keeping the previous run's problems (as RS).
 - **Output changes**: none.

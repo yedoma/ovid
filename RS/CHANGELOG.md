@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (finding the core, 2026-10-21)**
+- The launcher and pipeline look for the shared core in OVID_CORE, core/ inside the app and ../core beside it only; the old
+  ~/Desktop/Ovid fallback (and its Windows Desktop\\Ovid twin) is gone. The launcher's not-found message says to keep the app beside
+  core/ or run Make_Portable.bat.
+- Set-up: a core kept only at ~/Desktop/Ovid is no longer found; put core/ beside the app or set OVID_CORE.
+- **Output changes**: none.
+
 **Fixed (duplicates table, Sources layout, 2026-10-21)**
 - An empty catalogue/duplicates.csv kept its key, kept_path and dup_path columns (data.table() had taken key = as its key argument); golden updated.
 - Sources page: three column widths for its three cards (bslib warning gone).

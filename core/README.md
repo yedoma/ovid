@@ -7,8 +7,7 @@ A fix made here reaches all five apps; nothing here knows about Campbell, water 
 
 1. the folder in the `OVID_CORE` environment variable, if set;
 2. `core/` inside the app folder (what `Make_Portable.bat` puts there, so a zipped copy runs anywhere);
-3. `../core` beside the app folder (the Ovid_Apps bundle);
-4. `~/Desktop/Ovid` (where the core files used to be; a last fallback for older set-ups).
+3. `../core` beside the app folder (the Ovid_Apps bundle).
 
 ## Files
 

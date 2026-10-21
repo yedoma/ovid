@@ -52,7 +52,7 @@ if ("--portable" %in% args) {
     ok <- file.copy(list.files(R.home(), full.names = TRUE, all.files = FALSE), dest, recursive = TRUE)
     if (!all(ok)) stop("Copying R failed; is there enough disk space?")
   }
-  # the shared Ovid Core files go in core/ so the copy does not need ~/Desktop/Ovid
+  # the shared Ovid Core files go in core/ so the copy does not need the Ovid_Apps bundle beside it
   core_dest <- file.path(app_dir, "core")
   if (normalizePath(CORE_DIR, winslash = "/") != normalizePath(core_dest, winslash = "/", mustWork = FALSE)) {
     cat("Copying the shared Ovid Core files from", CORE_DIR, "into", core_dest, "...\n")

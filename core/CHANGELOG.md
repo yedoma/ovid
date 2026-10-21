@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (finding the core, 2026-10-21)**
+- launcher.R comment and README.md: the core is found through OVID_CORE, core/ in the app or ../core only; ~/Desktop/Ovid is no longer looked in.
+- tests: a check that no app's launcher or pipeline looks for the core on the Desktop.
+- **Output changes**: none.
+
 **Fixed (warning leaks, 2026-10-21)**
 - timezones.R: checking a `file_pattern` no longer prints TRE's compilation warning beside the finding.
 - util.R `say_progress()`: a step message with no progress bar open no longer warns ("setProgress was called outside of withProgress", seen in background runs).

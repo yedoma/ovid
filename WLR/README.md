@@ -149,7 +149,7 @@ All time stamps are UTC-7 without daylight saving. Files that state a zone (HOBO
 | `R/summaries.R` | monthly and water-year summaries from daily means (`output/summaries/`), and manual measurements set against the logger (`config/manual_measurements.csv` in, `output/audit/measurements.csv` out; reference only, never applied) |
 | `R/report.R` | the run report (written to `output/report.html` on every run) and one report per site, in HTML, PDF or both |
 | `R/config.R`, `R/preflight.R`, `R/export.R`, `R/plots.R`, `R/util.R` | set-up tables, set-up checks, outputs and export, Nord theme and plots, date styles and serial numbers |
-| ovid Core (`../core`) | shared with CS, GT, GS and RS: the audit trail (`remove_rows()`, `remove_cells()`), helpers, reading and backing up set-up tables, the run cache, the time-zone table, corrupt-timestamp removal, reports, the app shell, import and export, the run manifest, the set-up check's collector and the launcher. Found through `OVID_CORE`, then `core/` in this folder (made by `Make_Portable.bat`), then `../core` (the Ovid_Apps bundle), then `~/Desktop/Ovid` |
+| ovid Core (`../core`) | shared with CS, GT, GS and RS: the audit trail (`remove_rows()`, `remove_cells()`), helpers, reading and backing up set-up tables, the run cache, the time-zone table, corrupt-timestamp removal, reports, the app shell, import and export, the run manifest, the set-up check's collector and the launcher. Found through `OVID_CORE`, then `core/` in this folder (made by `Make_Portable.bat`), then `../core` (the Ovid_Apps bundle) |
 
 </details>
 

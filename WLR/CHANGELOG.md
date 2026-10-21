@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (finding the core, 2026-10-21)**
+- The launcher and pipeline look for the shared core in OVID_CORE, core/ inside the app and ../core beside it only; the old
+  ~/Desktop/Ovid fallback (and its Windows Desktop\\Ovid twin) is gone. The launcher's not-found message says to keep the app beside
+  core/ or run Make_Portable.bat.
+- Set-up: a core kept only at ~/Desktop/Ovid is no longer found; put core/ beside the app or set OVID_CORE.
+- **Output changes**: none.
+
 **Fixed (empty audit tables, 2026-10-21)**
 - manual_check.csv, baro_suggestions.csv, baro_compare.csv, dgps.csv and dgps_history.csv are written empty when a run has none of their kind; before, fwrite warned and left the previous run's file in place (stale checks on the pages and in reports).
 - **Output changes**: none for a run that has those tables.

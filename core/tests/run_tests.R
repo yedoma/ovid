@@ -889,4 +889,20 @@ local({ source(file.path(CORE_DIR, "theme.R"), local = TRUE)
   if (length(bad)) cat("    colours outside the palette:", paste(bad, collapse = ", "), "\n")
   check("apps draw no hex or rgba colour outside their palette, except the named scientific scales", !length(bad)) })
 
+cat("finding the core\n")
+local({
+  root <- dirname(CORE_DIR)
+  apps <- c("CS", "WLR", "GT", "GS", "RS")
+  files <- c(file.path(root, apps, "launcher", "run_app.R"),
+             file.path(root, apps, paste0(tolower(apps), "_pipeline.R")))
+  core_line <- function(f) paste(grep("CORE_DIR <- local", readLines(f, warn = FALSE), value = TRUE), collapse = "")
+  look <- vapply(files, core_line, "")
+  check("every launcher and pipeline looks for the core in OVID_CORE, core/ and ../core only, never on the Desktop",
+        all(nzchar(look)) && !any(grepl("Desktop", look)) && all(grepl("OVID_CORE", look)))
+  all_lines <- unlist(lapply(files, readLines, warn = FALSE))
+  # ~/Desktop/Ovid_Projects is the data folder and stays
+  check("the not-found message says to keep the app beside core/ rather than naming a Desktop folder",
+        !any(grepl("~/Desktop/Ovid([^_]|$)", all_lines)))
+})
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)
