@@ -7,6 +7,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (stale problems, 2026-10-21)**
+- audit/problems.csv is removed by a clean run instead of keeping the previous run's problems (as RS).
+- **Output changes**: none.
+
 **Changed (colours follow the colour scheme, 2026-10-20)**
 - Map: survey-year lines, the "no surveys" line, transect start and end, site markers and the legend ground take the scheme's colours (Settings > Colours); site names and GPR marker numbers on the map stay white on satellite imagery (MAP_LABEL_COL, M).
 - GPR: thaw-depth line and picks, field markers, A-scan and the GPS tracks (picked / other) take the scheme's gold, orange and blue.

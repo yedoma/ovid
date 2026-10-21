@@ -82,7 +82,7 @@ tz_check <- function(tz) {
     else if (abs(o) > 14) add(i, "offset_hours is more than 14 hours from UTC.")
     for (v in intersect(c("start", "end"), names(tz))) if (nzchar(tz_str(tz[[v]][i])) && is.na(tz_dt(tz[[v]][i]))) add(i, paste0(v, " '", tz[[v]][i], "' is not a date or date-time; this row never matches."))
     p <- tz_str(tz$file_pattern[i])
-    if (nzchar(p) && inherits(tryCatch(grepl(p, "x"), error = function(e) e), "error")) add(i, paste0("file_pattern '", p, "' is not a valid pattern; this row never matches."))
+    if (nzchar(p) && inherits(tryCatch(suppressWarnings(grepl(p, "x")), error = function(e) e), "error")) add(i, paste0("file_pattern '", p, "' is not a valid pattern; this row never matches."))
   }
   if (length(out)) rbindlist(out) else data.table(row = integer(), item = character(), problem = character())
 }

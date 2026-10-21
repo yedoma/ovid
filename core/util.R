@@ -25,13 +25,13 @@ say <- function(..., col = "fg", log = get0("LOG", ifnotfound = NULL),
 }
 
 # "[k/N] what" moves the progress bar of the Shiny session to the middle of step k. Outside a session, or with no steps,
-# nothing happens; try() because a message sent while no progress bar is open is not an error.
+# nothing happens; a message sent while no progress bar is open only warns, and that is silenced too.
 say_progress <- function(msg, steps) {
   pat <- paste0("^\\[[0-9]+/", steps, "\\] ?")
   if (!steps || !grepl(pat, msg)) return(invisible())
   if (!requireNamespace("shiny", quietly = TRUE) || is.null(shiny::getDefaultReactiveDomain())) return(invisible())
   k <- as.numeric(sub("^\\[([0-9]+)/.*", "\\1", msg))
-  try(shiny::setProgress((k - 0.5) / steps, detail = sub(pat, "", msg)), silent = TRUE)
+  try(suppressWarnings(shiny::setProgress((k - 0.5) / steps, detail = sub(pat, "", msg))), silent = TRUE)   # no bar open: a warning, not an error
   invisible()
 }
 

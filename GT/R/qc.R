@@ -132,6 +132,7 @@ assign_sensors <- function(d, sens, type, serial, sgn = 1) {
   configured <- d$sensor %in% rows$sensor
   d <- remove_rows(d, which(configured & !is.na(d$site) & d$depth_source %in% "default" & is.na(d$depth_m)), "site", "no_depth",
                    "the sensor has no depth and default depths are switched off (Automatic corrections): type one in the sensors and depths table", detail = "summary")
+  configured <- d$sensor %in% rows$sensor                                          # again: the removal above shortened d
   d <- remove_rows(d, which(configured & is.na(d$site)), "site", "outside_deployment",
                    "outside the start and end dates of this sensor's deployment (sensors and depths table)", detail = "summary")
   d

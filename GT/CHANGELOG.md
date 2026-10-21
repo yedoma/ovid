@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (sensor assignment, HOBO battery column, 2026-10-21)**
+- assign_sensors(): the sensor mask was taken before the no-depth removal shortened the table, so with default depths off the outside-deployment removal could drop the wrong rows.
+- A HOBOware CSV column with a unit ("Batt, V") is a measurement, not an event: it no longer adds one event per record to audit/events.csv (as WLR).
+- **Output changes**: events.csv loses the "Batt" rows for U23 exports with a battery column; values unchanged.
+
 **Fixed (scan table colours, 2026-10-20)**
 - The before-import scan table's ok / no words take the scheme's green and yellow (gold when it has none) instead of fixed fall-back colours (GT set no --yel variable).
 - **Output changes:** none (screen colour only).

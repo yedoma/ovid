@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (empty derived summary, 2026-10-21)**
+- audit/derived_summary.csv is written with its header when no station yields derived products, instead of leaving the last run's rows in place.
+- **Output changes**: none.
+
 **Changed (precipitation colours, 2026-10-20)**
 - The "missing" fill on the precipitation flag plot is the palette's bg2 with no hard-coded fall-back (bg2 is always set).
 - **Output changes:** none.

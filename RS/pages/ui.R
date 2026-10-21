@@ -85,7 +85,7 @@ std_pages <- function() list(
     card(card_header("Products and STAC"), rs_products_ui("products_tbl"), div(class = "mt-2", rs_stac_ui("stac_dl")))),
   "Setup",
   ovid_tool("Sources", icon = "hard-drive",
-    layout_columns(col_widths = c(7, 5, 12, 12),
+    layout_columns(col_widths = c(7, 5, 12),
       card(card_header("Sources in the archive"), uiOutput("src_list"),
         p(class = "muted mt-2", "A source that is not plugged in keeps its last scan. The same flight found in two sources is one flight with copies. Remove takes a source out of the catalogue; its folder and files are never changed."),
         h3("Last scan"), uiOutput("src_scan"),

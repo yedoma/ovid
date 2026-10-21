@@ -61,7 +61,7 @@ set-up checks. CS keeps its own `load_configs()` because its set-up tables are r
 
 ## Versions
 
-Current: core 1.14.0, shell 1.1.0, files 1.0.0. Apps: CS 1.10.0, WLR 0.10.0, GT 1.7.0, GS 0.4.0, RS 0.5.0. What changed in each version is in `CHANGELOG.md` (the core), each app's `CHANGELOG.md`, and `Ovid_Apps/CHANGELOG.md` for the whole bundle.
+Current: core 1.15.0, shell 1.2.0, files 1.0.0. Apps: CS 1.11.0, WLR 0.12.0, GT 1.8.0, GS 0.5.0, RS 0.6.0. What changed in each version is in `CHANGELOG.md` (the core), each app's `CHANGELOG.md`, and `Ovid_Apps/CHANGELOG.md` for the whole bundle.
 
 Bump `CORE_VERSION` (manifest.R) when a change here alters any app's output. It is written into every run manifest beside the app's version.
 After a change here, run every app's tests: `Rscript tests/run_tests.R` in each app folder.

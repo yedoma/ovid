@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (warning leaks, 2026-10-21)**
+- timezones.R: checking a `file_pattern` no longer prints TRE's compilation warning beside the finding.
+- util.R `say_progress()`: a step message with no progress bar open no longer warns ("setProgress was called outside of withProgress", seen in background runs).
+- README.md: current versions brought up to date (core 1.15.0, shell 1.2.0, CS 1.11.0, WLR 0.12.0, GT 1.8.0, GS 0.5.0, RS 0.6.0).
+
 **Changed (colours from the palette, 2026-10-20)**
 - theme.R: OVID_SCHEMES$Nord holds nord0 to nord15, WLR's status-line ground and grey (`named`); `nord_palette()` gives WLR's palette from it (WLR no longer keeps its own copy). New `col_rgba(col, a)` for plotly fills and legend grounds.
 - tests: apps draw no quoted hex or rgba() colour outside their palette, except the named scientific scales (Spectral, Viridis, RdBu, Grey, Blue-white-red) and two fixed whites (map labels on satellite imagery, the radargram cursor).

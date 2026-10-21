@@ -462,7 +462,8 @@ run_pipeline_steps <- function(cfg = CFG) {
   fwrite(meta[order(station, stream)], file.path(adir, "metadata.csv"), dateTimeAs = "write.csv")
   fwrite(summ, file.path(adir, "station_summary.csv"), dateTimeAs = "write.csv")
   fwrite(flags[order(station, stream, parameter, start)], file.path(adir, "flags.csv")); fwrite(dups, file.path(adir, "duplicate_sources.csv"))
-  fwrite(rbindlist(derived_made, fill = TRUE), file.path(adir, "derived_summary.csv"))
+  fwrite(if (length(derived_made)) rbindlist(derived_made, fill = TRUE) else data.table(station = character(), stream = character(), derived = character(), totals = character(), days = integer()),
+         file.path(adir, "derived_summary.csv"))                                   # a run with no derived products still writes the header, not the last run's rows
   bf <- rbindlist(AUDIT$by_file)
   bf <- if (nrow(bf)) bf[, .(n = sum(n), entries = sum(entries)), by = .(source_file, stage, rule, level)]
         else data.table(source_file = character(), stage = character(), rule = character(), level = character(), n = integer(), entries = integer())

@@ -174,7 +174,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   b <- build_flights(A$images, cfg$flight_gap_min, A$files, blur_limit_px = lim("blur_limit_px", 1))
   # the same photo in several folders or sources (copies, by its photo key, readers.R): counted once; the copy in the flight's primary
   # folder is kept and the others are listed in catalogue/duplicates.csv (kind, key, kept_path, dup_path, why; the eMotion logs use the same columns)
-  dup <- data.table(kind = character(), key = character(), kept_path = character(), dup_path = character(), why = character())
+  dup <- as.data.table(list(kind = character(), key = character(), kept_path = character(), dup_path = character(), why = character()))   # data.table() would take key = as its key argument
   if ("photo_key" %in% names(b$images) && nrow(b$images)) { ki <- b$images[!is.na(photo_key), .(pk = photo_key, p = paste0(source_id, ":", rel), pr = primary %in% TRUE)][order(pk, -pr, p)]
     ki <- ki[, if (.N > 1L) .(kept_path = p[1], dup_path = p[-1]), by = pk]
     if (nrow(ki)) dup <- ki[, .(kind = "photo", key = pk, kept_path, dup_path, why = fifelse(grepl("|md5:", pk, fixed = TRUE), "same size and first 64 kB", "same size, camera, exposure time and band"))] }

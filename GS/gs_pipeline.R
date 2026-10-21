@@ -173,7 +173,8 @@ run_pipeline_steps <- function(cfg = CFG) {
     unlink(file.path(pv, setdiff(list.files(pv), used))) }
   if (inc) for (d in c("qc", "previews")) cache_prune(file.path(cdir, d), c_used)
   if ("preview" %in% names(surveys)) { cat_s[surveys, preview := i.preview, on = "survey_id"]; fwrite(cat_s, file.path(catd, "surveys.csv")) }
-  probs <- rbindlist(AUDIT$problems); if (nrow(probs)) fwrite(probs, file.path(od, "audit", "problems.csv"))
+  probs <- rbindlist(AUDIT$problems); pf <- file.path(od, "audit", "problems.csv")
+  if (nrow(probs)) fwrite(probs, pf) else unlink(pf)          # a clean run leaves no problems from an earlier one
   write_run_manifest(cfg, t0, list(files = nrow(files), surveys = nrow(surveys), measurements = sum(vapply(a$meas, nrow, 0L)),
                                    surveys_checked = length(a$meas), surveys_reused = n_q, previews_reused = n_pv),
                      settings = list(raw_dirs = paste(cfg$raw_dirs, collapse = ";"), catalogue_profile = profs[1]), packages = c("data.table", "jsonlite"))

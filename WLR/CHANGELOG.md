@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (empty audit tables, 2026-10-21)**
+- manual_check.csv, baro_suggestions.csv, baro_compare.csv, dgps.csv and dgps_history.csv are written empty when a run has none of their kind; before, fwrite warned and left the previous run's file in place (stale checks on the pages and in reports).
+- **Output changes**: none for a run that has those tables.
+
 **Changed (Nord from core, 2026-10-20)**
 - R/plots.R takes its Nord colours from core (`nord_palette()`, OVID_SCHEMES$Nord) instead of its own copy; the values are the same.
 - **Output changes:** none.

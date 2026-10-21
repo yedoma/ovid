@@ -248,7 +248,8 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   if (is.na(serial)) { s2 <- regmatches(basename(path), regexpr("^[0-9]{6,10}", basename(path))); if (length(s2)) serial <- s2 }
   is_t <- grepl("^Temp", hdr); is_rh <- grepl("^RH", hdr)
   water <- any(grepl(HOBO_WATER_CHANNELS, hdr[-dcol]))   # a water-level or conductivity logger: WLR reads it, not GT
-  is_ev <- !is_t & !is_rh & seq_along(hdr) > dcol & !grepl("^(Abs Pres|Water Level|Light|Intensity|Voltage|Volt)", hdr)
+  # an event column has no unit after its name ("Coupler Detached (LGR S/N: ...)"); a column with one ("Batt, V") is a measurement (as WLR)
+  is_ev <- !is_t & !is_rh & seq_along(hdr) > dcol & !grepl(",", sub("\\(.*$", "", hdr)) & !grepl("^(Abs Pres|Water Level|Light|Intensity|Voltage|Volt)", hdr)
   meta <- list(format = "hobo_csv", type = "hobo", serial = serial, model = "HOBO", title = title, offset_hours = offset, interval_s = NA_real_,
                rows = length(l) - hi, download = NA, water = water)
   if (header_only) return(list(meta = meta))

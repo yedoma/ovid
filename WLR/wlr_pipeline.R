@@ -635,7 +635,10 @@ run_pipeline_steps <- function(cfg = CFG) {
   fwrite(deps, file.path(adir, "deployments.csv"), dateTimeAs = "write.csv")
   if (nrow(md)) fwrite(md, file.path(adir, "metadata.csv"), dateTimeAs = "write.csv")
   fwrite(rbindlist(summ, fill = TRUE), file.path(adir, "summary.csv"), dateTimeAs = "write.csv")
-  fwrite(rbindlist(checks, fill = TRUE), file.path(adir, "manual_check.csv"), dateTimeAs = "write.csv")
+  # a table with no rows and no columns (nothing of its kind this run) is written as an empty file: fwrite would warn and
+  # leave the last run's file in place; the pages read an empty file as an empty table (pages/fct_outputs.R)
+  fwrite_out <- function(x, f, ...) if (NCOL(x)) fwrite(x, f, ...) else { unlink(f); file.create(f) }
+  fwrite_out(rbindlist(checks, fill = TRUE), file.path(adir, "manual_check.csv"), dateTimeAs = "write.csv")
   tape_f <- file.path(adir, "tape_offsets.csv"); unlink(tape_f)
   if (length(tape_log)) { tl <- rbindlist(tape_log, fill = TRUE); fwrite(tl, tape_f, dateTimeAs = "write.csv"); nb <- sum(tl$status == "check the metadata")
     if (nb) problem("tape checks", sprintf("%d of %d deployments differ from the tape by more than %g m (median of their checks), more than drift usually explains; most likely a metadata error (hang length, logger offset, reference point or visit time). Review them on Field visits: adjust the metadata or keep them as they are",
@@ -660,15 +663,15 @@ run_pipeline_steps <- function(cfg = CFG) {
          manual = numeric(), logger = numeric(), difference = numeric(), method = character(), author = character(), notes = character()), file.path(adir, "measurements.csv"), dateTimeAs = "write.csv")
   fwrite(if (length(gaps)) rbindlist(gaps, fill = TRUE) else data.table(logger_id = character(), gap_start = character(), gap_end = character(), gap_hours = numeric(), missing_records = integer()),
          file.path(adir, "gaps.csv"), dateTimeAs = "write.csv")
-  fwrite(rbindlist(sugg_all, fill = TRUE), file.path(adir, "baro_suggestions.csv"))
+  fwrite_out(rbindlist(sugg_all, fill = TRUE), file.path(adir, "baro_suggestions.csv"))
   fwrite(bchk$table, file.path(adir, "baro_checks.csv"), dateTimeAs = "write.csv")
   fwrite(if (nrow(alt_log)) alt_log else data.table(serial = character(), file = character(), altitude_m = numeric(), correction_kpa = numeric(),
          correction_m_water = numeric(), records = integer(), applied = logical()), file.path(adir, "solinst_altitude.csv"))
-  fwrite(baro_compare(baros), file.path(adir, "baro_compare.csv"))
+  fwrite_out(baro_compare(baros), file.path(adir, "baro_compare.csv"))
   fwrite(if (nrow(seams)) seams else data.table(station = character(), from_serial = character(), to_serial = character(), change_at = character(),
          overlap_days = numeric(), difference_kpa = numeric(), gap_hours = numeric()), file.path(adir, "baro_seams.csv"), dateTimeAs = "write.csv")
   fwrite(bst, file.path(adir, "baro_stations.csv"))
-  fwrite(ghist, file.path(adir, "dgps_history.csv"), dateTimeAs = "write.csv")
+  fwrite_out(ghist, file.path(adir, "dgps_history.csv"), dateTimeAs = "write.csv")
   fwrite(if (length(air)) rbindlist(air, fill = TRUE) else data.table(deployment = character(), site = character(), serial = character(), year = integer(), where = character(),
          from = character(), to = character(), records = integer(), first_in_water = character(), action = character()), file.path(adir, "air_runs.csv"), dateTimeAs = "write.csv")
   # every raw file: what it is, how many readings it gave, how many reached the output, and what happened to the rest
@@ -696,7 +699,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     if (inc) c_used <- c(c_used, cf) }
   if (inc) { cache_prune(file.path(cdir, "read"), READ_CACHE$used); cache_prune(file.path(cdir, "plots"), p_used)
              for (d in c("stitch", "logger", "corrected", "agree")) cache_prune(file.path(cdir, d), c_used) }
-  fwrite(gps, file.path(adir, "dgps.csv"), dateTimeAs = "write.csv"); fwrite(links, file.path(adir, "gps_links.csv"))
+  fwrite_out(gps, file.path(adir, "dgps.csv"), dateTimeAs = "write.csv"); fwrite(links, file.path(adir, "gps_links.csv"))
   fwrite(near_duplicates(man), file.path(adir, "overlaps.csv"), dateTimeAs = "write.csv")
   fwrite(idx, file.path(adir, "audit_index.csv"))
   fwrite(if (length(AUDIT$problems)) rbindlist(AUDIT$problems) else data.table(where = character(), problem = character()), file.path(adir, "problems.csv"))

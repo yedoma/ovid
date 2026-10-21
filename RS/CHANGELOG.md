@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (duplicates table, Sources layout, 2026-10-21)**
+- An empty catalogue/duplicates.csv kept its key, kept_path and dup_path columns (data.table() had taken key = as its key argument); golden updated.
+- Sources page: three column widths for its three cards (bslib warning gone).
+- **Output changes**: the header of an empty duplicates.csv.
+
 **Changed (failures reported, not hidden, 2026-10-20)**
 - 1 failure now reported (a source's scan.rds); 27 defaults commented as safe. The Sources page shows a notice when the set-up check cannot run.
 - **Output changes:** none for readable projects; a part that cannot be read or made is now on the problem list.

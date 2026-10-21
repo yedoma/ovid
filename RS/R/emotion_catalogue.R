@@ -215,7 +215,7 @@ emotion_geometry <- function(fl, links, emo) {
 # duplicates.csv rows for the logs (same columns as the photos): every copy of a log other than the one its flight uses (or,
 # for a log no flight uses, its first copy), and other versions of a flight's log.
 emotion_duplicates <- function(fl, emo) {
-  out <- data.table(kind = character(), key = character(), kept_path = character(), dup_path = character(), why = character())
+  out <- as.data.table(list(kind = character(), key = character(), kept_path = character(), dup_path = character(), why = character()))   # data.table() would take key = as its key argument
   lg <- emo$logs
   if (is.null(lg) || !nrow(lg) || !"log_id" %in% names(lg)) return(out)
   lg <- lg[log_kind != "link" & !is.na(ebee_flight_no(log_file)$no)][, ref := paste0(source_id, ":", rel)]   # logs named by drone and flight
