@@ -50,7 +50,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "standards", "file_audit", "cache", "timezones", "config", "calibration", "table_rules", "manifest", "preflight", "theme"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "export", "gnss", "datasets", "gis", "stac", "preflight"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "rs_pipeline.R"))   # every file's code (the run manifest)

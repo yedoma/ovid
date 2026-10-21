@@ -57,7 +57,7 @@ From this folder:
 | `Rscript rs_pipeline.R` | rescans every source that is plugged in; sources that are not keep their last scan |
 | `Rscript rs_pipeline.R export` | writes the viewer to send: `<project>/output/viewer/Ovid_RS_viewer.zip` |
 
-The project folder is set on the app's Data source page (saved in app_settings.json; on this Mac `~/Projects/Ovid/Projects/RS/UAV_project`), or `RS_PROJECT_DIR`; with none set it is `~/Projects/Ovid/Projects/RS/Untitled`. Sources are listed in
+The project folder is set on the app's Data source page (saved in app_settings.json), or `RS_PROJECT_DIR`; with none set it is `~/Projects/Ovid/Projects/RS/project`. Sources are listed in
 `config/sources.csv`. Each image is opened once (its first 64 kB: EXIF and XMP) and the result kept per folder in
 `<project>/cache/sources/<source>/`, so a rescan only reads folders whose files changed. Tests: `Rscript tests/run_tests.R` (with tests/test_bad_files.R, test_golden.R and test_formulas.R; samples in tests/samples, the golden project in tests/golden). eMotion mission plans (.mis3) have no sample yet: the files at hand hold place names.
 

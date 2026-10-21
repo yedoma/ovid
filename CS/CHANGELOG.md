@@ -7,6 +7,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - Projects go in ~/Projects/Ovid/Projects/CS when none is set (was ~/Desktop/Ovid_Projects/CS).
+- Default raw folder is ~/Projects/Ovid/Projects/CS/raw (was ~/Desktop/dat/RAW and ~/Desktop/Dat_Files, both retired).
 - Set-up: projects and raw data kept in the old Desktop folders are not found by default any more; open them from their new place.
 - **Output changes**: none.
 

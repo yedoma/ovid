@@ -5,9 +5,16 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (folder layout, 2026-10-21)**
+- util.R: with none set, each app's project folder is ~/Projects/Ovid/Projects/<app>/project (was .../Untitled). Each app keeps raw/ for
+  its data, project/ for everything else and archive/ for older runs.
+- tests/test_raw_only.R runs each app on its trimmed sample in Projects/test_samples (the demos are removed); GS and RS have none
+  and are skipped.
+- **Output changes**: none.
+
 **Changed (projects folder, 2026-10-21)**
 - util.R `ovid_projects_home()`: projects go in ~/Projects/Ovid/Projects/<app> (was ~/Desktop/Ovid_Projects/<app>); tests updated, and a
-  check that GS, GT and RS defaults are not on the Desktop.
+  check that every app's default folders are under ~/Projects/Ovid/Projects.
 - **Output changes**: none.
 
 **Changed (finding the core, 2026-10-21)**

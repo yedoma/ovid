@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (folder layout, 2026-10-21)**
+- Default raw folder is ~/Projects/Ovid/Projects/GT/raw (logger files only); the metadata folder is in the project (project/metadata).
+- **Output changes**: none.
+
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - The default raw and metadata folders are ~/Projects/Ovid/Projects/GT/raw/data and raw/metadata (were ~/Desktop/GT/...); projects go in
   ~/Projects/Ovid/Projects/GT.

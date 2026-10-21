@@ -393,7 +393,7 @@ local({ sj <- paste(readLines(file.path(CORE_DIR, "www", "sheet.js"), warn = FAL
 
 cat("the project folder when none is set (util.R)\n")
 local({ d <- ovid_default_project("CS"); repo <- tempfile("repo_"); dir.create(file.path(repo, ".git"), recursive = TRUE)
-  check("no project folder: ~/Projects/Ovid/Projects/<app>/Untitled", identical(ovid_project_dir("", "CS", repo), d) && identical(ovid_project_dir(NA, "CS", repo), d))
+  check("no project folder: ~/Projects/Ovid/Projects/<app>/project", identical(ovid_project_dir("", "CS", repo), d) && identical(ovid_project_dir(NA, "CS", repo), d))
   check("\"/\" and the home folder are never used as the project folder", identical(ovid_project_dir("/", "CS", repo), d) && identical(ovid_project_dir("~", "CS", repo), d))
   check("a folder inside the app's own git repository is not used", identical(ovid_project_dir(file.path(repo, "sub", "proj"), "CS", repo), d))
   check("a folder the user sets wins", identical(ovid_project_dir("~/elsewhere/my project", "CS", repo), "~/elsewhere/my project"))
@@ -449,7 +449,7 @@ local({ for (.f in c("cache", "manifest", "projects")) source(file.path(CORE_DIR
   check("a project name: not empty, no / \\ or :, not one already used", nzchar(project_name_problem("", c(a, b))) && nzchar(project_name_problem("a/b")) && nzchar(project_name_problem("a:b")) &&
         nzchar(project_name_problem("Beta", c(a, b), a)) && !nzchar(project_name_problem("Gamma", c(a, b), a)))
   r <- project_rename(a, "Alpha 2", c(a, b))
-  check("outside Ovid_Projects a rename changes the name shown, not the folder", identical(path_norm(r), path_norm(a)) && identical(project_name(a), "Alpha 2"))
+  check("outside the projects folder a rename changes the name shown, not the folder", identical(path_norm(r), path_norm(a)) && identical(project_name(a), "Alpha 2"))
   e <- tryCatch(project_rename(a, "Beta", c(a, b)), error = function(e) conditionMessage(e)); check("a rename to a name in use is refused, saying why", grepl("already", e))
   d <- project_duplicate(a, "Copy", c(a, b), dest = file.path(root, "Copy"))
   check("a duplicate has the set-up tables, not the outputs", file.exists(file.path(d, "config", "qc_rules.csv")) && !dir.exists(file.path(d, "output")) && identical(project_name(d), "Copy"))
@@ -458,7 +458,7 @@ local({ for (.f in c("cache", "manifest", "projects")) source(file.path(CORE_DIR
   check("the open project is listed when the saved settings have no folder yet (first start, automatic folder); a saved one is kept",
         identical(projects_known(projects_with_open(list(), list(project_dir = "/x/Untitled"))), "/x/Untitled") &&
         identical(projects_with_open(list(project_dir = "/a"), list(project_dir = "/b"))$project_dir, "/a") && !length(projects_known(projects_with_open(list(), list()))))
-  check("under Ovid_Projects a rename renames the folder too", dir.exists(r) && basename(r) == "New name" && !dir.exists(p) && identical(project_name(r), "New name"))
+  check("in the projects folder a rename renames the folder too", dir.exists(r) && basename(r) == "New name" && !dir.exists(p) && identical(project_name(r), "New name"))
   Sys.setenv(HOME = h0); unlink(c(root, h), recursive = TRUE) })
 
 cat("projects: settings of an older version, and opening a project's settings (projects.R)\n")
@@ -900,7 +900,6 @@ local({
   check("every launcher and pipeline looks for the core in OVID_CORE, core/ and ../core only, never on the Desktop",
         all(nzchar(look)) && !any(grepl("Desktop", look)) && all(grepl("OVID_CORE", look)))
   all_lines <- unlist(lapply(files, readLines, warn = FALSE))
-  # ~/Desktop/Ovid_Projects/... names are data folders, not the core
   check("the not-found message says to keep the app beside core/ rather than naming a Desktop folder",
         !any(grepl("~/Desktop/Ovid([^_]|$)", all_lines)))
 })
@@ -910,8 +909,8 @@ local({
   root <- dirname(CORE_DIR)
   defaults <- function(app) { f <- file.path(root, app, paste0(tolower(app), "_pipeline.R"))
     grep("(raw_dirs|metadata_dir|project_dir)\\s*(=|<-)", readLines(f, warn = FALSE), value = TRUE) }
-  look <- unlist(lapply(c("GS", "GT", "RS"), defaults))
-  check("GS, GT and RS default to folders under ~/Projects/Ovid/Projects, not the Desktop", length(look) > 0 && !any(grepl("~/Desktop", look)))
+  look <- unlist(lapply(c("CS", "WLR", "GT", "GS", "RS"), defaults)); dirs <- unlist(regmatches(look, gregexpr('"~/[^"]*"', look)))
+  check("every app's default folders are under ~/Projects/Ovid/Projects", length(dirs) >= 6 && all(startsWith(dirs, '"~/Projects/Ovid/Projects/')))
   check("projects go in ~/Projects/Ovid/Projects/<app> when none is set", identical(ovid_projects_home("RS"), "~/Projects/Ovid/Projects/RS"))
 })
 

@@ -48,7 +48,7 @@ downloadHandler <- ovid_downloads("GS")                  # every download is nam
 SETTINGS_FILE <- file.path(APP_DIR, "app_settings.json")
 SETTINGS <- settings_read(SETTINGS_FILE)                          # core util.R: the last good copy if this one is damaged
 for (k in intersect(names(SETTINGS), c("raw_dirs", "project_dir", "catalogue_profile", "base_offset_h"))) CFG[[k]] <- SETTINGS[[k]]
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)             # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)             # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 VIEWER <- FALSE                                     # GS has no viewer mode: an imported catalogue is changed in its own copy
 set_paths <- function() { PROJECT <<- path.expand(CFG$project_dir); CAT <<- file.path(PROJECT, "output", "catalogue") }
 set_paths()

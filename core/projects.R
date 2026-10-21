@@ -103,7 +103,7 @@ project_name_problem <- function(name, others = character(), path = NULL) { n <-
 projects_root <- function(app = project_app()) path_norm(ovid_projects_home(app))
 project_in_root <- function(path, app = project_app()) identical(path_norm(dirname(path.expand(path))), projects_root(app))
 project_automatic <- function(path) identical(path_norm(path), path_norm(ovid_project_dir("")))
-# Rename: under Ovid_Projects the folder is renamed with the project; elsewhere only the name it shows (in .ovid_project).
+# Rename: in the app's projects folder the folder is renamed with the project; elsewhere only the name it shows (in .ovid_project).
 # Returns the project's path afterwards.
 project_rename <- function(path, name, others = character()) {
   why <- project_name_problem(name, others, path); if (nzchar(why)) project_stop(why)

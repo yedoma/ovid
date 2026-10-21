@@ -296,9 +296,9 @@ norm_serial <- function(x, keep = SERIAL_KEEP) {
 
 # ---- The project folder when none is set --------------------------------------------------------------------------------
 # Only the raw data folder is needed. With no project (output) folder, or one that is "/", the home folder or inside the
-# app's own folder (its git repository), the app uses ~/Projects/Ovid/Projects/<app>/Untitled, the folder every app's
+# app's own folder (its git repository), the app uses ~/Projects/Ovid/Projects/<app>/project, the folder every app's
 # projects go in; it is created on the first write. A folder the user sets always wins otherwise.
-ovid_default_project <- function(app = get0("OVID_APP", ifnotfound = "ovid"), name = "Untitled") file.path(ovid_projects_home(app), name)
+ovid_default_project <- function(app = get0("OVID_APP", ifnotfound = "ovid"), name = "project") file.path(ovid_projects_home(app), name)
 # Apps that were renamed: former name = current name (ERT became GS on 2026-10-14). A project marked with a former name
 # opens in the current app, and ~/Projects/Ovid/Projects/<former> stays the projects folder until a <current> one exists.
 OVID_APP_RENAMED <- c(ERT = "GS")

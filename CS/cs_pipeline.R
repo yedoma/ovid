@@ -33,7 +33,7 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
 
 OVID_APP <- "CS"                                          # its projects go in ~/Projects/Ovid/Projects/CS/ (core util.R)
 CFG <- list(
-  raw_dirs    = c("~/Desktop/dat/RAW", "~/Desktop/Dat_Files"),
+  raw_dirs    = c("~/Projects/Ovid/Projects/CS/raw"),
   project_dir = "",     # config/ and output/ live here
 
   # Diagnostic / high-frequency tables that are not station data.
@@ -101,7 +101,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "qc", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 for (.f in c("plots", "toa5", "tob3", "cr10x", "program", "stitch", "config", "qc", "derived", "homog", "precip", "history", "preflight", "io", "export", "composite"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "cs_pipeline.R"))   # every file's code (the run manifest)

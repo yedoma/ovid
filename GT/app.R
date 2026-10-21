@@ -51,7 +51,7 @@ SET_KEYS <- c("raw_dirs", "metadata_dir", "project_dir", NUM_KEYS, "unzoned_offs
 CORR_KEYS <- vapply(Filter(function(x) isTRUE(x$panel) && nzchar(x$setting %||% ""), CORRECTIONS), function(x) x$setting, "")   # the Automatic corrections switches
 for (k in SET_KEYS) if (is.null(SETTINGS[[k]])) SETTINGS[k] <- list(CFG[[k]])
 if (nzchar(Sys.getenv("GT_PROJECT_DIR"))) SETTINGS$project_dir <- Sys.getenv("GT_PROJECT_DIR")
-SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 SETTINGS$permafrost_years <- gt_permafrost_years(SETTINGS$permafrost_years, SETTINGS$project_dir)   # not saved yet: the old calibration_options.csv (R/config.R)
 if (nzchar(Sys.getenv("GT_RAW_DIRS"))) SETTINGS$raw_dirs <- strsplit(Sys.getenv("GT_RAW_DIRS"), ";")[[1]]
 if (nzchar(Sys.getenv("GT_METADATA_DIR"))) SETTINGS$metadata_dir <- Sys.getenv("GT_METADATA_DIR")

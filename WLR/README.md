@@ -73,11 +73,13 @@ Needs R with data.table, ggplot2, xml2, readxl, shiny, DT and zip (installed on 
 <details>
 <summary><b>Folders</b></summary>
 
+With none set on Data source, the folders are under ~/Projects/Ovid/Projects/WLR: raw/ for the data, project/ for the rest.
+
 ```
-WLR/data/2025/            water level and conductivity downloads for 2025 (.hobo + HOBOware .csv, .xle + Solinst .csv)
-WLR/data/baro/2025/       barologgers for 2025
-WLR/metadata/             WL_Metadata.xlsx (one sheet per year; the newest .xlsx is used)
-WLR/dgps/                 dGPS survey exports (.csv, Emlid style: Name, Location = T / TOC / GS, heights)
+raw/2025/                 water level and conductivity downloads for 2025 (.hobo + HOBOware .csv, .xle + Solinst .csv)
+raw/baro/2025/            barologgers for 2025
+<project>/metadata/       WL_Metadata.xlsx (one sheet per year; the newest .xlsx is used)
+<project>/dgps/           dGPS survey exports (.csv, Emlid style: Name, Location = T / TOC / GS, heights)
 <project>/config/         set-up tables (written by the app)
 <project>/output/         sites/ (one CSV per deployment), corrected/ (one CSV per site), baro/ (each serial and each station), plots/, audit/
 ```

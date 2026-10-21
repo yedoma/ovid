@@ -7,6 +7,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - Projects go in ~/Projects/Ovid/Projects/WLR when none is set (was ~/Desktop/Ovid_Projects/WLR).
+- Default folders: raw data in ~/Projects/Ovid/Projects/WLR/raw; metadata and dGPS in the project (project/metadata, project/dgps); were ~/WLR/....
 - Set-up: projects and raw data kept in the old Desktop folders are not found by default any more; open them from their new place.
 - **Output changes**: none.
 

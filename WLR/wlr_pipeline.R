@@ -30,9 +30,9 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
 
 OVID_APP <- "WLR"                                          # its projects go in ~/Projects/Ovid/Projects/WLR/ (core util.R)
 CFG <- list(
-  raw_dirs     = c("~/WLR/data"),           # holds 2025/, 2024/ ... and baro/2025/, baro/2024/ ...
-  metadata_dir = "~/WLR/metadata",          # the newest .xlsx here is the WL_Metadata workbook
-  dgps_dir     = "~/WLR/dgps",              # dGPS survey exports (.csv)
+  raw_dirs     = c("~/Projects/Ovid/Projects/WLR/raw"),   # holds 2025/, 2024/ ... and baro/2025/, baro/2024/ ...
+  metadata_dir = "~/Projects/Ovid/Projects/WLR/project/metadata",   # the newest .xlsx here is the WL_Metadata workbook
+  dgps_dir     = "~/Projects/Ovid/Projects/WLR/project/dgps",       # dGPS survey exports (.csv)
   project_dir  = "",        # config/ and output/ live here
   years        = NULL,                      # process only these deployment years, e.g. c(2024, 2025); NULL = every year found
 
@@ -112,7 +112,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "hobo", "cache", "timezones", "timestamps", "time_corrections", "config", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 for (.f in c("util", "plots", "readers", "units", "discover", "metadata", "stitch", "baro", "baro_check", "qc", "datum", "summaries", "drift", "hydro", "config", "export", "preflight", "report"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "wlr_pipeline.R"))   # every file's code (the run manifest)

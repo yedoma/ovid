@@ -47,7 +47,7 @@ SETTINGS <- settings_read(SETTINGS_FILE)                          # core util.R:
 for (k in intersect(names(SETTINGS), c("project_dir", "viewer_title"))) CFG[[k]] <- SETTINGS[[k]]   # viewer_title: the viewer's and STAC's
 if (!is.null(SETTINGS$base_offset_h)) BASE_OFFSET <- CFG$base_offset_h <- SETTINGS$base_offset_h   # Settings > Time zone
 if (nzchar(Sys.getenv("RS_PROJECT_DIR"))) CFG$project_dir <- Sys.getenv("RS_PROJECT_DIR")   # as in CS: the environment wins
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)             # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)             # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 local({ vt <- project_settings_read(CFG$project_dir)$viewer_title; if (nzchar(vt %||% "")) CFG$viewer_title <<- vt })   # saved with the project (core projects.R)
 VIEWER <- FALSE                                     # RS has no viewer mode in the app (the viewer it writes is for that)
 CAT <- function() file.path(path.expand(CFG$project_dir), "output", "catalogue")
