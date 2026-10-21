@@ -296,14 +296,14 @@ norm_serial <- function(x, keep = SERIAL_KEEP) {
 
 # ---- The project folder when none is set --------------------------------------------------------------------------------
 # Only the raw data folder is needed. With no project (output) folder, or one that is "/", the home folder or inside the
-# app's own folder (its git repository), the app uses ~/Desktop/Ovid_Projects/<app>/Untitled, the folder every app's
+# app's own folder (its git repository), the app uses ~/Projects/Ovid/Projects/<app>/Untitled, the folder every app's
 # projects go in; it is created on the first write. A folder the user sets always wins otherwise.
 ovid_default_project <- function(app = get0("OVID_APP", ifnotfound = "ovid"), name = "Untitled") file.path(ovid_projects_home(app), name)
 # Apps that were renamed: former name = current name (ERT became GS on 2026-10-14). A project marked with a former name
-# opens in the current app, and ~/Desktop/Ovid_Projects/<former> stays the projects folder until a <current> one exists.
+# opens in the current app, and ~/Projects/Ovid/Projects/<former> stays the projects folder until a <current> one exists.
 OVID_APP_RENAMED <- c(ERT = "GS")
 ovid_app_name <- function(app) { app <- as.character(app); i <- app %in% names(OVID_APP_RENAMED); app[i] <- OVID_APP_RENAMED[app[i]]; app }
-ovid_projects_home <- function(app, root = "~/Desktop/Ovid_Projects") {
+ovid_projects_home <- function(app, root = "~/Projects/Ovid/Projects") {
   d <- file.path(root, app); old <- file.path(root, names(OVID_APP_RENAMED)[OVID_APP_RENAMED == app])
   old <- old[dir.exists(path.expand(old))]
   if (!dir.exists(path.expand(d)) && length(old)) old[1] else d }

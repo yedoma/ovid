@@ -21,9 +21,9 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
 
 GS_VERSION <- "0.5.0"
 
-OVID_APP <- "GS"                                          # its projects go in ~/Desktop/Ovid_Projects/GS/ (core util.R)
+OVID_APP <- "GS"                                          # its projects go in ~/Projects/Ovid/Projects/GS/ (core util.R)
 CFG <- list(
-  raw_dirs    = c("~/Desktop/ERT"),            # the raw archive, any layout; read only
+  raw_dirs    = c("~/Projects/Ovid/Projects/GS/raw"),  # the raw archive, any layout; read only
   project_dir = "",       # config/ and output/ live here (never inside the raw archive)
   qc_profiles = c("frozen_ground", "standard", "strict", "exploratory"),   # the built-in profiles; every profile in qc_profiles.csv is checked
   catalogue_profile = "",                      # the profile that fills the catalogue (Settings); none or unknown: the first built-in
@@ -53,7 +53,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "qc", "file_audit", "cache", "timezones", "config", "table_rules", "manifest", "preflight", "theme"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
 for (.f in c("config", "importers", "catalogue", "qc", "plots", "inversion", "export", "preflight"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "gs_pipeline.R"))   # every file's code (the run manifest)

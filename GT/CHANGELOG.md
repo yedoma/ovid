@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (folders under ~/Projects/Ovid, 2026-10-21)**
+- The default raw and metadata folders are ~/Projects/Ovid/Projects/GT/raw/data and raw/metadata (were ~/Desktop/GT/...); projects go in
+  ~/Projects/Ovid/Projects/GT.
+- Set-up: projects and raw data kept in the old Desktop folders are not found by default any more; open them from their new place.
+- **Output changes**: none.
+
 **Changed (finding the core, 2026-10-21)**
 - The launcher and pipeline look for the shared core in OVID_CORE, core/ inside the app and ../core beside it only; the old
   ~/Desktop/Ovid fallback (and its Windows Desktop\\Ovid twin) is gone. The launcher's not-found message says to keep the app beside

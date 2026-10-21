@@ -1,12 +1,12 @@
 # core/tests/test_raw_only.R  --  Every app runs with only its raw data folder set: no metadata, no project folder, no set-up
 # tables. The pipeline is run in a fresh R with HOME in a temporary folder, so the default project folder
-# (~/Desktop/Ovid_Projects/<app>/Untitled, core util.R) is made there and nothing of the user's is touched.
+# (~/Projects/Ovid/Projects/<app>/Untitled, core util.R) is made there and nothing of the user's is touched.
 #   Rscript core/tests/test_raw_only.R [APP ...]        (exit status 1 if anything fails)
-# Raw data: OVID_TEST_RAW_<APP> if set, else ~/Desktop/Ovid_Projects/demo/<APP>/raw, else the first folder in that demo's
+# Raw data: OVID_TEST_RAW_<APP> if set, else ~/Projects/Ovid/Projects/demo/<APP>/raw, else the first folder in that demo's
 # raw_dirs.txt; an app with none is skipped with a note, and the summary counts it as skipped, not passed.
 A <- commandArgs(TRUE); apps <- if (length(A)) A else c("CS", "WLR", "GT", "GS", "RS")
 here <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); dirname(dirname(dirname(normalizePath(sub("^--file=", "", a[1]))))) })
-demo <- function(app) { d <- file.path("~/Desktop/Ovid_Projects/demo", c(app, if (app == "GS") "ERT"))   # GS demos made as ERT
+demo <- function(app) { d <- file.path("~/Projects/Ovid/Projects/demo", c(app, if (app == "GS") "ERT"))   # GS demos made as ERT
   file.path(c(d[dir.exists(path.expand(d))], d)[1], "raw") }
 `%||%` <- function(a, b) if (is.null(a) || !length(a) || is.na(a[1])) b else a
 ok <- 0L; fail <- character(); skipped <- character()
@@ -22,9 +22,9 @@ for (app in apps) {
   out <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), c("-e", shQuote(sprintf("setwd(%s); source(%s); r <- tryCatch({ run_pipeline(); 'OK' }, error = function(e) paste('ERROR', conditionMessage(e))); cat('\\nRESULT', r, '\\n')",
     deparse(dirname(pipe)), deparse(basename(pipe))))), stdout = TRUE, stderr = TRUE, env = env))
   res <- sub("^RESULT ", "", grep("^RESULT", out, value = TRUE)[1] %||% "no result")
-  proj <- file.path(home, "Desktop", "Ovid_Projects", app, "Untitled")
+  proj <- file.path(home, "Projects", "Ovid", "Projects", app, "Untitled")
   check(sprintf("%s runs with only a raw folder (no metadata, no project folder): %s", app, trimws(res)), identical(trimws(res), "OK"))
-  check(sprintf("%s wrote its output in the default project folder ~/Desktop/Ovid_Projects/%s/Untitled", app, app), dir.exists(file.path(proj, "output")) && length(list.files(file.path(proj, "output"), recursive = TRUE)) > 0)
+  check(sprintf("%s wrote its output in the default project folder ~/Projects/Ovid/Projects/%s/Untitled", app, app), dir.exists(file.path(proj, "output")) && length(list.files(file.path(proj, "output"), recursive = TRUE)) > 0)
   unlink(home, recursive = TRUE)
 }
 cat(sprintf("\n%d passed, %d failed%s\n", ok, length(fail), if (length(skipped)) sprintf(", %d skipped", length(skipped)) else "")); if (length(fail)) quit(status = 1)

@@ -393,7 +393,7 @@ local({ sj <- paste(readLines(file.path(CORE_DIR, "www", "sheet.js"), warn = FAL
 
 cat("the project folder when none is set (util.R)\n")
 local({ d <- ovid_default_project("CS"); repo <- tempfile("repo_"); dir.create(file.path(repo, ".git"), recursive = TRUE)
-  check("no project folder: ~/Desktop/Ovid_Projects/<app>/Untitled", identical(ovid_project_dir("", "CS", repo), d) && identical(ovid_project_dir(NA, "CS", repo), d))
+  check("no project folder: ~/Projects/Ovid/Projects/<app>/Untitled", identical(ovid_project_dir("", "CS", repo), d) && identical(ovid_project_dir(NA, "CS", repo), d))
   check("\"/\" and the home folder are never used as the project folder", identical(ovid_project_dir("/", "CS", repo), d) && identical(ovid_project_dir("~", "CS", repo), d))
   check("a folder inside the app's own git repository is not used", identical(ovid_project_dir(file.path(repo, "sub", "proj"), "CS", repo), d))
   check("a folder the user sets wins", identical(ovid_project_dir("~/elsewhere/my project", "CS", repo), "~/elsewhere/my project"))
@@ -900,9 +900,19 @@ local({
   check("every launcher and pipeline looks for the core in OVID_CORE, core/ and ../core only, never on the Desktop",
         all(nzchar(look)) && !any(grepl("Desktop", look)) && all(grepl("OVID_CORE", look)))
   all_lines <- unlist(lapply(files, readLines, warn = FALSE))
-  # ~/Desktop/Ovid_Projects is the data folder and stays
+  # ~/Desktop/Ovid_Projects/... names are data folders, not the core
   check("the not-found message says to keep the app beside core/ rather than naming a Desktop folder",
         !any(grepl("~/Desktop/Ovid([^_]|$)", all_lines)))
+})
+
+cat("default folders\n")
+local({
+  root <- dirname(CORE_DIR)
+  defaults <- function(app) { f <- file.path(root, app, paste0(tolower(app), "_pipeline.R"))
+    grep("(raw_dirs|metadata_dir|project_dir)\\s*(=|<-)", readLines(f, warn = FALSE), value = TRUE) }
+  look <- unlist(lapply(c("GS", "GT", "RS"), defaults))
+  check("GS, GT and RS default to folders under ~/Projects/Ovid/Projects, not the Desktop", length(look) > 0 && !any(grepl("~/Desktop", look)))
+  check("projects go in ~/Projects/Ovid/Projects/<app> when none is set", identical(ovid_projects_home("RS"), "~/Projects/Ovid/Projects/RS"))
 })
 
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

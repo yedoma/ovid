@@ -98,7 +98,7 @@ project_name_problem <- function(name, others = character(), path = NULL) { n <-
   o <- others[!is.na(others) & nzchar(others)]; if (!is.null(path)) o <- o[vapply(o, path_norm, "") != path_norm(path)]
   if (length(o) && tolower(n) %in% tolower(vapply(o, project_name, ""))) return(paste0("There is already a project called ", n, "."))
   "" }
-# The folder new projects go in (~/Desktop/Ovid_Projects/<app>), and whether a project lives there (then renaming renames
+# The folder new projects go in (~/Projects/Ovid/Projects/<app>), and whether a project lives there (then renaming renames
 # its folder too) or is the folder the app made itself when none was set (the automatic folder).
 projects_root <- function(app = project_app()) path_norm(ovid_projects_home(app))
 project_in_root <- function(path, app = project_app()) identical(path_norm(dirname(path.expand(path))), projects_root(app))

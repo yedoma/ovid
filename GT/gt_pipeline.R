@@ -33,10 +33,10 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
 
 GT_VERSION <- "1.8.0"
 
-OVID_APP <- "GT"                                          # its projects go in ~/Desktop/Ovid_Projects/GT/ (core util.R)
+OVID_APP <- "GT"                                          # its projects go in ~/Projects/Ovid/Projects/GT/ (core util.R)
 CFG <- list(
-  raw_dirs      = c("~/Desktop/GT/data"),       # logger files, in any folder layout (type/year folders are fine)
-  metadata_dir  = "~/Desktop/GT/metadata",      # registry workbook, NTGS metadata workbooks, field notes (.docx)
+  raw_dirs      = c("~/Projects/Ovid/Projects/GT/raw/data"),  # logger files, in any folder layout (type/year folders are fine)
+  metadata_dir  = "~/Projects/Ovid/Projects/GT/raw/metadata",  # registry workbook, NTGS metadata workbooks, field notes (.docx)
   project_dir   = "",       # config/ and output/ live here
 
   base_offset_h = -7,                           # every time stamp is moved to UTC-7 (no daylight saving); set -6 to standardise every record to UTC-6
@@ -106,7 +106,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
 for (.f in c("util", "readers", "f2b", "config", "metadata", "discover", "stitch", "qc", "derived", "plots", "export", "preflight", "report"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "gt_pipeline.R"))   # every file's code (the run manifest)

@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (projects folder, 2026-10-21)**
+- util.R `ovid_projects_home()`: projects go in ~/Projects/Ovid/Projects/<app> (was ~/Desktop/Ovid_Projects/<app>); tests updated, and a
+  check that GS, GT and RS defaults are not on the Desktop.
+- **Output changes**: none.
+
 **Changed (finding the core, 2026-10-21)**
 - launcher.R comment and README.md: the core is found through OVID_CORE, core/ in the app or ../core only; ~/Desktop/Ovid is no longer looked in.
 - tests: a check that no app's launcher or pipeline looks for the core on the Desktop.

@@ -17,7 +17,7 @@ and a Shiny `app.R` (later) calls the pipeline and edits the set-up tables.
 ## Folders
 
 ```
-raw archive (any layout, read only)     e.g. ~/Desktop/ERT
+raw archive (any layout, read only)     e.g. ~/Projects/Ovid/Projects/GS/raw
 <project>/config/        what people decide (CSV, edited in the app or by hand; every change backed up by core/config.R)
 <project>/output/catalogue/   the lightweight archive: files, bundles, surveys, transects, sites, projects, stats, QC summary, previews
 <project>/output/surveys/<survey_id>/   measurements.csv, extra.csv, electrodes.csv, contact.csv, flags.csv

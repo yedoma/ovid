@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Changed (folders under ~/Projects/Ovid, 2026-10-21).** Projects, raw archives and demos moved from the Desktop into ~/Projects/Ovid/Projects/<app> (CS, GS, GT, RS, WLR, demo, test_samples). The default projects folder, the GS and GT raw defaults and RS's project folder follow; the ~/Desktop/UAV_project fallback is gone. **Output changes:** none.
+
 **Changed (finding the core, 2026-10-21).** All five apps find the shared core through OVID_CORE, core/ inside the app or ../core beside it; the old ~/Desktop/Ovid fallback is gone (Ovid now lives in ~/Projects/Ovid), with a core test to keep it out; a core kept only at ~/Desktop/Ovid must move beside the apps or be named in OVID_CORE. The dead "Ovid ERT" Finder alias at the repo root is removed. **Output changes:** none.
 
 **Changed (2026-10-20).** Colours follow the colour scheme: GS map, GPR and pseudosection colours and GT's scan table take the palette of the scheme picked in Settings > Colours; WLR's Nord colours come from core. GS's Greys pseudosection scale runs from the scheme's panel ground to its text; the scientific scales (Spectral, Viridis, GPR Grey and Blue-white-red) stay fixed and map labels on satellite imagery stay white. A core test fails on any other fixed colour. **Output changes:** none in each app's own scheme (GS red and violet as lifted for contrast); other schemes draw in their own colours.

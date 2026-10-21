@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (folders under ~/Projects/Ovid, 2026-10-21)**
+- The ~/Desktop/UAV_project fallback is gone: the project folder is the one set in app_settings.json (on this Mac
+  ~/Projects/Ovid/Projects/RS/UAV_project), else ~/Projects/Ovid/Projects/RS/Untitled.
+- app.R: RS_PROJECT_DIR wins over the saved project folder, as in CS (the app test sets it).
+- Set-up: projects and raw data kept in the old Desktop folders are not found by default any more; open them from their new place.
+- **Output changes**: none.
+
 **Changed (finding the core, 2026-10-21)**
 - The launcher and pipeline look for the shared core in OVID_CORE, core/ inside the app and ../core beside it only; the old
   ~/Desktop/Ovid fallback (and its Windows Desktop\\Ovid twin) is gone. The launcher's not-found message says to keep the app beside

@@ -50,7 +50,7 @@ SET_KEYS <- c("raw_dirs", "metadata_dir", "dgps_dir", "project_dir", "years", "b
 for (k in SET_KEYS) if (is.null(SETTINGS[[k]])) SETTINGS[k] <- list(CFG[[k]])
 BASE_OFFSET <- SETTINGS$base_offset_h; UTM_ZONE <- SETTINGS$utm_zone   # exports made before a run use the saved zones
 if (nzchar(Sys.getenv("WLR_PROJECT_DIR"))) SETTINGS$project_dir <- Sys.getenv("WLR_PROJECT_DIR")
-SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
+SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
 if (nzchar(Sys.getenv("WLR_RAW_DIRS"))) SETTINGS$raw_dirs <- strsplit(Sys.getenv("WLR_RAW_DIRS"), ";")[[1]]
 if (nzchar(Sys.getenv("WLR_METADATA_DIR"))) SETTINGS$metadata_dir <- Sys.getenv("WLR_METADATA_DIR")
 if (nzchar(Sys.getenv("WLR_DGPS_DIR"))) SETTINGS$dgps_dir <- Sys.getenv("WLR_DGPS_DIR")

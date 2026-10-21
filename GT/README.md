@@ -48,7 +48,7 @@ On a Mac: double-click **`Open GT (Mac).command`** in the Ovid_Apps folder. On W
 
 From R:
 ```r
-shiny::runApp("~/Desktop/GT/ovid_GT")   # the app: set the folders on Home > Data source, then Run pipeline
+shiny::runApp("~/Projects/Ovid/Ovid_Apps/GT")   # the app: set the folders on Home > Data source, then Run pipeline
 ```
 or without the app:
 ```

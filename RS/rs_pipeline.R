@@ -22,7 +22,7 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
 
 RS_VERSION <- "0.6.0"
 
-OVID_APP <- "RS"                                          # its projects go in ~/Desktop/Ovid_Projects/RS/ (core util.R)
+OVID_APP <- "RS"                                          # its projects go in ~/Projects/Ovid/Projects/RS/ (core util.R)
 CFG <- list(
   raw_dirs       = c("/Volumes/Drive"),             # sources added on the first run when config/sources.csv is empty; read only
   project_dir    = "",       # config/, cache/ and output/ live here (never inside a source)
@@ -30,9 +30,6 @@ CFG <- list(
   points_per_flight = 150)                       # image positions per flight kept in the shareable viewer
 if (nzchar(Sys.getenv("RS_RAW_DIRS")))    CFG$raw_dirs    <- strsplit(Sys.getenv("RS_RAW_DIRS"), ";")[[1]]
 if (nzchar(Sys.getenv("RS_PROJECT_DIR"))) CFG$project_dir <- Sys.getenv("RS_PROJECT_DIR")
-# Catalogues made before the UAV to RS rename live in ~/Desktop/UAV_project: keep using it until that folder is renamed RS_project
-if (!nzchar(Sys.getenv("RS_PROJECT_DIR")) && !dir.exists(path.expand(CFG$project_dir)) && dir.exists(path.expand("~/Desktop/UAV_project")))
-  CFG$project_dir <- "~/Desktop/UAV_project"
 RUN_ON_SOURCE <- !identical(Sys.getenv("RS_NO_RUN"), "1")
 
 for (p in c("data.table", "jsonlite"))
@@ -53,7 +50,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "standards", "file_audit", "cache", "timezones", "config", "calibration", "table_rules", "manifest", "preflight", "theme"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
-CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
+CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
 for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "export", "gnss", "datasets", "gis", "stac", "preflight"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "rs_pipeline.R"))   # every file's code (the run manifest)

@@ -53,7 +53,7 @@ if (is.null(SETTINGS$prog_dir) || !nzchar(SETTINGS$prog_dir)) SETTINGS$prog_dir 
 if (is.null(SETTINGS$station_format)) SETTINGS$station_format <- CFG$station_format
 if (!is.null(SETTINGS$base_offset_h)) BASE_OFFSET <- SETTINGS$base_offset_h   # Settings > Time zone
 if (nzchar(Sys.getenv("CS_PROJECT_DIR"))) SETTINGS$project_dir <- Sys.getenv("CS_PROJECT_DIR")
-SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Desktop/Ovid_Projects/<app>/Untitled (core util.R)
+SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/Projects/Ovid/Projects/<app>/Untitled (core util.R)
 # Viewer mode: colleagues can look at Metadata, Explore and Audit, but cannot
 # change the set-up or run the pipeline. Turned on by CS_VIEWER=1 or by the
 # app_settings.json that "Build viewer bundle" writes.
