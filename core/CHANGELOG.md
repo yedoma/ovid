@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (other HOBO models, 2026-10-23)**
+- hobo.R: `hobo_decode_more()` reads U12-008, U24-001 and TidbiT (UTBI-001) .hobo files with no HOBOware CSV export. Same stream as the U20 (record i at launch + delay + i x interval, events take no slot); the event mark is as many one bits as the record's first field. TidbiT: one 12-bit thermistor count; U12-008: a 12-bit count per thermistor probe (8 battery bits when the fifth channel is on); U24-001: 16-bit low and full range and a 12-bit temperature count, conductivity from the file's calibration with its temperature term. Thermistor curve fitted to HOBOware exports, used from -55 to 85 C (outside: NA, counted in attr out_of_range). Checked against 60 exports (53 U24, 6 U12, 1 TidbiT): every record, time and value within the export's precision. `hobo_decode()` and HOBO_DECODE_MODELS are unchanged; no app calls the new reader yet. 4 tests.
+- **Output changes:** none (nothing uses it yet).
+
 **Changed (plots, 2026-10-22)**
 - www/tsview.js: the Precipitation switch in the view bar is shown only when a plot has precipitation to draw (it showed On
   with no precipitation file). Test added.

@@ -344,6 +344,31 @@ local({ source(file.path(CORE_DIR, "hobo.R"), local = TRUE)
   if (file.exists(hs)) { r <- hobo_decode(hs)
     check("a real U20 .hobo: first and last pressure as HOBOware exports them (14.3473 psi = 98.92 kPa, 16.1953 psi = 111.66 kPa), all 1,564 records",
           nrow(r) == 1564L && abs(r$pres_kpa[1] - 14.3473 * HOBO_PSI_KPA) < 0.01 && abs(r$pres_kpa[nrow(r)] - 16.1953 * HOBO_PSI_KPA) < 0.01) }
+  # other models (hobo_decode_more): the same stream, another record; the event mark is as many one bits as the first field
+  mk <- function(model, on, types, st, extra = list()) {
+    ch <- unlist(lapply(seq_along(on), function(i) c(tlv(0x0b, as.raw(on[i])), tlv(0x0c, as.raw(types[i])))))
+    h <- c(charToRaw("HOBO"), tlv(0x05, charToRaw(model)), tlv(0x06, charToRaw("10000008")), tlv(0x07, as.raw(c(20, 22, 8, 19, 12, 0, 0, 0))),
+           tlv(0x08, as.raw(c(0, 0, 7, 8))), unlist(extra), ch)
+    st <- c(rep(1L, 16), st, rep(1L, (-length(c(rep(1L, 16), st))) %% 8))
+    f <- tempfile(fileext = ".hobo"); writeBin(c(h, packBits(as.integer(matrix(st, 8)[8:1, ]), "raw")), f); f }
+  evn <- function(w, type, secs, n) c(rep(1L, w), bits(type, 4), bits(n, 4), if (n) bits(secs, 4 * n))
+  tf <- mk("HOBO UTBI-001 TidbiT Temp", c(1, 0), c(0, 0), c(bits(2528, 12), evn(12, 0, 0, 0), bits(2517, 12), bits(2499, 12), evn(12, 3, 1, 1), bits(2000, 12)))
+  t <- hobo_decode_more(tf)
+  check("a TidbiT .hobo: 12-bit thermistor counts as HOBOware gives them (13.497, 13.762, 14.194 C), events (12 one bits) take no slot, stopped ends it",
+        nrow(t) == 3L && max(abs(t$temp_c - c(13.497, 13.762, 14.194))) < 0.002 && identical(format(t$TIMESTAMP[3], "%Y-%m-%d %H:%M"), "2022-08-19 13:00"))
+  uf <- mk("HOBO U12-008 4-Ch Ext Out/Ind", c(1, 1, 1, 1, 1), c(0x95, 0x95, 0x95, 0x95, 0), c(rep(c(bits(2644, 12), bits(2569, 12), bits(2684, 12), bits(3056, 12), bits(140, 8)), 2)))
+  u <- hobo_decode_more(uf)
+  check("a U12-008 .hobo: four 12-bit probe counts a record (10.687, 12.509, 9.706, 0.051 C), then 8 bits of battery when the fifth channel is on",
+        nrow(u) == 2L && max(abs(unlist(u[1, -1]) - c(10.687, 12.509, 9.706, 0.051))) < 0.002)
+  cal24 <- list(c(-0.052096907, 0.071018413, 2.855952e-07, 5.800527e-11, -5.686593e-15, 1.435364e-19, 0, 3.17, -0.1047, 29162),
+                c(-1.81072855, 0.372236222, 4.395435e-06, 1.193569e-10, -2.231218e-14, 6.197125e-19, 0, 3.17, -0.1047, 30122), c(-9.553174, 0.012658064, 0))
+  cf <- mk("HOBO U24-001 Conductivity", c(1, 1, 1, 0), c(0, 0, 0, 0), c(bits(735, 16), bits(131, 16), bits(908, 12), evn(16, 0, 0, 0), bits(804, 16), bits(144, 16), bits(873, 12)),
+           extra = lapply(cal24, function(x) tlv(0x31, f32(x))))
+  w <- hobo_decode_more(cf)
+  check("a U24-001 .hobo: 16-bit low and full range and a 12-bit temperature count; conductivity from the file's calibration with its temperature term (53.9, 48.5 uS/cm at 1.94 C)",
+        nrow(w) == 2L && abs(w$ec_low_us[1] - 53.9) < 0.06 && abs(w$ec_full_us[1] - 48.5) < 0.06 && abs(w$temp_c[1] - 1.94) < 0.006 && abs(w$ec_low_us[2] - 59.0) < 0.06)
+  check("hobo_decode leaves these models to hobo_decode_more (a U20 reader returns NULL), and hobo_decode_more leaves the U20 to hobo_decode",
+        is.null(hobo_decode(tf)) && is.null(hobo_decode_more(ef)))
 })
 
 
