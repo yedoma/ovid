@@ -100,12 +100,15 @@ apply_manual <- function(dt, manual, oow, kind) {
 }
 
 # Flags that need no rule table: service visits, the logger reading below the out-of-water margin, freezing, baro fill-in.
+# The deployment's first reading counts as a visit: a logger settles in the well for a while after it goes in, as it is
+# disturbed for a while around a download.
 apply_auto_flags <- function(dt, visits, events, cfg) {
   w <- cfg$service_window_h * 3600
-  vt <- c(visits, events$TIMESTAMP[events$event %in% c("Coupler Detached", "Coupler Attached", "Host Connected", "Stopped")])
+  vt <- c(visits, events$TIMESTAMP[events$event %in% c("Coupler Detached", "Coupler Attached", "Host Connected", "Stopped")],
+          if (nrow(dt)) min(dt$TIMESTAMP, na.rm = TRUE))
   vt <- unique(vt[!is.na(vt)])
   if (length(vt)) { near <- vapply(as.numeric(dt$TIMESTAMP), function(t) any(abs(t - as.numeric(vt)) <= w), logical(1))
-    for (p in intersect(c("depth_m", "pres_kpa", "spc_uscm"), names(dt))) add_flag(dt, p, which(near), "service_visit", sprintf("within %g h of a download or field visit", cfg$service_window_h)) }
+    for (p in intersect(c("depth_m", "pres_kpa", "spc_uscm"), names(dt))) add_flag(dt, p, which(near), "service_visit", sprintf("within %g h of installation, a download or a field visit", cfg$service_window_h)) }
   if ("depth_m" %in% names(dt)) {
     add_flag(dt, "depth_m", which(dt$depth_m < cfg$out_of_water_m), "out_of_water", sprintf("less than %g m of water above the sensor", cfg$out_of_water_m))
     if ("temp_c" %in% names(dt)) add_flag(dt, "depth_m", which(dt$temp_c <= 0), "freezing", "logger temperature at or below 0 deg C")

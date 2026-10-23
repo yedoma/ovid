@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid WLR how-to guide</title>
+<style>
+:root{color-scheme:dark;--bg:#2e3440;--fg:#e5e9f0;--muted:#c0c8d6;--rule:#4c566a;--panel:#3b4252;--accent:#88c0d0;--blue:#81a1c1;--red:#d58089;--green:#a3be8c;--amber:#ebcb8b;--code:#434c5e;--purple:#b48ead}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--amber);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+.chk li{list-style:"☐  "}
+@media print{body{font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:0}h2{break-after:avoid}h3{break-after:avoid}nav{break-after:page}.ex,.f,table{break-inside:avoid}}
+@page{size:A4;margin:0}
+@media print{main{padding:14mm 14mm}}
+html{background:var(--bg)}
+
+:root{--mk:#D08770;--mk-ink:#242933;--ink:#eceff4;--soft:#d8dee9;--rule2:rgba(255,255,255,.09);--sheet:#323846;--well:#272c36;--frost:#8fbcbb;--num:#ebcb8b}
+body{font:16px/1.7 Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+main{max-width:900px;padding:40px 24px 80px}
+p,li{max-width:68ch}main p{margin:10px 0}
+/* title page block */
+.head{padding:0 0 22px;margin:0 0 26px;border-bottom:1px solid var(--rule2)}
+.kicker{font:600 11.5px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+.head h1{font-size:34px;line-height:1.12;margin:0 0 10px;letter-spacing:-.015em;font-weight:700}
+.head .lede{color:var(--soft);font-size:17px;line-height:1.6;margin:0 0 16px;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.meta span{font-size:12px;color:var(--soft);border:1px solid var(--rule2);border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.03)}
+/* contents */
+.toc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 10px;background:none;padding:0;border-radius:0}
+.toc .grp{border:1px solid var(--rule2);border-radius:10px;padding:14px 16px;background:var(--sheet)}
+.toc .grp h4{margin:0 0 8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.toc ol{margin:0;padding:0;list-style:none;columns:1}
+.toc li{margin:4px 0;font-size:14.5px;line-height:1.45;display:flex;gap:10px}
+.toc li b{color:var(--soft);font-variant-numeric:tabular-nums;min-width:1.6em;text-align:right;font-weight:600}
+.toc a{color:var(--ink);text-decoration:none}
+/* sections: a light sheet, the heading set off by a rule */
+section.task{background:transparent;border:1px solid var(--rule2);border-radius:12px;padding:6px 26px 18px;margin:30px 0;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
+section.task h2{border-top:none;margin:16px 0 14px;padding:0 0 12px;border-bottom:1px solid var(--rule2);font-size:21px;line-height:1.3;font-weight:650;display:flex;align-items:center;gap:12px;letter-spacing:-.005em}
+section.task h2 .no{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;border-radius:7px;
+  background:rgba(136,192,208,.14);color:var(--accent);border:1px solid rgba(136,192,208,.45);font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+/* text roles: app controls, words to type, numbers with units */
+strong,b{color:#fff;font-weight:650}
+strong.ui{font-weight:600;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:0 5px;white-space:nowrap}
+strong.lead{color:#fff}
+code{font:500 .86em/1.4 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--frost);background:var(--well);border:1px solid rgba(255,255,255,.07);
+  border-radius:5px;padding:1px 6px;box-shadow:inset 0 1px 2px rgba(0,0,0,.35);white-space:nowrap}
+.num{font-variant-numeric:tabular-nums lining-nums;color:var(--num);font-weight:550;white-space:nowrap}
+/* callouts */
+.co{border-radius:8px;padding:10px 14px 10px 16px;margin:14px 0;border:1px solid var(--rule2);border-left:3px solid var(--rule);background:rgba(255,255,255,.025);max-width:none;line-height:1.6}
+.co>strong:first-child{display:block;margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;background:none;border:0;padding:0}
+.co.when{border-left-color:var(--blue)}.co.when>strong:first-child{color:#d8dee9}
+.co.result{border-left-color:var(--green)}.co.result>strong:first-child{color:var(--green)}
+.co.check{border-left-color:var(--accent)}.co.check>strong:first-child{color:var(--accent)}
+.co.note{border-left-color:var(--amber);background:rgba(235,203,139,.06)}.co.note>strong:first-child{color:var(--amber)}
+/* steps */
+main ol:not(.plain){padding-left:0;list-style:none;counter-reset:st}
+main ol:not(.plain)>li{counter-increment:st;position:relative;padding-left:38px;margin:10px 0}
+main ol:not(.plain)>li::before{content:counter(st);position:absolute;left:0;top:3px;width:24px;height:24px;border-radius:6px;background:var(--sheet);border:1px solid var(--rule2);
+  color:var(--soft);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+main ol.markers>li::before{border-radius:50%;background:var(--mk);color:var(--mk-ink);border:2px solid var(--mk-ink)}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--mk);color:var(--mk-ink);
+  font:700 11px/1 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;vertical-align:1px;margin:0 1px;font-variant-numeric:tabular-nums}
+main ul{padding-left:22px}main ul li{margin:8px 0}
+/* figures, as in a textbook: a matted plate with a numbered caption */
+main figure{margin:18px 0 12px;padding:10px;background:var(--well);border:1px solid var(--rule2);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.28);break-inside:avoid;page-break-inside:avoid}
+main img{display:block;max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+main figcaption{font-size:13px;color:var(--soft);margin:9px 4px 1px;line-height:1.45}
+main figcaption b{color:#fff;font-weight:650;margin-right:4px}
+.foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--rule2);font-size:12.5px;color:var(--soft)}
+@media (max-width:700px){.toc{grid-template-columns:1fr}section.task{padding:4px 14px 12px}}
+@page{size:A4;margin:22mm 0 20mm;background:#2e3440;@bottom-left{content:'ovid WLR how-to guide';color:#c0c8d6;font:9px -apple-system,Helvetica,Arial,sans-serif;padding-left:17mm}@bottom-right{content:counter(page) ' / ' counter(pages);color:#c0c8d6;font:9px -apple-system,Helvetica,Arial,sans-serif;padding-right:17mm}}
+@media print{html,body{background:var(--bg)}body{font-size:11.2pt;line-height:1.62;orphans:3;widows:3}main{padding:0 17mm}h1{font-size:28px}
+  section.task{border:0;border-radius:0;padding:0;margin:0 0 10mm;box-shadow:none;break-before:auto}
+  section.task h2{break-after:avoid;margin-top:0;padding-top:4mm}section.task h2,section.task .co.when{break-after:avoid}
+  .toc,.grp,.co,figure,img,li,p,.head{break-inside:avoid;page-break-inside:avoid}figure{box-shadow:none}li{line-height:1.5}.head{margin-bottom:18px}}
+</style>
+</head>
+<body><main>
+<header class="head"><p class="kicker">ovid · WLR · How-to guide</p><h1>How-to guide</h1><p class="lede">One task per section: when to use it, the steps, what changes and how to check it. Page names are those in the rail on the left (<strong>1 Bring in</strong>, <strong>2 Organize</strong>, <strong>3 Correct</strong>, <strong>4 Report</strong> and <strong>More</strong>); an orange number in a step points to the same marker in its figure. For a first project, start with the WLR quick start; for what WLR does to the data and why, see the WLR reference guide.</p><p class="meta"><span>WLR 0.12.0</span><span>22 October 2026</span><span>Figures: constructed example, not field data</span></p></header>
+<div class="intro"><nav class="toc"><div class="grp"><h4>Bring in</h4><ol class="plain"><li><b>1</b><a href="#task-1">Add a new download</a></li><li><b>2</b><a href="#task-2">Leave out a file or say what logger it is</a></li></ol></div><div class="grp"><h4>Organize</h4><ol class="plain"><li><b>3</b><a href="#task-3">Give a logger a site, dates or a hang length</a></li><li><b>4</b><a href="#task-4">Accept suggestions and decide what the run found</a></li><li><b>5</b><a href="#task-5">Rename a site or hide it</a></li><li><b>6</b><a href="#task-6">Correct the workbook for one deployment</a></li></ol></div><div class="grp"><h4>Correct</h4><ol class="plain"><li><b>7</b><a href="#task-7">Set the time zone of files that state none</a></li><li><b>8</b><a href="#task-8">Fix a logger clock</a></li><li><b>9</b><a href="#task-9">Choose the barologgers</a></li><li><b>10</b><a href="#task-10">Enter a logger offset or a survey point</a></li><li><b>11</b><a href="#task-11">Enter tape checks and check drift</a></li><li><b>12</b><a href="#task-12">Remove a stretch of data</a></li><li><b>13</b><a href="#task-13">Change a quality limit</a></li><li><b>14</b><a href="#task-14">Switch an automatic correction off</a></li></ol></div><div class="grp"><h4>Check and report</h4><ol class="plain"><li><b>15</b><a href="#task-15">Look at a site over time</a></li><li><b>16</b><a href="#task-16">Find out why a value was removed</a></li><li><b>17</b><a href="#task-17">Run the set-up check</a></li><li><b>18</b><a href="#task-18">Export data and reports</a></li><li><b>19</b><a href="#task-19">Back up or share the set-up</a></li><li><b>20</b><a href="#task-20">Report a problem</a></li></ol></div></nav>
+</div>
+<section class="task">
+<h2 id="task-1"><span class="no">1</span>Add a new download</h2>
+<p class="co when"><strong>when</strong> After a field visit, with new .hobo or .xle files.</p>
+<figure><img src="img/guide/wlr_ht_01.png" alt="Run pipeline and Bring in files" style="width:100%"><figcaption><b>Figure 1.</b> Run pipeline and Bring in files</figcaption></figure>
+<ol>
+<li>Copy the files into the year folder of a data folder (<code>2025/</code>, or <code>baro/2025/</code> for barologgers). U20 and U20L .hobo files are read as they are; for other HOBO models, export the CSV from HOBOware beside the .hobo.</li>
+<li>Press <strong class="ui">Run pipeline</strong> <span class="mk">1</span>.</li>
+</ol>
+<p class="co result"><strong>result</strong> Only loggers whose files or set-up changed are read and drawn again; the rest are reused from the last run. A logger's downloads from several years are joined into one record, then split into deployments.</p>
+<p class="co check"><strong>check</strong> <strong class="ui">2 Bring in files</strong> lists each file with its status. To read some files again without a full run, select them <span class="mk">2</span> and press <strong class="ui">Rescan selected files</strong> <span class="mk">3</span>.</p>
+</section>
+<section class="task">
+<h2 id="task-2"><span class="no">2</span>Leave out a file or say what logger it is</h2>
+<p class="co when"><strong>when</strong> A file is a bad copy, has the wrong serial in it, or is a barologger outside a <code>baro/</code> folder (or the reverse).</p>
+<figure><img src="img/guide/wlr_ht_02.png" alt="Bring in files: sort the selected files" style="width:100%"><figcaption><b>Figure 2.</b> Bring in files: sort the selected files</figcaption></figure>
+<ol>
+<li><strong class="lead">2 Bring in files:</strong> select the file <span class="mk">1</span>.</li>
+<li>Give a <strong class="ui">Reason</strong> and your initials <span class="mk">2</span>.</li>
+<li>Press <strong class="ui">Leave out</strong> <span class="mk">3</span>, <strong class="ui">Set serial</strong> (with the serial typed beside it), or <strong class="ui">It is a barologger</strong> / <strong class="ui">It is a water logger</strong> <span class="mk">4</span>.</li>
+<li>Press <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> A sorting rule is added to the set-up tables and applied on every run. The raw file is not changed.</p>
+<p class="co check"><strong>check</strong> The file's <strong class="ui">Use</strong> and <strong class="ui">Kind</strong> columns show the change, and the <strong class="ui">Audit trail</strong> gives the reason.</p>
+</section>
+<section class="task">
+<h2 id="task-3"><span class="no">3</span>Give a logger a site, dates or a hang length</h2>
+<p class="co when"><strong>when</strong> A logger has no site (&quot;Unlisted&quot; in the outputs), was moved, or the workbook is missing.</p>
+<figure><img src="img/guide/wlr_ht_03.png" alt="Loggers and deployments: the deployment sheet" style="width:100%"><figcaption><b>Figure 3.</b> Loggers and deployments: the deployment sheet</figcaption></figure>
+<ol>
+<li><strong class="lead">3 Loggers and deployments:</strong> double-click a cell of the logger's row to edit it. <strong class="ui">Site</strong> <span class="mk">1</span> is the one column most rows need.</li>
+<li><strong class="ui">From</strong> <span class="mk">2</span> and <strong class="ui">To</strong> <span class="mk">3</span> limit the row to a period; blank covers the logger's whole record, and a year or a month alone is fine. A logger moved to another site gets a second row.</li>
+<li><strong class="ui">Hang length (cm)</strong>, the T-coupler and casing columns and the others (scroll right) are used when given.</li>
+<li><strong class="ui">Save changes</strong> <span class="mk">4</span>, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The logger's records go to that site for that period. What you type here wins over the workbook, which wins over what the files say.</p>
+<p class="co check"><strong>check</strong> <strong class="ui">Deployment history</strong> lists every deployment with its start, end and where each came from.</p>
+</section>
+<section class="task">
+<h2 id="task-4"><span class="no">4</span>Accept suggestions and decide what the run found</h2>
+<p class="co when"><strong>when</strong> After a run, when <strong class="ui">Data check</strong> in the side panel shows something to look at.</p>
+<figure><img src="img/guide/wlr_ht_04.png" alt="Needs you" style="width:100%"><figcaption><b>Figure 4.</b> Needs you</figcaption></figure>
+<ol>
+<li><strong class="lead">4 Needs you:</strong> <strong class="ui">Accept the suggested matches</strong> <span class="mk">1</span> of loggers to rows, made from a year, a name in the files or a logger's only deployment.</li>
+<li>Under <strong class="ui">What the last run found</strong> <span class="mk">2</span>, decide each line: <strong class="ui">Keep</strong>, <strong class="ui">Remove…</strong>, <strong class="ui">Correct…</strong> or <strong class="ui">Not a problem</strong>, or follow its link to the page that fixes it.</li>
+<li>Each decision is saved as you make it (<strong class="ui">Not a problem</strong> asks why); the next run uses it.</li>
+</ol>
+<p class="co result"><strong>result</strong> A kept flag stays in the data as a flag. A removal or correction becomes a row in Corrections over a period, noted &quot;Needs you&quot;.</p>
+<p class="co check"><strong>check</strong> The item leaves the list. Turn <strong class="ui">Only what needs a look</strong> off to see decided items with their decision.</p>
+</section>
+<section class="task">
+<h2 id="task-5"><span class="no">5</span>Rename a site or hide it</h2>
+<p class="co when"><strong>when</strong> A site was named wrongly, or a site should stay out of the overview pages.</p>
+<figure><img src="img/guide/wlr_ht_05.png" alt="Sites: rename, what shows" style="width:100%"><figcaption><b>Figure 5.</b> Sites: rename, what shows</figcaption></figure>
+<ol>
+<li><strong class="lead">5 Sites: rename, what shows:</strong> pick the site, type the new name and press <strong class="ui">Preview</strong> <span class="mk">1</span>, then <strong class="ui">Rename</strong> <span class="mk">2</span>. Every set-up table that holds the name is changed; <strong class="ui">Undo the last rename</strong> puts them back.</li>
+<li>Untick <strong class="ui">Shown</strong> <span class="mk">3</span> to leave a site out of the site strip, Overview and Needs you. It is still processed, exported and in the reports.</li>
+</ol>
+<p class="co result"><strong>result</strong> The outputs take the new name at the next run.</p>
+</section>
+<section class="task">
+<h2 id="task-6"><span class="no">6</span>Correct the workbook for one deployment</h2>
+<p class="co when"><strong>when</strong> The WL_Metadata workbook has a wrong hang length, date or site for one logger, and the workbook itself should stay as it is.</p>
+<figure><img src="img/guide/wlr_ht_06.png" alt="Deployment history" style="width:100%"><figcaption><b>Figure 6.</b> Deployment history</figcaption></figure>
+<ol>
+<li><strong class="lead">Deployment history:</strong> check the deployment's <strong class="ui">T_ST</strong> <span class="mk">1</span>, its start and end, and where each value came from.</li>
+<li>Under <strong class="ui">Corrections to the workbook</strong> <span class="mk">2</span>, <strong class="ui">Add row</strong> <span class="mk">3</span>: serial and year pick the deployment; fill in only what is wrong (site, deployed, removed, the hang length <code>T_ST_m</code> in metres, or <code>T_ST_from_year</code> to take another year's value), with a reason and your initials.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The correction wins over the workbook for that deployment; the workbook is not changed.</p>
+<p class="co check"><strong>check</strong> <strong class="ui">Set-up check</strong> (More) lists every deployment's hang length and its source.</p>
+</section>
+<section class="task">
+<h2 id="task-7"><span class="no">7</span>Set the time zone of files that state none</h2>
+<p class="co when"><strong>when</strong> Some files that state no time zone (Solinst files, or CSVs exported without one) were logged in a different zone from the one given at the first run.</p>
+<figure><img src="img/guide/wlr_ht_07.png" alt="Clocks: files and the time-zone table" style="width:100%"><figcaption><b>Figure 7.</b> Clocks: files and the time-zone table</figcaption></figure>
+<ol>
+<li><strong class="lead">Clocks:</strong> <strong class="ui">read as</strong> <span class="mk">1</span> shows the zone each file was read in, and why.</li>
+<li>In the <strong class="ui">Time-zone table</strong> <span class="mk">2</span>, <strong class="ui">Add row</strong> <span class="mk">3</span> and fill in any of serial, model, file pattern (a folder such as <code>2019/</code>), and start and end; <code>offset_hours</code> is the clock's offset from UTC, e.g. <span class="num">−6</span>.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run pipeline</strong>. The first matching row wins, so put one-logger rows above whole-year rows.</li>
+</ol>
+<p class="co result"><strong>result</strong> Those files are read in their own zone, then moved to the project's time zone (Settings) like every other record.</p>
+<p class="co check"><strong>check</strong> The <strong class="ui">read as</strong> column shows the new zone, and the site plot has no whole-hour step at the download.</p>
+</section>
+<section class="task">
+<h2 id="task-8"><span class="no">8</span>Fix a logger clock</h2>
+<p class="co when"><strong>when</strong> A logger's clock was wrong by a known amount, or drifted and was found out at download.</p>
+<figure><img src="img/guide/wlr_ht_08.png" alt="Clocks: clock corrections" style="width:100%"><figcaption><b>Figure 8.</b> Clocks: clock corrections</figcaption></figure>
+<ol>
+<li><strong class="lead">Clocks:</strong> under <strong class="ui">Clock corrections</strong> <span class="mk">1</span>, <strong class="ui">Add row</strong> <span class="mk">2</span>.</li>
+<li>Fill in the serial, the start and end (blank = all of its record) and <code>shift_minutes</code>. With <code>mode</code> set to drift, the shift grows from none at the start to <code>shift_minutes</code> at the end.</li>
+<li><strong class="ui">Save changes</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The readings are moved in time; each shifted record is in the audit trail.</p>
+<p class="co check"><strong>check</strong> On the site plot, events and field visits line up with the logger's record again.</p>
+</section>
+<section class="task">
+<h2 id="task-9"><span class="no">9</span>Choose the barologgers</h2>
+<p class="co when"><strong>when</strong> A site has more than one barologger near it, a barologger failed, or the suggested one is not the best.</p>
+<figure><img src="img/guide/wlr_ht_09.png" alt="Barometric compensation" style="width:100%"><figcaption><b>Figure 9.</b> Barometric compensation</figcaption></figure>
+<ol>
+<li><strong class="lead">Barometric compensation:</strong> pick the <strong class="ui">Processing year</strong>, then for each group the <strong class="ui">Primary barologger</strong> <span class="mk">1</span> and a <strong class="ui">Secondary</strong> <span class="mk">2</span> that fills its gaps.</li>
+<li><strong class="ui">Save choices</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> Every water reading is compensated with the primary's air pressure at its time, or the secondary's where the primary has none; a fill-in from another barologger is shifted onto the primary's level and flagged.</p>
+<p class="co check"><strong>check</strong> <strong class="ui">Barologgers over the year</strong> plots each candidate; <strong class="ui">Offset and drift</strong> shows how far they differ.</p>
+</section>
+<section class="task">
+<h2 id="task-10"><span class="no">10</span>Enter a logger offset or a survey point</h2>
+<p class="co when"><strong>when</strong> Hang lengths are measured to the logger's tip, or a site has a surveyed reference point, so depths can become water elevations.</p>
+<figure><img src="img/guide/wlr_ht_10.png" alt="Datum and offsets: logger offsets" style="width:100%"><figcaption><b>Figure 10.</b> Datum and offsets: logger offsets</figcaption></figure>
+<ol>
+<li><strong class="lead">Datum and offsets:</strong> the formulas at the top show how each value is made from the hang length (T_ST), the offset and the reference elevation.</li>
+<li><strong class="ui">Logger offsets</strong> <span class="mk">1</span>: <strong class="ui">Set the offset for</strong> a logger model or one logger <span class="mk">2</span>, pick a known offset or <strong class="ui">Manual measurement</strong> and type the tip-to-sensor distance in cm <span class="mk">3</span>, then <strong class="ui">Set offset</strong> <span class="mk">4</span>.</li>
+<li>For elevations: <strong class="ui">Survey points for each site</strong> links a site to a dGPS point (code T, TOC or GS); <strong class="ui">Elevations typed by hand</strong> takes a reference elevation surveyed another way. Record the vertical datum and geoid model with every elevation (the table has columns for them): elevations on different datums cannot be compared.</li>
+<li>Press <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> Every deployment with a hang length gets depth to water below its reference point; those with a surveyed reference also get sensor and water elevations.</p>
+<p class="co check"><strong>check</strong> <strong class="ui">Deployment history</strong> shows the offset used for each deployment and where it came from.</p>
+</section>
+<section class="task">
+<h2 id="task-11"><span class="no">11</span>Enter tape checks and check drift</h2>
+<p class="co when"><strong>when</strong> After each field visit with a tape reading of the water level.</p>
+<figure><img src="img/guide/wlr_ht_11.png" alt="Manual levels and drift" style="width:100%"><figcaption><b>Figure 11.</b> Manual levels and drift</figcaption></figure>
+<ol>
+<li>The tape reading at each download goes with the deployment: <strong class="ui">T-coupler to water (cm)</strong> (or casing to water) in the WL_Metadata workbook or on the deployment sheet (task 3).</li>
+<li>Other readings by hand go on <strong class="ui">Manual levels and drift</strong>: under <strong class="ui">Manual measurements</strong> <span class="mk">1</span>, <strong class="ui">Add row</strong> <span class="mk">2</span> with the site, time (YYYY-MM-DD HH:MM in the project's zone), parameter (<code>depth_m</code> water above the sensor, <code>dtw_m</code> depth to water, <code>elev_m</code> water elevation, <code>temp_c</code> or <code>spc_uscm</code>) and value, then <strong class="ui">Save changes</strong>. They show on the plots and on the site's <strong class="ui">Manual vs logger</strong> card, with the difference, and never change the data.</li>
+<li>Press <strong class="ui">Run pipeline</strong>. <strong class="ui">Tape against logger</strong> <span class="mk">3</span> compares each visit's tape with the logger just before the visit.</li>
+<li>A deployment with one check shows its median only. A difference beyond the limit (<span class="num">5 cm</span> unless set in Settings) is more likely a metadata error than sensor drift: fix the hang length (task 6) or the offset (task 10). To keep the values as they are, select the rows and press <strong class="ui">Keep selected as they are</strong> <span class="mk">4</span>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The readings by hand show beside the logger with their difference; the data are not changed. Drift correction from the tapes is off by default: switch it on in Settings to export corrected values beside the logger's own.</p>
+<p class="co check"><strong>check</strong> After the run, look at the site's <strong class="ui">Manual vs logger</strong> card and the <strong class="ui">Tape against logger</strong> table.</p>
+</section>
+<section class="task">
+<h2 id="task-12"><span class="no">12</span>Remove a stretch of data</h2>
+<p class="co when"><strong>when</strong> The logger was out of the water, frozen, disturbed during a visit, or still settling after it went into the well. The automatic check flags readings within <span class="num">2 h</span> of installation, a download or a visit; remove those that are not water level, and anything else the check did not catch.</p>
+<figure><img src="img/guide/wlr_ht_12.png" alt="Workbench" style="width:100%"><figcaption><b>Figure 12.</b> Workbench</figcaption></figure>
+<ol>
+<li>Switch to <strong class="ui">Workbench</strong> (top right). In the tree, pick the site, deployment or logger <span class="mk">1</span>.</li>
+<li>Shift + drag across the chart <span class="mk">2</span> to select the stretch; the inspector <span class="mk">4</span> shows its count, mean, minimum, maximum and how many are already removed or flagged.</li>
+<li>Press <strong class="ui">Remove…</strong> <span class="mk">3</span> and give a reason and your initials. <strong class="ui">Out of water…</strong>, <strong class="ui">Correct a period…</strong> and <strong class="ui">Drop records…</strong> beside it work the same way.</li>
+<li>Press <strong class="ui">Run</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> A row is added to Corrections over a period. The old values stay in the audit trail and raw files are never changed. <strong class="ui">Restore</strong> undoes it the same way.</p>
+<p class="co check"><strong>check</strong> After the run, the stretch shows as removed on the plot (a faint line keeps the old values) and the <strong class="ui">Audit trail</strong> lists it.</p>
+</section>
+<section class="task">
+<h2 id="task-13"><span class="no">13</span>Change a quality limit</h2>
+<p class="co when"><strong>when</strong> A limit removes good readings, or lets bad ones through, for your loggers or sites.</p>
+<figure><img src="img/guide/wlr_ht_13.png" alt="Quality rules" style="width:100%"><figcaption><b>Figure 13.</b> Quality rules</figcaption></figure>
+<ol>
+<li><strong class="lead">Quality rules:</strong> double-click a cell to change it: <strong class="ui">Min</strong> and <strong class="ui">Max</strong> <span class="mk">1</span>, the largest single jump (max spike) or the longest flat stretch (max flat h).</li>
+<li><strong class="ui">Action</strong> <span class="mk">2</span>: remove or flag. <strong class="ui">Applies to</strong> takes water, baro, ec, all, or site names or serials separated by |.</li>
+<li><strong class="ui">Save changes</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The rule is applied to every reading it covers; each removal or flag carries the rule's ID.</p>
+<p class="co check"><strong>check</strong> The <strong class="ui">Audit trail</strong> lists the rule's ID and how many values it removed or flagged.</p>
+<p class="co note"><strong>note</strong> The seeded limits are ovid defaults with no published source (reference guide, section 13); check them against your loggers' specifications. The barometric range, <span class="num">90</span> to <span class="num">110 kPa</span>, fits sites from sea level to about <span class="num">1,000 m</span>: widen Q-04 for higher sites, or good readings are removed.</p>
+</section>
+<section class="task">
+<h2 id="task-14"><span class="no">14</span>Switch an automatic correction off</h2>
+<p class="co when"><strong>when</strong> A correction the run makes on its own does not suit the project.</p>
+<figure><img src="img/guide/wlr_ht_14.png" alt="Automatic corrections" style="width:100%"><figcaption><b>Figure 14.</b> Automatic corrections</figcaption></figure>
+<ol>
+<li><strong class="ui">6 Automatic corrections</strong> lists everything a run changes on its own, with its <strong class="ui">State</strong> <span class="mk">1</span> and <strong class="ui">Where to change it</strong> <span class="mk">2</span>.</li>
+<li>Turn its switch off, or change the setting named in the last column, then <strong class="ui">Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result</strong> From the next run the correction is not made; flags never change a value either way.</p>
+<p class="co check"><strong>check</strong> The <strong class="ui">State</strong> column shows the change; after the run, the <strong class="ui">Audit trail</strong> no longer lists that correction.</p>
+</section>
+<section class="task">
+<h2 id="task-15"><span class="no">15</span>Look at a site over time</h2>
+<p class="co when"><strong>when</strong> To look at a deployment in detail, compare its values, or save a figure or the data in view.</p>
+<figure><img src="img/guide/wlr_ht_15.png" alt="Plot and explore" style="width:100%"><figcaption><b>Figure 15.</b> Plot and explore</figcaption></figure>
+<ol>
+<li><strong class="ui">Plot and explore</strong> (More): pick the <strong class="ui">Site</strong> <span class="mk">1</span> and <strong class="ui">Deployment</strong> <span class="mk">2</span>, and the values to show.</li>
+<li>Drag left to right zooms in, right to left zooms out; Shift + drag selects a stretch; double-click shows the whole record. The line is smoothed for display (<strong class="ui">Smoothing</strong> in the plot options turns it off); <strong class="ui">Save data</strong> gives the readings themselves.</li>
+<li><strong class="ui">Save image</strong> or <strong class="ui">Save data</strong> <span class="mk">3</span> saves what is in view.</li>
+<li><strong class="ui">Flags on this record</strong> <span class="mk">4</span> lists every flag with its check and rule.</li>
+</ol>
+<p class="co result"><strong>result</strong> Nothing changes in the project; the plot and the data saved are what is in view.</p>
+</section>
+<section class="task">
+<h2 id="task-16"><span class="no">16</span>Find out why a value was removed</h2>
+<p class="co when"><strong>when</strong> A value is missing from an export or a plot and you want to know why.</p>
+<figure><img src="img/guide/wlr_ht_16.png" alt="Audit trail" style="width:100%"><figcaption><b>Figure 16.</b> Audit trail</figcaption></figure>
+<ol>
+<li><strong class="ui">Audit trail</strong> (More): read it top down: what was done and why <span class="mk">1</span>, where it happened <span class="mk">2</span>, then each logger's reconciliation <span class="mk">3</span> and every raw file.</li>
+<li>Click a line in <span class="mk">1</span> to see what it means and where it happened.</li>
+</ol>
+<p class="co result"><strong>result</strong> Every reading read is either written or accounted for, logger by logger.</p>
+</section>
+<section class="task">
+<h2 id="task-17"><span class="no">17</span>Run the set-up check</h2>
+<p class="co when"><strong>when</strong> Before the first run, after changing the set-up, and before exporting.</p>
+<figure><img src="img/guide/wlr_ht_17.png" alt="Set-up check" style="width:100%"><figcaption><b>Figure 17.</b> Set-up check</figcaption></figure>
+<ol>
+<li><strong class="ui">Set-up check</strong> (More) lists what is missing or inconsistent in the set-up, each with a <strong class="ui">Fix</strong> <span class="mk">2</span>. Fix what is red first.</li>
+<li><strong class="ui">Check again</strong> <span class="mk">1</span> after a change.</li>
+<li><strong class="ui">Hang lengths (T_ST)</strong> <span class="mk">3</span>: every deployment with data and its hang length; select a row and type a length or take another year's value.</li>
+</ol>
+<p class="co result"><strong>result</strong> Nothing changes until you follow a fix and run again.</p>
+</section>
+<section class="task">
+<h2 id="task-18"><span class="no">18</span>Export data and reports</h2>
+<p class="co when"><strong>when</strong> To send data to someone, archive it, or build reports.</p>
+<figure><img src="img/guide/wlr_ht_18.png" alt="Report" style="width:100%"><figcaption><b>Figure 18.</b> Report</figcaption></figure>
+<ol>
+<li><strong class="lead">7 Report:</strong> pick the sites, the <strong class="ui">Values</strong> <span class="mk">1</span> and the <strong class="ui">Time step</strong> <span class="mk">2</span>.</li>
+<li><strong class="ui">Quality flags</strong> <span class="mk">3</span>: WMO codes 0 to 7, or letters S, R, M. Drift-corrected values can be included beside the logger's own.</li>
+<li><strong class="ui">Format</strong> <span class="mk">4</span>: a ZIP package (NetCDF too if ticked), one CSV, one file per site, or the report alone. Reports in HTML, PDF or both.</li>
+<li><strong class="ui">Export</strong> <span class="mk">5</span>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The package holds every value of the sites' deployments as the run wrote them, the manual measurements beside the logger, the reports and a README with the processing level of each file; it can be used without the app. Fill in the <strong class="ui">Dataset</strong> card in Settings first: it is written into every NetCDF file.</p>
+</section>
+<section class="task">
+<h2 id="task-19"><span class="no">19</span>Back up or share the set-up</h2>
+<p class="co when"><strong>when</strong> To keep a copy of the set-up, or start another project with it.</p>
+<figure><img src="img/guide/wlr_ht_19.png" alt="Configuration" style="width:100%"><figcaption><b>Figure 19.</b> Configuration</figcaption></figure>
+<ol>
+<li><strong class="ui">Configuration</strong> (More): <strong class="ui">Export configuration (ZIP)</strong> <span class="mk">1</span> writes every set-up table, the deployment sheet, the Needs you decisions and the settings.</li>
+<li>In another project: <strong class="ui">Browse…</strong> for the zip <span class="mk">2</span>, choose to replace the tables or add its rows, then <strong class="ui">Apply the import</strong> <span class="mk">3</span>.</li>
+</ol>
+<p class="co result"><strong>result</strong> The tables it replaces are kept in the project's history folder (config/history).</p>
+</section>
+<section class="task">
+<h2 id="task-20"><span class="no">20</span>Report a problem</h2>
+<p class="co when"><strong>when</strong> A page shows a notice with a reference, or something looks wrong.</p>
+<figure><img src="img/guide/wlr_ht_20.png" alt="Top bar: troubleshooting and help" style="width:60%"><figcaption><b>Figure 20.</b> Top bar: troubleshooting and help</figcaption></figure>
+<ol>
+<li>A notice with a reference (E- and six characters) means part of a page failed; the app carries on.</li>
+<li>The lifebuoy button <span class="mk">1</span> builds a troubleshooting zip: versions, logs, problems and the set-up, no raw data. Send it with the reference.</li>
+<li>The <strong class="ui">?</strong> button <span class="mk">2</span> opens the reference guide.</li>
+</ol>
+<p class="co result"><strong>result</strong> The zip and the reference let a problem be traced without your raw data.</p>
+</section>
+
+<p class="foot">ovid WLR. For what WLR does to the data and why, see the WLR reference guide; every figure can be retaken with docs/guide_shots.R.</p>
+</main></body>
+</html>

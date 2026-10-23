@@ -211,7 +211,7 @@ review_list_server <- function(id, items, file, open = NULL, remove = NULL, peri
          if (any(!is.na(x$decided))) sprintf(" \u00b7 %d decided", sum(!is.na(x$decided)))) })
   btn <- function(i, act, lab, cls = "btn-default") tags$button(type = "button", class = paste("btn btn-sm", cls),
     onclick = sprintf("Shiny.setInputValue('%s',{id:%s,a:'%s'},{priority:'event'})", ns("act"), jsonlite::toJSON(i, auto_unbox = TRUE), act), lab)
-  output$list <- renderUI({ x <- rows(); if (isTRUE(input$only)) x <- x[is.na(decided)]
+  output$list <- renderUI({ x <- rows(); if (isTRUE(input$only) && nrow(x)) x <- x[is.na(decided)]   # an empty list has no columns
     validate(need(nrow(x) > 0, if (isTRUE(input$only)) "Nothing waits for you." else "Nothing found yet: bring in files and run once."))
     n <- nrow(x); x <- utils::head(x, 200); E <- !isTRUE(get0("VIEWER"))
     x[, `:=`(.g = needs_group_of(kind, where, if ("group" %in% names(x)) group), .f = needs_fix_of(kind, paste(what, detail), if ("fix" %in% names(x)) fix))]

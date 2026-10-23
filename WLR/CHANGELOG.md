@@ -5,6 +5,45 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (guides, 2026-10-22)**
+- docs/WLR_quick_start and docs/WLR_how_to (.md, .html, .pdf): a first project page by page, and 20 tasks one at a time, each with a
+  figure of the app and numbered markers. The figures come from a small project built from tests/golden (no site data):
+  docs/guide_shots.R retakes them, docs/build_guides.R rebuilds the HTML and PDF.
+- Reference guide: the quick start and the app section follow the pages as they are now (rail, Needs you, 7 Report); Needs you
+  decisions are saved as they are made (the guide said they waited for Apply); U20 and U20L .hobo files need no CSV export.
+
+**Changed (reference guide charts, 2026-10-22)**
+- docs/charts.R draws the reference guide's three example charts from the worked example, so they agree with its numbers;
+  axes say "water above sensor", each chart says it is an illustration, and the barologger values are labelled. The
+  pipeline chart says "every time to the base zone" (it said UTC−7).
+- **Output changes**: none.
+
+**Changed (service-visit flag, 2026-10-22)**
+- Readings within the service window (2 h) after a deployment's first reading are flagged service_visit, as those around a
+  download already were: the logger settles in the well after it goes in. Test added.
+- **Output changes**: yes, flags only. Each deployment's first 2 h of depth and pressure are flagged (kept, not removed); the
+  values do not change. Golden outputs regenerated; they await a person's acceptance.
+
+**Changed (Site page values, after a review of the guides, 2026-10-22)**
+- "Change, 60 days" starts from the first settled reading: readings within the service window after a deployment's start (the
+  logger settling in the well) are left out, and a record shorter than 60 days says "Change in the record" with the time it
+  starts from. Test: R/summaries.R settled_change().
+- "Manual vs logger" shows the signed median difference (logger − manual) and n; it showed the largest difference as ±.
+- The level is named "water above sensor" (or "water elevation") on the Site page as everywhere else, and the first card is
+  "Latest", not "now".
+- Tape against logger leaves the largest difference blank for a deployment with one check.
+- Manual levels and drift no longer gives drift as "1 to 3 cm a year" (no source); the reference guide lists the seeded
+  quality limits, service window and out-of-water margin with the other ovid defaults that have no published source.
+- **Output changes**: none (display only).
+
+**Fixed (2026-10-22)**
+- After a run with no problems and nothing to note, Needs you and the side panel showed "Error: ..." instead of their contents
+  (an empty list of notes was built as a 1 x 1 matrix). Test: every page opens with no error on the golden project.
+- The Problems card on the Site page linked to "Check the data", which is not a page; it opens Needs you. The Configuration page also named
+  "Check the data" decisions; it says Needs you. Test: every link to a
+  page names a page the app has.
+- **Output changes**: none.
+
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - Projects go in ~/Projects/Ovid/Projects/WLR when none is set (was ~/Desktop/Ovid_Projects/WLR).
 - Default folders: raw data in ~/Projects/Ovid/Projects/WLR/raw; metadata and dGPS in the project (project/metadata, project/dgps); were ~/WLR/....

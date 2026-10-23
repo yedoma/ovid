@@ -36,6 +36,20 @@ summaries_of <- function(daily, year_complete = 0.9, sig = NULL, water_year_star
   list(monthly = mon[order(site, parameter, year, month)], water_year = wy[order(site, parameter, water_year)])
 }
 
+# ---- the change over the last days, from settled readings ------------------------------------------------------------
+# The change of a level over the last `days` before its latest reading, for the Site page. A logger settles for a while after
+# it goes into the well, so readings within `window_h` of a deployment's start are not used as the start of the change (the
+# same window the service-visit check flags after a download). Returns the indices of the first and last readings and
+# whether the record covers the whole span (else the change is since the first settled reading); NULL with fewer than two.
+settled_change <- function(t, v, starts = numeric(), window_h = 2, days = 60) {
+  k <- which(!is.na(v) & !is.na(t)); if (length(k) < 2) return(NULL)
+  tn <- as.numeric(t); last <- k[which.max(tn[k])]; from <- tn[last] - days * 86400
+  st <- as.numeric(starts); st <- st[!is.na(st)]
+  settling <- vapply(tn[k], function(x) any(x >= st & x < st + window_h * 3600), NA)
+  ok <- k[!settling & tn[k] >= from & k != last]; if (!length(ok)) return(NULL)
+  first <- ok[which.min(tn[ok])]
+  list(first = first, last = last, full = min(tn[k]) <= from) }
+
 # ---- manual measurements -------------------------------------------------------------------------------------------
 # Readings taken by hand (a tape, a handheld thermometer or conductivity meter, a survey of the water surface). They are
 # reference points only: shown beside the logger with the difference, never used to change the data.

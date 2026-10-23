@@ -45,7 +45,9 @@
   output$xp_dl <- downloadHandler(xp_name, xp_write)
   fv_tape_tab <- reactive({ o <- outs(); req(o); f <- file.path(out_dir(pd(), "audit"), "tape_offsets.csv")
     if (!file.exists(f)) return(data.table()); x <- fread(f, colClasses = list(character = c("serial", "year")))
-    if (!isTRUE(input$fv_tape_all)) x <- x[status != "ok"]; x[order(status != "check the metadata", -abs(median_diff_m))] })
+    if (!isTRUE(input$fv_tape_all)) x <- x[status != "ok"]
+    if (all(c("checks", "largest_diff_m") %in% names(x))) x[checks < 2, largest_diff_m := NA]   # one check has no spread: its median is the check
+    x[order(status != "check the metadata", -abs(median_diff_m))] })
   output$fv_tape <- renderDT({ x <- fv_tape_tab()
     validate(need(nrow(x), if (isTRUE(input$fv_tape_all)) "No tape checks in the last run." else sprintf("No deployment differs from the tape by more than %g m.", CFG$tape_warn_m)))
     ovid_dt(x, selection = "multiple", page = 10) })

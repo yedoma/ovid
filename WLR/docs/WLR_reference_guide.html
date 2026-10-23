@@ -56,6 +56,7 @@ html{background:var(--bg)}
 <li><a href="#drift">11b. Drift and offset correction (off by default)</a></li>
 <li><a href="#11c-missing-values-typed-by-hand-or-interpolated">11c. Missing values typed by hand or interpolated</a></li>
 <li><a href="#summ">12. Daily, monthly and water-year summaries</a></li>
+<li><a href="#defaults">13. ovid defaults with no published source</a></li>
 <li><a href="#outputs">Reading the outputs</a></li>
 <li><a href="#processing-levels-and-the-dataset-card">Processing levels and the Dataset card</a></li>
 <li><a href="#sensors">Sensor notes</a></li>
@@ -67,19 +68,20 @@ html{background:var(--bg)}
 </ol></nav>
 
 <h2 id="quick">Quick start</h2>
+<p>The WLR quick start walks through a first project page by page, with figures; the WLR how-to guide has one task per section (a new download, a time zone, a hang length, the barologgers, tape checks, a removal, the export). In short:</p>
 <ol>
-<li>Put raw files in year folders: <code>data/2025/…</code> for water loggers, <code>data/baro/2025/…</code> for barologgers. Keep both the <code>.hobo</code> and its HOBOware CSV export, or the <code>.xle</code> and its Solinst CSV.</li>
-<li>Put the newest WL_Metadata workbook in <code>metadata/</code> and dGPS exports in <code>dgps/</code>. Without a workbook the run still completes, but WLR cannot build deployments except those you set by hand on Deployment history.</li>
-<li>Open the app (<code>Open WLR (Mac).command</code>, <code>Ovid_WLR.bat</code> on Windows, or <code>shiny::runApp()</code>) and choose the project folder with <b>Browse…</b> (where <code>config/</code> and <code>output/</code> will live).</li>
-<li>Run the <b>Set-up check</b>. Fix anything it lists in red first.</li>
-<li>Press <b>Run</b>. The first run writes the set-up tables and suggests barometric groups.</li>
-<li>Check the <b>Barometric</b> page: one primary barologger per group and year, a secondary if you have one.</li>
-<li>Check <b>Deployment history</b>: every logger has a site and dates. Give unlisted loggers a site.</li>
-<li>Enter logger offsets and survey points on the <b>Datum</b> page.</li>
-<li>Run again. Read the <b>Problems</b> list and the <b>Quality rules</b> suggestions (readings in the air).</li>
-<li>Look at each site in <b>Explore</b>, then export data and reports (HTML, PDF or both) from <b>Reports and export</b>.</li>
+<li>Put raw files in year folders: <code>raw/2025/…</code> for water loggers, <code>raw/baro/2025/…</code> for barologgers. U20 and U20L <code>.hobo</code> and Solinst <code>.xle</code> files are read as they are; for other HOBO models keep the HOBOware CSV export beside the <code>.hobo</code>.</li>
+<li>Optionally put the newest WL_Metadata workbook in the project's <code>metadata/</code> folder and dGPS exports in <code>dgps/</code>. Without a workbook the run still completes; each logger then gets its site on <strong>3 Loggers and deployments</strong>.</li>
+<li>Open the app (<code>Open WLR (Mac).command</code>, <code>Ovid_WLR.bat</code> on Windows, or <code>shiny::runApp()</code>) and set the folders on <strong>1 Project</strong> with <strong>Browse…</strong> (the project folder is where <code>config/</code> and <code>output/</code> will live).</li>
+<li>Press <strong>Run pipeline</strong>. If the files do not state their time zone, the first run asks which zone the loggers were set to.</li>
+<li>On <strong>3 Loggers and deployments</strong>, press <strong>Add what was found</strong> and give each logger a site; <strong>Save changes</strong> and run again.</li>
+<li>On <strong>4 Needs you</strong>, accept the suggested matches and decide what the run found.</li>
+<li>Check <strong>Barometric compensation</strong>: one primary barologger per group and year, a secondary if you have one.</li>
+<li>Enter hang lengths, logger offsets and survey points (<strong>Deployment history</strong>, <strong>Datum and offsets</strong>) and tape readings (<strong>Manual levels and drift</strong>), then run again.</li>
+<li>Read the <strong>Set-up check</strong> (More). Fix anything it lists in red first.</li>
+<li>Look at each site on the <strong>Site</strong> page or in <strong>Plot and explore</strong>, then export data and reports (HTML, PDF or both) from <strong>7 Report</strong>.</li>
 </ol>
-<p>After a change to one raw file, use <b>Rescan</b> on the Raw files page instead of a full run: only what changed is rebuilt. With <code>incremental = TRUE</code> each file is kept as read (by its MD5) and each deployment plot (by its data) in <code>&lt;project&gt;/cache/</code>, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting <code>cache/</code> does the same.</p>
+<p>After a change to one raw file, use <strong>Rescan selected files</strong> on <strong>2 Bring in files</strong> instead of a full run: only what changed is rebuilt. With <code>incremental = TRUE</code> each file is kept as read (by its MD5) and each deployment plot (by its data) in <code>&lt;project&gt;/cache/</code>, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting <code>cache/</code> does the same.</p>
 
 <h2 id="order">What happens to the data, in order</h2>
 <table>
@@ -89,7 +91,7 @@ html{background:var(--bg)}
 <tr><td>3</td><td>Units</td><td>Pressure to kPa, temperature to °C</td><td>column <code>unit_pres</code></td></tr>
 <tr><td>4</td><td>Stitch</td><td>One continuous record per logger; overlapping downloads de-duplicated</td><td><code>loggers/</code>, audit trail</td></tr>
 <tr><td>5</td><td>Barometric</td><td>Barologgers cleaned and joined into stations</td><td><code>baro/</code>, <code>audit/baro_seams.csv</code></td></tr>
-<tr><td>6</td><td>Deployments</td><td>Records outside a deployment are left out</td><td>Problems list, audit trail</td></tr>
+<tr><td>6</td><td>Deployments</td><td>Records outside a deployment are left out</td><td>Needs you, audit trail</td></tr>
 <tr><td>7</td><td>Limits and manual removals</td><td>Impossible values removed; your removals applied</td><td><code>audit/audit_index.csv</code></td></tr>
 <tr><td>8</td><td>Compensation</td><td>Adds <code>baro_kpa</code>, <code>dp_kpa</code>, <code>depth_m</code></td><td>columns <code>baro_source</code>, <code>baro_name</code>, <code>baro_shift</code></td></tr>
 <tr><td>9</td><td>Datum</td><td>Adds <code>dtw_m</code> and <code>elev_m</code></td><td><code>audit/summary.csv</code> (T_ST, z_ref, offset)</td></tr>
@@ -152,11 +154,11 @@ html{background:var(--bg)}
 <figure style="margin:10px 0 16px"><svg viewBox="0 0 860 280" role="img" aria-label="Barometric pressure, 15 July 2022" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Barometric pressure, 15 July 2022</text><line x1="470" x2="488" y1="12" y2="12" style="stroke:var(--fg);stroke-width:2.5"/><text x="494" y="16" style="fill:var(--fg)">barologger reading</text><line x1="620" x2="638" y1="12" y2="12" style="stroke:var(--muted);stroke-width:2.5;stroke-dasharray:4 3"/><text x="644" y="16" style="fill:var(--fg)">interpolated, every 30 min</text>
 <line x1="60" x2="840" y1="240.0" y2="240.0" style="stroke:var(--rule)"/><text x="54" y="244.0" text-anchor="end" style="fill:var(--muted)">97.6</text><line x1="60" x2="840" y1="193.3" y2="193.3" style="stroke:var(--rule)"/><text x="54" y="197.3" text-anchor="end" style="fill:var(--muted)">97.7</text><line x1="60" x2="840" y1="146.7" y2="146.7" style="stroke:var(--rule)"/><text x="54" y="150.7" text-anchor="end" style="fill:var(--muted)">97.8</text><line x1="60" x2="840" y1="100.0" y2="100.0" style="stroke:var(--rule)"/><text x="54" y="104.0" text-anchor="end" style="fill:var(--muted)">97.9</text><line x1="60" x2="840" y1="53.3" y2="53.3" style="stroke:var(--rule)"/><text x="54" y="57.3" text-anchor="end" style="fill:var(--muted)">98.0</text><text x="60.0" y="256" text-anchor="middle" style="fill:var(--muted)">00:00</text><text x="157.5" y="256" text-anchor="middle" style="fill:var(--muted)">03:00</text><text x="255.0" y="256" text-anchor="middle" style="fill:var(--muted)">06:00</text><text x="352.5" y="256" text-anchor="middle" style="fill:var(--muted)">09:00</text><text x="450.0" y="256" text-anchor="middle" style="fill:var(--muted)">12:00</text><text x="547.5" y="256" text-anchor="middle" style="fill:var(--muted)">15:00</text><text x="645.0" y="256" text-anchor="middle" style="fill:var(--muted)">18:00</text><text x="742.5" y="256" text-anchor="middle" style="fill:var(--muted)">21:00</text><text x="840.0" y="256" text-anchor="middle" style="fill:var(--muted)">24:00</text><text x="14" y="140.0" transform="rotate(-90 14 140.0)" text-anchor="middle" style="fill:var(--muted)">kPa</text><text x="460.0" y="276" text-anchor="middle" style="fill:var(--muted)"></text><polyline points="60.0,206.9 76.2,199.0 92.5,191.0 108.8,186.4 125.0,181.7 141.2,177.1 157.5,172.5 173.8,167.9 190.0,163.2 206.2,158.6 222.5,154.0 238.8,149.3 255.0,144.7 271.2,140.1 287.5,135.5 303.8,130.1 320.0,124.7 336.2,119.4 352.5,114.0 368.8,108.6 385.0,103.3 401.2,97.9 417.5,92.5 433.8,87.2 450.0,81.8 466.3,76.4 482.5,71.1 498.8,72.7 515.0,74.3 531.2,76.0 547.5,77.6 563.8,79.2 580.0,80.9 596.2,82.5 612.5,84.1 628.8,85.8 645.0,87.4 661.2,89.0 677.5,90.7 693.8,88.9 710.0,87.2 726.2,85.4 742.5,83.7 758.8,81.9 775.0,80.2 791.2,78.4 807.5,76.7 823.8,74.9" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 3"/><circle cx="92.5" cy="191.0" r="4.5" style="fill:var(--fg)"/><circle cx="287.5" cy="135.5" r="4.5" style="fill:var(--fg)"/><circle cx="482.5" cy="71.1" r="4.5" style="fill:var(--fg)"/><circle cx="677.5" cy="90.7" r="4.5" style="fill:var(--fg)"/><circle cx="450.0" cy="81.8" r="5" style="fill:none;stroke:var(--red);stroke-width:2"/><text x="472.0" y="123.8" text-anchor="start" style="fill:var(--fg)">12:00 → 97.939 kPa</text></svg></figure>
-<p class="where">The barologger here records every 6 hours (black dots). For each 30-minute water reading the app draws a straight line between the two nearest readings (dashed). At 12:00 that gives 97.939 kPa, the value used in the trace above.</p>
+<p class="where">The barologger here records every 6 hours (white dots, with their values). For each 30-minute water reading the app draws a straight line between the two nearest readings (dashed). At 12:00 that gives 97.939 kPa, the value used in the trace above.</p>
 <figure style="margin:10px 0 16px"><svg viewBox="0 0 860 280" role="img" aria-label="Monthly mean depth, min to max" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Monthly mean depth, min to max</text><rect x="460" y="5" width="14" height="10" style="fill:var(--blue)"/><text x="480" y="15" style="fill:var(--fg)">complete month</text><rect x="600" y="5" width="14" height="10" style="fill:var(--blue);opacity:.35"/><text x="620" y="15" style="fill:var(--fg)">incomplete (under 90% of days)</text>
 <line x1="60" x2="840" y1="240.0" y2="240.0" style="stroke:var(--rule)"/><text x="54" y="244.0" text-anchor="end" style="fill:var(--muted)">1.0</text><line x1="60" x2="840" y1="187.5" y2="187.5" style="stroke:var(--rule)"/><text x="54" y="191.5" text-anchor="end" style="fill:var(--muted)">1.2</text><line x1="60" x2="840" y1="135.0" y2="135.0" style="stroke:var(--rule)"/><text x="54" y="139.0" text-anchor="end" style="fill:var(--muted)">1.4</text><line x1="60" x2="840" y1="82.5" y2="82.5" style="stroke:var(--rule)"/><text x="54" y="86.5" text-anchor="end" style="fill:var(--muted)">1.6</text><line x1="60" x2="840" y1="30.0" y2="30.0" style="stroke:var(--rule)"/><text x="54" y="34.0" text-anchor="end" style="fill:var(--muted)">1.8</text><text x="84.4" y="256" text-anchor="middle" style="fill:var(--muted)">Aug</text><text x="133.1" y="256" text-anchor="middle" style="fill:var(--muted)">Sep</text><text x="181.9" y="256" text-anchor="middle" style="fill:var(--muted)">Oct</text><text x="230.6" y="256" text-anchor="middle" style="fill:var(--muted)">Nov</text><text x="279.4" y="256" text-anchor="middle" style="fill:var(--muted)">Dec</text><text x="328.1" y="256" text-anchor="middle" style="fill:var(--muted)">Jan</text><text x="376.9" y="256" text-anchor="middle" style="fill:var(--muted)">Feb</text><text x="425.6" y="256" text-anchor="middle" style="fill:var(--muted)">Mar</text><text x="474.4" y="256" text-anchor="middle" style="fill:var(--muted)">Apr</text><text x="523.1" y="256" text-anchor="middle" style="fill:var(--muted)">May</text><text x="571.9" y="256" text-anchor="middle" style="fill:var(--muted)">Jun</text><text x="620.6" y="256" text-anchor="middle" style="fill:var(--muted)">Jul</text><text x="669.4" y="256" text-anchor="middle" style="fill:var(--muted)">Aug</text><text x="718.1" y="256" text-anchor="middle" style="fill:var(--muted)">Sep</text><text x="766.9" y="256" text-anchor="middle" style="fill:var(--muted)">Oct</text><text x="815.6" y="256" text-anchor="middle" style="fill:var(--muted)">Nov</text><text x="14" y="140.0" transform="rotate(-90 14 140.0)" text-anchor="middle" style="fill:var(--muted)">depth_m (m)</text><text x="460.0" y="276" text-anchor="middle" style="fill:var(--muted)">Aug 2021 to Nov 2022</text><rect x="67.3" y="180.7" width="34.1" height="59.3" style="fill:var(--blue);opacity:0.35"/><line x1="84.4" x2="84.4" y1="184.4" y2="173.8" style="stroke:var(--fg)"/><rect x="116.1" y="172.8" width="34.1" height="67.2" style="fill:var(--blue);opacity:1"/><line x1="133.1" x2="133.1" y1="178.6" y2="166.0" style="stroke:var(--fg)"/><rect x="164.8" y="168.9" width="34.1" height="71.1" style="fill:var(--blue);opacity:1"/><line x1="181.9" x2="181.9" y1="174.4" y2="162.8" style="stroke:var(--fg)"/><rect x="213.6" y="159.4" width="34.1" height="80.6" style="fill:var(--blue);opacity:1"/><line x1="230.6" x2="230.6" y1="173.1" y2="141.3" style="stroke:var(--fg)"/><rect x="262.3" y="139.7" width="34.1" height="100.3" style="fill:var(--blue);opacity:1"/><line x1="279.4" x2="279.4" y1="153.4" y2="132.4" style="stroke:var(--fg)"/><rect x="311.1" y="127.4" width="34.1" height="112.6" style="fill:var(--blue);opacity:1"/><line x1="328.1" x2="328.1" y1="143.4" y2="114.3" style="stroke:var(--fg)"/><rect x="359.8" y="108.2" width="34.1" height="131.8" style="fill:var(--blue);opacity:1"/><line x1="376.9" x2="376.9" y1="123.2" y2="96.9" style="stroke:var(--fg)"/><rect x="408.6" y="84.9" width="34.1" height="155.1" style="fill:var(--blue);opacity:1"/><line x1="425.6" x2="425.6" y1="99.8" y2="69.9" style="stroke:var(--fg)"/><rect x="457.3" y="61.0" width="34.1" height="179.0" style="fill:var(--blue);opacity:1"/><line x1="474.4" x2="474.4" y1="72.8" y2="45.5" style="stroke:var(--fg)"/><rect x="506.1" y="112.2" width="34.1" height="127.8" style="fill:var(--blue);opacity:1"/><line x1="523.1" x2="523.1" y1="142.1" y2="44.7" style="stroke:var(--fg)"/><rect x="554.8" y="152.3" width="34.1" height="87.7" style="fill:var(--blue);opacity:1"/><line x1="571.9" x2="571.9" y1="164.1" y2="141.6" style="stroke:var(--fg)"/><rect x="603.6" y="172.3" width="34.1" height="67.7" style="fill:var(--blue);opacity:1"/><line x1="620.6" x2="620.6" y1="182.8" y2="161.0" style="stroke:var(--fg)"/><rect x="652.3" y="185.4" width="34.1" height="54.6" style="fill:var(--blue);opacity:1"/><line x1="669.4" x2="669.4" y1="194.3" y2="178.3" style="stroke:var(--fg)"/><rect x="701.1" y="191.2" width="34.1" height="48.8" style="fill:var(--blue);opacity:1"/><line x1="718.1" x2="718.1" y1="197.7" y2="185.7" style="stroke:var(--fg)"/><rect x="749.8" y="196.4" width="34.1" height="43.6" style="fill:var(--blue);opacity:1"/><line x1="766.9" x2="766.9" y1="212.7" y2="188.8" style="stroke:var(--fg)"/><rect x="798.6" y="195.6" width="34.1" height="44.4" style="fill:var(--blue);opacity:0.35"/><line x1="815.6" x2="815.6" y1="200.4" y2="188.6" style="stroke:var(--fg)"/></svg></figure>
-<p class="where">August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean.</p>
+<p class="where">August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.</p>
 
 <h2 id="files">1. Finding and pairing files</h2>
 <p>The app reads every file under the raw folders and records its size, checksum (MD5), serial, model, units and stated time zone.</p>
@@ -172,7 +174,7 @@ html{background:var(--bg)}
 </table>
 <p>The <code>.hobo</code> file itself only gives the logger's identity; HOBOware cannot be read directly: for many files at once use <b>Bulk Export</b> in HOBOware Pro, which writes a CSV beside each <code>.hobo</code>.</p>
 <p>Older Levelogger software writes <code>.xle</code> files in Latin-1 (a degree sign in the units) without saying so; the app reads them again as Latin-1 instead of failing.</p>
-<p class="where">Override any decision on the Raw files page (Sorting rules): ignore a file, set its serial, its zone, or whether it is water or baro.</p>
+<p class="where">Override any decision on <b>2 Bring in files</b> (Sort the selected files, or the Sorting rules): ignore a file, set its serial, its zone, or whether it is water or baro.</p>
 <p><b>Serial numbers</b> are normalised so the same logger matches everywhere: leading zeros are dropped and a typed prefix is reduced to the logger's own serial (for example <code>0012345678</code> → <code>12345678</code>).</p>
 
 <h2 id="time">2. Time stamps and time zones</h2>
@@ -292,7 +294,7 @@ elev = 285.400 − 1.800 + 0.020 + 1.250 = <b>284.870 m</b>.</div>
 <tr><td>below_air</td><td>Depth more than 0.1 m below zero: the logger reads less than the air pressure, which is impossible in water. A failing or frozen sensor, or a wrong unit. Over 5% of a season is listed under Problems.</td><td>below_air_m, below_air_share</td></tr>
 <tr><td>out_of_water</td><td>Less than 0.02 m of water above the sensor</td><td>out_of_water_m</td></tr>
 <tr><td>freezing</td><td>Logger temperature at or below 0 °C (ice can squeeze the sensor)</td><td></td></tr>
-<tr><td>service_visit</td><td>Within 2 h of a download or field visit (logger out of the well)</td><td>service_window_h</td></tr>
+<tr><td>service_visit</td><td>Within 2 h of installation, a download or a field visit (logger out of the well or still settling)</td><td>service_window_h</td></tr>
 <tr><td>baro_secondary / baro_fill / no_baro</td><td>Compensated with the secondary, with a shifted fill-in, or not at all</td><td></td></tr>
 <tr><td>manual removal</td><td>Your own removals and out-of-water periods (removed, not flagged), logged with author and reason</td><td>Quality rules page</td></tr>
 </table>
@@ -385,7 +387,7 @@ carry</em> in Settings chooses whether <code>corrected/</code> holds both versio
 usual columns. The Corrected data export has the same choice. A
 corrected value that differs from the logger's has WMO code 5, &quot;has been
 changed&quot;.</p>
-<p><strong>Tape against logger (every run, drift on or off).</strong> Each deployment with a tape check gets a row in <code>output/audit/tape_offsets.csv</code>: the number of checks, the median and largest difference (logger minus tape), the median tape and logger levels, T_ST and where it came from, the logger offset and the reference point. Drift is usually 1 to 3 cm a year, so a median difference above <em>tape_warn_m</em> (Settings, default 0.05 m) more likely means a metadata error. Those rows are marked <code>check the metadata</code>, with a hint (the logger read about zero at the visit; the tape puts the water below the sensor; no T_ST; a steady offset at every check), and the problems list gets one line with their number. On Field visits, <em>Tape against logger</em> lists them: fix the hang length (<code>T_ST_m</code> on Deployment history), the logger offset (Datum and dGPS, Logger offsets) or the reference, and run again; or select them and press <em>Keep selected as they are</em>, which adds a <code>keep</code> row to <code>drift_corrections.csv</code> and marks them <code>kept as it is</code> on the next run. Nothing is changed either way. On the test record 119 of 159 deployments are above 5 cm.</p>
+<p><strong>Tape against logger (every run, drift on or off).</strong> Each deployment with a tape check gets a row in <code>output/audit/tape_offsets.csv</code>: the number of checks, the median and largest difference (logger minus tape), the median tape and logger levels, T_ST and where it came from, the logger offset and the reference point. A pressure sensor drifts by a small share of its range a year (its maker's specification), so a median difference above <em>tape_warn_m</em> (Settings, default 0.05 m) more likely means a metadata error. Those rows are marked <code>check the metadata</code>, with a hint (the logger read about zero at the visit; the tape puts the water below the sensor; no T_ST; a steady offset at every check), and the problems list gets one line with their number. On Field visits, <em>Tape against logger</em> lists them: fix the hang length (<code>T_ST_m</code> on Deployment history), the logger offset (Datum and dGPS, Logger offsets) or the reference, and run again; or select them and press <em>Keep selected as they are</em>, which adds a <code>keep</code> row to <code>drift_corrections.csv</code> and marks them <code>kept as it is</code> on the next run. Nothing is changed either way. On the test record 119 of 159 deployments are above 5 cm.</p>
 <p><strong>On the test record.</strong> With the tape offsets applied to the
 2023–2025 data, the largest offset in a deployment had a median of 0.15 m
 and was above 3 cm in 131 of 159 deployments (1.7 m at most). Offsets of
@@ -421,6 +423,92 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <div class="ex"><b>Example.</b> 30-minute logging → 48 records a day; a day needs at least 0.8 × 48 = 38.4, so <b>39</b> records. September 2024 with 26 good days: 26 ≥ 0.9 × 30 = 27? No → <b>incomplete</b>.</div>
 <p>Monthly: mean, min, max and days per site and parameter. Water year (1 October to 30 September by default; the project may set another start): mean, min and its date, max and its date, range and days. Two loggers at one site on the same day are pooled. Files: <code>output/summaries/monthly.csv</code>, <code>water_year.csv</code>.</p>
 
+<h2 id="defaults">13. ovid defaults with no published source</h2>
+<p>The methods above have published sources; these limits and defaults do
+not. They are ovid's own choices, kept as settings where they can be
+changed, and should be reported as such.</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Default</th>
+<th>Where to change it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Casing height change reported above</td>
+<td>2 cm</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Barometric efficiency listed above, and the r² it needs</td>
+<td>0.1, 0.2</td>
+<td>Settings (0.1); code (0.2)</td>
+</tr>
+<tr>
+<td>Barologger offset or drift counted as material at</td>
+<td>0.1 kPa</td>
+<td>code (baro check)</td>
+</tr>
+<tr>
+<td>Air temperature for the hypsometric reduction when none is logged</td>
+<td>5 °C</td>
+<td>code (external barometer)</td>
+</tr>
+<tr>
+<td>Deployment (processing) year starts</td>
+<td>15 September</td>
+<td>code (the water year is a setting)</td>
+</tr>
+<tr>
+<td>Water logger pressure kept between</td>
+<td>50 to 250 kPa</td>
+<td>Quality rules (Q-01)</td>
+</tr>
+<tr>
+<td>Water above the sensor flagged below</td>
+<td>−0.05 m</td>
+<td>Quality rules (Q-02)</td>
+</tr>
+<tr>
+<td>Barometric pressure kept between</td>
+<td>90 to 110 kPa (sea level to about 1,000 m; widen it for higher sites)</td>
+<td>Quality rules (Q-04)</td>
+</tr>
+<tr>
+<td>Temperature kept between</td>
+<td>−40 to 50 °C (water), −55 to 45 °C (air), −5 to 40 °C (conductivity loggers)</td>
+<td>Quality rules (Q-03, Q-05, Q-07)</td>
+</tr>
+<tr>
+<td>Specific conductance kept between</td>
+<td>0 to 5,000 µS/cm</td>
+<td>Quality rules (Q-06)</td>
+</tr>
+<tr>
+<td>Single-point spike</td>
+<td>5 kPa (water), 0.5 m (depth), 1.5 kPa (air), 500 µS/cm</td>
+<td>Quality rules</td>
+</tr>
+<tr>
+<td>A reading stuck on one value for</td>
+<td>48 h</td>
+<td>Quality rules (Q-08)</td>
+</tr>
+<tr>
+<td>Readings flagged around a visit or download</td>
+<td>2 h</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Out-of-water margin</td>
+<td>0.02 m</td>
+<td>Settings</td>
+</tr>
+</tbody>
+</table>
+
 <h2 id="outputs">Reading the outputs</h2>
 <table>
 <tr><th>File</th><th>What it holds</th></tr>
@@ -436,7 +524,7 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <tr><td>audit/baro_seams.csv</td><td>Barologger changes at each station with overlap and difference</td></tr>
 <tr><td>audit/manual_check.csv, measurements.csv</td><td>Tape checks and manual measurements against the logger</td></tr>
 <tr><td>summaries/</td><td>Monthly and water-year summaries</td></tr>
-<tr><td>report.html</td><td>The run report; site reports from Reports and export</td></tr>
+<tr><td>report.html</td><td>The run report; site reports from 7 Report</td></tr>
 </table>
 
 <h2 id="processing-levels-and-the-dataset-card">Processing levels and the Dataset card</h2>
@@ -528,17 +616,17 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <p class="where">Print just this page and keep it in the field book.</p>
 
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
-<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
+<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
 <h3>Check the data</h3>
-<ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
+<ul><li>Each site gets a page with a plot of its main series and cards for its depth, change, peak, temperature, tape checks and problems. What the automatic checks found is listed on <strong>4 Needs you</strong>: decide each one (Keep, Remove…, Correct… or Not a problem); each decision is saved as it is made, and the next run applies it.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>
 <ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
 <h3>When something goes wrong</h3>
 <ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
 <h3>HOBO .hobo files</h3>
-<p>U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; the Raw files page says so for each file.</p>
+<p>U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; 2 Bring in files says so for each file.</p>
 <h3>Configuration</h3>
-<p>Set up &gt; Configuration exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.</p>
+<p>Configuration (More) exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.</p>
 <h2 id="plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</h2>
 <h3 id="plot-gestures">Plot gestures</h3>
 <p>The same on every time plot in both views, the Workbench chart and its point charts.</p>
@@ -585,7 +673,7 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <tr><th>Message or symptom</th><th>What it means</th><th>What to do</th></tr>
 <tr><td>logger X: not in the metadata workbook; processed as "Unlisted X"</td><td>A serial with data but no row in the workbook</td><td>Give it a site and dates on Deployment history, or add it to the workbook</td></tr>
 <tr><td>N records (dates) fall outside every deployment</td><td>The logger recorded before or after its deployment dates</td><td>If it was in the water, add or extend the deployment</td></tr>
-<tr><td>no records inside the deployment dates</td><td>Wrong year, serial or dates in the workbook, or a missing file</td><td>Check the workbook row and Raw files</td></tr>
+<tr><td>no records inside the deployment dates</td><td>Wrong year, serial or dates in the workbook, or a missing file</td><td>Check the workbook row and 2 Bring in files</td></tr>
 <tr><td>… read below the air pressure, down to −X m</td><td>A failing or frozen sensor, or the wrong barologger</td><td>Compare with a tape check; if the logger is at fault, remove the period or the season</td></tr>
 <tr><td>seam over 0.3 kPa at a baro station</td><td>Two barologgers at one station disagree</td><td>Check elevation and placement; consider a manual offset or another primary</td></tr>
 <tr><td>hobo_without_csv</td><td>A .hobo file with no CSV export</td><td>Export it from HOBOware (with the time zone in the header)</td></tr>

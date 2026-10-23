@@ -1,3 +1,5 @@
 site,logger_id,parameter,start,end,records,check,detail,accepted,rule_id,qc_code,app
-Well A,2000001,depth_m,2014-02-17 15:30:00,2014-02-17 17:00:00,4,service_visit,within 2 h of a download or field visit,FALSE,service_visit,2,WLR
-Well A,2000001,pres_kpa,2014-02-17 15:30:00,2014-02-17 17:00:00,4,service_visit,within 2 h of a download or field visit,FALSE,service_visit,2,WLR
+Well A,2000001,depth_m,2014-02-11 18:00:00,2014-02-11 20:00:00,5,service_visit,"within 2 h of installation, a download or a field visit",FALSE,service_visit,2,WLR
+Well A,2000001,depth_m,2014-02-17 15:30:00,2014-02-17 17:00:00,4,service_visit,"within 2 h of installation, a download or a field visit",FALSE,service_visit,2,WLR
+Well A,2000001,pres_kpa,2014-02-11 18:00:00,2014-02-11 20:00:00,5,service_visit,"within 2 h of installation, a download or a field visit",FALSE,service_visit,2,WLR
+Well A,2000001,pres_kpa,2014-02-17 15:30:00,2014-02-17 17:00:00,4,service_visit,"within 2 h of installation, a download or a field visit",FALSE,service_visit,2,WLR

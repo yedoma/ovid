@@ -328,6 +328,23 @@ check("a HOBO CSV with temperature only is a temperature logger, not read", tm[n
 check("its .hobo goes with it", tm[name == "1000004.hobo", status] == "temperature_logger")
 check("a U12 .hobo with no CSV is a temperature logger, not one needing an export", tm[name == "1000006.hobo", status] == "temperature_logger")
 check("a water-level CSV is still read", tm[name == "20000001.csv", status == "ok" && use])
+cat("change over the last 60 days (Site page)\n")
+local({ t <- as.POSIXct("2014-02-11 18:00", tz = "UTC") + (0:287) * 1800; v <- c(0.02, 0.1, 0.22, rep(0.25, 285)); v[288] <- 0.27
+  ch <- settled_change(t, v, starts = t[1], window_h = 2)
+  check("the change starts after the logger has settled (not at its first reading in the well) and says the record is shorter than 60 days",
+        !is.null(ch) && t[ch$first] >= t[1] + 2 * 3600 && abs(v[ch$last] - v[ch$first] - 0.02) < 1e-9 && !ch$full)
+  t2 <- as.POSIXct("2014-01-01", tz = "UTC") + (0:99) * 86400; v2 <- seq_len(100) / 100
+  ch2 <- settled_change(t2, v2, starts = t2[1])
+  check("on a long record the change spans the last 60 days", ch2$full && as.numeric(difftime(t2[ch2$last], t2[ch2$first], units = "days")) == 60)
+  check("fewer than two readings give no change", is.null(settled_change(t[1], 0.2))) })
+
+cat("service visits include the installation\n")
+local({ t <- as.POSIXct("2014-02-11 18:00", tz = "UTC") + (0:47) * 1800; d <- data.table(TIMESTAMP = t, depth_m = 0.3, pres_kpa = 100)
+  d <- apply_auto_flags(d, as.POSIXct(character(), tz = "UTC"), empty_events(), modifyList(CFG, list(service_window_h = 2)))
+  fl <- d$flag_depth_m; ok <- function(x) !is.na(x) & nzchar(x)
+  check("readings within the service window after a deployment's first reading are flagged as a service visit, later ones are not",
+        !is.null(fl) && all(ok(fl[1:5])) && !any(ok(fl[6:48]))) })
+
 cat("WMO quality codes\n")
 tt <- as.POSIXct("2025-06-01 00:00:00", tz = "UTC") + 3600 * (0:5)
 wd <- data.table(TIMESTAMP = tt, depth_m = c(1, 1, 1, 1, NA, 1), temp_c = 5, flag_depth_m = c("", "out_of_water", "service_visit;freezing", "baro_fill", "", "baro_secondary"))
@@ -530,6 +547,11 @@ local({ old <- setwd(here); on.exit(setwd(old)); suppressMessages(sys.source("ap
 app$SETTINGS_FILE <- file.path(wb_root, "app_settings.json"); app$VIEWER <- FALSE
 app$SETTINGS <- as.list(app$CFG)                     # the defaults, not the settings saved on this computer (a test never reads or writes them)
 pw <- file.path(wb_root, "p")
+local({ src <- unlist(lapply(list.files(file.path(here, "pages"), "\\.R$", full.names = TRUE), readLines, warn = FALSE))
+  go <- unlist(regmatches(src, gregexpr('`data-ovid-go` = "[A-Za-z]+"', src)))
+  pages <- c(vapply(Filter(function(x) inherits(x, "ovid_tool"), app$wlr_flow_pages()), `[[`, "", "value"), "Settings", "Reference", "Conversions")
+  check("every link to a page names a page the app has (\"Decide on Check the data\" went nowhere)", length(go) > 0 && all(sub('.*"([A-Za-z]+)"$', "\\1", go) %in% pages))
+  check("no page names \"Check the data\" any more (its findings are on Needs you)", !any(grepl("Check the data", src, fixed = TRUE))) })
 check("both interfaces build their table editors from one list, and the Workbench opens each where the Standard edits it",
       all(app$SETUP_TABLES$cfg %in% names(CONFIG_FILES)) && !anyDuplicated(app$SETUP_TABLES$id) && setequal(names(app$WB_OPEN), app$SETUP_TREE$id) &&
       any(grepl("setup_editors(cfgp, tick, mark, skip = \"depsheet\")", deparse(app$server), fixed = TRUE)))
@@ -691,7 +713,16 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = file.path(wb_root, "p"))), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
-  check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad)) })
+  check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad))
+  # a run with nothing to note (no problems, every deployment within the tape limit): Needs you and the side panel were "Error: ..."
+  gp <- tempfile("wlr_golden_ui"); dir.create(file.path(gp, "config"), recursive = TRUE)
+  file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))
+  invisible(capture.output(run_pipeline(modifyList(CFG, list(raw_dirs = file.path(here, "tests", "golden", "raw"), metadata_dir = "", dgps_dir = "", project_dir = gp,
+                                                             unzoned_offset_h = -7, make_plots = FALSE)))))
+  ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = gp, WLR_RAW_DIRS = file.path(here, "tests", "golden", "raw")), workbench = FALSE),
+                 error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
+  bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
+  check("every page opens with no error after a run that found nothing to note (the golden project)", nrow(ui) > 5 && !nrow(bad)) })
 local({                                                               # the configuration zip and the app's helpers (Standard interface)
   cp <- tempfile("cfgp"); dir.create(file.path(cp, "config"), recursive = TRUE)
   fwrite(data.table(serial = "20000001", site = "Lake 3", owner = "A"), file.path(cp, "config", "metadata.csv"))

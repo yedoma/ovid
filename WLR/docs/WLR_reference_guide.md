@@ -4,18 +4,20 @@ Water level loggers: what the app does to every reading, why, and how to check i
 
 ## Quick start
 
-1.  Put raw files in year folders: `data/2025/…` for water loggers, `data/baro/2025/…` for barologgers. Keep both the `.hobo` and its HOBOware CSV export, or the `.xle` and its Solinst CSV.
-2.  Put the newest WL_Metadata workbook in `metadata/` and dGPS exports in `dgps/`. Without a workbook the run still completes, but WLR cannot build deployments except those you set by hand on Deployment history.
-3.  Open the app (`Open WLR (Mac).command`, `Ovid_WLR.bat` on Windows, or `shiny::runApp()`) and choose the project folder with **Browse…** (where `config/` and `output/` will live).
-4.  Run the **Set-up check**. Fix anything it lists in red first.
-5.  Press **Run**. The first run writes the set-up tables and suggests barometric groups.
-6.  Check the **Barometric** page: one primary barologger per group and year, a secondary if you have one.
-7.  Check **Deployment history**: every logger has a site and dates. Give unlisted loggers a site.
-8.  Enter logger offsets and survey points on the **Datum** page.
-9.  Run again. Read the **Problems** list and the **Quality rules** suggestions (readings in the air).
-10. Look at each site in **Explore**, then export data and reports (HTML, PDF or both) from **Reports and export**.
+The WLR quick start walks through a first project page by page, with figures; the WLR how-to guide has one task per section (a new download, a time zone, a hang length, the barologgers, tape checks, a removal, the export). In short:
 
-After a change to one raw file, use **Rescan** on the Raw files page instead of a full run: only what changed is rebuilt. With `incremental = TRUE` each file is kept as read (by its MD5) and each deployment plot (by its data) in `<project>/cache/`, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting `cache/` does the same.
+1.  Put raw files in year folders: `raw/2025/…` for water loggers, `raw/baro/2025/…` for barologgers. U20 and U20L `.hobo` and Solinst `.xle` files are read as they are; for other HOBO models keep the HOBOware CSV export beside the `.hobo`.
+2.  Optionally put the newest WL_Metadata workbook in the project's `metadata/` folder and dGPS exports in `dgps/`. Without a workbook the run still completes; each logger then gets its site on **3 Loggers and deployments**.
+3.  Open the app (`Open WLR (Mac).command`, `Ovid_WLR.bat` on Windows, or `shiny::runApp()`) and set the folders on **1 Project** with **Browse…** (the project folder is where `config/` and `output/` will live).
+4.  Press **Run pipeline**. If the files do not state their time zone, the first run asks which zone the loggers were set to.
+5.  On **3 Loggers and deployments**, press **Add what was found** and give each logger a site; **Save changes** and run again.
+6.  On **4 Needs you**, accept the suggested matches and decide what the run found.
+7.  Check **Barometric compensation**: one primary barologger per group and year, a secondary if you have one.
+8.  Enter hang lengths, logger offsets and survey points (**Deployment history**, **Datum and offsets**) and tape readings (**Manual levels and drift**), then run again.
+9.  Read the **Set-up check** (More). Fix anything it lists in red first.
+10. Look at each site on the **Site** page or in **Plot and explore**, then export data and reports (HTML, PDF or both) from **7 Report**.
+
+After a change to one raw file, use **Rescan selected files** on **2 Bring in files** instead of a full run: only what changed is rebuilt. With `incremental = TRUE` each file is kept as read (by its MD5) and each deployment plot (by its data) in `<project>/cache/`, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting `cache/` does the same.
 
 ## What happens to the data, in order
 
@@ -26,7 +28,7 @@ After a change to one raw file, use **Rescan** on the Raw files page instead of 
 | 3   | Units                      | Pressure to kPa, temperature to °C                                          | column `unit_pres`                                 |
 | 4   | Stitch                     | One continuous record per logger; overlapping downloads de-duplicated       | `loggers/`, audit trail                            |
 | 5   | Barometric                 | Barologgers cleaned and joined into stations                                | `baro/`, `audit/baro_seams.csv`                    |
-| 6   | Deployments                | Records outside a deployment are left out                                   | Problems list, audit trail                         |
+| 6   | Deployments                | Records outside a deployment are left out                                   | Needs you, audit trail                             |
 | 7   | Limits and manual removals | Impossible values removed; your removals applied                            | `audit/audit_index.csv`                            |
 | 8   | Compensation               | Adds `baro_kpa`, `dp_kpa`, `depth_m`                                        | columns `baro_source`, `baro_name`, `baro_shift`   |
 | 9   | Datum                      | Adds `dtw_m` and `elev_m`                                                   | `audit/summary.csv` (T_ST, z_ref, offset)          |
@@ -111,11 +113,11 @@ The water level rises through the winter while the logger stays above freezing, 
 
 ![baro day](img/baro_day.svg)
 
-The barologger here records every 6 hours (black dots). For each 30-minute water reading the app draws a straight line between the two nearest readings (dashed). At 12:00 that gives 97.939 kPa, the value used in the trace above.
+The barologger here records every 6 hours (white dots, with their values). For each 30-minute water reading the app draws a straight line between the two nearest readings (dashed). At 12:00 that gives 97.939 kPa, the value used in the trace above.
 
 ![monthly](img/monthly.svg)
 
-August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean.
+August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.
 
 ## 1. Finding and pairing files
 
@@ -133,7 +135,7 @@ The app reads every file under the raw folders and records its size, checksum (M
 
 The `.hobo` file itself only gives the logger's identity; HOBOware cannot be read directly: for many files at once use **Bulk Export** in HOBOware Pro, which writes a CSV beside each `.hobo`. Older Levelogger software writes `.xle` files in Latin-1 (a degree sign in the units) without saying so; the app reads them again as Latin-1 instead of failing.
 
-Override any decision on the Raw files page (Sorting rules): ignore a file, set its serial, its zone, or whether it is water or baro.
+Override any decision on **2 Bring in files** (Sort the selected files, or the Sorting rules): ignore a file, set its serial, its zone, or whether it is water or baro.
 
 **Serial numbers** are normalised so the same logger matches everywhere: leading zeros are dropped and a typed prefix is reduced to the logger's own serial (for example `0012345678` → `12345678`).
 
@@ -389,7 +391,7 @@ Solinst's software uses α = 0.02 by default; the app uses 0.0191 (the common va
 | below_air                            | Depth more than 0.1 m below zero: the logger reads less than the air pressure, which is impossible in water. A failing or frozen sensor, or a wrong unit. Over 5% of a season is listed under Problems.      | below_air_m, below_air_share                  |
 | out_of_water                         | Less than 0.02 m of water above the sensor                                                                                                                                                                   | out_of_water_m                                |
 | freezing                             | Logger temperature at or below 0 °C (ice can squeeze the sensor)                                                                                                                                             |                                               |
-| service_visit                        | Within 2 h of a download or field visit (logger out of the well)                                                                                                                                             | service_window_h                              |
+| service_visit                        | Within 2 h of installation, a download or a field visit (logger out of the well or still settling)                                                                                                                                             | service_window_h                              |
 | baro_secondary / baro_fill / no_baro | Compensated with the secondary, with a shifted fill-in, or not at all                                                                                                                                        |                                               |
 | manual removal                       | Your own removals and out-of-water periods (removed, not flagged), logged with author and reason                                                                                                             | Quality rules page                            |
 
@@ -486,8 +488,7 @@ changed".
 with a tape check gets a row in `output/audit/tape_offsets.csv`: the
 number of checks, the median and largest difference (logger minus tape),
 the median tape and logger levels, T_ST and where it came from, the
-logger offset and the reference point. Drift is usually 1 to 3 cm a
-year, so a median difference above *tape_warn_m* (Settings, default
+logger offset and the reference point. A pressure sensor drifts by a small share of its range a year (its maker's specification), so a median difference above *tape_warn_m* (Settings, default
 0.05 m) more likely means a metadata error. Those rows are marked
 `check the metadata`, with a hint (the logger read about zero at the
 visit; the tape puts the water below the sensor; no T_ST; a steady
@@ -562,6 +563,15 @@ changed, and should be reported as such.
 | Barologger offset or drift counted as material at | 0.1 kPa | code (baro check) |
 | Air temperature for the hypsometric reduction when none is logged | 5 °C | code (external barometer) |
 | Deployment (processing) year starts | 15 September | code (the water year is a setting) |
+| Water logger pressure kept between | 50 to 250 kPa | Quality rules (Q-01) |
+| Water above the sensor flagged below | −0.05 m | Quality rules (Q-02) |
+| Barometric pressure kept between | 90 to 110 kPa (sea level to about 1,000 m; widen it for higher sites) | Quality rules (Q-04) |
+| Temperature kept between | −40 to 50 °C (water), −55 to 45 °C (air), −5 to 40 °C (conductivity loggers) | Quality rules (Q-03, Q-05, Q-07) |
+| Specific conductance kept between | 0 to 5,000 µS/cm | Quality rules (Q-06) |
+| Single-point spike | 5 kPa (water), 0.5 m (depth), 1.5 kPa (air), 500 µS/cm | Quality rules |
+| A reading stuck on one value for | 48 h | Quality rules (Q-08) |
+| Readings flagged around a visit or download | 2 h | Settings |
+| Out-of-water margin | 0.02 m | Settings |
 
 ## Reading the outputs
 
@@ -579,7 +589,7 @@ changed, and should be reported as such.
 | audit/baro_seams.csv                     | Barologger changes at each station with overlap and difference                                                                                          |
 | audit/manual_check.csv, measurements.csv | Tape checks and manual measurements against the logger                                                                                                  |
 | summaries/                               | Monthly and water-year summaries                                                                                                                        |
-| report.html                              | The run report; site reports from Reports and export                                                                                                    |
+| report.html                              | The run report; site reports from 7 Report                                                                                                    |
 
 ## Processing levels and the Dataset card
 
@@ -648,11 +658,11 @@ Print just this page and keep it in the field book.
 
 ## Using the app: the set-up flow and the Workbench
 
-The app has two views of the same project, data and edits: the **Standard** view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the **Workbench**, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.
+The app has two views of the same project, data and edits: the **Standard** view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More), and the **Workbench**, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.
 
 ### Check the data
 
-- Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until **Apply**, then one run applies them.
+- Each site gets a page with a plot of its main series and cards for its depth, change, peak, temperature, tape checks and problems. What the automatic checks found is listed on **4 Needs you**: decide each one (Keep, Remove…, Correct… or Not a problem); each decision is saved as it is made, and the next run applies it.
 - A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. **Look closer** zooms to it and opens the Workbench there.
 - The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.
 
@@ -672,11 +682,11 @@ The app has two views of the same project, data and edits: the **Standard** view
 
 ### HOBO .hobo files
 
-U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; the Raw files page says so for each file.
+U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; 2 Bring in files says so for each file.
 
 ### Configuration
 
-Set up > Configuration exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.
+Configuration (More) exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.
 
 
 ## Plots, set-up tables and Needs you
@@ -713,7 +723,7 @@ The pop-up can also be grouped by what to do.
 |-------------------------------------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | logger X: not in the metadata workbook; processed as "Unlisted X" | A serial with data but no row in the workbook                     | Give it a site and dates on Deployment history, or add it to the workbook             |
 | N records (dates) fall outside every deployment                   | The logger recorded before or after its deployment dates          | If it was in the water, add or extend the deployment                                  |
-| no records inside the deployment dates                            | Wrong year, serial or dates in the workbook, or a missing file    | Check the workbook row and Raw files                                                  |
+| no records inside the deployment dates                            | Wrong year, serial or dates in the workbook, or a missing file    | Check the workbook row and 2 Bring in files                                           |
 | … read below the air pressure, down to −X m                       | A failing or frozen sensor, or the wrong barologger               | Compare with a tape check; if the logger is at fault, remove the period or the season |
 | seam over 0.3 kPa at a baro station                               | Two barologgers at one station disagree                           | Check elevation and placement; consider a manual offset or another primary            |
 | hobo_without_csv                                                  | A .hobo file with no CSV export                                   | Export it from HOBOware (with the time zone in the header)                            |

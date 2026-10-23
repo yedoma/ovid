@@ -72,7 +72,7 @@ CORRECTIONS <- list(
   list(id = "hide_accepted", does = "flags", setting = "hide_accepted_flags", panel = TRUE,
        what = "Flags decided not a problem (Needs you) are left out of the exported flag columns; flags.csv keeps them, marked accepted."),
   list(id = "visits", rules = c("service_visit", "out_of_water", "below_air"), does = "flags", setting = "", where = "Settings, Checks (service window, out of water)",
-       what = "Readings close to a download or field visit, with too little water above the sensor, or well below the air pressure are flagged."))
+       what = "Readings close to installation, a download or a field visit, with too little water above the sensor, or well below the air pressure are flagged."))
 
 # Where a site's name is held (core rename.R): renaming one changes every table here.
 RENAMES <- list(

@@ -36,7 +36,7 @@ Ingests HOBO and Solinst water level logger files, stitches each logger into one
 
 Processing suite for water level recorders (HOBO and Solinst), built on the same pattern as ovid Core // CS: a pipeline script that does the work, and a Shiny app (Nord dark) that calls it and edits its set-up tables.
 
-Full detail: [docs/WLR_reference_guide.md](docs/WLR_reference_guide.md) (also .html and .pdf).
+Step by step: [docs/WLR_quick_start.md](docs/WLR_quick_start.md) for a first project and [docs/WLR_how_to.md](docs/WLR_how_to.md) for one task at a time, with figures of the app. Full detail: [docs/WLR_reference_guide.md](docs/WLR_reference_guide.md). Each is also .html and .pdf; `docs/guide_shots.R` retakes the figures and `docs/build_guides.R` rebuilds the HTML and PDF.
 
 </details>
 
@@ -170,4 +170,4 @@ All time stamps are UTC-7 without daylight saving. Files that state a zone (HOBO
 
 </details>
 
-[Reference guide](docs/WLR_reference_guide.md) · [Changelog](CHANGELOG.md) · [System overview](../docs/overview.md) · [All five apps](../README.md)
+[Quick start](docs/WLR_quick_start.md) · [How-to guide](docs/WLR_how_to.md) · [Reference guide](docs/WLR_reference_guide.md) · [Changelog](CHANGELOG.md) · [System overview](../docs/overview.md) · [All five apps](../README.md)

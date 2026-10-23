@@ -31,7 +31,7 @@
     lab <- c(bo = "deployments with readings no barologger covers", tape = sprintf("deployments where logger and tape differ by more than %s", tape_cm()), rf = "files not used")
     go <- c(bo = "Baro", tape = "Visits", rf = "Files"); k <- names(lab)[n[names(lab)] > 0]   # the tape table and Keep are on Manual levels and drift
     pr <- o$problems; pr <- if (!is.null(pr) && nrow(pr)) data.table(kind = "note", where = as.character(pr$where), what = as.character(pr$problem), detail = "the last run", go = "Metadata")
-    rbind(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k])), fill = TRUE) })
+    rbindlist(list(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k]))), fill = TRUE) })   # rbind() of two NULLs gave a 1 x 1 matrix
   home_rows <- reactive({ o <- outs(); req(o); o$summary[order(site, year), .(site, year, serial, kind, start, end, records, `T_ST (m)` = T_ST, reference, `depth median (m)` = depth_median,
                                                                             `tape diff (m)` = tape_diff_median, primary, deployment)] })
   output$home_dep <- renderDT(ovid_dt(home_rows()[, !"deployment"], selection = "single", page = 12))

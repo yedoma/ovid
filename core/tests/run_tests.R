@@ -256,6 +256,9 @@ if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(
   pd <- tempfile("rl"); dir.create(file.path(pd, "config"), recursive = TRUE); rp <- review_path(pd)
   its <- rbind(it, data.table(kind = "moved", where = "A1", what = "Looks like it was moved", serial = "A1", at = "2024-02-01 00:00"),
                  data.table(kind = "note", where = "3", what = "files could not be read", go = "Files"), fill = TRUE)
+  testServer(review_list_server, args = list(items = reactive(NULL), file = reactive(rp)), {
+    session$setInputs(only = TRUE); h <- tryCatch(paste(as.character(output$list$html), collapse = ""), error = function(e) conditionMessage(e))
+    check("an empty list says nothing waits for you, not an error", grepl("Nothing waits for you", h, fixed = TRUE)) })
   split_to <- NULL
   testServer(review_list_server, args = list(items = reactive(its), file = reactive(rp), split = function(s, a) split_to <<- c(s, a)), {
     session$setInputs(only = TRUE); id1 <- rows()[kind == "flag" & records == 5, id]
@@ -913,5 +916,10 @@ local({
   check("every app's default folders are under ~/Projects/Ovid/Projects", length(dirs) >= 6 && all(startsWith(dirs, '"~/Projects/Ovid/Projects/')))
   check("projects go in ~/Projects/Ovid/Projects/<app> when none is set", identical(ovid_projects_home("RS"), "~/Projects/Ovid/Projects/RS"))
 })
+
+cat("the Precipitation switch (tsview.js)\n")
+local({ js <- paste(readLines(file.path(CORE_DIR, "www", "tsview.js"), warn = FALSE), collapse = "\n")
+  check("the Precipitation switch is hidden when no plot has precipitation to draw (it showed On and drew nothing)",
+        grepl("data-tsv-opt=\"bars\"", js, fixed = TRUE) && grepl("l.hidden = !anyBars", js, fixed = TRUE)) })
 
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

@@ -27,7 +27,7 @@
         kp <- stats::median(d$depth_m / d$dp_kpa, na.rm = TRUE); off <- if (p == "elev_m") stats::median(d$elev_m - d$depth_m, na.rm = TRUE) else 0
         g <- ifelse(r$parameter == p, r$old_value, ifelse(r$parameter == "pres_kpa" & is.finite(kp), (r$old_value - d$baro_kpa[i]) * kp + off, NA_real_))
         raw[i] <- ifelse(is.na(raw[i]), g, raw[i]) } }, silent = TRUE)
-    lab <- c(elev_m = "Water level", depth_m = "Water depth")[[p]]
+    lab <- c(elev_m = "Water elevation", depth_m = "Water above sensor")[[p]]
     ms <- if (nrow(o$meas) && all(c("site", "parameter", "time", "manual") %in% names(o$meas))) o$meas[site == st & parameter == p] else data.table()
     ser <- list(list(name = lab, key = p, unit = "m", v = v, raw = raw, digits = 3, marks = if (nrow(ms)) list(t = ms$time, v = ms$manual, label = "manual")))
     if (extra) { if ("baro_kpa" %in% names(d)) ser[[2]] <- list(name = "Barometric pressure", unit = "kPa", v = d$baro_kpa, digits = 2)
@@ -97,22 +97,24 @@
     span(class = "d-chip", title = paste("Compensated with", r$primary %|% "no barologger", if (nzchar(r$secondary %|% "")) paste("and", r$secondary) else ""), r$baro_group %|% "no baro group") })
   output$site_kpis <- renderUI({ o <- outs(); st <- site_cur(); req(o, st); m <- lv_load(st, TRUE); req(m)
     lv <- m$series[[1]]$v; t <- m$t; k <- which(!is.na(lv)); if (!length(k)) return(p(class = "dim", "No water level at this site."))
-    last <- max(k); t60 <- t[last] - 60 * 86400; k60 <- k[t[k] >= t60]; pk <- k[which.max(lv[k])]
+    last <- max(k); pk <- k[which.max(lv[k])]
+    ch <- settled_change(t, lv, o$summary[site == st]$start, SETTINGS$service_window_h %||% 2)   # R/summaries.R
     tc <- if (length(m$series) > 1) m$series[[length(m$series)]] else NULL; tv <- if (!is.null(tc) && identical(tc$name, "Water temperature")) tc$v
     ms <- if (nrow(o$meas) && "difference" %in% names(o$meas)) o$meas[site == st & !is.na(difference)] else data.table()
     fl <- if (nrow(o$flags)) o$flags[site == st] else data.table()
     f3 <- function(x) formatC(x, format = "f", digits = 3)
     tagList(
-      ovid_kpi(if (m$series[[1]]$name == "Water level") "Water level now" else "Water depth now", f3(lv[last]), "m", format(t[last], "%Y-%m-%d %H:%M")),
-      if (length(k60) > 1) ovid_kpi("Change, 60 days", sub("^-", "\u2212", sprintf("%+.3f", lv[last] - lv[k60[1]])), "m", paste("since", format(t[k60[1]], "%Y-%m-%d"))),
+      ovid_kpi(paste("Latest", tolower(m$series[[1]]$name)), f3(lv[last]), "m", format(t[last], "%Y-%m-%d %H:%M")),
+      if (!is.null(ch)) ovid_kpi(if (ch$full) "Change, 60 days" else "Change in the record", sub("^-", "\u2212", sprintf("%+.3f", lv[ch$last] - lv[ch$first])), "m",
+        paste("since", format(t[ch$first], "%Y-%m-%d %H:%M"), if (!ch$full) "(first settled reading)")),
       ovid_kpi("Peak level", f3(lv[pk]), "m", format(t[pk], "%Y-%m-%d %H:%M")),
       if (length(tv) && any(!is.na(tv))) { j <- max(which(!is.na(tv))); ovid_kpi("Water temperature", formatC(tv[j], format = "f", digits = 1), "\u00b0C",
           sprintf("range %s to %s", formatC(min(tv, na.rm = TRUE), format = "f", digits = 1), formatC(max(tv, na.rm = TRUE), format = "f", digits = 1))) },
-      ovid_kpi("Manual vs logger", if (nrow(ms)) paste0("\u00b1", f3(max(abs(ms$difference)))) else "\u2014", if (nrow(ms)) "m",
-        if (nrow(ms)) sprintf("%d check%s, %s", nrow(ms), if (nrow(ms) == 1) "" else "s", if (all(abs(ms$difference) <= tape_lim())) paste("all within", tape_cm()) else sprintf("%d beyond %s", sum(abs(ms$difference) > tape_lim()), tape_cm())) else "no manual levels yet",
+      ovid_kpi("Manual vs logger", if (nrow(ms)) sub("^-", "\u2212", sprintf("%+.3f", stats::median(ms$difference))) else "\u2014", if (nrow(ms)) "m",
+        if (nrow(ms)) sprintf("median, logger \u2212 manual; n = %d, %s", nrow(ms), if (all(abs(ms$difference) <= tape_lim())) paste("all within", tape_cm()) else sprintf("%d beyond %s", sum(abs(ms$difference) > tape_lim()), tape_cm())) else "no manual levels yet",
         level = if (nrow(ms) && any(abs(ms$difference) > tape_lim())) "warn"),   # tape_lim(): Settings tape_warn_m (home.R)
       ovid_kpi("Problems", if (nrow(fl)) num(nrow(fl)) else "none", NULL,
-        if (nrow(fl)) tagList(paste(fl[, .(w = paste0(if ("detail" %in% names(fl)) detail[1] else gsub("_", " ", check[1]), ", ", format(as.Date(substr(min(start), 1, 10)), "%d %b"), " to ", format(as.Date(substr(max(end), 1, 10)), "%d %b"))), by = check]$w, collapse = "; "), tags$br(), tags$a(href = "#", `data-ovid-go` = "Check", "Decide on Check the data \u203a")) else "nothing flagged",
+        if (nrow(fl)) tagList(paste(fl[, .(w = paste0(if ("detail" %in% names(fl)) detail[1] else gsub("_", " ", check[1]), ", ", format(as.Date(substr(min(start), 1, 10)), "%d %b"), " to ", format(as.Date(substr(max(end), 1, 10)), "%d %b"))), by = check]$w, collapse = "; "), tags$br(), tags$a(href = "#", `data-ovid-go` = "Needs", "Decide on Needs you \u203a")) else "nothing flagged",
         level = if (nrow(fl)) "warn")) })
   observe({ input$nav; st <- site_cur(); req(identical(input$nav, "Site"), st); m <- lv_load(st, TRUE); req(m)
     fl <- outs()$flags; iss <- if (nrow(fl)) fl[site == st, .(t0 = as.numeric(parse_dt(start)), t1 = as.numeric(parse_dt(end)), label = gsub("_", " ", check), level = "warn")] else NULL

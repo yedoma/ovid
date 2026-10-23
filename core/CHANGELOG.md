@@ -5,6 +5,16 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (plots, 2026-10-22)**
+- www/tsview.js: the Precipitation switch in the view bar is shown only when a plot has precipitation to draw (it showed On
+  with no precipitation file). Test added.
+- **Output changes**: none.
+
+**Fixed (review list, 2026-10-22)**
+- flow.R review_list_server: an empty list with "Only what needs a look" on showed "Error: Object 'decided' not found" instead
+  of "Nothing waits for you". Test added.
+- **Output changes**: none.
+
 **Changed (folder layout, 2026-10-21)**
 - util.R: with none set, each app's project folder is ~/Projects/Ovid/Projects/<app>/project (was .../Untitled). Each app keeps raw/ for
   its data, project/ for everything else and archive/ for older runs.

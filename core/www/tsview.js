@@ -86,6 +86,9 @@
     if (m.bars) { m.bars.t = arr(m.bars.t); m.bars.v = arr(m.bars.v); }
     var same = this.d && this.d.series.length && m.series.length && this.d.series[0].name === m.series[0].name && this.d.series[0].t[0] === m.series[0].t[0];
     this.d = m; this.step = m.step || 1800;
+    // the Precipitation switch only where a plot has precipitation to draw
+    var anyBars = Object.keys(V).some(function(k){ var q = V[k].d; return q && q.bars && q.bars.t && q.bars.t.length; });
+    document.querySelectorAll('[data-tsv-opt="bars"]').forEach(function(x){ var l = x.closest('label'); if (l) l.hidden = !anyBars; });
     if (!same) { this.close = null; this.span = Math.min(91, this.full() / DAY); var f = m.focus != null ? m.focus : m.issues.length ? (m.issues[0].t0 + m.issues[0].t1) / 2 : null;
       this.c = f; }
     else if (m.focus != null) { this.close = null; this.c = m.focus; }      // the same data opened at a given time
