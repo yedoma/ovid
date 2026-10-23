@@ -30,14 +30,96 @@ code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
 @page{size:A4;margin:0}
 @media print{main{padding:14mm 14mm}}
 html{background:var(--bg)}
+
+:root{--mk:#D08770;--mk-ink:#242933;--ink:#eceff4;--soft:#d8dee9;--rule2:rgba(255,255,255,.09);--sheet:#323846;--well:#272c36;--frost:#8fbcbb;--num:#ebcb8b}
+body{font:16px/1.7 Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+main{max-width:900px;padding:40px 24px 80px}
+p,li{max-width:68ch}main p{margin:10px 0}
+/* title page block */
+.head{padding:0 0 22px;margin:0 0 26px;border-bottom:1px solid var(--rule2)}
+.kicker{font:600 11.5px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+.head h1{font-size:34px;line-height:1.12;margin:0 0 10px;letter-spacing:-.015em;font-weight:700}
+.head .lede{color:var(--soft);font-size:17px;line-height:1.6;margin:0 0 16px;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.meta span{font-size:12px;color:var(--soft);border:1px solid var(--rule2);border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.03)}
+/* contents */
+.toc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 10px;background:none;padding:0;border-radius:0}
+.toc .grp{border:1px solid var(--rule2);border-radius:10px;padding:14px 16px;background:var(--sheet)}
+.toc .grp h4{margin:0 0 8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.toc ol{margin:0;padding:0;list-style:none;columns:1}
+.toc li{margin:4px 0;font-size:14.5px;line-height:1.45;display:flex;gap:10px}
+.toc li b{color:var(--soft);font-variant-numeric:tabular-nums;min-width:1.6em;text-align:right;font-weight:600}
+.toc a{color:var(--ink);text-decoration:none}
+/* sections: a light sheet, the heading set off by a rule */
+section.task{background:transparent;border:1px solid var(--rule2);border-radius:12px;padding:6px 26px 18px;margin:30px 0;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
+section.task h2{border-top:none;margin:16px 0 14px;padding:0 0 12px;border-bottom:1px solid var(--rule2);font-size:21px;line-height:1.3;font-weight:650;display:flex;align-items:center;gap:12px;letter-spacing:-.005em}
+section.task h2 .no{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;border-radius:7px;
+  background:rgba(136,192,208,.14);color:var(--accent);border:1px solid rgba(136,192,208,.45);font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+/* text roles: app controls, words to type, numbers with units */
+strong,b{color:#fff;font-weight:650}
+strong.ui{font-weight:600;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:0 5px;white-space:nowrap}
+strong.lead{color:#fff}
+code{font:500 .86em/1.4 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--frost);background:var(--well);border:1px solid rgba(255,255,255,.07);
+  border-radius:5px;padding:1px 6px;box-shadow:inset 0 1px 2px rgba(0,0,0,.35);white-space:nowrap}
+.num{font-variant-numeric:tabular-nums lining-nums;color:var(--num);font-weight:550;white-space:nowrap}
+/* callouts */
+.co{border-radius:8px;padding:10px 14px 10px 16px;margin:14px 0;border:1px solid var(--rule2);border-left:3px solid var(--rule);background:rgba(255,255,255,.025);max-width:none;line-height:1.6}
+.co>strong:first-child{display:block;margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;background:none;border:0;padding:0}
+.co.when{border-left-color:var(--blue)}.co.when>strong:first-child{color:#d8dee9}
+.co.result{border-left-color:var(--green)}.co.result>strong:first-child{color:var(--green)}
+.co.check{border-left-color:var(--accent)}.co.check>strong:first-child{color:var(--accent)}
+.co.note{border-left-color:var(--amber);background:rgba(235,203,139,.06)}.co.note>strong:first-child{color:var(--amber)}
+/* steps */
+main ol:not(.plain){padding-left:0;list-style:none;counter-reset:st}
+main ol:not(.plain)>li{counter-increment:st;position:relative;padding-left:38px;margin:10px 0}
+main ol:not(.plain)>li::before{content:counter(st);position:absolute;left:0;top:3px;width:24px;height:24px;border-radius:6px;background:var(--sheet);border:1px solid var(--rule2);
+  color:var(--soft);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+main ol.markers>li::before{border-radius:50%;background:var(--mk);color:var(--mk-ink);border:2px solid var(--mk-ink)}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--mk);color:var(--mk-ink);
+  font:700 11px/1 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;vertical-align:1px;margin:0 1px;font-variant-numeric:tabular-nums}
+main ul{padding-left:22px}main ul li{margin:8px 0}
+/* figures, as in a textbook: a matted plate with a numbered caption */
+main figure{margin:18px 0 12px;padding:10px;background:var(--well);border:1px solid var(--rule2);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.28);break-inside:avoid;page-break-inside:avoid}
+main img{display:block;max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+main figcaption{font-size:13px;color:var(--soft);margin:9px 4px 1px;line-height:1.45}
+main figcaption b{color:#fff;font-weight:650;margin-right:4px}
+.foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--rule2);font-size:12.5px;color:var(--soft)}
+@media (max-width:700px){.toc{grid-template-columns:1fr}section.task{padding:4px 14px 12px}}
+@page{size:A4;margin:22mm 0 20mm;background:#2e3440;@bottom-left{content:'ovid WLR reference guide';color:#c0c8d6;font:9px -apple-system,Helvetica,Arial,sans-serif;padding-left:17mm}@bottom-right{content:counter(page) ' / ' counter(pages);color:#c0c8d6;font:9px -apple-system,Helvetica,Arial,sans-serif;padding-right:17mm}}
+@media print{html,body{background:var(--bg)}body{font-size:11.2pt;line-height:1.62;orphans:3;widows:3}main{padding:0 17mm}h1{font-size:28px}
+  section.task{border:0;border-radius:0;padding:0;margin:0 0 10mm;box-shadow:none;break-before:auto}
+  section.task h2{break-after:avoid;margin-top:0;padding-top:4mm}section.task h2,section.task .co.when{break-after:avoid}
+  .toc,.grp,.co,figure,img,li,p,.head{break-inside:avoid;page-break-inside:avoid}figure{box-shadow:none;border-radius:0}*{box-shadow:none!important;text-shadow:none!important}li{line-height:1.5}.head{margin-bottom:18px}}
+
+.f{background:var(--well);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--accent);border-radius:8px;padding:12px 16px;margin:14px 0;
+  font:12.5px/1.7 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;color:#e5e9f0;white-space:pre;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.ex{border:1px solid var(--rule2);border-left:3px solid var(--green);border-radius:8px;padding:10px 16px;margin:14px 0;background:rgba(163,190,140,.05)}
+.ex b:first-child,.ex strong:first-child{color:var(--green);background:none;border:0;padding:0}
+.note{border:1px solid var(--rule2);border-left:3px solid var(--amber);border-radius:8px;padding:10px 16px;background:rgba(235,203,139,.06)}
+main table{display:table;width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;line-height:1.5;margin:14px 0 18px;border:1px solid var(--rule2);border-radius:10px;overflow:hidden}
+main th{background:var(--sheet);color:#fff;font-weight:650;text-align:left;padding:8px 10px;border:0;border-bottom:1px solid var(--rule2)}
+main td{padding:7px 10px;border:0;border-top:1px solid rgba(255,255,255,.05);vertical-align:top}
+main tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+main table code{white-space:normal}
+main h3{font-size:17px;margin:26px 0 8px;color:#fff;font-weight:650;padding-left:10px;border-left:3px solid var(--accent)}
+section.plain h2{display:flex;align-items:center;gap:12px;border-top:none;margin:34px 0 14px;padding:0 0 12px;border-bottom:1px solid var(--rule2);font-size:22px;font-weight:650}
+section.plain h2 .no{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;padding:0 7px;border-radius:7px;
+  background:rgba(136,192,208,.14);color:var(--accent);border:1px solid rgba(136,192,208,.45);font-size:13.5px;font-weight:700}
+nav.ref{border:1px solid var(--rule2);border-radius:10px;padding:16px 18px;background:var(--sheet);margin:20px 0}
+nav.ref h4{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+nav.ref ol{columns:2;column-gap:28px;margin:0;padding-left:0;list-style:none}nav.ref li{margin:4px 0;font-size:14.5px;break-inside:avoid}
+nav.ref a{color:var(--ink);text-decoration:none}
+figure.chart{padding:14px}figure.chart svg{display:block;border-radius:6px}
+.note,.ex,.f{max-width:none}
+main td,main th{overflow-wrap:normal;word-break:normal;hyphens:none}main table.wide{font-size:11px}main table.wide td,main table.wide th{padding:5px 6px}nav.ref li{margin:0 0 6px}
+@media print{main{max-width:none!important;padding:0 17mm!important}main table{font-size:11.5px}main td,main th{padding:6px 8px}main table,.f,.ex,.note,figure,tr,nav.ref li{break-inside:avoid}section.plain h2,main h3{break-after:avoid}nav.ref{break-after:page}}
 </style>
 </head>
 <body><main>
-<h1>ovid WLR Reference Guide</h1>
-<p class="sub">Water level loggers: what the app does to every reading, why, and how to check it. For WLR 0.12.0 (ovid Core 1.15.0). Settings are quoted with their defaults; change them in the app or in <code>wlr_pipeline.R</code>.</p>
+<header class="head"><p class="kicker">ovid · WLR · Reference guide</p><h1>Reference guide</h1><p class="lede">Water level loggers: what the app does to every reading, why, and how to check it. For WLR 0.12.0 (ovid Core 1.15.0). Settings are quoted with their defaults; change them in the app or in <code>wlr_pipeline.R</code>.</p><p class="meta"><span>WLR 0.12.0</span><span>22 October 2026</span><span>Methods, formulas and sources</span></p></header>
 
-<nav><b>Contents</b>
-<ol>
+<nav class="ref"><h4>Contents</h4>
+<ol class="plain">
 <li><a href="#quick">Quick start</a></li>
 <li><a href="#order">What happens to the data, in order</a></li>
 <li><a href="#flow">The pipeline at a glance</a></li>
@@ -67,22 +149,25 @@ html{background:var(--bg)}
 <li><a href="#refs">References</a></li>
 </ol></nav>
 
+<section class="plain">
 <h2 id="quick">Quick start</h2>
 <p>The WLR quick start walks through a first project page by page, with figures; the WLR how-to guide has one task per section (a new download, a time zone, a hang length, the barologgers, tape checks, a removal, the export). In short:</p>
 <ol>
 <li>Put raw files in year folders: <code>raw/2025/…</code> for water loggers, <code>raw/baro/2025/…</code> for barologgers. U20 and U20L <code>.hobo</code> and Solinst <code>.xle</code> files are read as they are; for other HOBO models keep the HOBOware CSV export beside the <code>.hobo</code>.</li>
 <li>Optionally put the newest WL_Metadata workbook in the project's <code>metadata/</code> folder and dGPS exports in <code>dgps/</code>. Without a workbook the run still completes; each logger then gets its site on <strong>3 Loggers and deployments</strong>.</li>
-<li>Open the app (<code>Open WLR (Mac).command</code>, <code>Ovid_WLR.bat</code> on Windows, or <code>shiny::runApp()</code>) and set the folders on <strong>1 Project</strong> with <strong>Browse…</strong> (the project folder is where <code>config/</code> and <code>output/</code> will live).</li>
-<li>Press <strong>Run pipeline</strong>. If the files do not state their time zone, the first run asks which zone the loggers were set to.</li>
-<li>On <strong>3 Loggers and deployments</strong>, press <strong>Add what was found</strong> and give each logger a site; <strong>Save changes</strong> and run again.</li>
+<li>Open the app (<code>Open WLR (Mac).command</code>, <code>Ovid_WLR.bat</code> on Windows, or <code>shiny::runApp()</code>) and set the folders on <strong>1 Project</strong> with <strong class="ui">Browse…</strong> (the project folder is where <code>config/</code> and <code>output/</code> will live).</li>
+<li>Press <strong class="ui">Run pipeline</strong>. If the files do not state their time zone, the first run asks which zone the loggers were set to.</li>
+<li>On <strong>3 Loggers and deployments</strong>, press <strong class="ui">Add what was found</strong> and give each logger a site; <strong class="ui">Save changes</strong> and run again.</li>
 <li>On <strong>4 Needs you</strong>, accept the suggested matches and decide what the run found.</li>
-<li>Check <strong>Barometric compensation</strong>: one primary barologger per group and year, a secondary if you have one.</li>
-<li>Enter hang lengths, logger offsets and survey points (<strong>Deployment history</strong>, <strong>Datum and offsets</strong>) and tape readings (<strong>Manual levels and drift</strong>), then run again.</li>
-<li>Read the <strong>Set-up check</strong> (More). Fix anything it lists in red first.</li>
-<li>Look at each site on the <strong>Site</strong> page or in <strong>Plot and explore</strong>, then export data and reports (HTML, PDF or both) from <strong>7 Report</strong>.</li>
+<li>Check <strong class="ui">Barometric compensation</strong>: one primary barologger per group and year, a secondary if you have one.</li>
+<li>Enter hang lengths, logger offsets and survey points (<strong class="ui">Deployment history</strong>, <strong class="ui">Datum and offsets</strong>) and tape readings (<strong class="ui">Manual levels and drift</strong>), then run again.</li>
+<li>Read the <strong class="ui">Set-up check</strong> (More). Fix anything it lists in red first.</li>
+<li>Look at each site on the <strong class="ui">Site</strong> page or in <strong class="ui">Plot and explore</strong>, then export data and reports (HTML, PDF or both) from <strong>7 Report</strong>.</li>
 </ol>
-<p>After a change to one raw file, use <strong>Rescan selected files</strong> on <strong>2 Bring in files</strong> instead of a full run: only what changed is rebuilt. With <code>incremental = TRUE</code> each file is kept as read (by its MD5) and each deployment plot (by its data) in <code>&lt;project&gt;/cache/</code>, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting <code>cache/</code> does the same.</p>
+<p>After a change to one raw file, use <strong class="ui">Rescan selected files</strong> on <strong>2 Bring in files</strong> instead of a full run: only what changed is rebuilt. With <code>incremental = TRUE</code> each file is kept as read (by its MD5) and each deployment plot (by its data) in <code>&lt;project&gt;/cache/</code>, so a rerun reads and draws only what changed; a code update makes the next run a full one, and deleting <code>cache/</code> does the same.</p>
 
+</section>
+<section class="plain">
 <h2 id="order">What happens to the data, in order</h2>
 <table>
 <tr><th>#</th><th>Step</th><th>What changes</th><th>Logged in</th></tr>
@@ -101,13 +186,17 @@ html{background:var(--bg)}
 </table>
 <p>Every record read is accounted for: <b>records read = records in the output + records dropped</b>, per logger. The run stops if that does not hold.</p>
 
+</section>
+<section class="plain">
 <h2 id="flow">The pipeline at a glance</h2>
 <p>Five stages, twelve steps. Inputs on the left enter at the step that uses them; files on the right are written at the step that makes them. Every step passes the full record down; nothing is dropped without an entry in the audit files.</p>
-<figure style="margin:8px 0 14px"><svg viewBox="0 0 960 768" role="img" aria-label="WLR processing pipeline" style="width:100%;height:auto;font:13px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
-<defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:var(--muted)"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:var(--green)"/></marker><marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:var(--fg)"/></marker></defs>
-<text x="133" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">WHAT YOU PROVIDE</text><text x="500.0" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">PROCESSING STEPS</text><text x="821" y="24" text-anchor="middle" style="fill:var(--muted);font-weight:700">WHAT IT WRITES (output/)</text>
-<rect x="326" y="40" width="312" height="218" rx="10" style="fill:var(--accent);opacity:.10"/><text x="0" y="0" transform="translate(348 46.0) rotate(90)" style="fill:var(--accent);font-weight:700;font-size:11px;letter-spacing:.6px">READ</text><rect x="380" y="46" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/><circle cx="402" cy="68.0" r="13" style="fill:var(--accent)"/><text x="402" y="72.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">1</text><text x="424" y="64" style="fill:var(--fg);font-weight:600">Find and pair files</text><text x="424" y="80" style="fill:var(--muted);font-size:11.5px">choose one file per download</text><rect x="8" y="55.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="72.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Raw files: .hobo + CSV, .xle + CSV</text><line x1="260" y1="68.0" x2="376" y2="68.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="68.0" x2="684" y2="68.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="55.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="72.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">audit/files.csv, file_audit.csv</text><line x1="500.0" y1="90" x2="500.0" y2="100" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="100" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/><circle cx="402" cy="122.0" r="13" style="fill:var(--accent)"/><text x="402" y="126.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">2</text><text x="424" y="118" style="fill:var(--fg);font-weight:600">Time stamps</text><text x="424" y="134" style="fill:var(--muted);font-size:11.5px">every time to UTC−7</text><rect x="8" y="109.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Time-zone table, Sorting rules</text><line x1="260" y1="122.0" x2="376" y2="122.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="500.0" y1="144" x2="500.0" y2="154" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="154" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/><circle cx="402" cy="176.0" r="13" style="fill:var(--accent)"/><text x="402" y="180.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">3</text><text x="424" y="172" style="fill:var(--fg);font-weight:600">Units</text><text x="424" y="188" style="fill:var(--muted);font-size:11.5px">pressure to kPa, °C</text><line x1="500.0" y1="198" x2="500.0" y2="208" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="208" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--accent);stroke-width:1.5"/><circle cx="402" cy="230.0" r="13" style="fill:var(--accent)"/><text x="402" y="234.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">4</text><text x="424" y="226" style="fill:var(--fg);font-weight:600">Stitch</text><text x="424" y="242" style="fill:var(--muted);font-size:11.5px">one record per logger</text><line x1="622" y1="230.0" x2="684" y2="230.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="217.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="234.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">loggers/</text><line x1="500.0" y1="252" x2="500.0" y2="262" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="270" width="312" height="110" rx="10" style="fill:var(--blue);opacity:.10"/><text x="0" y="0" transform="translate(348 276.0) rotate(90)" style="fill:var(--blue);font-weight:700;font-size:11px;letter-spacing:.6px">COMBINE</text><rect x="380" y="276" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--blue);stroke-width:1.5"/><circle cx="402" cy="298.0" r="13" style="fill:var(--blue)"/><text x="402" y="302.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">5</text><text x="424" y="294" style="fill:var(--fg);font-weight:600">Barometric stations</text><text x="424" y="310" style="fill:var(--muted);font-size:11.5px">join barologgers, interpolate</text><rect x="8" y="285.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="302.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Barologger files, baro groups</text><line x1="260" y1="298.0" x2="376" y2="298.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="298.0" x2="684" y2="298.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="285.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="302.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">baro/, baro_seams.csv</text><line x1="500.0" y1="320" x2="500.0" y2="330" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="330" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--blue);stroke-width:1.5"/><circle cx="402" cy="352.0" r="13" style="fill:var(--blue)"/><text x="402" y="356.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">6</text><text x="424" y="348" style="fill:var(--fg);font-weight:600">Deployments</text><text x="424" y="364" style="fill:var(--muted);font-size:11.5px">logger + site + season</text><rect x="8" y="339.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="356.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">WL_Metadata workbook</text><line x1="260" y1="352.0" x2="376" y2="352.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="500.0" y1="374" x2="500.0" y2="384" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="392" width="312" height="164" rx="10" style="fill:var(--green);opacity:.10"/><text x="0" y="0" transform="translate(348 398.0) rotate(90)" style="fill:var(--green);font-weight:700;font-size:11px;letter-spacing:.6px">CORRECT</text><rect x="380" y="398" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--green);stroke-width:1.5"/><circle cx="402" cy="420.0" r="13" style="fill:var(--green)"/><text x="402" y="424.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">7</text><text x="424" y="416" style="fill:var(--fg);font-weight:600">Limits and removals</text><text x="424" y="432" style="fill:var(--muted);font-size:11.5px">impossible values out</text><rect x="8" y="407.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="424.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Quality rules, your removals</text><line x1="260" y1="420.0" x2="376" y2="420.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="420.0" x2="684" y2="420.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="407.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="424.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">audit/audit_index.csv</text><line x1="500.0" y1="442" x2="500.0" y2="452" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="452" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--green);stroke-width:1.5"/><circle cx="402" cy="474.0" r="13" style="fill:var(--green)"/><text x="402" y="478.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">8</text><text x="424" y="470" style="fill:var(--fg);font-weight:600">Compensation</text><text x="424" y="486" style="fill:var(--muted);font-size:11.5px">Δp → depth_m</text><line x1="500.0" y1="496" x2="500.0" y2="506" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="506" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--green);stroke-width:1.5"/><circle cx="402" cy="528.0" r="13" style="fill:var(--green)"/><text x="402" y="532.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">9</text><text x="424" y="524" style="fill:var(--fg);font-weight:600">Datum</text><text x="424" y="540" style="fill:var(--muted);font-size:11.5px">dtw_m, elev_m</text><rect x="8" y="515.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="532.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Logger offsets, dGPS surveys</text><line x1="260" y1="528.0" x2="376" y2="528.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="528.0" x2="684" y2="528.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="515.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="532.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">sites/, corrected/, summary.csv</text><line x1="500.0" y1="550" x2="500.0" y2="560" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="568" width="312" height="110" rx="10" style="fill:var(--amber);opacity:.10"/><text x="0" y="0" transform="translate(348 574.0) rotate(90)" style="fill:var(--amber);font-weight:700;font-size:11px;letter-spacing:.6px">CHECK</text><rect x="380" y="574" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--amber);stroke-width:1.5"/><circle cx="402" cy="596.0" r="13" style="fill:var(--amber)"/><text x="402" y="600.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">10</text><text x="424" y="592" style="fill:var(--fg);font-weight:600">Flags</text><text x="424" y="608" style="fill:var(--muted);font-size:11.5px">mark doubtful readings</text><line x1="622" y1="596.0" x2="684" y2="596.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="583.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="600.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">audit/flags.csv</text><line x1="500.0" y1="618" x2="500.0" y2="628" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="628" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--amber);stroke-width:1.5"/><circle cx="402" cy="650.0" r="13" style="fill:var(--amber)"/><text x="402" y="654.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">11</text><text x="424" y="646" style="fill:var(--fg);font-weight:600">Tape and manual checks</text><text x="424" y="662" style="fill:var(--muted);font-size:11.5px">logger vs hand readings</text><rect x="8" y="637.0" width="250" height="26" rx="13" style="fill:none;stroke:var(--muted)"/><text x="133" y="654.0" text-anchor="middle" style="fill:var(--fg);font-size:11.5px">Field visits, manual measurements</text><line x1="260" y1="650.0" x2="376" y2="650.0" style="stroke:var(--muted);stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="650.0" x2="684" y2="650.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="637.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="654.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">manual_check.csv, measurements.csv</text><line x1="500.0" y1="672" x2="500.0" y2="682" style="stroke:var(--fg);stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="690" width="312" height="56" rx="10" style="fill:var(--purple);opacity:.10"/><text x="0" y="0" transform="translate(348 696.0) rotate(90)" style="fill:var(--purple);font-weight:700;font-size:11px;letter-spacing:.6px">OUTPUT</text><rect x="380" y="696" width="240" height="44" rx="7" style="fill:var(--panel);stroke:var(--purple);stroke-width:1.5"/><circle cx="402" cy="718.0" r="13" style="fill:var(--purple)"/><text x="402" y="722.5" text-anchor="middle" style="fill:var(--bg);font-weight:700">12</text><text x="424" y="714" style="fill:var(--fg);font-weight:600">Summaries and reports</text><text x="424" y="730" style="fill:var(--muted);font-size:11.5px">day, month, water year</text><line x1="622" y1="718.0" x2="684" y2="718.0" style="stroke:var(--green);stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="705.0" width="262" height="26" rx="4" style="fill:var(--code)"/><text x="821" y="722.0" text-anchor="middle" style="fill:var(--fg);font:11px ui-monospace,Menlo,monospace">summaries/, report.html</text></svg></figure>
+<figure style="margin:8px 0 14px"><figure class="chart"><svg viewBox="0 0 960 768" role="img" aria-label="WLR processing pipeline" style="width:100%;height:auto;font:13px -apple-system,Segoe UI,Helvetica,Arial,sans-serif"><rect width="960" height="768" fill="#2e3440"/>
+<defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:#c0c8d6"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:#a3be8c"/></marker><marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" style="fill:#e5e9f0"/></marker></defs>
+<text x="133" y="24" text-anchor="middle" style="fill:#c0c8d6;font-weight:700">WHAT YOU PROVIDE</text><text x="500.0" y="24" text-anchor="middle" style="fill:#c0c8d6;font-weight:700">PROCESSING STEPS</text><text x="821" y="24" text-anchor="middle" style="fill:#c0c8d6;font-weight:700">WHAT IT WRITES (output/)</text>
+<rect x="326" y="40" width="312" height="218" rx="10" style="fill:#88c0d0;opacity:.10"/><text x="0" y="0" transform="translate(348 46.0) rotate(90)" style="fill:#88c0d0;font-weight:700;font-size:11px;letter-spacing:.6px">READ</text><rect x="380" y="46" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#88c0d0;stroke-width:1.5"/><circle cx="402" cy="68.0" r="13" style="fill:#88c0d0"/><text x="402" y="72.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">1</text><text x="424" y="64" style="fill:#e5e9f0;font-weight:600">Find and pair files</text><text x="424" y="80" style="fill:#c0c8d6;font-size:11.5px">choose one file per download</text><rect x="8" y="55.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="72.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Raw files: .hobo + CSV, .xle + CSV</text><line x1="260" y1="68.0" x2="376" y2="68.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="68.0" x2="684" y2="68.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="55.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="72.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">audit/files.csv, file_audit.csv</text><line x1="500.0" y1="90" x2="500.0" y2="100" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="100" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#88c0d0;stroke-width:1.5"/><circle cx="402" cy="122.0" r="13" style="fill:#88c0d0"/><text x="402" y="126.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">2</text><text x="424" y="118" style="fill:#e5e9f0;font-weight:600">Time stamps</text><text x="424" y="134" style="fill:#c0c8d6;font-size:11.5px">every time to the base zone</text><rect x="8" y="109.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="126.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Time-zone table, Sorting rules</text><line x1="260" y1="122.0" x2="376" y2="122.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="500.0" y1="144" x2="500.0" y2="154" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="154" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#88c0d0;stroke-width:1.5"/><circle cx="402" cy="176.0" r="13" style="fill:#88c0d0"/><text x="402" y="180.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">3</text><text x="424" y="172" style="fill:#e5e9f0;font-weight:600">Units</text><text x="424" y="188" style="fill:#c0c8d6;font-size:11.5px">pressure to kPa, °C</text><line x1="500.0" y1="198" x2="500.0" y2="208" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="208" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#88c0d0;stroke-width:1.5"/><circle cx="402" cy="230.0" r="13" style="fill:#88c0d0"/><text x="402" y="234.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">4</text><text x="424" y="226" style="fill:#e5e9f0;font-weight:600">Stitch</text><text x="424" y="242" style="fill:#c0c8d6;font-size:11.5px">one record per logger</text><line x1="622" y1="230.0" x2="684" y2="230.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="217.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="234.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">loggers/</text><line x1="500.0" y1="252" x2="500.0" y2="262" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="270" width="312" height="110" rx="10" style="fill:#81a1c1;opacity:.10"/><text x="0" y="0" transform="translate(348 276.0) rotate(90)" style="fill:#81a1c1;font-weight:700;font-size:11px;letter-spacing:.6px">COMBINE</text><rect x="380" y="276" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#81a1c1;stroke-width:1.5"/><circle cx="402" cy="298.0" r="13" style="fill:#81a1c1"/><text x="402" y="302.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">5</text><text x="424" y="294" style="fill:#e5e9f0;font-weight:600">Barometric stations</text><text x="424" y="310" style="fill:#c0c8d6;font-size:11.5px">join barologgers, interpolate</text><rect x="8" y="285.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="302.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Barologger files, baro groups</text><line x1="260" y1="298.0" x2="376" y2="298.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="298.0" x2="684" y2="298.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="285.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="302.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">baro/, baro_seams.csv</text><line x1="500.0" y1="320" x2="500.0" y2="330" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="330" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#81a1c1;stroke-width:1.5"/><circle cx="402" cy="352.0" r="13" style="fill:#81a1c1"/><text x="402" y="356.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">6</text><text x="424" y="348" style="fill:#e5e9f0;font-weight:600">Deployments</text><text x="424" y="364" style="fill:#c0c8d6;font-size:11.5px">logger + site + season</text><rect x="8" y="339.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="356.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">WL_Metadata workbook</text><line x1="260" y1="352.0" x2="376" y2="352.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="500.0" y1="374" x2="500.0" y2="384" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="392" width="312" height="164" rx="10" style="fill:#a3be8c;opacity:.10"/><text x="0" y="0" transform="translate(348 398.0) rotate(90)" style="fill:#a3be8c;font-weight:700;font-size:11px;letter-spacing:.6px">CORRECT</text><rect x="380" y="398" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#a3be8c;stroke-width:1.5"/><circle cx="402" cy="420.0" r="13" style="fill:#a3be8c"/><text x="402" y="424.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">7</text><text x="424" y="416" style="fill:#e5e9f0;font-weight:600">Limits and removals</text><text x="424" y="432" style="fill:#c0c8d6;font-size:11.5px">impossible values out</text><rect x="8" y="407.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="424.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Quality rules, your removals</text><line x1="260" y1="420.0" x2="376" y2="420.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="420.0" x2="684" y2="420.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="407.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="424.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">audit/audit_index.csv</text><line x1="500.0" y1="442" x2="500.0" y2="452" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="452" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#a3be8c;stroke-width:1.5"/><circle cx="402" cy="474.0" r="13" style="fill:#a3be8c"/><text x="402" y="478.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">8</text><text x="424" y="470" style="fill:#e5e9f0;font-weight:600">Compensation</text><text x="424" y="486" style="fill:#c0c8d6;font-size:11.5px">Δp → depth_m</text><line x1="500.0" y1="496" x2="500.0" y2="506" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="506" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#a3be8c;stroke-width:1.5"/><circle cx="402" cy="528.0" r="13" style="fill:#a3be8c"/><text x="402" y="532.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">9</text><text x="424" y="524" style="fill:#e5e9f0;font-weight:600">Datum</text><text x="424" y="540" style="fill:#c0c8d6;font-size:11.5px">dtw_m, elev_m</text><rect x="8" y="515.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="532.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Logger offsets, dGPS surveys</text><line x1="260" y1="528.0" x2="376" y2="528.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="528.0" x2="684" y2="528.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="515.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="532.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">sites/, corrected/, summary.csv</text><line x1="500.0" y1="550" x2="500.0" y2="560" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="568" width="312" height="110" rx="10" style="fill:#ebcb8b;opacity:.10"/><text x="0" y="0" transform="translate(348 574.0) rotate(90)" style="fill:#ebcb8b;font-weight:700;font-size:11px;letter-spacing:.6px">CHECK</text><rect x="380" y="574" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#ebcb8b;stroke-width:1.5"/><circle cx="402" cy="596.0" r="13" style="fill:#ebcb8b"/><text x="402" y="600.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">10</text><text x="424" y="592" style="fill:#e5e9f0;font-weight:600">Flags</text><text x="424" y="608" style="fill:#c0c8d6;font-size:11.5px">mark doubtful readings</text><line x1="622" y1="596.0" x2="684" y2="596.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="583.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="600.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">audit/flags.csv</text><line x1="500.0" y1="618" x2="500.0" y2="628" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="380" y="628" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#ebcb8b;stroke-width:1.5"/><circle cx="402" cy="650.0" r="13" style="fill:#ebcb8b"/><text x="402" y="654.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">11</text><text x="424" y="646" style="fill:#e5e9f0;font-weight:600">Tape and manual checks</text><text x="424" y="662" style="fill:#c0c8d6;font-size:11.5px">logger vs hand readings</text><rect x="8" y="637.0" width="250" height="26" rx="13" style="fill:none;stroke:#c0c8d6"/><text x="133" y="654.0" text-anchor="middle" style="fill:#e5e9f0;font-size:11.5px">Field visits, manual measurements</text><line x1="260" y1="650.0" x2="376" y2="650.0" style="stroke:#c0c8d6;stroke-width:1.3" marker-end="url(#am)"/><line x1="622" y1="650.0" x2="684" y2="650.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="637.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="654.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">manual_check.csv, measurements.csv</text><line x1="500.0" y1="672" x2="500.0" y2="682" style="stroke:#e5e9f0;stroke-width:1.5" marker-end="url(#af)"/><rect x="326" y="690" width="312" height="56" rx="10" style="fill:#b48ead;opacity:.10"/><text x="0" y="0" transform="translate(348 696.0) rotate(90)" style="fill:#b48ead;font-weight:700;font-size:11px;letter-spacing:.6px">OUTPUT</text><rect x="380" y="696" width="240" height="44" rx="7" style="fill:#3b4252;stroke:#b48ead;stroke-width:1.5"/><circle cx="402" cy="718.0" r="13" style="fill:#b48ead"/><text x="402" y="722.5" text-anchor="middle" style="fill:#2e3440;font-weight:700">12</text><text x="424" y="714" style="fill:#e5e9f0;font-weight:600">Summaries and reports</text><text x="424" y="730" style="fill:#c0c8d6;font-size:11.5px">day, month, water year</text><line x1="622" y1="718.0" x2="684" y2="718.0" style="stroke:#a3be8c;stroke-width:1.3" marker-end="url(#ag)"/><rect x="690" y="705.0" width="262" height="26" rx="4" style="fill:#434c5e"/><text x="821" y="722.0" text-anchor="middle" style="fill:#e5e9f0;font:11px ui-monospace,Menlo,monospace">summaries/, report.html</text></svg></figure></figure>
 
+</section>
+<section class="plain">
 <h2 id="trace">One reading through the pipeline</h2>
 <p>A real reading from one of your fen wells (a HOBO U20-001-04, 30-minute logging), followed from the raw file to the outputs. Site and logger names are left out.</p>
 <h3>In the raw file</h3>
@@ -130,37 +219,121 @@ html{background:var(--bg)}
 </table>
 <h3>What the outputs look like</h3>
 <p><b>sites/&lt;deployment&gt;.csv</b> (the corrected record; some columns left out):</p>
-<table><tr><th>TIMESTAMP</th><th>unit_pres</th><th>pres_raw</th><th>pres_kpa</th><th>temp_c</th><th>baro_kpa</th><th>baro_source</th><th>dp_kpa</th><th>depth_m</th><th>dtw_m</th><th>elev_m</th><th>flag_depth_m</th></tr>
+<table class="wide"><tr><th>TIMESTAMP</th><th>unit_<wbr>pres</th><th>pres_<wbr>raw</th><th>pres_<wbr>kpa</th><th>temp_<wbr>c</th><th>baro_<wbr>kpa</th><th>baro_<wbr>source</th><th>dp_<wbr>kpa</th><th>depth_<wbr>m</th><th>dtw_<wbr>m</th><th>elev_<wbr>m</th><th>flag_<wbr>depth_<wbr>m</th></tr>
 <tr><td>2022-07-15 12:00:00</td><td>kPa</td><td>110.346</td><td>110.346</td><td>2.195</td><td>97.9390</td><td>primary</td><td>12.4070</td><td>1.2652</td><td>0.3548</td><td></td><td></td></tr>
 <tr><td>2022-07-15 12:30:00</td><td>kPa</td><td>110.346</td><td>110.346</td><td>2.195</td><td>97.9505</td><td>primary</td><td>12.3955</td><td>1.2640</td><td>0.3560</td><td></td><td></td></tr></table>
 <p><b>audit/flags.csv</b> (a flag from the same logger, at the visit when it was installed):</p>
 <table><tr><th>parameter</th><th>start</th><th>end</th><th>records</th><th>check</th><th>detail</th></tr>
-<tr><td>depth_m</td><td>2021-08-23 17:00</td><td>2021-08-23 17:00</td><td>1</td><td>service_visit</td><td>within 2 h of a download or field visit</td></tr></table>
+<tr><td>depth_m</td><td>2021-08-23 17:00</td><td>2021-08-23 17:00</td><td>1</td><td>service_visit</td><td>within 2 h of installation, a download or a field visit</td></tr></table>
 <p><b>audit/file_audit.csv</b> (this raw file): status ok, readings read 21,687, in output 21,687, dropped 0, reconciles TRUE.</p>
 <p><b>summaries/monthly.csv</b>:</p>
 <table><tr><th>parameter</th><th>year</th><th>month</th><th>mean</th><th>min</th><th>max</th><th>days</th><th>days_in_month</th><th>complete</th></tr>
 <tr><td>depth_m</td><td>2022</td><td>7</td><td>1.258</td><td>1.218</td><td>1.301</td><td>31</td><td>31</td><td>TRUE</td></tr></table>
 <p><b>summaries/water_year.csv</b>:</p>
-<table><tr><th>parameter</th><th>water_year</th><th>mean</th><th>min</th><th>date_min</th><th>max</th><th>date_max</th><th>range</th><th>days</th><th>complete</th></tr>
-<tr><td>depth_m</td><td>2021</td><td>1.238</td><td>1.212</td><td>2021-08-28</td><td>1.256</td><td>2021-09-15</td><td>0.044</td><td>23</td><td>FALSE</td></tr>
-<tr><td>depth_m</td><td>2022</td><td>1.389</td><td>1.174</td><td>2022-08-25</td><td>1.744</td><td>2022-05-01</td><td>0.570</td><td>365</td><td>TRUE</td></tr></table>
+<table class="wide"><tr><th>parameter</th><th>water_<wbr>year</th><th>mean</th><th>min</th><th>date_<wbr>min</th><th>max</th><th>date_<wbr>max</th><th>range</th><th>days</th><th>complete</th></tr>
+<tr><td>depth_<wbr>m</td><td>2021</td><td>1.238</td><td>1.212</td><td>2021-08-28</td><td>1.256</td><td>2021-09-15</td><td>0.044</td><td>23</td><td>FALSE</td></tr>
+<tr><td>depth_<wbr>m</td><td>2022</td><td>1.389</td><td>1.174</td><td>2022-08-25</td><td>1.744</td><td>2022-05-01</td><td>0.570</td><td>365</td><td>TRUE</td></tr></table>
 <p class="where">Water year 2021 is incomplete because the logger went in on 23 August 2021, 23 days before the season ended. The 2022 maximum on 1 May is the snowmelt peak.</p>
 <h3>What the plots look like</h3>
 <p>The same well's outputs drawn as the app shows them on Explore and in the site report.</p>
-<figure style="margin:10px 0 16px"><svg viewBox="0 0 860 300" role="img" aria-label="Depth above the sensor, daily mean" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
-<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Depth above the sensor, daily mean</text><line x1="380" x2="398" y1="12" y2="12" style="stroke:var(--blue);stroke-width:2.5"/><text x="404" y="16" style="fill:var(--fg)">depth_m</text>
-<line x1="60" x2="840" y1="260.0" y2="260.0" style="stroke:var(--rule)"/><text x="54" y="264.0" text-anchor="end" style="fill:var(--muted)">1.0</text><line x1="60" x2="840" y1="208.9" y2="208.9" style="stroke:var(--rule)"/><text x="54" y="212.9" text-anchor="end" style="fill:var(--muted)">1.2</text><line x1="60" x2="840" y1="157.8" y2="157.8" style="stroke:var(--rule)"/><text x="54" y="161.8" text-anchor="end" style="fill:var(--muted)">1.4</text><line x1="60" x2="840" y1="106.7" y2="106.7" style="stroke:var(--rule)"/><text x="54" y="110.7" text-anchor="end" style="fill:var(--muted)">1.6</text><line x1="60" x2="840" y1="55.6" y2="55.6" style="stroke:var(--rule)"/><text x="54" y="59.6" text-anchor="end" style="fill:var(--muted)">1.8</text><text x="80.5" y="276" text-anchor="middle" style="fill:var(--muted)">Sep 21</text><text x="184.6" y="276" text-anchor="middle" style="fill:var(--muted)">Nov 21</text><text x="288.7" y="276" text-anchor="middle" style="fill:var(--muted)">Jan 22</text><text x="389.4" y="276" text-anchor="middle" style="fill:var(--muted)">Mar 22</text><text x="493.5" y="276" text-anchor="middle" style="fill:var(--muted)">May 22</text><text x="597.6" y="276" text-anchor="middle" style="fill:var(--muted)">Jul 22</text><text x="703.5" y="276" text-anchor="middle" style="fill:var(--muted)">Sep 22</text><text x="807.6" y="276" text-anchor="middle" style="fill:var(--muted)">Nov 22</text><text x="14" y="150.0" transform="rotate(-90 14 150.0)" text-anchor="middle" style="fill:var(--muted)">depth_m (m)</text><text x="460.0" y="296" text-anchor="middle" style="fill:var(--muted)"></text><line x1="727.4" x2="727.4" y1="30" y2="260" style="stroke:var(--muted);stroke-dasharray:3 3"/><text x="731.4" y="44" style="fill:var(--muted)">water year 2022 ends</text><polyline points="65.1,201.5 66.8,202.2 68.5,203.3 70.2,203.3 71.9,203.8 73.7,203.8 75.4,203.5 77.1,200.5 78.8,196.9 80.5,196.9 82.2,196.9 83.9,197.9 85.6,198.7 87.3,198.9 89.0,198.2 90.7,197.1 92.4,197.1 94.1,196.6 95.8,196.9 97.5,197.4 99.3,197.6 101.0,197.1 102.7,197.6 104.4,196.9 106.1,197.4 107.8,197.6 109.5,196.1 111.2,190.2 112.9,189.2 114.6,189.5 116.3,189.7 118.0,189.2 119.7,190.2 121.4,190.5 123.2,191.8 124.9,191.3 126.6,189.7 128.3,189.7 130.0,189.5 131.7,187.9 133.4,189.5 135.1,189.2 136.8,187.4 138.5,187.2 140.2,188.2 141.9,188.4 143.6,188.2 145.3,189.2 147.0,188.4 148.8,188.4 150.5,189.5 152.2,189.2 153.9,189.7 155.6,190.5 157.3,190.7 159.0,190.7 160.7,191.3 162.4,192.0 164.1,192.8 165.8,192.5 167.5,193.8 169.2,193.3 170.9,193.3 172.6,194.1 174.4,193.8 176.1,193.3 177.8,193.3 179.5,193.0 181.2,192.8 182.9,192.3 184.6,192.5 186.3,192.3 188.0,192.8 189.7,193.3 191.4,194.1 193.1,194.1 194.8,193.3 196.5,192.3 198.2,190.5 200.0,189.2 201.7,188.2 203.4,185.6 205.1,185.6 206.8,185.9 208.5,184.4 210.2,182.8 211.9,182.6 213.6,180.8 215.3,176.2 217.0,175.9 218.7,175.9 220.4,173.1 222.1,169.8 223.9,169.3 225.6,169.0 227.3,168.0 229.0,168.0 230.7,167.5 232.4,169.3 234.1,166.5 235.8,166.2 237.5,166.0 239.2,164.2 240.9,171.1 242.6,169.0 244.3,167.7 246.0,164.7 247.7,163.4 249.5,161.9 251.2,162.9 252.9,161.9 254.6,160.6 256.3,160.6 258.0,163.7 259.7,161.9 261.4,162.6 263.1,163.7 264.8,159.8 266.5,159.3 268.2,159.8 269.9,158.8 271.6,158.3 273.3,159.8 275.1,159.1 276.8,162.1 278.5,162.1 280.2,160.8 281.9,159.3 283.6,161.9 285.3,161.9 287.0,161.6 288.7,158.8 290.4,157.0 292.1,159.3 293.8,159.1 295.5,161.6 297.2,156.8 298.9,155.7 300.7,155.5 302.4,157.3 304.1,153.7 305.8,152.4 307.5,152.2 309.2,152.2 310.9,150.6 312.6,150.1 314.3,149.3 316.0,151.6 317.7,153.2 319.4,149.6 321.1,149.3 322.8,148.8 324.6,147.3 326.3,146.8 328.0,144.7 329.7,145.5 331.4,143.0 333.1,142.4 334.8,140.9 336.5,140.1 338.2,139.1 339.9,139.6 341.6,140.1 343.3,141.9 345.0,141.9 346.7,138.6 348.4,137.3 350.2,136.8 351.9,136.3 353.6,136.3 355.3,135.5 357.0,133.5 358.7,134.0 360.4,133.5 362.1,131.5 363.8,132.0 365.5,132.2 367.2,132.0 368.9,129.7 370.6,129.4 372.3,128.1 374.0,130.2 375.8,127.9 377.5,127.9 379.2,124.3 380.9,123.8 382.6,122.8 384.3,122.5 386.0,124.6 387.7,121.7 389.4,121.0 391.1,120.2 392.8,119.4 394.5,118.9 396.2,117.4 397.9,117.1 399.6,113.8 401.4,114.8 403.1,116.4 404.8,115.6 406.5,113.8 408.2,112.3 409.9,112.5 411.6,111.5 413.3,110.5 415.0,109.0 416.7,107.9 418.4,107.4 420.1,106.9 421.8,106.2 423.5,104.1 425.3,103.1 427.0,102.8 428.7,102.1 430.4,101.3 432.1,101.0 433.8,100.5 435.5,98.7 437.2,98.7 438.9,97.7 440.6,96.4 442.3,96.4 444.0,95.4 445.7,94.4 447.4,93.6 449.1,91.8 450.9,91.1 452.6,90.8 454.3,90.1 456.0,89.3 457.7,89.0 459.4,89.5 461.1,89.3 462.8,88.8 464.5,88.0 466.2,87.2 467.9,86.0 469.6,85.5 471.3,85.2 473.0,85.2 474.7,84.2 476.5,83.4 478.2,82.4 479.9,81.9 481.6,80.9 483.3,80.3 485.0,78.0 486.7,76.8 488.4,75.5 490.1,73.7 491.8,71.9 493.5,71.7 495.2,80.1 496.9,101.3 498.6,119.4 500.4,122.8 502.1,121.0 503.8,123.5 505.5,129.7 507.2,133.0 508.9,135.0 510.6,132.2 512.3,129.4 514.0,129.2 515.7,131.2 517.4,131.7 519.1,134.0 520.8,137.3 522.5,140.7 524.2,143.2 526.0,146.3 527.7,149.3 529.4,151.1 531.1,152.2 532.8,152.9 534.5,153.2 536.2,155.0 537.9,155.7 539.6,157.0 541.3,159.1 543.0,161.1 544.7,163.4 546.4,166.0 548.1,168.0 549.8,169.3 551.6,170.0 553.3,173.1 555.0,174.9 556.7,175.2 558.4,172.6 560.1,167.2 561.8,167.2 563.5,165.7 565.2,166.5 566.9,169.3 568.6,171.6 570.3,172.9 572.0,174.9 573.7,176.4 575.4,177.5 577.2,178.5 578.9,180.0 580.6,180.8 582.3,176.7 584.0,174.9 585.7,176.9 587.4,178.7 589.1,180.5 590.8,181.3 592.5,182.8 594.2,183.8 595.9,184.1 597.6,184.4 599.3,185.6 601.1,186.4 602.8,188.2 604.5,189.5 606.2,190.2 607.9,191.0 609.6,192.0 611.3,192.0 613.0,190.2 614.7,189.0 616.4,189.5 618.1,190.7 619.8,191.8 621.5,192.0 623.2,193.6 624.9,194.6 626.7,196.1 628.4,196.4 630.1,196.9 631.8,197.6 633.5,197.6 635.2,198.4 636.9,198.9 638.6,199.4 640.3,200.2 642.0,199.7 643.7,200.5 645.4,200.5 647.1,201.0 648.8,201.2 650.5,202.0 652.3,201.5 654.0,202.2 655.7,203.0 657.4,203.3 659.1,204.0 660.8,204.3 662.5,202.8 664.2,204.0 665.9,205.1 667.6,204.5 669.3,205.3 671.0,205.8 672.7,206.1 674.4,206.3 676.1,206.8 677.9,207.1 679.6,208.1 681.3,209.4 683.0,209.7 684.7,209.9 686.4,210.4 688.1,210.7 689.8,211.4 691.5,212.2 693.2,212.2 694.9,211.2 696.6,208.6 698.3,208.4 700.0,208.1 701.8,208.1 703.5,208.4 705.2,208.9 706.9,209.1 708.6,209.7 710.3,209.4 712.0,209.4 713.7,210.4 715.4,210.2 717.1,210.9 718.8,210.9 720.5,211.7 722.2,211.7 723.9,211.7 725.6,212.5 727.4,212.7 729.1,212.7 730.8,213.0 732.5,213.2 734.2,213.2 735.9,213.2 737.6,213.7 739.3,213.5 741.0,214.3 742.7,214.5 744.4,215.3 746.1,215.5 747.8,215.8 749.5,215.3 751.2,215.8 753.0,215.8 754.7,216.0 756.4,215.5 758.1,217.3 759.8,217.1 761.5,216.8 763.2,217.3 764.9,216.8 766.6,217.1 768.3,217.1 770.0,217.6 771.7,218.1 773.4,218.6 775.1,221.2 776.8,217.8 778.6,219.6 780.3,219.4 782.0,219.4 783.7,217.8 785.4,216.6 787.1,217.1 788.8,217.1 790.5,216.8 792.2,217.6 793.9,217.6 795.6,217.1 797.3,217.6 799.0,218.3 800.7,217.1 802.5,217.6 804.2,218.1 805.9,217.6 807.6,217.8 809.3,218.3 811.0,218.6 812.7,218.1 814.4,218.1 816.1,218.1 817.8,219.1 819.5,218.3 821.2,218.1 822.9,217.8 824.6,217.3 826.3,216.6 828.1,214.5 829.8,214.3 831.5,213.0 833.2,213.2 834.9,214.0 836.6,213.2" style="fill:none;stroke:var(--blue);stroke-width:2"/><path d="M65.1,190.1 l6,6 l-6,6 l-6,-6z" style="fill:#fff;stroke:var(--fg)"/><text x="75.1" y="216.1" style="fill:var(--fg)">tape check at install: 1.250 m</text><text x="493.5" y="63.7" text-anchor="middle" style="fill:var(--fg)">snowmelt peak 1 May</text></svg></figure>
+<figure style="margin:10px 0 16px"><figure class="chart"><svg viewBox="0 0 860 300" role="img" aria-label="Water above the sensor, daily mean (illustration)" style="width:100%;height:auto;font:12px -apple-system,'Segoe UI',Helvetica,Arial,sans-serif"><rect width="860" height="300" style="fill:#2E3440"/>
+<text x="60.0" y="18.0" text-anchor="start" style="fill:#E5E9F0;font-weight:600;font-size:13px">Water above the sensor, daily mean</text>
+<text x="60.0" y="34.0" text-anchor="start" style="fill:#D8DEE9;font-size:11px">The worked example: a constructed record, not field data</text>
+<line x1="60" x2="840" y1="250.0" y2="250.0" style="stroke:#3B4252"/><text x="54.0" y="254.0" text-anchor="end" style="fill:#D8DEE9;">1.0</text>
+<line x1="60" x2="840" y1="200.0" y2="200.0" style="stroke:#3B4252"/><text x="54.0" y="204.0" text-anchor="end" style="fill:#D8DEE9;">1.2</text>
+<line x1="60" x2="840" y1="150.0" y2="150.0" style="stroke:#3B4252"/><text x="54.0" y="154.0" text-anchor="end" style="fill:#D8DEE9;">1.4</text>
+<line x1="60" x2="840" y1="100.0" y2="100.0" style="stroke:#3B4252"/><text x="54.0" y="104.0" text-anchor="end" style="fill:#D8DEE9;">1.6</text>
+<line x1="60" x2="840" y1="50.0" y2="50.0" style="stroke:#3B4252"/><text x="54.0" y="54.0" text-anchor="end" style="fill:#D8DEE9;">1.8</text>
+<text transform="translate(16 150.0) rotate(-90)" text-anchor="middle" style="fill:#D8DEE9">Water above sensor (m)</text>
+<text x="73.9" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Sep 2021</text>
+<text x="179.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Nov 2021</text>
+<text x="285.3" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Jan 2022</text>
+<text x="387.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Mar 2022</text>
+<text x="493.3" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">May 2022</text>
+<text x="599.1" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Jul 2022</text>
+<text x="706.5" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Sep 2022</text>
+<text x="812.3" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Nov 2022</text>
+<polyline points="60.0,187.7 61.7,187.0 63.5,187.3 65.2,186.8 66.9,187.0 68.7,186.8 70.4,186.8 72.1,185.8 73.9,186.5 75.6,185.8 77.3,185.8 79.1,186.3 80.8,186.8 82.5,187.7 84.3,186.8 86.0,186.8 87.7,187.5 89.5,188.7 91.2,188.0 92.9,187.0 94.7,186.5 96.4,187.0 98.1,186.3 99.9,184.5 101.6,184.5 103.3,185.0 105.1,186.5 106.8,186.0 108.5,186.0 110.3,184.8 112.0,184.5 113.7,183.8 115.5,184.0 117.2,184.0 118.9,185.0 120.7,184.8 122.4,185.3 124.1,185.3 125.9,184.8 127.6,184.0 129.3,183.0 131.1,182.5 132.8,182.8 134.5,183.0 136.3,182.8 138.0,182.8 139.7,181.3 141.5,181.3 143.2,180.5 144.9,180.8 146.7,180.8 148.4,180.0 150.1,179.8 151.9,179.0 153.6,179.2 155.3,179.0 157.1,178.8 158.8,179.8 160.5,179.8 162.3,179.8 164.0,178.0 165.7,177.8 167.5,176.8 169.2,176.8 170.9,176.2 172.7,176.2 174.4,175.2 176.1,175.0 177.9,174.5 179.6,175.2 181.3,175.2 183.1,175.0 184.8,174.8 186.5,174.5 188.3,174.2 190.0,173.2 191.7,172.5 193.5,172.8 195.2,173.0 196.9,172.2 198.7,171.5 200.4,170.5 202.1,171.0 203.9,171.2 205.6,170.5 207.3,170.2 209.1,169.5 210.8,169.0 212.5,168.2 214.3,167.0 216.0,167.2 217.7,167.0 219.5,166.5 221.2,166.5 222.9,166.8 224.7,167.2 226.4,167.0 228.1,166.2 229.9,165.0 231.6,163.5 233.3,162.8 235.1,163.0 236.8,162.2 238.5,162.5 240.3,161.8 242.0,162.2 243.7,161.5 245.5,161.0 247.2,160.5 248.9,160.0 250.7,159.5 252.4,159.2 254.1,159.0 255.9,159.2 257.6,158.8 259.3,158.2 261.1,156.0 262.8,156.0 264.5,155.2 266.3,156.5 268.0,156.0 269.7,155.5 271.5,154.8 273.2,153.8 274.9,153.5 276.7,152.8 278.4,153.0 280.1,153.0 281.9,152.0 283.6,150.5 285.3,149.8 287.1,149.2 288.8,148.5 290.5,147.0 292.3,147.0 294.0,147.0 295.7,146.5 297.5,145.8 299.2,145.2 300.9,145.2 302.7,144.8 304.4,144.5 306.1,143.8 307.9,143.0 309.6,141.8 311.3,141.5 313.1,141.0 314.8,140.5 316.5,140.2 318.3,139.5 320.0,139.8 321.7,138.2 323.5,137.8 325.2,136.8 326.9,137.0 328.7,136.5 330.4,136.0 332.1,135.0 333.9,134.0 335.6,133.0 337.3,132.5 339.1,132.5 340.8,132.0 342.5,130.5 344.3,129.5 346.0,129.0 347.7,128.5 349.5,128.5 351.2,127.0 352.9,126.7 354.7,125.7 356.4,126.2 358.1,124.8 359.9,124.0 361.6,122.8 363.3,123.3 365.1,122.8 366.8,121.8 368.5,120.5 370.3,120.0 372.0,119.8 373.7,119.0 375.5,118.3 377.2,117.5 378.9,117.5 380.7,116.8 382.4,115.5 384.1,114.8 385.9,115.0 387.6,114.5 389.3,113.5 391.1,112.0 392.8,112.0 394.5,111.5 396.3,110.5 398.0,109.0 399.7,107.5 401.5,106.5 403.2,106.0 404.9,106.3 406.7,106.3 408.4,105.0 410.1,102.5 411.9,102.5 413.6,102.8 415.3,103.3 417.1,102.3 418.8,101.3 420.5,100.3 422.3,99.5 424.0,97.8 425.7,96.8 427.5,95.5 429.2,95.5 430.9,94.8 432.7,94.0 434.4,92.8 436.1,92.0 437.9,91.8 439.6,91.5 441.3,90.8 443.1,89.5 444.8,89.5 446.5,88.2 448.3,87.2 450.0,85.8 451.7,85.2 453.5,84.8 455.2,83.5 456.9,82.8 458.7,81.2 460.4,81.5 462.1,80.8 463.9,80.5 465.6,79.2 467.3,77.5 469.1,76.7 470.8,75.5 472.5,75.7 474.3,75.2 476.0,74.0 477.7,72.2 479.5,70.5 481.2,70.7 482.9,69.5 484.7,68.7 486.4,67.2 488.1,67.0 489.9,67.0 491.6,66.5 493.3,65.7 495.1,69.2 496.8,72.0 498.5,74.7 500.3,77.8 502.0,81.2 503.7,84.8 505.5,87.8 507.2,90.2 508.9,92.8 510.7,94.8 512.4,97.0 514.1,100.8 515.9,103.8 517.6,105.8 519.3,107.0 521.1,109.5 522.8,113.5 524.5,116.0 526.3,117.8 528.0,118.8 529.7,120.8 531.5,123.0 533.2,125.0 534.9,126.5 536.7,128.5 538.4,130.8 540.1,132.5 541.9,134.0 543.6,134.8 545.3,137.8 547.1,140.0 548.8,141.8 550.5,142.8 552.3,143.8 554.0,144.5 555.7,146.2 557.5,148.8 559.2,151.0 560.9,152.2 562.7,152.8 564.4,154.5 566.1,154.5 567.9,156.0 569.6,157.0 571.3,159.2 573.1,159.8 574.8,160.8 576.5,162.5 578.3,164.0 580.0,164.8 581.7,165.0 583.5,165.8 585.2,167.0 586.9,168.0 588.7,169.0 590.4,169.5 592.1,170.8 593.9,172.0 595.6,173.2 597.3,173.8 599.1,175.0 600.8,176.0 602.5,176.2 604.3,176.8 606.0,177.5 607.7,178.5 609.5,179.5 611.2,179.5 612.9,180.3 614.7,180.5 616.4,181.5 618.1,181.8 619.9,181.8 621.6,182.8 623.3,182.8 625.1,184.0 626.8,184.8 628.5,185.8 630.3,186.0 632.0,186.3 633.7,187.0 635.5,187.7 637.2,187.7 638.9,187.7 640.7,189.0 642.4,190.2 644.1,191.0 645.9,191.2 647.6,191.0 649.3,190.7 651.1,191.2 652.8,192.0 654.5,192.5 656.3,192.5 658.0,192.0 659.7,193.2 661.5,193.5 663.2,193.7 664.9,193.2 666.7,194.0 668.4,194.5 670.1,195.5 671.9,195.5 673.6,195.7 675.3,195.7 677.1,195.5 678.8,196.2 680.5,197.0 682.3,198.0 684.0,198.8 685.7,198.5 687.5,198.5 689.2,198.2 690.9,198.5 692.7,197.7 694.4,198.5 696.1,198.8 697.9,199.5 699.6,198.5 701.3,198.5 703.1,198.2 704.8,200.0 706.5,199.5 708.3,200.5 710.0,200.0 711.7,201.2 713.5,201.2 715.2,200.5 716.9,199.2 718.7,199.8 720.4,200.5 722.1,201.0 723.9,200.8 725.6,201.2 727.3,202.0 729.1,202.0 730.8,201.5 732.5,201.0 734.3,201.2 736.0,202.2 737.7,202.2 739.5,202.8 741.2,203.0 742.9,202.8 744.7,202.5 746.4,202.5 748.1,203.0 749.9,203.0 751.6,202.5 753.3,203.0 755.1,203.5 756.8,204.0 758.5,204.0 760.3,204.5 762.0,204.8 763.7,204.2 765.5,203.2 767.2,204.0 768.9,204.8 770.7,205.5 772.4,205.5 774.1,205.8 775.9,206.0 777.6,205.5 779.3,206.2 781.1,206.0 782.8,206.0 784.5,204.5 786.3,204.2 788.0,204.8 789.7,205.2 791.5,206.0 793.2,205.0 794.9,205.0 796.7,205.2 798.4,205.5 800.1,205.5 801.9,205.2 803.6,204.8 805.3,205.0 807.1,205.2 808.8,206.8 810.5,206.5 812.3,206.0 814.0,206.2 815.7,206.5 817.5,207.2 819.2,206.0 820.9,205.2 822.7,204.8 824.4,204.8 826.1,205.8 827.9,205.5 829.6,206.2 831.3,205.8 833.1,206.5 834.8,206.2 836.5,206.2 838.3,206.8 840.0,206.0" style="fill:none;stroke:#81A1C1;stroke-width:2"/>
+<line x1="758.5" x2="758.5" y1="50" y2="250" style="stroke:#D8DEE9;stroke-dasharray:4 4"/>
+<text x="752.5" y="242.0" text-anchor="end" style="fill:#D8DEE9;">water year 2022 ends (30 Sep)</text>
+<circle cx="493.3" cy="65.7" r="4" style="fill:#88C0D0"/>
+<text x="501.3" y="69.7" text-anchor="start" style="fill:#E5E9F0;">snowmelt peak 1 May: 1.74 m</text>
+<rect x="56.0" y="183.5" width="8" height="8" transform="rotate(45 60.0 187.5)" style="fill:#E5E9F0"/>
+<text x="70.0" y="205.5" text-anchor="start" style="fill:#E5E9F0;">tape check at installation: 1.250 m</text>
+</svg></figure></figure>
 <p class="where">The water level rises through the winter while the logger stays above freezing, peaks with snowmelt on 1 May, and falls through the summer. The white diamond is the tape check at installation; the logger agrees with it.</p>
-<figure style="margin:10px 0 16px"><svg viewBox="0 0 860 280" role="img" aria-label="Barometric pressure, 15 July 2022" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
-<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Barometric pressure, 15 July 2022</text><line x1="470" x2="488" y1="12" y2="12" style="stroke:var(--fg);stroke-width:2.5"/><text x="494" y="16" style="fill:var(--fg)">barologger reading</text><line x1="620" x2="638" y1="12" y2="12" style="stroke:var(--muted);stroke-width:2.5;stroke-dasharray:4 3"/><text x="644" y="16" style="fill:var(--fg)">interpolated, every 30 min</text>
-<line x1="60" x2="840" y1="240.0" y2="240.0" style="stroke:var(--rule)"/><text x="54" y="244.0" text-anchor="end" style="fill:var(--muted)">97.6</text><line x1="60" x2="840" y1="193.3" y2="193.3" style="stroke:var(--rule)"/><text x="54" y="197.3" text-anchor="end" style="fill:var(--muted)">97.7</text><line x1="60" x2="840" y1="146.7" y2="146.7" style="stroke:var(--rule)"/><text x="54" y="150.7" text-anchor="end" style="fill:var(--muted)">97.8</text><line x1="60" x2="840" y1="100.0" y2="100.0" style="stroke:var(--rule)"/><text x="54" y="104.0" text-anchor="end" style="fill:var(--muted)">97.9</text><line x1="60" x2="840" y1="53.3" y2="53.3" style="stroke:var(--rule)"/><text x="54" y="57.3" text-anchor="end" style="fill:var(--muted)">98.0</text><text x="60.0" y="256" text-anchor="middle" style="fill:var(--muted)">00:00</text><text x="157.5" y="256" text-anchor="middle" style="fill:var(--muted)">03:00</text><text x="255.0" y="256" text-anchor="middle" style="fill:var(--muted)">06:00</text><text x="352.5" y="256" text-anchor="middle" style="fill:var(--muted)">09:00</text><text x="450.0" y="256" text-anchor="middle" style="fill:var(--muted)">12:00</text><text x="547.5" y="256" text-anchor="middle" style="fill:var(--muted)">15:00</text><text x="645.0" y="256" text-anchor="middle" style="fill:var(--muted)">18:00</text><text x="742.5" y="256" text-anchor="middle" style="fill:var(--muted)">21:00</text><text x="840.0" y="256" text-anchor="middle" style="fill:var(--muted)">24:00</text><text x="14" y="140.0" transform="rotate(-90 14 140.0)" text-anchor="middle" style="fill:var(--muted)">kPa</text><text x="460.0" y="276" text-anchor="middle" style="fill:var(--muted)"></text><polyline points="60.0,206.9 76.2,199.0 92.5,191.0 108.8,186.4 125.0,181.7 141.2,177.1 157.5,172.5 173.8,167.9 190.0,163.2 206.2,158.6 222.5,154.0 238.8,149.3 255.0,144.7 271.2,140.1 287.5,135.5 303.8,130.1 320.0,124.7 336.2,119.4 352.5,114.0 368.8,108.6 385.0,103.3 401.2,97.9 417.5,92.5 433.8,87.2 450.0,81.8 466.3,76.4 482.5,71.1 498.8,72.7 515.0,74.3 531.2,76.0 547.5,77.6 563.8,79.2 580.0,80.9 596.2,82.5 612.5,84.1 628.8,85.8 645.0,87.4 661.2,89.0 677.5,90.7 693.8,88.9 710.0,87.2 726.2,85.4 742.5,83.7 758.8,81.9 775.0,80.2 791.2,78.4 807.5,76.7 823.8,74.9" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 3"/><circle cx="92.5" cy="191.0" r="4.5" style="fill:var(--fg)"/><circle cx="287.5" cy="135.5" r="4.5" style="fill:var(--fg)"/><circle cx="482.5" cy="71.1" r="4.5" style="fill:var(--fg)"/><circle cx="677.5" cy="90.7" r="4.5" style="fill:var(--fg)"/><circle cx="450.0" cy="81.8" r="5" style="fill:none;stroke:var(--red);stroke-width:2"/><text x="472.0" y="123.8" text-anchor="start" style="fill:var(--fg)">12:00 → 97.939 kPa</text></svg></figure>
+<figure style="margin:10px 0 16px"><figure class="chart"><svg viewBox="0 0 860 300" role="img" aria-label="Barometric pressure on 15 July 2022, interpolated to the water logger's times (illustration)" style="width:100%;height:auto;font:12px -apple-system,'Segoe UI',Helvetica,Arial,sans-serif"><rect width="860" height="300" style="fill:#2E3440"/>
+<text x="60.0" y="18.0" text-anchor="start" style="fill:#E5E9F0;font-weight:600;font-size:13px">Barometric pressure, 15 July 2022</text>
+<text x="60.0" y="34.0" text-anchor="start" style="fill:#D8DEE9;font-size:11px">The worked example: 6-hourly barologger readings, interpolated to each half-hourly water reading</text>
+<circle cx="560" cy="14" r="4" style="fill:#E5E9F0"/>
+<text x="570.0" y="18.0" text-anchor="start" style="fill:#D8DEE9;">barologger reading</text>
+<line x1="690" x2="712" y1="14" y2="14" style="stroke:#D8DEE9;stroke-width:1.5;stroke-dasharray:4 3"/>
+<text x="718.0" y="18.0" text-anchor="start" style="fill:#D8DEE9;">interpolated</text>
+<line x1="60" x2="840" y1="240.0" y2="240.0" style="stroke:#3B4252"/><text x="54.0" y="244.0" text-anchor="end" style="fill:#D8DEE9;">97.6</text>
+<line x1="60" x2="840" y1="192.5" y2="192.5" style="stroke:#3B4252"/><text x="54.0" y="196.5" text-anchor="end" style="fill:#D8DEE9;">97.7</text>
+<line x1="60" x2="840" y1="145.0" y2="145.0" style="stroke:#3B4252"/><text x="54.0" y="149.0" text-anchor="end" style="fill:#D8DEE9;">97.8</text>
+<line x1="60" x2="840" y1="97.5" y2="97.5" style="stroke:#3B4252"/><text x="54.0" y="101.5" text-anchor="end" style="fill:#D8DEE9;">97.9</text>
+<line x1="60" x2="840" y1="50.0" y2="50.0" style="stroke:#3B4252"/><text x="54.0" y="54.0" text-anchor="end" style="fill:#D8DEE9;">98.0</text>
+<text transform="translate(16 145.0) rotate(-90)" text-anchor="middle" style="fill:#D8DEE9">Barometric pressure (kPa)</text>
+<text x="60.0" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">00:00</text>
+<text x="157.5" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">03:00</text>
+<text x="255.0" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">06:00</text>
+<text x="352.5" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">09:00</text>
+<text x="450.0" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">12:00</text>
+<text x="547.5" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">15:00</text>
+<text x="645.0" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">18:00</text>
+<text x="742.5" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">21:00</text>
+<text x="840.0" y="258.0" text-anchor="middle" style="fill:#D8DEE9;">24:00</text>
+<polyline points="60.0,206.7 76.2,198.4 92.5,190.1 108.8,185.4 125.0,180.7 141.2,176.0 157.5,171.3 173.8,166.6 190.0,161.9 206.2,157.2 222.5,152.4 238.8,147.7 255.0,143.0 271.2,138.3 287.5,133.6 303.8,128.1 320.0,122.7 336.2,117.2 352.5,111.7 368.8,106.3 385.0,100.8 401.2,95.4 417.5,89.9 433.8,84.4 450.0,79.0 466.3,73.5 482.5,68.0 498.8,69.7 515.0,71.4 531.2,73.0 547.5,74.7 563.8,76.4 580.0,78.0 596.2,79.7 612.5,81.4 628.8,83.0 645.0,84.7 661.2,86.3 677.5,88.0 693.8,86.3 710.0,84.7 726.2,83.0 742.5,81.4 758.8,79.7 775.0,78.0 791.2,76.4 807.5,74.7 823.8,73.0 840.0,71.4" style="fill:none;stroke:#D8DEE9;stroke-width:1.5;stroke-dasharray:4 3"/>
+<circle cx="92.5" cy="190.1" r="4.5" style="fill:#E5E9F0"/>
+<circle cx="287.5" cy="133.6" r="4.5" style="fill:#E5E9F0"/>
+<circle cx="482.5" cy="68.0" r="4.5" style="fill:#E5E9F0"/>
+<circle cx="677.5" cy="88.0" r="4.5" style="fill:#E5E9F0"/>
+<text x="92.5" y="180.1" text-anchor="middle" style="fill:#D8DEE9;font-size:11px">97.705</text>
+<text x="287.5" y="123.6" text-anchor="middle" style="fill:#D8DEE9;font-size:11px">97.824</text>
+<text x="482.5" y="58.0" text-anchor="middle" style="fill:#D8DEE9;font-size:11px">97.962</text>
+<text x="677.5" y="78.0" text-anchor="middle" style="fill:#D8DEE9;font-size:11px">97.920</text>
+<circle cx="450.0" cy="79.0" r="5.5" style="fill:none;stroke:#D08770;stroke-width:2"/>
+<text x="462.0" y="105.0" text-anchor="start" style="fill:#E5E9F0;font-weight:600">12:00 → 97.939 kPa</text>
+</svg></figure></figure>
 <p class="where">The barologger here records every 6 hours (white dots, with their values). For each 30-minute water reading the app draws a straight line between the two nearest readings (dashed). At 12:00 that gives 97.939 kPa, the value used in the trace above.</p>
-<figure style="margin:10px 0 16px"><svg viewBox="0 0 860 280" role="img" aria-label="Monthly mean depth, min to max" style="width:100%;height:auto;font:12px -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
-<text x="60" y="16" style="fill:var(--fg);font-weight:600;font-size:13px">Monthly mean depth, min to max</text><rect x="460" y="5" width="14" height="10" style="fill:var(--blue)"/><text x="480" y="15" style="fill:var(--fg)">complete month</text><rect x="600" y="5" width="14" height="10" style="fill:var(--blue);opacity:.35"/><text x="620" y="15" style="fill:var(--fg)">incomplete (under 90% of days)</text>
-<line x1="60" x2="840" y1="240.0" y2="240.0" style="stroke:var(--rule)"/><text x="54" y="244.0" text-anchor="end" style="fill:var(--muted)">1.0</text><line x1="60" x2="840" y1="187.5" y2="187.5" style="stroke:var(--rule)"/><text x="54" y="191.5" text-anchor="end" style="fill:var(--muted)">1.2</text><line x1="60" x2="840" y1="135.0" y2="135.0" style="stroke:var(--rule)"/><text x="54" y="139.0" text-anchor="end" style="fill:var(--muted)">1.4</text><line x1="60" x2="840" y1="82.5" y2="82.5" style="stroke:var(--rule)"/><text x="54" y="86.5" text-anchor="end" style="fill:var(--muted)">1.6</text><line x1="60" x2="840" y1="30.0" y2="30.0" style="stroke:var(--rule)"/><text x="54" y="34.0" text-anchor="end" style="fill:var(--muted)">1.8</text><text x="84.4" y="256" text-anchor="middle" style="fill:var(--muted)">Aug</text><text x="133.1" y="256" text-anchor="middle" style="fill:var(--muted)">Sep</text><text x="181.9" y="256" text-anchor="middle" style="fill:var(--muted)">Oct</text><text x="230.6" y="256" text-anchor="middle" style="fill:var(--muted)">Nov</text><text x="279.4" y="256" text-anchor="middle" style="fill:var(--muted)">Dec</text><text x="328.1" y="256" text-anchor="middle" style="fill:var(--muted)">Jan</text><text x="376.9" y="256" text-anchor="middle" style="fill:var(--muted)">Feb</text><text x="425.6" y="256" text-anchor="middle" style="fill:var(--muted)">Mar</text><text x="474.4" y="256" text-anchor="middle" style="fill:var(--muted)">Apr</text><text x="523.1" y="256" text-anchor="middle" style="fill:var(--muted)">May</text><text x="571.9" y="256" text-anchor="middle" style="fill:var(--muted)">Jun</text><text x="620.6" y="256" text-anchor="middle" style="fill:var(--muted)">Jul</text><text x="669.4" y="256" text-anchor="middle" style="fill:var(--muted)">Aug</text><text x="718.1" y="256" text-anchor="middle" style="fill:var(--muted)">Sep</text><text x="766.9" y="256" text-anchor="middle" style="fill:var(--muted)">Oct</text><text x="815.6" y="256" text-anchor="middle" style="fill:var(--muted)">Nov</text><text x="14" y="140.0" transform="rotate(-90 14 140.0)" text-anchor="middle" style="fill:var(--muted)">depth_m (m)</text><text x="460.0" y="276" text-anchor="middle" style="fill:var(--muted)">Aug 2021 to Nov 2022</text><rect x="67.3" y="180.7" width="34.1" height="59.3" style="fill:var(--blue);opacity:0.35"/><line x1="84.4" x2="84.4" y1="184.4" y2="173.8" style="stroke:var(--fg)"/><rect x="116.1" y="172.8" width="34.1" height="67.2" style="fill:var(--blue);opacity:1"/><line x1="133.1" x2="133.1" y1="178.6" y2="166.0" style="stroke:var(--fg)"/><rect x="164.8" y="168.9" width="34.1" height="71.1" style="fill:var(--blue);opacity:1"/><line x1="181.9" x2="181.9" y1="174.4" y2="162.8" style="stroke:var(--fg)"/><rect x="213.6" y="159.4" width="34.1" height="80.6" style="fill:var(--blue);opacity:1"/><line x1="230.6" x2="230.6" y1="173.1" y2="141.3" style="stroke:var(--fg)"/><rect x="262.3" y="139.7" width="34.1" height="100.3" style="fill:var(--blue);opacity:1"/><line x1="279.4" x2="279.4" y1="153.4" y2="132.4" style="stroke:var(--fg)"/><rect x="311.1" y="127.4" width="34.1" height="112.6" style="fill:var(--blue);opacity:1"/><line x1="328.1" x2="328.1" y1="143.4" y2="114.3" style="stroke:var(--fg)"/><rect x="359.8" y="108.2" width="34.1" height="131.8" style="fill:var(--blue);opacity:1"/><line x1="376.9" x2="376.9" y1="123.2" y2="96.9" style="stroke:var(--fg)"/><rect x="408.6" y="84.9" width="34.1" height="155.1" style="fill:var(--blue);opacity:1"/><line x1="425.6" x2="425.6" y1="99.8" y2="69.9" style="stroke:var(--fg)"/><rect x="457.3" y="61.0" width="34.1" height="179.0" style="fill:var(--blue);opacity:1"/><line x1="474.4" x2="474.4" y1="72.8" y2="45.5" style="stroke:var(--fg)"/><rect x="506.1" y="112.2" width="34.1" height="127.8" style="fill:var(--blue);opacity:1"/><line x1="523.1" x2="523.1" y1="142.1" y2="44.7" style="stroke:var(--fg)"/><rect x="554.8" y="152.3" width="34.1" height="87.7" style="fill:var(--blue);opacity:1"/><line x1="571.9" x2="571.9" y1="164.1" y2="141.6" style="stroke:var(--fg)"/><rect x="603.6" y="172.3" width="34.1" height="67.7" style="fill:var(--blue);opacity:1"/><line x1="620.6" x2="620.6" y1="182.8" y2="161.0" style="stroke:var(--fg)"/><rect x="652.3" y="185.4" width="34.1" height="54.6" style="fill:var(--blue);opacity:1"/><line x1="669.4" x2="669.4" y1="194.3" y2="178.3" style="stroke:var(--fg)"/><rect x="701.1" y="191.2" width="34.1" height="48.8" style="fill:var(--blue);opacity:1"/><line x1="718.1" x2="718.1" y1="197.7" y2="185.7" style="stroke:var(--fg)"/><rect x="749.8" y="196.4" width="34.1" height="43.6" style="fill:var(--blue);opacity:1"/><line x1="766.9" x2="766.9" y1="212.7" y2="188.8" style="stroke:var(--fg)"/><rect x="798.6" y="195.6" width="34.1" height="44.4" style="fill:var(--blue);opacity:0.35"/><line x1="815.6" x2="815.6" y1="200.4" y2="188.6" style="stroke:var(--fg)"/></svg></figure>
-<p class="where">August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.</p>
+<figure style="margin:10px 0 16px"><figure class="chart"><svg viewBox="0 0 860 300" role="img" aria-label="Monthly mean water above the sensor, minimum to maximum (illustration)" style="width:100%;height:auto;font:12px -apple-system,'Segoe UI',Helvetica,Arial,sans-serif"><rect width="860" height="300" style="fill:#2E3440"/>
+<text x="60.0" y="18.0" text-anchor="start" style="fill:#E5E9F0;font-weight:600;font-size:13px">Monthly mean, with the lowest to highest daily mean</text>
+<text x="60.0" y="34.0" text-anchor="start" style="fill:#D8DEE9;font-size:11px">The worked example, by month</text>
+<rect x="520" y="10" width="12" height="10" style="fill:#81A1C1"/>
+<text x="538.0" y="19.0" text-anchor="start" style="fill:#D8DEE9;">complete month</text>
+<rect x="650" y="10" width="12" height="10" style="fill:none;stroke:#7B88A1;stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="668.0" y="19.0" text-anchor="start" style="fill:#D8DEE9;">incomplete (under 90 % of days)</text>
+<line x1="60" x2="840" y1="250.0" y2="250.0" style="stroke:#3B4252"/><text x="54.0" y="254.0" text-anchor="end" style="fill:#D8DEE9;">1.0</text>
+<line x1="60" x2="840" y1="200.0" y2="200.0" style="stroke:#3B4252"/><text x="54.0" y="204.0" text-anchor="end" style="fill:#D8DEE9;">1.2</text>
+<line x1="60" x2="840" y1="150.0" y2="150.0" style="stroke:#3B4252"/><text x="54.0" y="154.0" text-anchor="end" style="fill:#D8DEE9;">1.4</text>
+<line x1="60" x2="840" y1="100.0" y2="100.0" style="stroke:#3B4252"/><text x="54.0" y="104.0" text-anchor="end" style="fill:#D8DEE9;">1.6</text>
+<line x1="60" x2="840" y1="50.0" y2="50.0" style="stroke:#3B4252"/><text x="54.0" y="54.0" text-anchor="end" style="fill:#D8DEE9;">1.8</text>
+<text transform="translate(16 150.0) rotate(-90)" text-anchor="middle" style="fill:#D8DEE9">Water above sensor (m)</text>
+<rect x="67.3" y="186.9" width="34.1" height="63.1" rx="2" style="fill:none;stroke:#7B88A1;stroke-width:1.5;stroke-dasharray:4 3"/><line x1="84.4" x2="84.4" y1="187.7" y2="185.8" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="84.4" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Aug</text>
+<rect x="116.1" y="185.9" width="34.1" height="64.1" rx="2" style="fill:#81A1C1"/><line x1="133.1" x2="133.1" y1="188.7" y2="183.8" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="133.1" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Sep</text>
+<rect x="164.8" y="179.7" width="34.1" height="70.3" rx="2" style="fill:#81A1C1"/><line x1="181.9" x2="181.9" y1="184.8" y2="174.5" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="181.9" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Oct</text>
+<rect x="213.6" y="170.4" width="34.1" height="79.6" rx="2" style="fill:#81A1C1"/><line x1="230.6" x2="230.6" y1="175.2" y2="165.0" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="230.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Nov</text>
+<rect x="262.3" y="157.9" width="34.1" height="92.1" rx="2" style="fill:#81A1C1"/><line x1="279.4" x2="279.4" y1="163.5" y2="150.5" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="279.4" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Dec</text>
+<rect x="311.1" y="141.6" width="34.1" height="108.4" rx="2" style="fill:#81A1C1"/><line x1="328.1" x2="328.1" y1="149.8" y2="132.5" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="328.1" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Jan</text>
+<rect x="359.8" y="123.2" width="34.1" height="126.8" rx="2" style="fill:#81A1C1"/><line x1="376.9" x2="376.9" y1="132.5" y2="114.8" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="376.9" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Feb</text>
+<rect x="408.6" y="102.5" width="34.1" height="147.5" rx="2" style="fill:#81A1C1"/><line x1="425.6" x2="425.6" y1="114.5" y2="91.5" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="425.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Mar</text>
+<rect x="457.3" y="78.2" width="34.1" height="171.8" rx="2" style="fill:#81A1C1"/><line x1="474.4" x2="474.4" y1="90.8" y2="66.5" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="474.4" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Apr</text>
+<rect x="506.1" y="105.6" width="34.1" height="144.4" rx="2" style="fill:#81A1C1"/><line x1="523.1" x2="523.1" y1="137.8" y2="65.7" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="523.1" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">May</text>
+<rect x="554.8" y="158.4" width="34.1" height="91.6" rx="2" style="fill:#81A1C1"/><line x1="571.9" x2="571.9" y1="173.8" y2="140.0" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="571.9" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Jun</text>
+<rect x="603.6" y="183.9" width="34.1" height="66.1" rx="2" style="fill:#81A1C1"/><line x1="620.6" x2="620.6" y1="191.2" y2="175.0" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="620.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Jul</text>
+<rect x="652.3" y="196.2" width="34.1" height="53.8" rx="2" style="fill:#81A1C1"/><line x1="669.4" x2="669.4" y1="200.0" y2="192.0" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="669.4" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Aug</text>
+<rect x="701.1" y="201.7" width="34.1" height="48.3" rx="2" style="fill:#81A1C1"/><line x1="718.1" x2="718.1" y1="204.0" y2="199.2" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="718.1" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Sep</text>
+<rect x="749.8" y="205.2" width="34.1" height="44.8" rx="2" style="fill:#81A1C1"/><line x1="766.9" x2="766.9" y1="206.8" y2="203.2" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="766.9" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Oct</text>
+<rect x="798.6" y="206.0" width="34.1" height="44.0" rx="2" style="fill:none;stroke:#7B88A1;stroke-width:1.5;stroke-dasharray:4 3"/><line x1="815.6" x2="815.6" y1="207.2" y2="204.8" style="stroke:#E5E9F0;stroke-width:1.5"/><text x="815.6" y="268.0" text-anchor="middle" style="fill:#D8DEE9;">Nov</text>
+<text x="181.9" y="286.0" text-anchor="middle" style="fill:#E5E9F0;">2021</text>
+<text x="571.9" y="286.0" text-anchor="middle" style="fill:#E5E9F0;">2022</text>
+</svg></figure></figure>
+<p class="where">August 2021 (8 days) and November 2022 (17 days) are drawn as dashed outlines because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.</p>
 
-<h2 id="files">1. Finding and pairing files</h2>
+</section>
+<section class="plain">
+<h2 id="files"><span class="no">1</span>Finding and pairing files</h2>
 <p>The app reads every file under the raw folders and records its size, checksum (MD5), serial, model, units and stated time zone.</p>
 <table>
 <tr><th>Status</th><th>Meaning</th><th>Read?</th></tr>
@@ -177,7 +350,9 @@ html{background:var(--bg)}
 <p class="where">Override any decision on <b>2 Bring in files</b> (Sort the selected files, or the Sorting rules): ignore a file, set its serial, its zone, or whether it is water or baro.</p>
 <p><b>Serial numbers</b> are normalised so the same logger matches everywhere: leading zeros are dropped and a typed prefix is reduced to the logger's own serial (for example <code>0012345678</code> → <code>12345678</code>).</p>
 
-<h2 id="time">2. Time stamps and time zones</h2>
+</section>
+<section class="plain">
+<h2 id="time"><span class="no">2</span>Time stamps and time zones</h2>
 <p>All times are stored at <b>UTC−7</b> (setting <code>base_offset_h = -7</code>), with no daylight saving.</p>
 <div class="f">t_out = t_file − (offset_file − offset_base) hours</div>
 <div class="ex"><b>Example.</b> A HOBO CSV header says <code>GMT-06:00</code>. A reading at <code>2025-06-01 12:00</code> becomes 12:00 − (−6 − (−7)) h = <b>11:00</b> at UTC−7.</div>
@@ -193,7 +368,9 @@ to UTC−6; nothing else changes by default. A file that states its zone is conv
 read in the zone set under <em>Zone of files that state none</em>; left blank, it is read in the base zone, as before. If no file in
 a run states its zone and none has been chosen, the app asks which zone the loggers' clocks were in before running (a script
 carries on in the base zone and lists it in the problems). The time-zone table and a zone set by hand still win.</p>
-<h2 id="units">3. Units to kPa and °C</h2>
+</section>
+<section class="plain">
+<h2 id="units"><span class="no">3</span>Units to kPa and °C</h2>
 <div class="f">p_kPa = p_raw × factor(unit)
 T_°C  = (T_°F − 32) × 5/9</div>
 <table><tr><th>Unit</th><th>kPa per unit</th><th>Unit</th><th>kPa per unit</th></tr>
@@ -209,11 +386,15 @@ T_°C  = (T_°F − 32) × 5/9</div>
 <div class="ex">
 <p><b>Example.</b> Solinst_555 (Barologger Gold, altitude 269 m): 269 / 826 = 0.326 m of water = <b>3.19 kPa</b> taken off every reading. Before this step it read 3.24–3.36 kPa above Pluvio_loggerbox, a Barologger Gold programmed with altitude 0 at the same site, in every year 2014–2021.</p>
 </div>
-<h2 id="stitch">4. Stitching each logger</h2>
+</section>
+<section class="plain">
+<h2 id="stitch"><span class="no">4</span>Stitching each logger</h2>
 <p>All downloads of one serial are joined into one record, in time order. Where two downloads overlap, the same time stamp is kept once. Records are never interpolated or invented here.</p>
 <p class="where">Output: <code>output/loggers/logger_&lt;serial&gt;.csv</code>. Overlaps and gaps are listed per file in <code>audit/file_audit.csv</code>.</p>
 
-<h2 id="baro">5. Barometric pressure</h2>
+</section>
+<section class="plain">
+<h2 id="baro"><span class="no">5</span>Barometric pressure</h2>
 <h3>Barologger limits</h3>
 <p>Barologger pressure outside <b>90–110 kPa</b> is removed (impossible at this elevation), and a jump of more than 1.5 kPa that comes straight back is flagged as a spike.</p>
 <h3>Stations: joining barologgers over the years</h3>
@@ -231,7 +412,9 @@ p_baro = p_fill + shift</div>
 <div class="ex"><b>Example.</b> Over their overlap the fill-in station reads a median 1.25 kPa above the primary, so shift = −1.25 kPa. A fill-in reading of 99.05 kPa is used as <b>97.80 kPa</b>. The column <code>baro_shift</code> records −1.25 and <code>baro_source</code> says <code>fill</code>.</div>
 <p class="where">Columns: <code>baro_kpa</code>, <code>baro_source</code> (primary, secondary, fill or blank), <code>baro_name</code>, <code>baro_serial</code>, <code>baro_shift</code>.</p>
 
-<h2 id="deploy">6. Deployments and seasons</h2>
+</section>
+<section class="plain">
+<h2 id="deploy"><span class="no">6</span>Deployments and seasons</h2>
 <p>Deployments come from the WL_Metadata workbook: one sheet per year, one row per logger and site. A year runs from the previous mid-September download sweep to its own:</p>
 <div class="f">season = calendar year + 1   if the time is after 15 Sept 12:00 of that year
 season = calendar year       otherwise</div>
@@ -240,9 +423,11 @@ season = calendar year       otherwise</div>
 <p>A logger can be redeployed in a new role: a water logger in some years and a barologger in others (by the workbook's Type). It is then a water logger inside its WLR (or Piezo) deployments and a barologger the rest of the time (a barologger has no removal date), and its barologger records feed that baro station. A workbook row that names a different make from the logger's Baro rows (a Solinst WLR row for a HOBO barologger) is two loggers sharing a short serial, so that row is set aside and listed under Problems. A logger in a <code>baro/</code> folder is always a barologger.</p>
 
 <h3 id="whole-record-a-site-across-seasons">Whole record: a site across seasons</h3>
-<p>In the Workbench, a site with more than one deployment has a <strong>Whole record</strong> first in its tree: every deployment there in time order, whichever logger it was, with a <code>serial</code> column. The time between deployments is left empty, never filled; on the chart it is hatched grey and labelled not deployed (the solid grey stays for removed and out-of-water stretches). A correction made on the Whole record goes to the logger of each row. The Site page opens it. It is the same series the run writes to <code>output/corrected/&lt;site&gt;.csv</code>.</p>
+<p>In the Workbench, a site with more than one deployment has a <strong class="ui">Whole record</strong> first in its tree: every deployment there in time order, whichever logger it was, with a <code>serial</code> column. The time between deployments is left empty, never filled; on the chart it is hatched grey and labelled not deployed (the solid grey stays for removed and out-of-water stretches). A correction made on the Whole record goes to the logger of each row. The Site page opens it. It is the same series the run writes to <code>output/corrected/&lt;site&gt;.csv</code>.</p>
 
-<h2 id="comp">7. Compensation: pressure to depth</h2>
+</section>
+<section class="plain">
+<h2 id="comp"><span class="no">7</span>Compensation: pressure to depth</h2>
 <p>A water level logger is not vented: it measures the water <i>plus</i> the air above it. Removing the air pressure leaves the water.</p>
 <div class="f">Δp (kPa)  = p_water − p_baro
 depth (m) = Δp × 1000 / (ρ × g)</div>
@@ -256,7 +441,9 @@ depth (m) = Δp × 1000 / (ρ × g)</div>
 <tr><td>water at 20 °C</td><td>998.207</td><td>1.4915</td></tr></table>
 The temperature effect is under 3 mm per metre of water, smaller than the logger's own accuracy, which is why fixed density is the default.</div>
 
-<h2 id="datum">8. Depth to water and elevation</h2>
+</section>
+<section class="plain">
+<h2 id="datum"><span class="no">8</span>Depth to water and elevation</h2>
 <p><b>T_ST</b> is the measured length from the reference point (the T-coupler, or the top of casing, TOC) to the logger's tip. <b>offset</b> is the distance from the tip up to the pressure sensor (Datum page, per serial or model; 0 if not entered). <b>z_ref</b> is the surveyed elevation of the reference point (dGPS, Datum page).</p>
 <div class="f">dtw_m  = T_ST − offset − depth                 (water below the reference point; positive = below)
 elev_m = z_ref − T_ST + offset + depth         (water surface elevation, m)</div>
@@ -266,13 +453,17 @@ elev = 285.400 − 1.800 + 0.020 + 1.250 = <b>284.870 m</b>.</div>
 <p>Which survey of the reference point is used is set by <code>dgps_pick</code>: <i>nearest</i> in time to the deployment (default), <i>latest</i>, or the <i>mean</i> of all surveys. Survey points without a FIX solution are left out. If the deployment's reference type (T or TOC) was never surveyed, the other is used and the summary says so.</p>
 <p>Without T_ST, <code>dtw_m</code> is blank; without a survey, <code>elev_m</code> is blank. Depth is still calculated.</p>
 
-<h2 id="ec">9. Specific conductance</h2>
+</section>
+<section class="plain">
+<h2 id="ec"><span class="no">9</span>Specific conductance</h2>
 <p>Conductivity rises about 2% per °C, so readings are normalised to 25 °C to be comparable:</p>
 <div class="f">SpC₂₅ = EC / (1 + α × (T − 25))         α = 0.0191 per °C (setting ec_alpha)</div>
 <div class="ex"><b>Example.</b> EC = 180 µS/cm at 4.0 °C: SpC = 180 / (1 + 0.0191 × (4 − 25)) = 180 / 0.5989 = <b>300.6 µS/cm</b>.</div>
 <p class="note">Solinst's software uses α = 0.02 by default; the app uses 0.0191 (the common value for natural waters, as in USGS practice). Where the logger already reports specific conductance, that value is used as it is.</p>
 
-<h2 id="qc">10. Quality checks and flags</h2>
+</section>
+<section class="plain">
+<h2 id="qc"><span class="no">10</span>Quality checks and flags</h2>
 <p><b>Removed</b> values are blanked and logged with the reason (you can see and restore them in Explore). <b>Flagged</b> values are kept and marked in a <code>flag_&lt;parameter&gt;</code> column. Default rules (<code>config/qc_rules.csv</code>, editable on the Quality rules page):</p>
 <table>
 <tr><th>Applies to</th><th>Parameter</th><th>Min</th><th>Max</th><th>Spike</th><th>Action</th><th>Why</th></tr>
@@ -300,7 +491,9 @@ elev = 285.400 − 1.800 + 0.020 + 1.250 = <b>284.870 m</b>.</div>
 </table>
 <div class="ex"><b>Example (below air).</b> p_water = 92.10 kPa while p_baro = 97.20 kPa → Δp = −5.10 kPa → depth = <b>−0.52 m</b>. A logger in air reads about the air pressure (depth ≈ 0); reading 5 kPa less is a sensor fault, so the reading is flagged <code>below_air</code>.</div>
 
-<h2 id="manual">11. Tape checks and manual measurements</h2>
+</section>
+<section class="plain">
+<h2 id="manual"><span class="no">11</span>Tape checks and manual measurements</h2>
 <h3>Tape check at each field visit</h3>
 <div class="f">h_tape     = T_ST − offset − tape_to_water
 difference = h_logger − h_tape</div>
@@ -313,12 +506,14 @@ difference = h_logger − h_tape</div>
 <div class="ex"><b>Example.</b> Logger depth 1.240 m at 12:00 and 1.250 m at 12:30; manual 1.230 m at 12:10. Logger at 12:10 = 1.240 + 0.010 × 10/30 = 1.2433 m → difference <b>+0.013 m</b>.</div>
 <p>They are shown as white diamonds on the plots (labelled with the difference) when <i>Show manual measurements</i> is on, and listed in <code>audit/measurements.csv</code>. They are reference points only and never alter the logger data.</p>
 
-<h2 id="drift">11b. Drift and offset correction (off by default)</h2>
+</section>
+<section class="plain">
+<h2 id="drift"><span class="no">11b</span>Drift and offset correction (off by default)</h2>
 <p>Nothing in this section changes a value unless you ask. The logger's own
 <code>depth_m</code>, <code>elev_m</code> and <code>dtw_m</code> are never overwritten: a correction adds
 <code>depth_m_corr</code>, <code>elev_m_corr</code>, <code>dtw_m_corr</code> and <code>drift_offset_m</code> beside
 them.</p>
-<p><strong>The offset.</strong> At each tape check the offset is the tape level minus the
+<p><strong class="lead">The offset.</strong> At each tape check the offset is the tape level minus the
 logger level (section 11), so a positive offset means the logger read too
 low. Between two checks it is prorated linearly with time, the usual
 practice for pressure transducers (&quot;a drift correction, usually a linear
@@ -330,7 +525,7 @@ the water level at every visit, and they are subject to drift, offset
 and slippage of the suspension [Cunningham and Schalk 2011, GWPD 16];
 a correction is only worth making when the cause is believed to be
 drift, which is why it is a choice.</p>
-<p><strong>How to turn it on.</strong></p>
+<p><strong class="lead">How to turn it on.</strong></p>
 <table>
 <thead>
 <tr>
@@ -381,20 +576,20 @@ drift, which is why it is a choice.</p>
 correction is logged in the audit trail (<code>correct</code>, <code>drift_correction</code>)
 and listed in <code>drift_corrections.csv</code> with the offsets, the largest one,
 whether it was applied and why not.</p>
-<p><strong>Corrected values.</strong> <code>depth_m_corr = depth_m + offset</code>, <code>elev_m_corr = elev_m + offset</code> and <code>dtw_m_corr = dtw_m − offset</code>. <em>Corrected files
+<p><strong class="lead">Corrected values.</strong> <code>depth_m_corr = depth_m + offset</code>, <code>elev_m_corr = elev_m + offset</code> and <code>dtw_m_corr = dtw_m − offset</code>. <em>Corrected files
 carry</em> in Settings chooses whether <code>corrected/</code> holds both versions
 (default), the logger's values only, or the corrected values in the
 usual columns. The Corrected data export has the same choice. A
 corrected value that differs from the logger's has WMO code 5, &quot;has been
 changed&quot;.</p>
-<p><strong>Tape against logger (every run, drift on or off).</strong> Each deployment with a tape check gets a row in <code>output/audit/tape_offsets.csv</code>: the number of checks, the median and largest difference (logger minus tape), the median tape and logger levels, T_ST and where it came from, the logger offset and the reference point. A pressure sensor drifts by a small share of its range a year (its maker's specification), so a median difference above <em>tape_warn_m</em> (Settings, default 0.05 m) more likely means a metadata error. Those rows are marked <code>check the metadata</code>, with a hint (the logger read about zero at the visit; the tape puts the water below the sensor; no T_ST; a steady offset at every check), and the problems list gets one line with their number. On Field visits, <em>Tape against logger</em> lists them: fix the hang length (<code>T_ST_m</code> on Deployment history), the logger offset (Datum and dGPS, Logger offsets) or the reference, and run again; or select them and press <em>Keep selected as they are</em>, which adds a <code>keep</code> row to <code>drift_corrections.csv</code> and marks them <code>kept as it is</code> on the next run. Nothing is changed either way. On the test record 119 of 159 deployments are above 5 cm.</p>
-<p><strong>On the test record.</strong> With the tape offsets applied to the
+<p><strong class="lead">Tape against logger (every run, drift on or off).</strong> Each deployment with a tape check gets a row in <code>output/audit/tape_offsets.csv</code>: the number of checks, the median and largest difference (logger minus tape), the median tape and logger levels, T_ST and where it came from, the logger offset and the reference point. A pressure sensor drifts by a small share of its range a year (its maker's specification), so a median difference above <em>tape_warn_m</em> (Settings, default 0.05 m) more likely means a metadata error. Those rows are marked <code>check the metadata</code>, with a hint (the logger read about zero at the visit; the tape puts the water below the sensor; no T_ST; a steady offset at every check), and the problems list gets one line with their number. On Field visits, <em>Tape against logger</em> lists them: fix the hang length (<code>T_ST_m</code> on Deployment history), the logger offset (Datum and dGPS, Logger offsets) or the reference, and run again; or select them and press <em>Keep selected as they are</em>, which adds a <code>keep</code> row to <code>drift_corrections.csv</code> and marks them <code>kept as it is</code> on the next run. Nothing is changed either way. On the test record 119 of 159 deployments are above 5 cm.</p>
+<p><strong class="lead">On the test record.</strong> With the tape offsets applied to the
 2023–2025 data, the largest offset in a deployment had a median of 0.15 m
 and was above 3 cm in 131 of 159 deployments (1.7 m at most). Offsets of
 that size are more likely a wrong T_ST, logger offset or reference
 elevation than drift, so check those first; this is the reason the
 correction stays off by default.</p>
-<p><strong>WMO quality codes and the bulk export.</strong> Exports give each value a
+<p><strong class="lead">WMO quality codes and the bulk export.</strong> Exports give each value a
 <code>_qc</code> column with the code of WMO BUFR table 0 33 020 [WMO]: readings in
 the air or out of the water are 3 (wrong); below the air pressure,
 freezing, near a service visit or without a barometric reading are 2
@@ -404,18 +599,20 @@ codes of the depth and pressure they are computed from. On the Reports
 and export page, <em>Select all sites</em> and <em>Export one file per site (ZIP)</em>
 give every site at once: one corrected-data CSV per site, all sites in
 one file, and a readme.</p>
-<h2 id="11c-missing-values-typed-by-hand-or-interpolated">11c. Missing values typed by hand or interpolated</h2>
+</section>
+<section class="plain">
+<h2 id="11c-missing-values-typed-by-hand-or-interpolated"><span class="no">11c</span>Missing values typed by hand or interpolated</h2>
 <p>Missing values are never filled unless a person asks. In the Workbench inspector, a selected run of missing values can be:</p>
 <ul>
-<li><strong>typed by hand</strong>, with a reason: a Corrections over a period row with action <code>set_value</code>. It fills missing values only, never replaces a value, and is flagged <code>hand_value</code>.</li>
-<li><strong>filled by linear interpolation</strong>, through the period tool (action <code>interpolate</code>), flagged <code>period_interpolate</code>. The gap's length is shown before the row is added; no length limit is set.</li>
+<li><strong class="ui">typed by hand</strong>, with a reason: a Corrections over a period row with action <code>set_value</code>. It fills missing values only, never replaces a value, and is flagged <code>hand_value</code>.</li>
+<li><strong class="ui">filled by linear interpolation</strong>, through the period tool (action <code>interpolate</code>), flagged <code>period_interpolate</code>. The gap's length is shown before the row is added; no length limit is set.</li>
 </ul>
-<div class="f">
-<p>v(t) = v_b + (v_e − v_b) × (t − t_b) / (t_e − t_b)</p>
-</div>
+<div class="f">v(t) = v_b + (v_e − v_b) × (t − t_b) / (t_e − t_b)</div>
 <p>where t_b is the last value before the gap and t_e the first after it. Both kinds are kept apart in the audit trail and counted in Corrections applied. Linear interpolation is sound for short gaps (hours to a day) and poor for long ones (Meggiorin et al. 2023; Niedzielski et al. 2023); estimated values are marked as estimated in the record (Wagner et al. 2006; WMO 2010).</p>
 
-<h2 id="summ">12. Daily, monthly and water-year summaries</h2>
+</section>
+<section class="plain">
+<h2 id="summ"><span class="no">12</span>Daily, monthly and water-year summaries</h2>
 <div class="f">a day counts      if records that day ≥ 0.8 × usual records per day   (min_complete)
 usual per day     = 86400 / logging interval (s)
 a month is complete if its days ≥ 0.9 × days in the month            (year_complete)
@@ -423,7 +620,9 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 <div class="ex"><b>Example.</b> 30-minute logging → 48 records a day; a day needs at least 0.8 × 48 = 38.4, so <b>39</b> records. September 2024 with 26 good days: 26 ≥ 0.9 × 30 = 27? No → <b>incomplete</b>.</div>
 <p>Monthly: mean, min, max and days per site and parameter. Water year (1 October to 30 September by default; the project may set another start): mean, min and its date, max and its date, range and days. Two loggers at one site on the same day are pooled. Files: <code>output/summaries/monthly.csv</code>, <code>water_year.csv</code>.</p>
 
-<h2 id="defaults">13. ovid defaults with no published source</h2>
+</section>
+<section class="plain">
+<h2 id="defaults"><span class="no">13</span>ovid defaults with no published source</h2>
 <p>The methods above have published sources; these limits and defaults do
 not. They are ovid's own choices, kept as settings where they can be
 changed, and should be reported as such.</p>
@@ -509,6 +708,8 @@ changed, and should be reported as such.</p>
 </tbody>
 </table>
 
+</section>
+<section class="plain">
 <h2 id="outputs">Reading the outputs</h2>
 <table>
 <tr><th>File</th><th>What it holds</th></tr>
@@ -527,6 +728,8 @@ changed, and should be reported as such.</p>
 <tr><td>report.html</td><td>The run report; site reports from 7 Report</td></tr>
 </table>
 
+</section>
+<section class="plain">
 <h2 id="processing-levels-and-the-dataset-card">Processing levels and the Dataset card</h2>
 <h3 id="processing-levels">Processing levels</h3>
 <p>Every export names its processing level, on one scale for every ovid app, by stage of correction:</p>
@@ -574,8 +777,10 @@ changed, and should be reported as such.</p>
 <p>A file's level follows from the WMO quality codes of its values, the review and the approval: computed values are L4; an approved record, or estimated values (code 6) in it, L3; every flag decided, or corrected values (code 5), L2; flagged values (codes 1, 2, 3) L1B; checked values (0, 7) L1A; otherwise L0. WLR takes the approval from the export's approval setting. Every level above L0 is provisional until reviewed and approved, and the label says so, for example <code>L1B flagged (provisional)</code>. L3 is the refined record, not gridded data as in NASA's scheme. The level is the <code>processing_level</code> attribute of each NetCDF export and is listed in each export's README.</p>
 <p>Sources: NASA Earthdata data processing levels (L0, L1A, L1B); ARM data levels; Horsburgh et al. (2008) ODM quality control levels; Zahumenský (2004); Estévez et al. (2011).</p>
 <h3 id="dataset-card">Dataset card</h3>
-<p><strong>Settings &gt; Dataset</strong> holds who made the data and how it may be used: title, summary, creator, email, institution and license. It is kept in the project (<code>config/dataset.json</code>) and written into every NetCDF export as ACDD attributes (<code>title</code>, <code>summary</code>, <code>creator_name</code>, <code>creator_email</code>, <code>institution</code>, <code>license</code>); a blank field is left out. NetCDF exports follow CF 1.8 (timeSeries).</p>
+<p><strong class="ui">Settings &gt; Dataset</strong> holds who made the data and how it may be used: title, summary, creator, email, institution and license. It is kept in the project (<code>config/dataset.json</code>) and written into every NetCDF export as ACDD attributes (<code>title</code>, <code>summary</code>, <code>creator_name</code>, <code>creator_email</code>, <code>institution</code>, <code>license</code>); a blank field is left out. NetCDF exports follow CF 1.8 (timeSeries).</p>
 
+</section>
+<section class="plain">
 <h2 id="sensors">Sensor notes</h2>
 <p>From the makers' manuals. FS = full scale (the top of the logger's range). All are absolute (non-vented) pressure loggers, so all need barometric compensation.</p>
 <table>
@@ -597,6 +802,8 @@ changed, and should be reported as such.</p>
 <li><b>Barologger placement.</b> Keep it in the shade and dry, at a similar elevation to the wells. Every 100 m of elevation difference changes air pressure by about 1.2 kPa (about 12 cm of water), which is why fill-ins are shifted.</li>
 </ul>
 
+</section>
+<section class="plain">
 <h2 id="values">Reasonable values</h2>
 <p>Typical ranges for northern boreal peatland wells and ponds at about 250–300 m elevation. Use them to spot problems, not as limits; your sites may differ.</p>
 <table>
@@ -615,29 +822,33 @@ changed, and should be reported as such.</p>
 </table>
 <p class="where">Print just this page and keep it in the field book.</p>
 
+</section>
+<section class="plain">
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
-<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
+<p>The app has two views of the same project, data and edits: the <strong class="ui">Standard</strong> view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More), and the <strong class="ui">Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
 <h3>Check the data</h3>
-<ul><li>Each site gets a page with a plot of its main series and cards for its depth, change, peak, temperature, tape checks and problems. What the automatic checks found is listed on <strong>4 Needs you</strong>: decide each one (Keep, Remove…, Correct… or Not a problem); each decision is saved as it is made, and the next run applies it.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
+<ul><li>Each site gets a page with a plot of its main series and cards for its depth, change, peak, temperature, tape checks and problems. What the automatic checks found is listed on <strong>4 Needs you</strong>: decide each one (Keep, Remove…, Correct… or Not a problem); each decision is saved as it is made, and the next run applies it.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong class="ui">Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>
-<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong>Remove</strong>, <strong>Flag</strong> and <strong>Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
+<ul><li>The tree on the left picks a site, station, deployment or table and its parameters; the chart shows one panel per parameter, the grid every value with its unit under the heading.</li><li>Dashed red lines on a panel are the quality-rule limits (Settings: quality rules) when they fall within the view; each panel is labelled with its unit.</li><li>Shift + drag (or right-drag) on the chart, or a drag in the grid, selects values; Shift + click adds a value, Esc clears the selection. A plain drag on the chart zooms. The inspector on the right lists the selection's count, mean, standard deviation, minimum, maximum, missing, removed and flagged values.</li><li><strong class="ui">Remove</strong>, <strong class="ui">Flag</strong> and <strong class="ui">Restore</strong> write rows to the set-up tables (manual removals) with a reason and initials. They show as pending until the next run applies them; the old values stay in the audit trail and raw files are never changed.</li></ul>
 <h3>When something goes wrong</h3>
 <ul><li>If part of a page fails, a notice says so with a short reference (E- and six characters) and the app carries on. The life-ring button collects versions, logs and the set-up into a troubleshooting zip (no raw data) to send with the reference.</li><li>If the output folder is deleted or moved while the app is open, the pages notice within seconds and show what is left; run again to rebuild it.</li><li>A project folder that cannot be written to (read-only, a locked or full drive), or a file where the output, cache or config folder should be, stops the run before anything is changed, with what to do.</li><li>A set-up table that is damaged or was saved by another program with columns missing is shown with those columns added empty and a notice; nothing changes in the file until it is saved.</li></ul>
 <h3>HOBO .hobo files</h3>
 <p>U20 and U20L .hobo files are read directly when there is no HOBOware CSV export beside them: their header gives the launch time, start delay, logging interval and the logger's own calibration, and each record gives temperature (Steinhart-Hart) and absolute pressure. Checked against the HOBOware export of 200 downloads, 99.4% of values were identical. Other HOBO models still need the CSV export; 2 Bring in files says so for each file.</p>
 <h3>Configuration</h3>
 <p>Configuration (More) exports every set-up table and the settings as one zip, and imports a zip, a single set-up CSV (recognised by its columns) or a workbook with one sheet per table. Nothing changes until the import is applied; the tables it replaces are kept in config/history.</p>
+</section>
+<section class="plain">
 <h2 id="plots-set-up-tables-and-needs-you">Plots, set-up tables and Needs you</h2>
 <h3 id="plot-gestures">Plot gestures</h3>
 <p>The same on every time plot in both views, the Workbench chart and its point charts.</p>
 <ul>
-<li><strong>Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong>Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
-<li><strong>Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
+<li><strong class="ui">Drag left to right</strong> zooms in on the dragged stretch (a box on depth, scatter and section plots). <strong class="ui">Drag right to left</strong> zooms out, twice as wide each time, up to the whole record. A drag shorter than 6 px is a click.</li>
+<li><strong class="ui">Shift + drag</strong> (or right-drag) selects: a time stretch across all panels, or a box on depth, scatter and section plots. Click selects one record; Shift + click adds one (or drops it, if already selected); Esc clears.</li>
 <li>The wheel or a pinch zooms at the pointer; Shift + wheel or a sideways swipe scrolls. Drag the time axis or the whole-record strip, or hold Space and drag, to move along. Double-click shows the whole record; Backspace returns to the previous view.</li>
 <li>Maps keep map habits: drag moves, click picks one item, Shift + drag draws a selection box.</li>
 </ul>
 <h3 id="yesno-picks-in-set-up-tables">Yes/No picks in set-up tables</h3>
-<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong>Yes</strong> or <strong>No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
+<p>Columns that hold yes or no (<code>enabled</code>, <code>show</code>, <code>identifies</code>, <code>include</code>, <code>active</code>, <code>hidden</code>) show <strong class="ui">Yes</strong> or <strong class="ui">No</strong> with a pick, in the Standard sheet and the Workbench grid alike. Typed or imported values are read in any case: yes, y, true, t, 1, on and no, n, false, f, 0, off. They are written <code>TRUE</code> or <code>FALSE</code>. Any other text is marked as an error, and the table cannot be applied until it is fixed.</p>
 <h3 id="needs-you-by-site">Needs you by site</h3>
 <p>Needs you (the Workbench pop-up and the review list) lists what waits on a person, grouped by site (the logger serial where no site is known; findings about the set-up tables or the project under Project). The same check on nearby days is one line. Each line says what to do and has a button that does it:</p>
 <table>
@@ -668,6 +879,8 @@ changed, and should be reported as such.</p>
 </table>
 <p>The pop-up can also be grouped by what to do.</p>
 
+</section>
+<section class="plain">
 <h2 id="trouble">Troubleshooting</h2>
 <table>
 <tr><th>Message or symptom</th><th>What it means</th><th>What to do</th></tr>
@@ -685,6 +898,8 @@ changed, and should be reported as such.</p>
 <tr><td>Run stopped: records do not reconcile</td><td>A logger's counts do not add up (a bug or an edited file mid-run)</td><td>Run again; if it persists, send the audit folder</td></tr>
 </table>
 
+</section>
+<section class="plain">
 <h2 id="glossary">Glossary</h2>
 <table>
 <tr><td><b>Absolute (non-vented) logger</b></td><td>Measures total pressure (water + air); needs a barologger to remove the air.</td></tr>
@@ -703,6 +918,8 @@ changed, and should be reported as such.</p>
 <tr><td><b>UTC−7</b></td><td>The single time zone all data are stored in (Mountain Standard Time, no daylight saving).</td></tr>
 </table>
 
+</section>
+<section class="plain">
 <h2 id="refs">References</h2>
 <ul>
 <li>Onset, <i>HOBO U20 Water Level Logger</i> (U20-001-0x) and <i>HOBO U20L Water Level Logger</i> manuals: <code>WLR/reference_manuals/U20.pdf</code>, <code>U20L.pdf</code>; <a href="https://www.onsetcomp.com">onsetcomp.com</a>.</li>
@@ -726,4 +943,5 @@ changed, and should be reported as such.</p>
 <li>Chalmers University / EGU23-2605 (2023). Assessing automated gap imputation of regional scale groundwater level data sets with typical gap patterns. <a href="https://research.chalmers.se/publication/535309">research.chalmers.se</a></li>
 <li>Niedzielski T., et al. (2023). EGU23-9962: gap filling of hourly water levels. <a href="https://meetingorganizer.copernicus.org/EGU23/EGU23-9962.html">meetingorganizer.copernicus.org</a></li>
 </ul>
+</section>
 </main></body></html>

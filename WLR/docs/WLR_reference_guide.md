@@ -84,7 +84,7 @@ A real reading from one of your fen wells (a HOBO U20-001-04, 30-minute logging)
 
 | parameter | start            | end              | records | check         | detail                                  |
 |-----------|------------------|------------------|---------|---------------|-----------------------------------------|
-| depth_m   | 2021-08-23 17:00 | 2021-08-23 17:00 | 1       | service_visit | within 2 h of a download or field visit |
+| depth_m   | 2021-08-23 17:00 | 2021-08-23 17:00 | 1       | service_visit | within 2 h of installation, a download or a field visit |
 
 **audit/file_audit.csv** (this raw file): status ok, readings read 21,687, in output 21,687, dropped 0, reconciles TRUE.
 
@@ -117,7 +117,7 @@ The barologger here records every 6 hours (white dots, with their values). For e
 
 ![monthly](img/monthly.svg)
 
-August 2021 (8 days) and November 2022 (17 days) are pale because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.
+August 2021 (8 days) and November 2022 (17 days) are drawn as dashed outlines because they hold under 90% of their days. The bars show each month's mean and the whiskers its lowest and highest daily mean. All three charts are drawn from the worked example by docs/charts.R.
 
 ## 1. Finding and pairing files
 

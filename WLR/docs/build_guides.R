@@ -10,8 +10,7 @@ suppressMessages({ library(commonmark); library(chromote) })
 DOCS <- "docs"
 REF_HTML <- file.path(DOCS, "WLR_reference_guide.html")
 
-ref_style <- function() { x <- readLines(REF_HTML, warn = FALSE, encoding = "UTF-8")
-  paste(x[seq(grep("<style>", x, fixed = TRUE)[1] + 1, grep("</style>", x, fixed = TRUE)[1] - 1)], collapse = "\n") }
+ref_style <- function() paste(readLines(file.path(DOCS, "guide_base.css"), warn = FALSE, encoding = "UTF-8"), collapse = "\n")   # colours and type
 # The guides' own design on the reference guide's colours: a title block, a contents of linked task cards, each task a card
 # with its number, callouts for When / Result / Check / Note, the figure markers (1) drawn as the same badges as in the
 # figures, figure captions, and a running footer with the page number in the PDF.
@@ -74,7 +73,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 @media print{html,body{background:var(--bg)}body{font-size:11.2pt;line-height:1.62;orphans:3;widows:3}main{padding:0 17mm}h1{font-size:28px}
   section.task{border:0;border-radius:0;padding:0;margin:0 0 10mm;box-shadow:none;break-before:auto}
   section.task h2{break-after:avoid;margin-top:0;padding-top:4mm}section.task h2,section.task .co.when{break-after:avoid}
-  .toc,.grp,.co,figure,img,li,p,.head{break-inside:avoid;page-break-inside:avoid}figure{box-shadow:none}li{line-height:1.5}.head{margin-bottom:18px}}"
+  .toc,.grp,.co,figure,img,li,p,.head{break-inside:avoid;page-break-inside:avoid}figure{box-shadow:none;border-radius:0}*{box-shadow:none!important;text-shadow:none!important}li{line-height:1.5}.head{margin-bottom:18px}}"
 
 md_body <- function(md) markdown_html(paste(readLines(md, warn = FALSE, encoding = "UTF-8"), collapse = "\n"), extensions = TRUE)
 APP_VER <- local({ x <- grep("^APP_VERSION <- ", readLines("wlr_pipeline.R", warn = FALSE), value = TRUE)[1]; sub('.*"([^"]+)".*', "\\1", x) })
@@ -141,7 +140,7 @@ build_guide <- function(md) {
 # The reference guide: the sections below rendered from the .md into its HTML (the rest of that HTML is kept as it is). A
 # section the HTML has is replaced, between its <h2> and the next; one it lacks goes in before the section that follows it.
 REF_SYNC <- c(quick = "Quick start", defaults = "13. ovid defaults with no published source")
-build_reference <- function(md = file.path(DOCS, "WLR_reference_guide.md")) {
+build_reference_sync <- function(md = file.path(DOCS, "WLR_reference_guide.md")) {
   x <- readLines(md, warn = FALSE, encoding = "UTF-8"); h <- grep("^## ", x); titles <- sub("^## ", "", x[h])
   for (id in names(REF_SYNC)) {
     i <- h[titles == REF_SYNC[[id]]]; j <- c(h[h > i], length(x) + 1)[1] - 1
@@ -154,6 +153,70 @@ build_reference <- function(md = file.path(DOCS, "WLR_reference_guide.md")) {
            nid <- sub('.*id="([^"]+)".*', "\\1", html[b + length(sec)]); li <- grep(sprintf('href="#%s"', nid), html, fixed = TRUE)[1]   # and in the contents
            if (!is.na(li)) html <- append(html, sprintf('<li><a href="#%s">%s</a></li>', id, REF_SYNC[[id]]), li - 1) }
     writeLines(html, REF_HTML, useBytes = TRUE) }
+  REF_HTML
+}
+
+# The reference guide in the guides' design: title block, contents, numbered section heads, app controls and numbers styled,
+# formulas inset in monospace, worked examples as boxes, tables and charts as in a textbook, the charts from docs/img.
+REF_CSS <- "
+.f{background:var(--well);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--accent);border-radius:8px;padding:12px 16px;margin:14px 0;
+  font:12.5px/1.7 'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;color:#e5e9f0;white-space:pre;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.ex{border:1px solid var(--rule2);border-left:3px solid var(--green);border-radius:8px;padding:10px 16px;margin:14px 0;background:rgba(163,190,140,.05)}
+.ex b:first-child,.ex strong:first-child{color:var(--green);background:none;border:0;padding:0}
+.note{border:1px solid var(--rule2);border-left:3px solid var(--amber);border-radius:8px;padding:10px 16px;background:rgba(235,203,139,.06)}
+main table{display:table;width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;line-height:1.5;margin:14px 0 18px;border:1px solid var(--rule2);border-radius:10px;overflow:hidden}
+main th{background:var(--sheet);color:#fff;font-weight:650;text-align:left;padding:8px 10px;border:0;border-bottom:1px solid var(--rule2)}
+main td{padding:7px 10px;border:0;border-top:1px solid rgba(255,255,255,.05);vertical-align:top}
+main tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+main table code{white-space:normal}
+main h3{font-size:17px;margin:26px 0 8px;color:#fff;font-weight:650;padding-left:10px;border-left:3px solid var(--accent)}
+section.plain h2{display:flex;align-items:center;gap:12px;border-top:none;margin:34px 0 14px;padding:0 0 12px;border-bottom:1px solid var(--rule2);font-size:22px;font-weight:650}
+section.plain h2 .no{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;padding:0 7px;border-radius:7px;
+  background:rgba(136,192,208,.14);color:var(--accent);border:1px solid rgba(136,192,208,.45);font-size:13.5px;font-weight:700}
+nav.ref{border:1px solid var(--rule2);border-radius:10px;padding:16px 18px;background:var(--sheet);margin:20px 0}
+nav.ref h4{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+nav.ref ol{columns:2;column-gap:28px;margin:0;padding-left:0;list-style:none}nav.ref li{margin:4px 0;font-size:14.5px;break-inside:avoid}
+nav.ref a{color:var(--ink);text-decoration:none}
+figure.chart{padding:14px}figure.chart svg{display:block;border-radius:6px}
+.note,.ex,.f{max-width:none}
+main td,main th{overflow-wrap:normal;word-break:normal;hyphens:none}main table.wide{font-size:11px}main table.wide td,main table.wide th{padding:5px 6px}nav.ref li{margin:0 0 6px}
+@media print{main{max-width:none!important;padding:0 17mm!important}main table{font-size:11.5px}main td,main th{padding:6px 8px}main table,.f,.ex,.note,figure,tr,nav.ref li{break-inside:avoid}section.plain h2,main h3{break-after:avoid}nav.ref{break-after:page}}"
+
+build_reference <- function(md = file.path(DOCS, "WLR_reference_guide.md")) {
+  build_reference_sync(md)
+  x <- paste(readLines(REF_HTML, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  head <- sub("(?s)<body>.*", "", x, perl = TRUE); body <- sub("(?s).*?<body>", "<body>", x, perl = TRUE)
+  head <- sub("(?s)<style>.*</style>", paste0("<style>\n", ref_style(), "\n", sub("content:'ovid WLR'", "content:'ovid WLR reference guide'", GUIDE_CSS, fixed = TRUE), "\n", REF_CSS, "\n</style>"), head, perl = TRUE)
+  if (!grepl("<header class=\"head\">", body, fixed = TRUE)) {
+    lede <- sub("(?s).*<p class=\"sub\">(.*?)</p>.*", "\\1", body, perl = TRUE)
+    body <- sub("(?s)<h1>[^<]*</h1>\\s*<p class=\"sub\">.*?</p>", sprintf("<header class=\"head\"><p class=\"kicker\">ovid \u00b7 WLR \u00b7 Reference guide</p><h1>Reference guide</h1><p class=\"lede\">%s</p><p class=\"meta\"><span>WLR %s</span><span>%s</span><span>Methods, formulas and sources</span></p></header>",
+                                                                   lede, APP_VER, format(Sys.Date(), "%d %B %Y")), body, perl = TRUE)
+    body <- sub("(?s)<nav><b>Contents</b>\\s*<ol>", "<nav class=\"ref\"><h4>Contents</h4>\n<ol class=\"plain\">", body, perl = TRUE)
+  }
+  # every step below is safe to repeat: a synced section arrives as plain HTML and is styled like the rest
+  body <- gsub("<h2 id=\"([^\"]+)\">(\\d+[a-z]?)\\. ([^<]+)</h2>", "<h2 id=\"\\1\"><span class=\"no\">\\2</span>\\3</h2>", body)
+  body <- gsub("</section>\n<section class=\"plain\">\n", "", body, fixed = TRUE); body <- gsub("<section class=\"plain\">\n|</section>\n", "", body)
+  body <- gsub("<h2", "</section>\n<section class=\"plain\">\n<h2", body, fixed = TRUE)
+  body <- sub("</section>\n", "", body, fixed = TRUE); body <- sub("</main>", "</section>\n</main>", body, fixed = TRUE)
+  body <- gsub("<strong>([^<]*[.:])</strong>", "<strong class=\"lead\">\\1</strong>", body, perl = TRUE)
+  body <- gsub("<strong>([^<0-9]+)</strong>", "<strong class=\"ui\">\\1</strong>", body, perl = TRUE)
+  body <- gsub("(?s)(?<!<figure class=\"chart\">)(<svg viewBox.*?</svg>)", "<figure class=\"chart\">\\1</figure>", body, perl = TRUE)
+  # formulas: no blank lines inside the box
+  body <- gsub("(?s)<div class=\"f\">\\s*(?:<p>)?\\s*(.*?)\\s*(?:</p>)?\\s*</div>", "<div class=\"f\">\\1</div>", body, perl = TRUE)
+  # a table with many columns is set smaller, with names allowed to break at their underscores, so it fits the page
+  tabs <- regmatches(body, gregexpr("(?s)<table>.*?</table>", body, perl = TRUE))[[1]]
+  for (tb in tabs) if (lengths(regmatches(tb, gregexpr("<th", tb, fixed = TRUE))) > 9)
+    body <- sub(tb, gsub("_", "_<wbr>", sub("<table>", "<table class=\"wide\">", tb, fixed = TRUE), fixed = TRUE), body, fixed = TRUE)
+  # the charts, from their files (they are drawn by docs/charts.R)
+  files <- c("WLR processing pipeline" = "pipeline.svg", "Depth above the sensor" = "depth_season.svg", "Water above the sensor" = "depth_season.svg",
+             "Barometric pressure" = "baro_day.svg", "Monthly mean" = "monthly.svg")
+  svgs <- regmatches(body, gregexpr("(?s)<svg viewBox.*?</svg>", body, perl = TRUE))[[1]]
+  for (sv in svgs) { lab <- sub("(?s).*?aria-label=\"([^\"]*)\".*", "\\1", sv, perl = TRUE); k <- names(files)[vapply(names(files), function(n) startsWith(lab, n), NA)][1]
+    if (is.na(k)) next
+    f <- paste(readLines(file.path(DOCS, "img", files[[k]]), warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    f <- sub("<svg xmlns=\"http://www.w3.org/2000/svg\" ", "<svg ", f, fixed = TRUE)
+    body <- sub(sv, f, body, fixed = TRUE) }
+  writeLines(paste0(head, body), REF_HTML, useBytes = TRUE)
   REF_HTML
 }
 
