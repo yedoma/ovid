@@ -308,7 +308,7 @@ bb3_locate <- function(fr, rg, types = NULL, sample = 200L, min_share = 0.2) {
   if (length(dset)) {
     one <- rec[one, on = "rid"][(j - 1L - tb) %% NB %in% dset, .(rid, j, type)]   # a single fit off every known offset is chance
     # settle records with several fits: keep the fits on a known offset
-    many <- rec[cand[nr > 1L, .(rid, j, type)], on = "rid"][(j - 1L - tb) %% NB %in% dset][, if (.N == 1L) .SD, by = rid]
+    many <- rec[cand[nr > 1L, .(rid, j, type)], on = "rid"][(j - 1L - tb) %% NB %in% dset][, nfit := .N, by = rid][nfit == 1L]   # columns kept when none settle
     one <- rbind(one, many[, .(rid, j, type)])
     # records still unplaced: try each known offset; a header that recurs across records of a length is a new type
     left <- rec[!rid %in% one$rid]
@@ -318,7 +318,7 @@ bb3_locate <- function(fr, rg, types = NULL, sample = 200L, min_share = 0.2) {
       newt <- tr[, .(n = uniqueN(rid)), by = .(L, h)][nl, on = "L"][n >= pmax(3L, min_share * N), .(L, type = h)]
       newt <- newt[!types, on = .(L, type)]
       types <- rbind(types, newt)
-      hit <- tr[types, on = .(L, h = type), nomatch = NULL][, if (.N == 1L) .SD, by = rid]
+      hit <- tr[types, on = .(L, h = type), nomatch = NULL][, nfit := .N, by = rid][nfit == 1L]
       one <- rbind(one, hit[, .(rid, j, type = h)])
     }
   }

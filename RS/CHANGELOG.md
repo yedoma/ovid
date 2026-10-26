@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (.bb3 logs with records on two clock offsets, 2026-10-26)**
+- A .bb3 log whose leftover records each fit two known clock offsets stopped with "object 'j' not found" (three 2017 eBee logs);
+  those records are now left unplaced and the rest of the log is read (R/read_emotion.R bb3_locate). Test added.
+- **Output changes**: such logs are now read instead of listed as not read.
+
 **Fixed (geotag lists in large archives, 2026-10-26)**
 - A geotag, KML or Pix4D list is linked to the flight(s) with the most of its image names, not to every flight sharing a name
   such as DJI_0001.JPG; a build over many sources stopped on this join. Ties keep each flight at 0.6, "as do N other flights".

@@ -494,6 +494,21 @@ local({                                                               # a checkp
         r4$ok && any(r4$issues$severity == "warning" & grepl("not a number", r4$issues$message)),
         "RS checkpoints: missing columns warn or stop before anything is worked out, and a value that is not a number is reported")
 })
+local({                                                               # .bb3 records that fit two known clock offsets (2017 eBee logs)
+  set.seed(7); rg <- bb3_ring(as.raw(sample(0:255, 64L * 16L, TRUE))); NB <- rg$NB; ty <- 0x1234L
+  rec <- function(j, d, h) c(as.raw(0x83), writeBin(16L * ((j - 1L - d) %% NB), raw(), 4L, endian = "little"), as.raw(c(0, 0)),
+                             as.raw(c(bitwXor(h %/% 256L, rg$k0[j]), bitwXor(h %% 256L, rg$k1[j]))), as.raw(rep(0, 10)))
+  hk <- function(c0, c1, j) bitwXor(c0, rg$k0[j]) * 256L + bitwXor(c1, rg$k1[j])
+  one_fit <- which(rg$cnt[rg$k0 * 256L + rg$k1 + 1L] == 1L)          # blocks whose key is theirs alone
+  gd <- one_fit[1:24]; lt <- one_fit[25:27]
+  # each left-over record reads as the type at offset 0 and as another type (tyB) at offset 5, so no single fit settles it
+  tyB <- vapply(lt, function(j) hk(bitwXor(ty %/% 256L, rg$k0[j]), bitwXor(ty %% 256L, rg$k1[j]), (j + 4L) %% NB + 1L), 1L)
+  rs <- c(lapply(seq_along(gd), function(i) rec(gd[i], if (i <= 12L) 0L else 5L, ty)), lapply(lt, function(j) rec(j, 0L, ty)))
+  u <- do.call(c, rs); n <- vapply(rs, length, 1L); a <- cumsum(c(1L, n))[seq_along(n)]
+  loc <- tryCatch(bb3_locate(list(u = u, a = a, n = n, flags = rep(0x83L, length(n))), rg, data.table(L = 8L, type = c(ty, tyB))), error = function(e) e)
+  check(!inherits(loc, "error") && sum(!is.na(loc$rec$type)) == length(gd) && sum(is.na(loc$rec$type)) == length(lt),
+        ".bb3: a record that fits two known clock offsets is left unplaced and the rest are read (2017 logs stopped on 'object j not found')")
+})
 local({                                                               # the .bb3 key built during a scan (R/emotion_catalogue.R), with a stand-in builder
   ring <- file.path(tempfile("ring"), "config", "emotion_bb3.ring"); got <- NULL
   build <- function(m, b, out) { got <<- b; dir.create(dirname(out), recursive = TRUE); writeBin(as.raw(1:4), out); list(closed = TRUE, blocks = 1L) }
