@@ -135,6 +135,11 @@ r2 <- run_pipeline(list(project_dir = proj), scan = character(), export = TRUE);
 check(g2$site == "Lake A" && g2$site_found == "LakeA" && g2$positioning_status == "PPK corrected" && g2$positioning_found == "RTK corrected",
       "user values override, found values kept beside them")
 check(!any(grepl("0002_D.RTK$", r2$links$rel)), "rejected link not made again")
+lh <- list_hits(data.table(source_id = "S", rel = rep(c("g1.txt", "g2.txt"), c(3, 1)), name = c("dji_0001.jpg", "dji_0002.jpg", "dji_0003.jpg", "dji_0001.jpg")),
+                rbind(data.table(file = sprintf("DJI_%04d.JPG", 1:3), flight_id = "A"), data.table(file = sprintf("DJI_%04d.JPG", 1:2), flight_id = "B"),
+                      data.table(file = "DJI_0001.JPG", flight_id = "C")))
+check(identical(lh[rel == "g1.txt", flight_id], "A") && lh[rel == "g1.txt", n] == 3L && lh[rel == "g1.txt", k] == 1L && setequal(lh[rel == "g2.txt", flight_id], c("A", "B", "C")) &&
+      all(lh[rel == "g2.txt", k] == 3L), "a geotag list goes to the flight with most of its image names; a name shared by many flights is a tie, not a join of every pair")
 
 # the viewer
 check(!is.null(r2$viewer) && file.exists(r2$viewer), "viewer zip written")

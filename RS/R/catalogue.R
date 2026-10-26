@@ -284,6 +284,13 @@ build_flights <- function(img, gap_min = 10, files = NULL, blur_limit_px = 1) {
 }
 
 # ---- links -----------------------------------------------------------------------------------------------------------
+# Route 3 of link_files: the flights whose image names a list file (geotags, KML, Pix4D) names, by lower-case name. Names like
+# DJI_0001.JPG repeat across many flights, so only the flight(s) with the most names in common are kept; k is how many tie.
+list_hits <- function(gi, images) {
+  h <- merge(gi, unique(images[, .(name = tolower(file), flight_id)]), by = "name", allow.cartesian = TRUE)[, .(n = .N), by = .(source_id, rel, flight_id)]
+  h[, best := n == max(n), by = .(source_id, rel)][best == TRUE][, k := .N, by = .(source_id, rel)][, best := NULL][]
+}
+
 # Each flight's other files, with a confidence from the evidence. Two routes: files in a flight's folders (DJI records,
 # onboard GNSS and LiDAR raw files, video), scored by time and name; and files carrying a senseFly flight number
 # (logs, eMotion geotags, plans, Pix4D projects), matched on that number anywhere in the archive. People's confirmed
@@ -325,9 +332,10 @@ link_files <- function(fl, folders, files, user = NULL, geo = NULL, images = NUL
                  if (!is.null(p4d) && nrow(p4d) && "p4d_files" %in% names(p4d)) p4d[!is.na(p4d_files) & nzchar(p4d_files), .(source_id, rel, names = p4d_files)])
   if (!is.null(lists) && nrow(lists) && !is.null(images)) {
     gi <- lists[, .(name = tolower(strsplit(names, ";", fixed = TRUE)[[1]])), by = .(source_id, rel)]
-    h <- merge(gi, unique(images[, .(name = tolower(file), flight_id)]), by = "name")[, .(n = .N), by = .(source_id, rel, flight_id)]
+    h <- list_hits(gi, images)
     if (nrow(h)) { h <- merge(h, cand, by = c("source_id", "rel"))
-      x <- rbind(x, h[, .(flight_id, source_id, rel, file, folder, format, role, ref, score = 0.95, evidence = paste0("lists ", n, " of the flight's image names"))], fill = TRUE) }
+      x <- rbind(x, h[, .(flight_id, source_id, rel, file, folder, format, role, ref, score = fifelse(k == 1L, 0.95, 0.6),
+                          evidence = paste0("lists ", n, " of the flight's image names", fifelse(k > 1L, paste0(" (as do ", k - 1L, " other flights)"), "")))], fill = TRUE) }
   }
   # route 4: GNSS observations anywhere in the archive whose time span covers the flight (a base station, say): probable at best
   if (!is.null(rinex) && nrow(rinex) && "obs_start_utc" %in% names(rinex)) {

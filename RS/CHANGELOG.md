@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (geotag lists in large archives, 2026-10-26)**
+- A geotag, KML or Pix4D list is linked to the flight(s) with the most of its image names, not to every flight sharing a name
+  such as DJI_0001.JPG; a build over many sources stopped on this join. Ties keep each flight at 0.6, "as do N other flights".
+- **Output changes**: list links in archives with repeated image names now go to the best-matching flight(s) only.
+
 **Added (flight footprints, one footprint per year, coverage report, 2026-10-26)**
 - Pipeline: each flight gets a footprint (photo frames from sensor, focal length and height above take-off ground; LiDAR swath
   2·h·tan(FOV/2)) in catalogue/footprints.csv and fp_* columns in flights.csv (R/footprints.R). eBee height comes from the RTK log
