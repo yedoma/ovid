@@ -65,6 +65,26 @@ local({
 
   # UTM (core convert.R, used for GNSS files and GIS layers): on the central meridian at the equator E = 500000, N = 0; at 45 N on
   # it N = 0.9996 x the WGS84 meridian arc of 4984944.38 m = 4982950.40 m; a point goes there and back unchanged (hand)
+  # photo footprint (pinhole camera; McGlone 2013, Wolf et al. 2014; hand): across = 13.2 mm x 100 m / 8.8 mm = 150 m, along
+  # 150 x 3648 / 5472 = 100 m; three photos 22.24 m apart on one line cover 100 + 2 x 22.24 = 144.5 m along by 150 m
+  fp <- flight_footprint(d[, `:=`(alt = NA_real_, height = 100, model = "FC6310R", file = c("a", "b", "c"))], cell = 0.5)
+  check(eq(fp$summary$fp_width_m, 150, 1e-9) && eq(fp$summary$fp_area_m2, 150 * (100 + 2 * 2e-4 * pi / 180 * FP_R), 150),
+        "photo footprint: 150 m across (13.2 mm x 100 m / 8.8 mm), 100 m along; three photos 22.24 m apart cover 150 x 144.5 m (hand, within the outline's one-cell edge)")
+  # LiDAR swath (Baltsavias 1999; hand): 2 x 60 m x tan(70 / 2 deg) = 84.03 m for the Zenmuse L2 at 60 m
+  ld <- data.table(lat = 61.3 + (0:10) * 1e-4, lon = -121.3, t = as.POSIXct("2026-09-01 18:00:00", tz = "UTC") + (0:10), height = 60, file = letters[1:11])
+  fl2 <- flight_footprint(ld, LIDAR_FOV_DEG[["L2"]], cell = 0.5)
+  check(eq(fl2$summary$fp_width_m, 84.02, 0.01) && fl2$summary$fp_kind == "lidar", "LiDAR swath is 2 x height x tan(FOV / 2) (hand: 84.02 m at 60 m with the L2's 70 deg)")
+  # one footprint per year (hand): two 100 m squares overlapping by half cover 15000 m2: 10000 under one flight, 5000 under two;
+  # their footprints sum to 20000 m2. A 10 m square apart (100 m2, under FOOTPRINT_MIN_M2) is dropped; a 40 m hole is kept.
+  sq <- function(id, x0, y0, s, part = 1L, ring = 0L) { p <- fp_ll(x0 + c(0, s, s, 0, 0), y0 + c(0, 0, s, s, 0), 61.3, -121.3)
+    data.table(flight_id = id, kind = "optical", part = part, ring = ring, line = paste(sprintf("%.9f %.9f", p$lat, p$lon), collapse = ";")) }
+  u <- footprint_union(rbind(sq("a", 0, 0, 100), sq("b", 50, 0, 100), sq("c", 500, 500, 10)), cell = 0.5)
+  check(eq(u$area_m2, 15000, 150) && eq(u$by_n[n == 1, m2], 10000, 150) && eq(u$by_n[n == 2, m2], 5000, 100) && u$parts == 1L && eq(u$sum_m2, 20100, 1),
+        "year footprint: two half-overlapping 100 m squares cover 15000 m2 (10000 under one flight, 5000 under two); a 100 m2 piece is dropped (hand)")
+  h <- footprint_union(rbind(sq("a", 0, 0, 100), sq("a", 30, 30, 40, ring = 1L)), cell = 0.5)
+  check(h$holes == 1L && eq(h$area_m2, 10000 - 1600, 150), "a flight's hole stays a hole in the year footprint (hand: 10000 - 1600 m2)")
+  # ellipsoidal height from ECEF (WGS 84; Bowring 1976), against h iterated to convergence by hand: 272.6319 m
+  check(eq(ecef_height(c(-1595452.6658, -2624073.1951, 5571684.6973)), 272.6319, 0.001), "height above the WGS 84 ellipsoid from a RINEX APPROX POSITION XYZ (hand: 272.6319 m)")
   u0 <- ll_to_utm(-123, 0, 10); u45 <- ll_to_utm(-123, 45, 10); back <- utm_to_ll(ll_to_utm(-121.3, 61.3, 10)[[1]], ll_to_utm(-121.3, 61.3, 10)[[2]], 10)
   check(eq(u0[[1]], 5e5, 1e-3) && eq(u0[[2]], 0, 1e-3) && eq(u45[[2]], 0.9996 * 4984944.378, 0.05) && eq(back[1], 61.3, 1e-7) && eq(back[2], -121.3, 1e-7),
         "UTM: 500000 E on the central meridian, N = 0.9996 x the meridian arc at 45 N (4982950.40 m), and back to the same latitude and longitude")

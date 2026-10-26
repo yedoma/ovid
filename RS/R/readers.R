@@ -215,6 +215,14 @@ read_kml <- function(path) {
        kml_files = paste(nm, collapse = ";"), kml_line = paste(sprintf("%.6f %.6f", m[k, 2], m[k, 1]), collapse = ";"))
 }
 
+# Height above the WGS 84 ellipsoid of an ECEF position (m): latitude by Bowring's (1976) formula, then h = p / cos(lat) - N.
+ecef_height <- function(p) {
+  a <- 6378137; f <- 1 / 298.257223563; b <- a * (1 - f); e2 <- f * (2 - f); ep2 <- e2 / (1 - e2)
+  r <- sqrt(p[1]^2 + p[2]^2); th <- atan2(p[3] * a, r * b)
+  lat <- atan2(p[3] + ep2 * b * sin(th)^3, r - e2 * a * cos(th)^3); N <- a / sqrt(1 - e2 * sin(lat)^2)
+  r / cos(lat) - N
+}
+
 # ---- RINEX observation headers --------------------------------------------------------------------------------------
 # Receiver, marker, approximate position and the time the observations span (first epoch from the header or first record,
 # last from the file's tail). Only the header and the last 64 kB are read. Observations prove data exist, not that a
@@ -239,9 +247,11 @@ read_rinex <- function(path) {
   if (gps) { first <- gps_to_utc(first); last <- gps_to_utc(last) }
   xyz <- suppressWarnings(as.numeric(strsplit(trimws(lab("APPROX POSITION XYZ")), " +")[[1]][1:3]))
   ll <- if (!anyNA(xyz) && sum(abs(xyz)) > 1e6) ecef_to_ll(xyz) else c(NA_real_, NA_real_)
+  ant <- suppressWarnings(as.numeric(substr(lab("ANTENNA: DELTA H/E/N") %|% "", 1, 14)))   # antenna above the marker (m)
   list(rinex_version = suppressWarnings(as.numeric(substr(h[1], 1, 9))), rinex_marker = trimws(lab("MARKER NAME")),
        rinex_receiver = trimws(substr(lab("REC # / TYPE / VERS"), 21, 40)), rinex_program = trimws(substr(lab("PGM / RUN BY / DATE"), 1, 20)),
-       obs_start_utc = fmt_ts(first), obs_end_utc = fmt_ts(last), rinex_lat = ll[1], rinex_lon = ll[2])
+       obs_start_utc = fmt_ts(first), obs_end_utc = fmt_ts(last), rinex_lat = ll[1], rinex_lon = ll[2],
+       rinex_h = if (!anyNA(xyz) && sum(abs(xyz)) > 1e6) ecef_height(xyz) else NA_real_, rinex_ant_h = ant)
 }
 
 # ---- names ------------------------------------------------------------------------------------------------------------

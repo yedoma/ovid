@@ -10,11 +10,14 @@ load_cat <- function(points_per_flight = CFG$points_per_flight) {
   if (!"kind_found" %in% names(fl)) fl[, kind_found := kind]
   fl[, `:=`(name = fifelse(nzchar(display_name), display_name, trimws(paste(site %|na|% "unnamed site", fifelse(is.na(flight_no), "", paste0("#", flight_no))))),
             date = fifelse(nzchar(date), date, "undated"), year = fifelse(is.na(year), "undated", as.character(year)))]
+  for (v in setdiff(FP_COLS, names(fl))) fl[, (v) := if (v %in% c("fp_kind", "fp_height_from", "fp_note")) "" else NA_real_]   # catalogues made before footprints
+  fl[, fpk := flight_kind(fl)]                                                 # optical or LiDAR (pages/fct_footprints.R)
   im <- rd("images.csv", select = c("flight_id", "primary", "lat", "lon"))
   pts <- if (nrow(im)) thin_points(im[, primary := as.logical(primary)], points_per_flight) else data.table(flight_id = character(), lat = numeric(), lon = numeric())
   list(flights = fl, links = rd("links.csv"), geometry = rd("geometry.csv", colClasses = list(character = c("flight_id", "ref", "line"))),
        points = pts, sources = rd("sources.csv"), gis_layers = rd("gis_layers.csv"), gis_features = rd("gis_features.csv", colClasses = list(character = c("feature", "line"))),
-       datasets = rd("datasets.csv", colClasses = list(character = c("acquired", "footprint", "crs", "detail", "product", "platform"))), unassigned = rd("unassigned.csv"), logs = rd("logs.csv"), made = file.mtime(file.path(CAT(), "flights.csv")))
+       datasets = rd("datasets.csv", colClasses = list(character = c("acquired", "footprint", "crs", "detail", "product", "platform"))), unassigned = rd("unassigned.csv"), logs = rd("logs.csv"),
+       footprints = { fp <- rd("footprints.csv", colClasses = list(character = c("flight_id", "kind", "line"))); if (nrow(fp)) fp else data.table(flight_id = character(), kind = character(), part = integer(), ring = integer(), line = character()) }, made = file.mtime(file.path(CAT(), "flights.csv")))
 }
 badge <- function(s) span(class = "badge-st", style = sprintf("border-color:%s;color:%s", STATUS_COL[s] %|na|% PAL$gray, STATUS_COL[s] %|na|% PAL$gray), s)
 fact <- function(k, v) if (length(v) && !is.na(v) && nzchar(as.character(v))) div(class = "fact", span(class = "k", k), span(class = "v", as.character(v)))

@@ -19,11 +19,16 @@ std_pages <- function() list(
         selectInput("f_aircraft", "Aircraft", NULL, multiple = TRUE), selectInput("f_sensor", "Sensor", NULL, multiple = TRUE),
         selectInput("f_status", "Positioning", NULL, multiple = TRUE), selectInput("f_source", "Source", NULL, multiple = TRUE),
         ovid_switch("f_checks", "Only flights with checks to look at", FALSE),
+        div(class = "rs-fp-pick", radioButtons("f_fp", "Footprint", c(Optical = "optical", LiDAR = "lidar", Both = "both"), selected = "both", inline = TRUE)),
+        ovid_switch("f_year_fp", "One footprint per year", FALSE),
+        div(class = "legend-line", "Joins the shown flights of each year into one outline with no overlaps; optical and LiDAR each get their own."),
         div(class = "legend-line", HTML("On the map: <b>Style</b> (top left) sets colours, sizes and colour-by; layers top right; legend bottom right."))),
-      ovid_controls(ovid_split_toggle("map_split", "Map and flight details", on = TRUE)),
+      ovid_controls(ovid_split_toggle("map_split", "Map and flight details", on = TRUE),
+                    actionButton("rep_make", "Report (PDF)", icon = icon("file-pdf"), class = "btn-sm", title = "The map as shown, with its legend, the numbers of each year's footprint and the flights"),
+                    div(style = "display:none", downloadButton("rep_dl", "Report"))),
       ovid_split("map_split", width = "34%", on = TRUE,
         card(card_body(padding = 0, ovid_focus(uiOutput("map_note"), div(id = "rsmap")))),
-        card(card_header("Flight"), card_body(uiOutput("detail")))),
+        card(card_header(textOutput("detail_h", inline = TRUE)), card_body(uiOutput("detail")))),
       mod_timeline_strip_ui("strip"),                                  # RS/pages/mod_timeline.R: flights by year under the map
       rs_list_ui())),                                                  # Flights, Photo sets and Other geodata, with the edit and Save bars (below)
   ovid_tool("Timeline", icon = "timeline",

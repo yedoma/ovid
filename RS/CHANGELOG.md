@@ -5,6 +5,18 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (flight footprints, one footprint per year, coverage report, 2026-10-26)**
+- Pipeline: each flight gets a footprint (photo frames from sensor, focal length and height above take-off ground; LiDAR swath
+  2·h·tan(FOV/2)) in catalogue/footprints.csv and fp_* columns in flights.csv (R/footprints.R). eBee height comes from the RTK log
+  (photo less take-off GNSS height), else the GNSS base ground; read_rinex now returns the ellipsoidal height and antenna height.
+- Map: flights are drawn by their footprint (dotted) instead of a box. Filters: Footprint (Optical, LiDAR, Both) and
+  One footprint per year, which joins the footprints in view into one outline per year and kind, with a coverage card
+  (area, parts, holes, area flown more than once, GSD, height, overlap, speed, sun, RTK share).
+- Report (PDF): the current view with legend, scale bar, north arrow and corner coordinates, coverage numbers, flights, method
+  and references (chromote; HTML when Chrome is missing). PNG export shares the drawing code (www/map_tools.js).
+- **Output changes**: flights.csv gains the fp_* columns and catalogue/footprints.csv is new; the RINEX sample output gains
+  rinex_h and rinex_ant_h. Golden and sample outputs need accepting.
+
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - The ~/Desktop/UAV_project fallback is gone: the project folder is the one set in app_settings.json (on this Mac
   ~/Projects/Ovid/Projects/RS/UAV_project), else ~/Projects/Ovid/Projects/RS/Untitled.

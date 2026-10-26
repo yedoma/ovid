@@ -55,6 +55,7 @@ WHO <- Sys.getenv("USER", Sys.getenv("USERNAME", "app"))
 `%|na|%` <- function(a, b) ifelse(is.na(a) | a == "", b, a)
 
 source(file.path(APP_DIR, "pages", "fct_outputs.R"), local = TRUE)
+source(file.path(APP_DIR, "pages", "fct_footprints.R"), local = TRUE)      # RS/pages/fct_footprints.R: flight and year footprints, the coverage card and report
 
 source(file.path(APP_DIR, "pages", "utils_tables.R"), local = TRUE)
 
@@ -103,6 +104,7 @@ server <- function(input, output, session, embedded = FALSE) {
   shown <- reactive({ f <- fl(); if (!nrow(f)) return(f)
     for (k in list(c("f_year", "year"), c("f_site", "site"), c("f_aircraft", "aircraft"), c("f_sensor", "sensor"), c("f_status", "positioning_status"), c("f_source", "source_id")))
       if (length(input[[k[1]]])) f <- f[get(k[2]) %in% input[[k[1]]]]
+    f <- f[fpk %in% fp_kinds(input$f_fp)]                                    # Optical, LiDAR or both (pages/fct_footprints.R)
     if (isTRUE(input$f_checks)) { k <- fchk(); f <- f[flight_id %in% k$flight_id[checks_open(k)]] }   # as the summary counts them (pages/fct_checks.R)
     q <- tolower(trim(input$f_text %||% "")); if (nzchar(q)) f <- f[grepl(q, tolower(paste(name, site, project, folder, notes, sensor, aircraft)), fixed = TRUE)]
     f })
@@ -133,13 +135,19 @@ server <- function(input, output, session, embedded = FALSE) {
     div(class = "map-note", span(paste0("Not drawn yet: ", paste(num(h), names(h), collapse = ", "), ". Narrow the filters to draw them, or ")),
         actionLink("m_all", "draw everything"), span(" (slow with a large archive).")) })
   observeEvent(input$m_all, mall(TRUE))
+  fp_memo <- new.env()                                          # each set of flights is joined once (pages/fct_footprints.R)
+  observeEvent(C(), rm(list = ls(fp_memo), envir = fp_memo))
+  years_fp <- reactive({ if (!isTRUE(input$f_year_fp)) return(list()); x <- C(); if (is.null(x)) return(list())
+    year_footprints(le_view(), x$footprints, fp_kinds(input$f_fp), fp_memo) })
   observe({ f <- fold_joined(le_view()); x <- isolate(C()); if (is.null(x)) return()      # a joined flight is one (pages/list_edits.R)
+    ym <- isTRUE(input$f_year_fp); yf <- years_fp()
     if (over("flights", nrow(f))) f <- f[0]
     g <- if (nrow(x$geometry)) x$geometry[kind != "derived" & (is.na(flight_id) | flight_id == "" | flight_id %in% f$flight_id)] else data.table()
     p <- x$points[flight_id %in% f$flight_id]
     session$sendCustomMessage("rsmap", list(
       flights = f[, .(id = flight_id, col = unname(STATUS_COL[positioning_status] %|na|% PAL$gray), name, date, year, site, aircraft, sensor, n = n_images,
-                      gb = round(size_gb, 1), status = positioning_status, lat_min, lon_min, lat_max, lon_max)],
+                      gb = round(size_gb, 1), status = positioning_status, lat_min, lon_min, lat_max, lon_max, fp_kind = fpk, fp_area_km2 = round(fp_area_m2 / 1e6, 3))],
+      fp = if (ym) NULL else fp_rings_json(x$footprints, f), years = year_layers(yf), year_mode = ym,
       pal = unname(c(PAL$blue, PAL$accent, PAL$green, PAL$red, PAL$purple, PAL$teal, PAL$gold, PAL$fg, PAL$fg4, mix_col(PAL$blue, PAL$bone, 0.5))),
       points = lapply(split(p[, .(lat, lon)], p$flight_id), function(d) unname(as.matrix(d))),
       geom = if (nrow(g)) g[, .(id = fifelse(is.na(flight_id), "", flight_id), kind, what, ref, line)] else list(), fit = FALSE)) })
@@ -147,7 +155,9 @@ server <- function(input, output, session, embedded = FALSE) {
   observeEvent(sel(), session$sendCustomMessage("rsmap_select", sel()))
   cur <- reactive({ id <- sel(); f <- fl(); if (is.null(id) || !nrow(f)) NULL else f[flight_id == id] })
 
-  output$detail <- renderUI({ f <- cur(); if (is.null(f) || !nrow(f)) return(p(class = "muted", "Click a flight on the map or in the table."))
+  output$detail_h <- renderText(if (isTRUE(input$f_year_fp)) "Coverage per year" else "Flight")
+  output$detail <- renderUI({ if (isTRUE(input$f_year_fp)) return(year_card(years_fp(), le_view()))   # one footprint per year: its numbers (pages/fct_footprints.R)
+    f <- cur(); if (is.null(f) || !nrow(f)) return(p(class = "muted", "Click a flight on the map or in the table."))
     lk <- C()$links[flight_id == f$flight_id & state != "suggested"]
     tagList(h3(f$name), div(class = "mb-2", badge(f$positioning_status)), p(class = "muted", f$positioning_evidence),
       fact(paste0("Date (", zone_text(BASE_OFFSET), ")"), f$start), fact("Time from", f$time_source), fact("Flight log start (UTC)", f$log_start_utc %||% NA), fact("Flown track (KML) start (UTC)", f$kml_start_utc %||% NA), fact("Duration (min)", f$duration_min), fact("Aircraft", f$aircraft), fact("Sensor", f$sensor),
@@ -162,6 +172,45 @@ server <- function(input, output, session, embedded = FALSE) {
       actionLink("go_flight", "Edit this flight and its links"))
   })
   observeEvent(input$go_flight, nav_select("nav", "Flight"))
+
+  # Report (PDF): the browser draws the map as shown (www/rs_map.js, map_tools.js), then the report is written as HTML and
+  # printed to PDF by Chrome (pages/fct_footprints.R); without Chrome the HTML is downloaded instead and says so.
+  rep_file <- reactiveVal(NULL)
+  observeEvent(input$rep_make, session$sendCustomMessage("rs-report", TRUE))
+  observeEvent(input$report_png, { r <- input$report_png
+    if (!is.null(r$error)) return(showNotification(paste("The report was not made: the map could not be drawn (", r$error, ").", sep = ""), type = "error"))
+    withProgress(message = "Writing the report", value = 0.3, {
+      v <- le_view(); fm <- fold_joined(v); ym <- isTRUE(input$f_year_fp); kinds <- fp_kinds(input$f_fp)
+      yf <- year_footprints(v, C()$footprints, kinds, fp_memo)
+      blocks <- lapply(yf, function(x) c(x, list(facts = year_facts(v[flight_id %in% x$ids], x$u, x$kind, x$with))))
+      pick <- function(id, lab) { s <- input[[id]]; if (length(s)) paste0(lab, ": ", paste(s, collapse = ", ")) else NULL }
+      filt <- paste(c(pick("f_year", "Year"), pick("f_site", "Site"), pick("f_aircraft", "Aircraft"), pick("f_sensor", "Sensor"), pick("f_status", "Positioning"), pick("f_source", "Source"),
+                      if (nzchar(trim(input$f_text %||% ""))) paste0("Search: \"", trim(input$f_text), "\""), if (isTRUE(input$f_checks)) "only flights with checks to look at",
+                      paste0("Footprint: ", c(optical = "Optical", lidar = "LiDAR", both = "Optical and LiDAR")[[input$f_fp %||% "both"]]),
+                      if (ym) "one footprint per year: on" else "one footprint per year: off"), collapse = "; ")
+      yrs <- sort(unique(v$year[v$kind != "photo set"])); kl <- paste(FP_KIND_LABEL[kinds], collapse = " and ")
+      title <- sprintf("Drone coverage %s \u00b7 %s", if (length(yrs) == 1L) yrs else if (length(yrs)) paste(range(yrs), collapse = " to ") else "", kl)
+      caption <- if (ym) sprintf("One footprint per year of the %d flights in view (%s), each kind its own outline (dotted: derived by ovid from photo positions and heights). Colours: %s.",
+                                 sum(v$kind != "photo set"), kl, paste(sprintf("%s %s", FP_KIND_LABEL[kinds], c(optical = "yellow", lidar = "blue")[kinds]), collapse = ", "))
+                 else sprintf("The ground each of the %d flights in view covered (dotted: photo footprints or LiDAR strips derived by ovid; a flight without one shows the box around its positions), coloured as the legend says.", nrow(fm))
+      caption <- paste(caption, "Web Mercator; latitude and longitude (WGS 84) at two corners; imagery Esri World Imagery.")
+      fls <- v[kind != "photo set"][order(date, start)]
+      nv <- function(k) if (k %in% names(fls)) suppressWarnings(as.numeric(fls[[k]])) else rep(NA_real_, nrow(fls))
+      tab <- fls[, .(Date = date, Start = substr(start, 12, 16), Name = name, Site = site, Sensor = sensor, Kind = FP_KIND_LABEL[fpk], Images = n_images,
+                     `GSD cm` = fifelse(is.finite(nv("fp_gsd_cm")), nv("fp_gsd_cm"), nv("gsd_cm_median")), `Height m` = nv("fp_height_m"),
+                     `Footprint km2` = round(nv("fp_area_m2") / 1e6, 3), Positioning = positioning_status)]
+      setnames(tab, "Footprint km2", "Footprint km\u00b2")
+      bt <- function(t) format(as.POSIXct(t) + BASE_OFFSET * 3600, "%Y-%m-%d %H:%M", tz = "UTC")   # in the project's base zone (Settings)
+      made <- sprintf("project %s \u00b7 catalogue built %s \u00b7 report %s (%s) \u00b7 ovid RS %s", basename(path.expand(CFG$project_dir)), bt(C()$made), bt(Sys.time()), zone_text(BASE_OFFSET), RS_VERSION)
+      d <- file.path(tempdir(), "rs_report"); dir.create(d, showWarnings = FALSE); h <- file.path(d, "coverage_report.html")
+      writeLines(report_html(list(title = title, filters = filt), r$png, caption, blocks, tab, made), h, useBytes = TRUE)
+      incProgress(0.4)
+      pdf <- report_pdf(h, paste("ovid RS \u00b7", title))
+      if (is.null(pdf)) showNotification("Chrome could not be started, so the report is saved as HTML: open it in a browser and print it to PDF.", type = "warning", duration = 12)
+      rep_file(pdf %||% h) })
+    session$sendCustomMessage("rs-download", "rep_dl") })                      # www/rs_download.js
+  output$rep_dl <- ovid_download("RS", "coverage_report", function() tools::file_ext(rep_file() %||% "x.pdf"), function(file) file.copy(rep_file(), file))
+  outputOptions(output, "rep_dl", suspendWhenHidden = FALSE)
 
   # Each page of the app, in this order (RS/pages/; they share this function's variables)
   source(file.path(APP_DIR, "pages", "flight.R"), local = TRUE)

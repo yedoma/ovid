@@ -236,13 +236,38 @@ metres everywhere                                → standalone GNSS / uncorrect
 |---|---|---|
 | planned | dashed | KML/KMZ/WPML lines or areas without times |
 | observed | solid | image positions, flown KML tracks, receiver positions |
-| derived | dotted | extents worked out by ovid |
+| derived | dotted | footprints and extents worked out by ovid |
 
 Colour is the positioning status: RTK green, partly RTK cyan, PPK blue, uncorrected red, "available, not confirmed" orange, unknown grey (accent.vim).
 
 Every map (Map page, GNSS page and the shared viewer) has a small **Legend** / **PNG** bar. **Legend** shows or hides the legend
 (remembered per map); **PNG** saves the view as it is on screen, with or without the legend, redrawn at 250 ppi: imagery tiles
 are fetched at the matching finer zoom and every shape is redrawn, so lines stay sharp.
+
+### Flight footprints and one footprint per year (added October 2026)
+
+Each flight is drawn by its **footprint**, dotted: the ground each photo covered, or for LiDAR the swath along the flown lines.
+A flight without the numbers for a footprint keeps a dotted box round its positions, and its tooltip says so.
+
+| Value | Formula | Source |
+|---|---|---|
+| Photo footprint across the track | sensor width · h / focal length | McGlone 2013; Wolf et al. 2014 |
+| Photo footprint along the track | across · image height / image width | McGlone 2013 |
+| LiDAR swath width | 2 · h · tan(FOV / 2); FOV 70° L2, 70.4° L1 | Baltsavias 1999; DJI 2024 |
+| h, height above take-off ground | DJI: relative altitude. eBee: photo GNSS height less take-off GNSS height from the RTK log; else less the GNSS base ground (RINEX height less antenna height) | Bowring 1976; RINEX 3.04 |
+| One footprint per year | frames marked on a 2 m grid, covered cells traced into outlines with holes, simplified by one cell; parts and holes under 500 m² dropped | Foley et al. 1990; Lorensen & Cline 1987; Douglas & Peucker 1973 |
+
+**Footprint** (Filters) picks Optical, LiDAR or Both. A LiDAR flight is one with LiDAR raw data and a known LiDAR payload; all
+others are Optical. **One footprint per year** joins the footprints of the flights in view into one outline per year and kind; in
+Both, the Optical (yellow) and LiDAR (blue) outlines are drawn on top of each other. The side card shows area, parts and holes,
+the area flown once, twice and more, and the flights' GSD, height, overlap, speed, sun elevation and RTK share. Photo sets and
+undated flights are left out.
+
+**Report (PDF)** prints the current view: the map as shown with legend, scale bar, north arrow and corner coordinates, the
+coverage numbers, the flights in view, the method and references. Without Chrome it saves HTML.
+
+Footprints are written by the pipeline to `catalogue/footprints.csv` (flight_id, kind, part, ring, line) and the summary columns
+`fp_kind`, `fp_area_m2`, `fp_height_m`, `fp_height_from`, `fp_width_m`, `fp_gsd_cm`, `fp_images`, `fp_cell_m`, `fp_note` in `flights.csv`.
 
 ## 9. Datasets: satellite, aerial and LiDAR
 
@@ -401,3 +426,10 @@ The pop-up can also be grouped by what to do.
 - Takasu, T., *RTKLIB manual*: the solution file format of `.pos` and Emlid `.LLH` logs (Q, ns, standard deviations, age, ratio).
 - Emlid, *Emlid Flow* documentation: point CSV export columns (solution status, RMS, samples, PDOP, satellites per constellation, baseline, correction type). [docs.emlid.com](https://docs.emlid.com)
 - CIPA DC-008, *Exchangeable image file format for digital still cameras (Exif)*: FocalLength, FocalPlaneXResolution, FocalPlaneResolutionUnit, PixelXDimension, PixelYDimension, ExposureTime.
+- Baltsavias, E. P. (1999). Airborne laser scanning: basic relations and formulas. *ISPRS J. Photogramm. Remote Sens.* 54, 199-214.
+- Bowring, B. R. (1976). Transformation from spatial to geographical coordinates. *Survey Review* 23(181), 323-327.
+- Douglas, D. H., Peucker, T. K. (1973). Algorithms for the reduction of the number of points required to represent a digitized line or its caricature. *Cartographica* 10(2), 112-122.
+- Foley, J. D., van Dam, A., Feiner, S. K., Hughes, J. F. (1990). *Computer Graphics: Principles and Practice*, 2nd ed. Addison-Wesley.
+- Lorensen, W. E., Cline, H. E. (1987). Marching cubes: a high resolution 3D surface construction algorithm. *SIGGRAPH Comput. Graph.* 21(4), 163-169.
+- McGlone, J. C. (ed.) (2013). *Manual of Photogrammetry*, 6th ed. ASPRS.
+- Wolf, P. R., Dewitt, B. A., Wilkinson, B. E. (2014). *Elements of Photogrammetry with Applications in GIS*, 4th ed. McGraw-Hill.

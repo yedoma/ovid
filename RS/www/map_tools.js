@@ -38,6 +38,21 @@
   function loadImg(src) { return new Promise(res => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
 
   async function exportPng(map, legendEl, name) {
+    const cv = await render(map, legendEl);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const png = withPpi(new Uint8Array(await blob.arrayBuffer()));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([png], { type: 'image/png' }));
+    a.download = `ovid_rs_${name}_${new Date().toISOString().slice(0, 10)}.png`; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  // The view for a report (RS Map page, Report): the PNG as above with a scale bar (bottom left), a north arrow (top right) and the
+  // latitude and longitude of two corners, as a data URL with the view's bounds.
+  window.OvidMapTools.report = async function (map, legendEl) {
+    const cv = await render(map, legendEl, true), b = map.getBounds();
+    return { png: cv.toDataURL('image/png'), south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast(), w: cv.width, h: cv.height };
+  };
+
+  async function render(map, legendEl, marks) {
     const size = map.getSize(), W = Math.round(size.x * K), H = Math.round(size.y * K);
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
     g.fillStyle = '#282c34'; g.fillRect(0, 0, W, H);
@@ -75,11 +90,29 @@
     if (att) { g.font = `${11 * K}px system-ui, sans-serif`; const w = g.measureText(att).width + 10 * K;
       g.fillStyle = 'rgba(40,44,52,.75)'; g.fillRect(0, H - 17 * K, w, 17 * K); g.fillStyle = '#e6e6e6'; g.textBaseline = 'middle'; g.fillText(att, 5 * K, H - 8.5 * K); }
     if (legendEl && legendEl.textContent.trim()) drawLegend(g, legendEl, W, H);
-    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
-    const png = withPpi(new Uint8Array(await blob.arrayBuffer()));
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([png], { type: 'image/png' }));
-    a.download = `ovid_rs_${name}_${new Date().toISOString().slice(0, 10)}.png`; document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    if (marks) drawMarks(g, map, W, H);
+    return cv;
+  }
+
+  // scale bar: a round length near a fifth of the width, measured across the middle of the view (Leaflet's distance, a sphere);
+  // north arrow (Web Mercator: north is up); the corners' latitude and longitude
+  function drawMarks(g, map, W, H) {
+    const s = map.getSize(), y = s.y / 2, m = map.distance(map.containerPointToLatLng([0, y]), map.containerPointToLatLng([s.x, y])) / s.x;   // metres per screen pixel
+    const want = m * s.x / 5, p10 = Math.pow(10, Math.floor(Math.log10(want))), len = [1, 2, 5, 10].map(k => k * p10).filter(v => v <= want).pop() || p10;
+    const px = len / m * K, x0 = 14 * K, y0 = H - 34 * K, lab = len >= 1000 ? `${len / 1000} km` : `${len} m`;
+    g.fillStyle = 'rgba(40,44,52,.8)'; g.fillRect(x0 - 6 * K, y0 - 20 * K, px + 12 * K, 30 * K);
+    g.fillStyle = '#ffffff'; g.fillRect(x0, y0, px, 4 * K); g.fillRect(x0, y0 - 4 * K, 1.5 * K, 8 * K); g.fillRect(x0 + px - 1.5 * K, y0 - 4 * K, 1.5 * K, 8 * K);
+    g.font = `${11 * K}px system-ui, sans-serif`; g.textBaseline = 'alphabetic'; g.fillText(lab, x0, y0 - 6 * K);
+    const ax = W - 26 * K, ay = 18 * K;
+    g.fillStyle = 'rgba(40,44,52,.8)'; g.fillRect(ax - 14 * K, ay - 8 * K, 28 * K, 46 * K);
+    g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(ax, ay); g.lineTo(ax + 7 * K, ay + 22 * K); g.lineTo(ax, ay + 17 * K); g.lineTo(ax - 7 * K, ay + 22 * K); g.closePath(); g.fill();
+    g.textAlign = 'center'; g.fillText('N', ax, ay + 35 * K); g.textAlign = 'left';
+    const b = map.getBounds(), f = (a, o) => `${Math.abs(a).toFixed(4)}° ${a < 0 ? 'S' : 'N'}  ${Math.abs(o).toFixed(4)}° ${o < 0 ? 'W' : 'E'}`;
+    g.font = `${10 * K}px system-ui, sans-serif`; g.textBaseline = 'top';
+    const t1 = f(b.getNorth(), b.getWest()), w1 = g.measureText(t1).width; g.fillStyle = 'rgba(40,44,52,.8)'; g.fillRect(0, 0, w1 + 10 * K, 15 * K);
+    g.fillStyle = '#ffffff'; g.fillText(t1, 5 * K, 2.5 * K);
+    const t2 = f(b.getSouth(), b.getEast()), w2 = g.measureText(t2).width; g.textBaseline = 'bottom';
+    g.fillStyle = 'rgba(40,44,52,.8)'; g.fillRect(W - w2 - 10 * K, H - 15 * K, w2 + 10 * K, 15 * K); g.fillStyle = '#ffffff'; g.fillText(t2, W - w2 - 5 * K, H - 2.5 * K);
   }
 
   // the legend as on screen: one line per row, a swatch where the row has one, bold headings, muted notes

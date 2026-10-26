@@ -51,7 +51,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
 for (.f in c("util", "convert", "audit", "standards", "file_audit", "cache", "timezones", "config", "calibration", "table_rules", "manifest", "preflight", "theme"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
-for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "export", "gnss", "datasets", "gis", "stac", "preflight"))
+for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "footprints", "export", "gnss", "datasets", "gis", "stac", "preflight"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "rs_pipeline.R"))   # every file's code (the run manifest)
 # What each cached step depends on (core code_fingerprint()): reading image headers follows the image readers only, so no
@@ -190,6 +190,9 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   pt <- b$images[primary %in% TRUE & is.finite(lat) & is.finite(lon) & !(lat == 0 & lon == 0) & flight_id %in% fl[placed_from == "photo geotags" & !log_track]$flight_id][order(flight_id, t, file)]
   if (nrow(pt)) { tr <- pt[, if (.N >= 2L) { i <- unique(round(seq(1, .N, length.out = min(.N, 300L)))); .(line = paste(sprintf("%.6f %.6f", lat[i], lon[i]), collapse = ";")) }, by = flight_id]
     if (nrow(tr)) geo <- rbind(geo, tr[, .(flight_id, kind = "observed", what = "track from photo geotags", ref = "", line)], fill = TRUE) }
+  # the ground each flight covered (R/footprints.R): its photos' footprints, or its LiDAR strip; catalogue/footprints.csv
+  fpb <- footprints_build(b$images, fl, A$records$emotion %||% list(), links, A$records$rinex, cfgs$gnss_bases)
+  fl <- merge(fl, fpb$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
   say("  ", nrow(fl), " flights (", sum(fl$n_copies > 0), " also found as copies; ", sum(fl$placed_from == "photo geotags"), " placed from photo geotags, ", sum(fl$placed_from == "flight log"), " from a flight log); ", paste(fl[, .N, by = positioning_found][, paste(N, positioning_found)], collapse = ", "))
 
   say("[5/5] Writing the catalogue", col = "accent")
@@ -232,7 +235,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
              "has_log", "placed_from", "has_geotags", "has_mrk", "has_rpt", "has_gnss_obs", "has_lidar_raw", "has_mission", "copies", "qa_flags")
   setcolorder(out, intersect(first, names(out))); setorder(out, year, date, start, na.last = TRUE)
   out[, `:=`(start_utc = fmt_ts(start_utc), end_utc = fmt_ts(end_utc))]
-  fwrite(out, file.path(catd, "flights.csv")); fwrite(links, file.path(catd, "links.csv")); fwrite(log_table(A$records$emotion$logs, links), file.path(catd, "logs.csv")); fwrite(A$scanned, file.path(catd, "sources.csv")); fwrite(geo, file.path(catd, "geometry.csv"))
+  fwrite(out, file.path(catd, "flights.csv")); fwrite(links, file.path(catd, "links.csv")); fwrite(log_table(A$records$emotion$logs, links), file.path(catd, "logs.csv")); fwrite(A$scanned, file.path(catd, "sources.csv")); fwrite(geo, file.path(catd, "geometry.csv")); fwrite(fpb$outlines, file.path(catd, "footprints.csv"))
   fwrite(A$files[, .(source_id, rel, format, family, role, status, size, mtime = fmt_ts(mtime))], file.path(catd, "files.csv"))
   for (k in c("focal_mm", "exposure_s", "gsd_cm", "speed_ms", "blur_px", "fwd_overlap_pct", "sun_elev_deg")) if (!k %in% names(b$images)) set(b$images, j = k, value = NA_real_)
   fwrite(b$images[, .(source_id, rel, flight_id, primary, time_utc = fmt_ts(time_utc), lat, lon, alt, alt_rel, rtk_flag, acc_xy, sensor, camera_serial, size, focal_mm, exposure_s, gsd_cm, speed_ms, blur_px, fwd_overlap_pct, sun_elev_deg)], file.path(catd, "images.csv"))
