@@ -21,6 +21,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
   and references (chromote; HTML when Chrome is missing). PNG export shares the drawing code (www/map_tools.js).
 - **Output changes**: flights.csv gains the fp_* columns and catalogue/footprints.csv is new; the RINEX sample output gains
   rinex_h and rinex_ant_h. Golden and sample outputs need accepting.
+- Fixed: eBee take-off height skips the track's heights before the GNSS fix (two 2026 flights read 388 m instead of about 115 m); footprints count each image once, not its copies.
 
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - The ~/Desktop/UAV_project fallback is gone: the project folder is the one set in app_settings.json (on this Mac

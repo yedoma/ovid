@@ -12,12 +12,13 @@
 # of the GNSS base on the ground (its RINEX header, less the antenna height). Over sloping ground the footprint is
 # approximate. Footprints are marked on a grid (FOOTPRINT_CELL_M) in metres around the centre of what is drawn, the
 # covered cells are traced once into outlines with isoband (holes kept), simplified by one cell (Douglas and Peucker
-# 1973), and parts and holes under FOOTPRINT_MIN_M2 are dropped. Sources: _hub/Derived_values_references.md, section 14.
+# 1973), and parts and holes under FOOTPRINT_MIN_M2 are dropped. Sources: _hub/Derived_values_references.md, section 6.
 
 FOOTPRINT_CELL_M <- 2              # grid cell (m): fine against a photo footprint of 50 m or more
 FOOTPRINT_MAX_CELLS <- 6e6         # a wider area takes a coarser cell, so a year spread over many km still fits in memory
 FOOTPRINT_MIN_M2 <- 500            # parts and holes smaller than this (a few cells at a strip's end) are dropped
 FOOTPRINT_LINE_GAP_S <- 30         # positions further apart in time are on different lines (as flight_metrics)
+FOOTPRINT_NOFIX_M <- 5             # m: a log track's first heights within this of 0 come before the GNSS fix
 # LiDAR field of view across the track (degrees), by the EXIF model of the payload's camera. Zenmuse L2: 70 deg horizontal
 # in both scan modes (DJI 2024, Zenmuse L2 User Manual v1.2); Zenmuse L1: 70.4 deg (DJI 2020, Zenmuse L1 User Manual v1.0).
 LIDAR_FOV_DEG <- c(L2 = 70, L1 = 70.4)
@@ -125,6 +126,15 @@ fp_parse <- function(line) { v <- strsplit(strsplit(line, ";", fixed = TRUE)[[1]
   list(lat = as.numeric(vapply(v, `[`, "", 1L)), lon = as.numeric(vapply(v, `[`, "", 2L))) }
 
 # ---- heights --------------------------------------------------------------------------------------------------------------
+# The take-off ground's GNSS height from a log's track heights in time order: the median of the first 5 once the receiver
+# has a height. A .bb3 track starts with a few points at about 0 m before the first fix; those are left out, unless every
+# one of the first 20 is near 0 (ground at the ellipsoid).
+fp_takeoff <- function(a) {
+  k <- which(abs(utils::head(a, 20L)) >= FOOTPRINT_NOFIX_M)[1]
+  if (!is.na(k) && k > 1L) a <- a[-seq_len(k - 1L)]
+  if (length(a)) stats::median(utils::head(a, 5L)) else NA_real_
+}
+
 # Each image's height above the take-off ground, and where it came from (a flight-level text). img: flight_id, alt,
 # alt_rel, family. emo: the eMotion records (tracks and photos by source_id:rel); fl: flights with log_ref; bases: one row
 # per flight with a base ground height (base_ground_m). DJI: alt_rel. eBee: the log's photos less its take-off, applied to
@@ -137,7 +147,7 @@ fp_heights <- function(img, fl, emo = NULL, bases = NULL) {
     lr <- fl[!is.na(log_ref), .(flight_id, ref = log_ref)]
     pm <- ph[is.finite(alt_wgs84), .(ph_wgs = stats::median(alt_wgs84)), by = .(ref = paste0(source_id, ":", rel))]
     to <- if (!is.null(tr) && nrow(tr) && "alt_wgs84" %in% names(tr))
-            tr[is.finite(alt_wgs84)][order(utc), .(to_wgs = stats::median(utils::head(alt_wgs84, 5L))), by = .(ref = paste0(source_id, ":", rel))] else data.table(ref = character(), to_wgs = numeric())
+            tr[is.finite(alt_wgs84)][order(utc), .(to_wgs = fp_takeoff(alt_wgs84)), by = .(ref = paste0(source_id, ":", rel))] else data.table(ref = character(), to_wgs = numeric())
     lr <- merge(merge(lr, pm, by = "ref"), to, by = "ref", all.x = TRUE)
     if (!is.null(bases) && nrow(bases)) lr <- merge(lr, bases[, .(flight_id, base_ground_m)], by = "flight_id", all.x = TRUE) else lr[, base_ground_m := NA_real_]
     lr[, `:=`(hh = fifelse(is.finite(to_wgs), ph_wgs - to_wgs, ph_wgs - base_ground_m),
@@ -209,6 +219,12 @@ footprints_build <- function(img, fl, emo = NULL, links = NULL, rinex = NULL, ba
   img <- copy(img); for (k in setdiff(need, names(img))) set(img, j = k, value = NA)
   for (k in c("lat", "lon", "alt", "alt_rel", "sensor_w_mm", "focal_mm", "px_x", "px_y")) set(img, j = k, value = suppressWarnings(as.numeric(img[[k]])))
   img <- img[!is.na(flight_id) & flight_id %in% fl$flight_id]
+  # each image once: of its copies (backups, eMotion img/ folders), the original when it is placed, else a geotagged copy
+  # (a Canon S110 does not geotag; eMotion writes the positions into its img/ copies)
+  if ("primary" %in% names(img)) {
+    img[, `:=`(pk = tolower(basename(file)), pos = is.finite(lat) & is.finite(lon) & !(lat == 0 & lon == 0))]
+    img <- unique(img[order(flight_id, pk, -pos, -(primary %in% TRUE))], by = c("flight_id", "pk"))[, c("pk", "pos") := NULL]
+  }
   hz <- fp_heights(img, fl, emo, fp_base_ground(links, rinex, bases)); img[, height := hz$height]
   lid <- fl[, .(flight_id, lidar = if ("has_lidar_raw" %in% names(fl)) has_lidar_raw %in% TRUE else FALSE)]
   fov <- img[, .(fov = { m <- names(LIDAR_FOV_DEG)[names(LIDAR_FOV_DEG) %in% model]; if (length(m)) LIDAR_FOV_DEG[[m[1]]] else NA_real_ }), by = flight_id]

@@ -83,6 +83,10 @@ local({
         "year footprint: two half-overlapping 100 m squares cover 15000 m2 (10000 under one flight, 5000 under two); a 100 m2 piece is dropped (hand)")
   h <- footprint_union(rbind(sq("a", 0, 0, 100), sq("a", 30, 30, 40, ring = 1L)), cell = 0.5)
   check(h$holes == 1L && eq(h$area_m2, 10000 - 1600, 150), "a flight's hole stays a hole in the year footprint (hand: 10000 - 1600 m2)")
+  # take-off ground from an eBee log's track (EP-01-23794_0345, 2026): the first 3 heights are 0.35, 0.24, 0.06 m before the GNSS
+  # fix, then 272.99 m on the ground; the take-off is the median of the first 5 fixed heights, not of 3 zeros and 2 heights
+  check(eq(fp_takeoff(c(0.35, 0.24, 0.06, 272.99, 272.97, 273.01, 273.00, 272.98, 280, 300)), 272.99, 1e-9) && eq(fp_takeoff(c(0.4, -0.2, 0.1, 0.3, 0.2, 0.0)), 0.2, 1e-9),
+        "take-off height leaves out the track's heights before the GNSS fix (hand: 272.99 m, not 0.35 m); ground at the ellipsoid is kept")
   # ellipsoidal height from ECEF (WGS 84; Bowring 1976), against h iterated to convergence by hand: 272.6319 m
   check(eq(ecef_height(c(-1595452.6658, -2624073.1951, 5571684.6973)), 272.6319, 0.001), "height above the WGS 84 ellipsoid from a RINEX APPROX POSITION XYZ (hand: 272.6319 m)")
   u0 <- ll_to_utm(-123, 0, 10); u45 <- ll_to_utm(-123, 45, 10); back <- utm_to_ll(ll_to_utm(-121.3, 61.3, 10)[[1]], ll_to_utm(-121.3, 61.3, 10)[[2]], 10)
