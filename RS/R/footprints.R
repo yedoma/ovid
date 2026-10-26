@@ -53,20 +53,21 @@ fp_heading <- function(x, y, t) {
 fp_grid <- function(x, y, cell = FOOTPRINT_CELL_M) {
   w <- diff(range(x)) + 4 * cell; h <- diff(range(y)) + 4 * cell
   cell <- max(cell, sqrt(w * h / FOOTPRINT_MAX_CELLS))
-  list(x0 = min(x) - 2 * cell, y0 = min(y) - 2 * cell, cell = cell, nx = ceiling(w / cell) + 2L, ny = ceiling(h / cell) + 2L)
+  list(x0 = round(min(x), 6) - 2 * cell, y0 = round(min(y), 6) - 2 * cell, cell = cell, nx = ceiling(w / cell) + 2L, ny = ceiling(h / cell) + 2L)
 }
 
 # How many groups cover each cell: polygons as rows of g (a group: one photo, one flight), r (a ring of it) and x, y in
 # order. Within a group the rings fill even-odd (a flight's holes stay holes); groups add up. Scanline at the cell
 # centres, so a cell counts when its centre is inside.
 fp_count <- function(p, gr) {
+  p <- copy(p)[, `:=`(x = round(x, 6), y = round(y, 6))]      # to the micrometre: the last bits of sin, cos and atan2 differ between processors
   e <- p[, { n <- .N; j <- c(2:n, 1L); .(x1 = x, y1 = y, x2 = x[j], y2 = y[j]) }, by = .(g, r)][y1 != y2]
   e[, `:=`(lo = ceiling((pmin(y1, y2) - gr$y0) / gr$cell + 0.5), hi = ceiling((pmax(y1, y2) - gr$y0) / gr$cell + 0.5) - 1L)]
   e <- e[hi >= lo]
   m <- matrix(0L, gr$ny, gr$nx + 1L)
   if (!nrow(e)) return(m[, -ncol(m), drop = FALSE])
   rr <- e[rep(seq_len(.N), hi - lo + 1L)][, row := lo + sequence(e$hi - e$lo + 1L) - 1L]
-  rr[, xi := x1 + (gr$y0 + (row - 0.5) * gr$cell - y1) * (x2 - x1) / (y2 - y1)]
+  rr[, xi := round(x1 + (gr$y0 + (row - 0.5) * gr$cell - y1) * (x2 - x1) / (y2 - y1), 6)]
   sp <- rr[order(g, row, xi), .(xa = xi[c(TRUE, FALSE)], xb = xi[c(FALSE, TRUE)]), by = .(g, row)]
   sp[, `:=`(ia = pmax(1L, ceiling((xa - gr$x0) / gr$cell + 0.5)), ib = pmin(gr$nx, ceiling((xb - gr$x0) / gr$cell + 0.5) - 1L))]
   sp <- sp[ib >= ia]
@@ -79,10 +80,11 @@ fp_count <- function(p, gr) {
 fp_simplify <- function(x, y, tol) {
   n <- length(x); if (n <= 4L) return(list(x = x, y = y))
   keep <- logical(n); keep[c(1L, n)] <- TRUE; st <- list(c(1L, n))
+  # squared distances, no sqrt: exact on grid points (halves of a cell), so a point exactly tol off goes the same way on every processor
   while (length(st)) { s <- st[[length(st)]]; st[[length(st)]] <- NULL; a <- s[1]; b <- s[2]; if (b - a < 2L) next
-    i <- (a + 1L):(b - 1L); dx <- x[b] - x[a]; dy <- y[b] - y[a]; L <- sqrt(dx^2 + dy^2)
-    d <- if (L > 0) abs(dy * x[i] - dx * y[i] + x[b] * y[a] - y[b] * x[a]) / L else sqrt((x[i] - x[a])^2 + (y[i] - y[a])^2)
-    if (max(d) > tol) { k <- i[which.max(d)]; keep[k] <- TRUE; st <- c(st, list(c(a, k), c(k, b))) } }
+    i <- (a + 1L):(b - 1L); dx <- x[b] - x[a]; dy <- y[b] - y[a]; L2 <- dx^2 + dy^2
+    d2 <- if (L2 > 0) (dy * x[i] - dx * y[i] + x[b] * y[a] - y[b] * x[a])^2 else (x[i] - x[a])^2 + (y[i] - y[a])^2
+    if (max(d2) > tol^2 * (if (L2 > 0) L2 else 1)) { k <- i[which.max(d2)]; keep[k] <- TRUE; st <- c(st, list(c(a, k), c(k, b))) } }
   list(x = x[keep], y = y[keep])
 }
 
@@ -92,10 +94,13 @@ fp_inside <- function(px, py, x, y) { n <- length(x); j <- c(n, seq_len(n - 1L))
 # The outline of the covered cells (count > 0): rows of part, ring (0 = the outer edge, 1+ = holes), x, y.
 fp_trace <- function(cnt, gr) {
   z <- matrix(0, nrow(cnt) + 2L, ncol(cnt) + 2L); z[2:(nrow(cnt) + 1L), 2:(ncol(cnt) + 1L)] <- cnt > 0
-  xs <- gr$x0 + (seq_len(ncol(z)) - 1.5) * gr$cell; ys <- gr$y0 + (seq_len(nrow(z)) - 1.5) * gr$cell
-  L <- isoband::isolines(xs, ys, z, 0.5)[[1]]
+  L <- isoband::isolines(seq_len(ncol(z)) - 1.5, seq_len(nrow(z)) - 1.5, z, 0.5)[[1]]   # in cells: the points fall on halves
   if (!length(L$x)) return(data.table(part = integer(), ring = integer(), x = numeric(), y = numeric()))
-  rg <- lapply(split(data.table(x = L$x, y = L$y), L$id), function(d) { d <- d[-nrow(d)]; s <- fp_simplify(d$x, d$y, gr$cell); data.table(x = s$x, y = s$y) })
+  rg <- lapply(split(data.table(x = L$x, y = L$y), L$id), function(d) { d <- d[-nrow(d)]
+    if (sum(d$x * shift(d$y, -1L, fill = d$y[1]) - shift(d$x, -1L, fill = d$x[1]) * d$y) < 0) d <- d[.N:1]   # counter-clockwise, from the lowest-left
+    k <- d[, which(y == min(y))][which.min(d[y == min(y), x])]; d <- d[c(k:.N, seq_len(k - 1L))]               # point, so the outline is the same
+    s <- fp_simplify(d$x, d$y, 1)                                                                                    # wherever the tracing starts
+    data.table(x = gr$x0 + s$x * gr$cell, y = gr$y0 + s$y * gr$cell) })
   rg <- rg[vapply(rg, nrow, 0L) >= 3L]
   a <- vapply(rg, function(d) fp_area(d$x, d$y), 0); rg <- rg[a >= FOOTPRINT_MIN_M2]; a <- a[a >= FOOTPRINT_MIN_M2]
   if (!length(rg)) return(data.table(part = integer(), ring = integer(), x = numeric(), y = numeric()))
