@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (a stopped run keeps an app's input-only cache, 2026-10-27)**
+- manifest.R output_restore: cache sub-folders an app names in CACHE_INPUT_ONLY (what was read from its inputs only) are kept when
+  a run fails, is cancelled or is killed; every other cache file the run wrote is still dropped. Default none, so CS, WLR, GT
+  and GS behave as before; RS names cache/sources (its scans). Test added.
+- **Output changes**: none.
+
 **Changed (plots, 2026-10-22)**
 - www/tsview.js: the Precipitation switch in the view bar is shown only when a plot has precipitation to draw (it showed On
   with no precipitation file). Test added.

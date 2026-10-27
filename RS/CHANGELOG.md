@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (scan cache kept when a run stops, 2026-10-27)**
+- cache/sources (image headers, logs and records read from the sources) is kept when a run fails or is stopped (core
+  output_restore, CACHE_INPUT_ONLY in rs_pipeline.R), so the next scan reads only what changed instead of every image.
+- **Output changes**: none.
+
 **Fixed (scan cache after a stopped run, 2026-10-26)**
 - A rescan that reads no new image no longer rewrites cache/sources/<id>/exif.rds, so a run that stops later (core output_restore
   drops the cache files a stopped run wrote) no longer makes the next scan read every image again. Test added.

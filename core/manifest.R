@@ -344,7 +344,9 @@ output_keep <- function(project_dir, free = disk_free(project_dir)) {    # TRUE 
   writeLines(as.character(as.numeric(Sys.time())), file.path(kept, ".ovid_kept"))
   TRUE
 }
-output_restore <- function(project_dir, why = "stopped") {
+# keep: cache sub-folders an app marks as holding only what was read from its inputs (CACHE_INPUT_ONLY, e.g. RS "sources":
+# image headers and log reads); they stay valid whatever the output, so a stopped run keeps them. Default none.
+output_restore <- function(project_dir, why = "stopped", keep = get0("CACHE_INPUT_ONLY", ifnotfound = character())) {
   pd <- path.expand(project_dir); out <- file.path(pd, "output"); kept <- file.path(pd, OUTPUT_KEPT); failed <- file.path(pd, OUTPUT_FAILED)
   if (!dir.exists(kept)) return(FALSE)
   # safe: with no stamp the folder's own time is used
@@ -358,7 +360,8 @@ output_restore <- function(project_dir, why = "stopped") {
   lg <- lg[!basename(lg) %in% list.files(file.path(out, "logs"))]
   if (length(lg)) { dir.create(file.path(out, "logs"), showWarnings = FALSE); file.copy(lg, file.path(out, "logs"), copy.date = TRUE) }
   unlink(failed, recursive = TRUE)
-  cf <- list.files(file.path(pd, "cache"), recursive = TRUE, full.names = TRUE, all.files = TRUE)
+  cf <- list.files(file.path(pd, "cache"), recursive = TRUE, full.names = FALSE, all.files = TRUE)
+  cf <- file.path(pd, "cache", cf[!sub("/.*", "", cf) %in% keep])
   unlink(cf[as.numeric(file.mtime(cf)) >= since - 2])
   writeLines(paste0("The run of ", format(as.POSIXct(since, origin = "1970-01-01"), "%Y-%m-%d %H:%M"), " ", why,
                     "; the output was put back as the run before it left it."), file.path(out, RUN_RESTORED))

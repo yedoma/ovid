@@ -141,6 +141,10 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
         identical(r, "broke part way") && readLines(file.path(o, "stations", "A.csv")) == "old" && !file.exists(file.path(o, "stations", "B.csv")) && !dir.exists(file.path(pd, OUTPUT_KEPT)))
   check("... keeps the stopped run's log and says what happened", length(list.files(file.path(o, "logs"), "\\.log$")) == 1 && grepl("put back", run_restored(pd)) && !nzchar(run_incomplete(pd)))
   check("... and drops the cached results it made, keeping the older ones", !file.exists(file.path(pd, "cache", "new.rds")) && file.exists(file.path(pd, "cache", "old.rds")))
+  CACHE_INPUT_ONLY <- "sources"; dir.create(file.path(pd, "cache", "sources", "S"), recursive = TRUE)        # an app's input-only cache (RS scans)
+  tryCatch(run_project(cfg, function() { writeLines("scan", file.path(pd, "cache", "sources", "S", "exif.rds")); writeLines("step", file.path(pd, "cache", "step.rds")); stop("broke") }), error = function(e) NULL)
+  check("... but keeps the cache an app marks as read from its inputs only (RS cache/sources)", file.exists(file.path(pd, "cache", "sources", "S", "exif.rds")) && !file.exists(file.path(pd, "cache", "step.rds")))
+  rm(CACHE_INPUT_ONLY)
   run_project(cfg, function() writeLines("new", file.path(pd, "output", "stations", "A.csv")))
   check("a run that finishes keeps its output and removes the copy", readLines(file.path(o, "stations", "A.csv")) == "new" && !dir.exists(file.path(pd, OUTPUT_KEPT)) && !nzchar(run_restored(pd)))
   output_keep(pd); writeLines("half", file.path(o, "stations", "A.csv"))                      # a run whose process was killed

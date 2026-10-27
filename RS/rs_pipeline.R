@@ -31,6 +31,7 @@ CFG <- list(
 if (nzchar(Sys.getenv("RS_RAW_DIRS")))    CFG$raw_dirs    <- strsplit(Sys.getenv("RS_RAW_DIRS"), ";")[[1]]
 if (nzchar(Sys.getenv("RS_PROJECT_DIR"))) CFG$project_dir <- Sys.getenv("RS_PROJECT_DIR")
 RUN_ON_SOURCE <- !identical(Sys.getenv("RS_NO_RUN"), "1")
+CACHE_INPUT_ONLY <- "sources"                  # cache/sources holds only what scans read from the sources: kept when a run stops (core output_restore)
 
 for (p in c("data.table", "jsonlite"))
   if (!requireNamespace(p, quietly = TRUE)) stop("The R package ", p, " is missing. Start the app with its launcher (the .bat or .command file), ",
