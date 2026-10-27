@@ -28,7 +28,8 @@
     base['Satellite (Esri)'].addTo(map);
     map.createPane('datasets').style.zIndex = 350;   // above the imagery tiles, under the flights
     FL.concat([YF], DSL).forEach(k => { lay[k] = L.layerGroup().addTo(map); items[k] = []; });
-    L.control.layers(null, lay, { collapsed: true }).addTo(map);
+    const lc = L.control.layers(null, lay, { collapsed: true }).addTo(map);
+    lc.getContainer().querySelector('.leaflet-control-layers-toggle').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 5-9 5-9-5z"/><path d="M3 14l9 5 9-5"/></svg>';   // a line icon like the other map buttons
     styleControl(); legend = L.control({ position: 'bottomright' }); legend.onAdd = () => L.DomUtil.create('div', 'map-legend'); legend.addTo(map);
     OvidMapTools(map, { legend: () => legend.getContainer(), name: 'map', key: 'main' });   // Legend on/off and 250 ppi PNG (www/map_tools.js)
     map.on('overlayadd overlayremove', drawLegend);
@@ -39,7 +40,7 @@
     c.onAdd = () => {
       const d = L.DomUtil.create('div', 'map-style leaflet-bar'); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
       const rowsH = FL.concat([YF], DSL).map(g => `<div class="ms-row" data-g="${g}"><span>${tip(g)}</span><input type="color"><input type="range" min="0.5" max="3" step="0.25"></div>`).join('');
-      d.innerHTML = `<a href="#" class="ms-btn" title="Colours and sizes">Style</a><div class="ms-body" hidden>
+      d.innerHTML = `<a href="#" class="ms-btn" title="Colours and sizes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Style</a><div class="ms-body" hidden>
         <label>Colour flights by <select class="ms-by">${['status|Positioning', 'year|Year', 'sensor|Sensor', 'aircraft|Aircraft', 'site|Site', 'single|One colour'].map(o => { const [v, t] = o.split('|'); return `<option value="${v}">${t}</option>`; }).join('')}</select></label>
         <label>Fill <input type="range" class="ms-op" min="0" max="0.6" step="0.05"></label>
         <div class="ms-head"><span>Layer</span><span>Colour</span><span>Size</span></div>${rowsH}
@@ -149,12 +150,12 @@
   const recolour = () => { if (last) { const f = fitted; draw({ ...last, fit: false }); fitted = f; } restyle(); };
   // compact legend: flight colours, then each layer that has something on the map, with its count
   function drawLegend() {
-    if (!legend || !legend.getContainer()) return; const sw = (c, dash) => `<i style="border-color:${c || 'transparent'}${dash ? ';border-style:dashed' : ''}"></i>`;
-    let h = yearKey.length ? '<div class="lg-t">One footprint per year</div>' + yearKey.map(([k, c]) => `<div>${sw(c)}${tip(k)}</div>`).join('') : '';
+    if (!legend || !legend.getContainer()) return; const sw = (c, st) => `<i style="border-color:${c || 'transparent'}${st ? ';border-top-style:' + st : ''}"></i>`;
+    let h = yearKey.length ? '<div class="lg-t">One footprint per year</div>' + yearKey.map(([k, c]) => `<div>${sw(c, 'dotted')}${tip(k)}</div>`).join('') : '';
     h += fkey.length && (items[FP] || []).length ? `<div class="lg-t">Flights by ${{ status: 'positioning', single: 'colour' }[S.by] || S.by}</div>` + fkey.map(([k, c]) => `<div>${sw(c)}${tip(k)}</div>`).join('') : '';
     const on = DSL.filter(g => (items[g] || []).length && map.hasLayer(lay[g]));
     if (on.length) h += '<div class="lg-t">Layers</div>' + on.map(g => `<div>${sw(colOf(g, items[g][0].col))}${tip(g)} <span class="mt-sub">${items[g].length}</span></div>`).join('');
-    if (h) h += '<div class="mt-sub lg-n">dashed planned · solid observed · dotted derived</div>';
+    if (h) h += '<div class="lg-k">' + [['dashed', 'planned'], ['solid', 'observed'], ['dotted', 'derived']].map(([st, t]) => `<span><i style="border-top-style:${st}"></i>${t}</span>`).join('') + '</div>';
     legend.getContainer().innerHTML = h; legend.getContainer().style.display = h ? '' : 'none';
   }
   function select(id) {

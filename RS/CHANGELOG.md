@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Map page type and icons, 2026-10-27)**
+- One Inter type scale on the Map page (11, 12.5, 13.5, 14 and 26 px); the map's controls and legend use Inter, not Leaflet's Helvetica.
+- Footprint switch: three equal parts, as tall as the inputs, the chosen one in the accent colour.
+- Coverage card: each value on one line with its range under it; "Height from" as short counts (DJI, log, log with base), the
+  full wording in the row's hover tip and in the report.
+- Map legend: year outlines drawn dotted as on the map; the planned / observed / derived key under a rule with line samples
+  (also in the PNG and report legend).
+- Style, Legend and PNG are one stack of same-size buttons with line icons; fullscreen and layers are the same size.
+- Report (PDF) button: a download-file icon. Number tiles: text starts at the top, labels grey.
+- **Output changes**: none (the report's numbers and wording are unchanged; its map legend is drawn in Inter).
+
 **Changed (scan cache kept when a run stops, 2026-10-27)**
 - cache/sources (image headers, logs and records read from the sources) is kept when a run fails or is stopped (core
   output_restore, CACHE_INPUT_ONLY in rs_pipeline.R), so the next scan reads only what changed instead of every image.

@@ -4,10 +4,13 @@
 // shape on the map is redrawn, so lines stay sharp. The legend, when included, is drawn bottom right as on screen.
 (function () {
   const PPI = 250, K = PPI / 96;
-  const css = `.dmt{font-size:12.5px}.dmt a{width:auto!important;padding:0 9px;font-weight:600;cursor:pointer}.dmt a.off{opacity:.55;text-decoration:line-through}
+  const css = `.dmt{font-size:12.5px}.dmt a{width:auto!important;padding:0 9px;font-weight:500;cursor:pointer}.dmt a.off{opacity:.55;text-decoration:line-through}
 .dmt-menu{background:var(--bg1,var(--panel,#383c44));color:var(--fg,#bcbfc4);padding:4px 0;border-top:1px solid rgba(128,128,128,.4)}
 .dmt-menu a{display:block;height:auto!important;line-height:1.8;text-align:left;font-weight:400;border:0!important;background:none!important;color:inherit!important}
 .dmt-menu a:hover{text-decoration:underline}.dmt-hidden{display:none!important}`;
+  const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  const ICON = { leg: svg('<path d="M9 7h11M9 12h11M9 17h11M4 7h1M4 12h1M4 17h1"/>'),
+                 png: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>') };
   function addCss() { if (document.getElementById('dmt-css')) return; const s = document.createElement('style'); s.id = 'dmt-css'; s.textContent = css; document.head.appendChild(s); }
   const store = { get(k) { try { return localStorage.getItem('ovidrs.legend.' + k); } catch (e) { return null; } },
                   set(k, v) { try { localStorage.setItem('ovidrs.legend.' + k, v); } catch (e) {} } };
@@ -20,7 +23,7 @@
     const c = L.control({ position: o.position || 'topleft' });
     c.onAdd = () => {
       const d = L.DomUtil.create('div', 'dmt leaflet-bar'); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
-      d.innerHTML = `<a class="dmt-leg" title="Show or hide the legend">Legend</a><a class="dmt-png" title="Save this view as a ${PPI} ppi PNG">PNG</a>
+      d.innerHTML = `<a class="dmt-leg" title="Show or hide the legend">${ICON.leg}Legend</a><a class="dmt-png" title="Save this view as a ${PPI} ppi PNG">${ICON.png}PNG</a>
         <div class="dmt-menu" hidden><a data-l="1">PNG with legend</a><a data-l="0">PNG without legend</a></div>`;
       btn = d.querySelector('.dmt-leg'); const menu = d.querySelector('.dmt-menu');
       btn.onclick = e => { e.preventDefault(); shown = !shown; store.set(key, shown ? 'on' : 'off'); apply(); };
@@ -119,21 +122,29 @@
   function drawLegend(g, el, W, H) {
     const was = el.classList.contains('dmt-hidden'); if (was) el.classList.remove('dmt-hidden');
     const cs = getComputedStyle(el), rows = [...el.children].filter(r => r.textContent.trim());
-    const fs = 12 * K, lh = fs * 1.5, pad = 9 * K, sw = 20 * K;
-    const font = r => `${+getComputedStyle(r).fontWeight >= 600 ? '600 ' : ''}${fs * (r.classList.contains('lg-n') ? 0.92 : 1)}px system-ui, sans-serif`;
-    const items = rows.map(r => { const i = r.querySelector('i'), ic = i && getComputedStyle(i);
-      return { t: r.textContent.trim().replace(/\s+/g, ' '), f: font(r), c: getComputedStyle(r).color,
-               sw: i ? { c: ic.borderTopColor, d: ic.borderTopStyle === 'dashed' } : null, muted: r.classList.contains('lg-n') }; });
+    const fs = 12.5 * K, lh = fs * 1.6, pad = 10 * K, sw = 30 * K, fam = cs.fontFamily || 'system-ui, sans-serif';
+    const font = r => `${+getComputedStyle(r).fontWeight >= 600 ? '600 ' : ''}${fs * (r.classList.contains('lg-n') || r.classList.contains('lg-k') ? 0.92 : 1)}px ${fam}`;
+    const swOf = i => { const ic = getComputedStyle(i); return { c: ic.borderTopColor, st: ic.borderTopStyle }; };
+    const items = rows.map(r => { const i = r.querySelector('i');
+      if (r.classList.contains('lg-k'))   // the line-style key: a short line before each word, on one row
+        return { key: [...r.children].map(sp => ({ t: sp.textContent.trim(), sw: swOf(sp.querySelector('i')) })), f: font(r), c: getComputedStyle(r).color, t: r.textContent.trim() };
+      return { t: r.textContent.trim().replace(/\s+/g, ' '), f: font(r), c: getComputedStyle(r).color, sw: i ? swOf(i) : null, muted: r.classList.contains('lg-n') }; });
+    const line = (s, x, y, len, w) => { g.strokeStyle = s.c; g.lineWidth = w; g.lineCap = s.st === 'dotted' ? 'round' : 'butt';
+      g.setLineDash(s.st === 'dashed' ? [4 * K, 3 * K] : s.st === 'dotted' ? [0.01, 2.2 * w] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + len, y); g.stroke(); g.setLineDash([]); g.lineCap = 'butt'; };
+    const kw = 16 * K + 5 * K, kgap = 12 * K;
+    const widthOf = it => { g.font = it.f; return it.key ? it.key.reduce((a, k) => a + kw + g.measureText(k.t).width, 0) + kgap * (it.key.length - 1) : g.measureText(it.t).width + (it.sw ? sw : 0); };
     if (was) el.classList.add('dmt-hidden');
-    let w = 0; items.forEach(it => { g.font = it.f; w = Math.max(w, g.measureText(it.t).width + (it.sw ? sw : 0)); });
+    let w = 0; items.forEach(it => { w = Math.max(w, widthOf(it)); });
     const bw = w + 2 * pad, bh = items.length * lh + 2 * pad, x0 = W - bw - 10 * K, y0 = H - bh - 22 * K;
     g.fillStyle = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' ? cs.backgroundColor : '#383c44';
     g.strokeStyle = cs.borderTopColor || '#484c54'; g.lineWidth = K;
     g.beginPath(); g.roundRect ? g.roundRect(x0, y0, bw, bh, 6 * K) : g.rect(x0, y0, bw, bh); g.fill(); g.stroke();
     g.textBaseline = 'middle';
     items.forEach((it, k) => { const y = y0 + pad + lh * (k + 0.5); let x = x0 + pad;
-      if (it.sw) { g.strokeStyle = it.sw.c; g.lineWidth = 3 * K; g.setLineDash(it.sw.d ? [4 * K, 3 * K] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 14 * K, y); g.stroke(); g.setLineDash([]); x += sw; }
-      g.font = it.f; g.fillStyle = it.muted ? '#999999' : it.c; g.fillText(it.t, x, y); });
+      g.font = it.f;
+      if (it.key) { it.key.forEach(k => { line(k.sw, x, y, 16 * K, 2 * K); x += kw; g.fillStyle = it.c; g.fillText(k.t, x, y); x += g.measureText(k.t).width + kgap; }); return; }
+      if (it.sw) { line(it.sw, x, y, 22 * K, 3 * K); x += sw; }
+      g.fillStyle = it.muted ? '#999999' : it.c; g.fillText(it.t, x, y); });
   }
 
   // PNG files carry their print size in a pHYs chunk: 250 ppi = 9843 pixels per metre

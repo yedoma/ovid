@@ -24,7 +24,7 @@ std_pages <- function() list(
         div(class = "legend-line", "Joins the shown flights of each year into one outline with no overlaps; optical and LiDAR each get their own."),
         div(class = "legend-line", HTML("On the map: <b>Style</b> (top left) sets colours, sizes and colour-by; layers top right; legend bottom right."))),
       ovid_controls(ovid_split_toggle("map_split", "Map and flight details", on = TRUE),
-                    actionButton("rep_make", "Report (PDF)", icon = icon("file-pdf"), class = "btn-sm", title = "The map as shown, with its legend, the numbers of each year's footprint and the flights"),
+                    actionButton("rep_make", "Report (PDF)", icon = icon("file-arrow-down"), class = "btn-sm", title = "The map as shown, with its legend, the numbers of each year's footprint and the flights"),
                     div(style = "display:none", downloadButton("rep_dl", "Report"))),
       ovid_split("map_split", width = "34%", on = TRUE,
         card(card_body(padding = 0, ovid_focus(uiOutput("map_note"), div(id = "rsmap")))),

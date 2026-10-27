@@ -93,12 +93,24 @@ year_facts <- function(f, u, kind, with = f$flight_id) {
 year_by_n <- function(u) { b <- u$by_n; s <- function(a, z) sum(b[n >= a & n <= z, m2])
   data.table(under = c("1 flight", "2 flights", "3 to 5", "6 to 10", "11 or more"), m2 = c(s(1, 1), s(2, 2), s(3, 5), s(6, 10), s(11, Inf))) }
 
+# One row of the card: the median on the line, its range under it; long labels and height sources shortened (the full
+# wording stays in the report and in the row's hover tip).
+HEIGHT_FROM_SHORT <- c("DJI height above take-off" = "DJI", "flight log: photo GNSS height less take-off height" = "log",
+                       "flight log photo height less the GNSS base's ground height" = "log, base")
+card_fact <- function(k, v) {
+  full <- v; k <- sub(", median of flights( \\(range\\))?$", ", median", k)
+  if (k == "Height from") { for (n in names(HEIGHT_FROM_SHORT)) v <- gsub(n, HEIGHT_FROM_SHORT[[n]], v, fixed = TRUE); v <- gsub("; ", " \u00b7 ", v, fixed = TRUE) }
+  m <- regmatches(v, regexec("^(.*) \\(([^()]+ to [^()]+)\\)$", v))[[1]]
+  r <- if (length(m)) paste("range", m[3]) else NULL; if (length(m)) v <- m[2]
+  div(class = "rs-fp-f", title = paste0(k, ": ", full), span(class = "k", k), span(class = paste("v", if (nchar(v) <= 24) "nw"), v), if (!is.null(r)) span(class = "r", r))
+}
+
 # The coverage card beside the map (one block per year and kind).
 year_card <- function(yf, f) {
   if (!length(yf)) return(p(class = "muted", "No flight in view has a footprint. Rebuild the catalogue (Sources) to work them out."))
   tagList(lapply(yf, function(x) { g <- f[flight_id %in% x$ids]; fa <- year_facts(g, x$u, x$kind, x$with); b <- year_by_n(x$u); mx <- max(b$m2, 1)
-    tagList(h3(class = "mt-2", sprintf("%s \u00b7 %s", x$year, FP_KIND_LABEL[[x$kind]]), span(class = "rs-fp-key", style = sprintf("border-color:%s", fp_kind_cols()[[x$kind]]))),
-      lapply(split(fa, factor(fa$section, unique(fa$section))), function(s) tagList(div(class = "rs-fp-sec", s$section[1]), lapply(seq_len(nrow(s)), function(i) fact(s$label[i], s$value[i])),
+    tagList(h3(class = "rs-fp-h", sprintf("%s \u00b7 %s", x$year, FP_KIND_LABEL[[x$kind]]), span(class = "rs-fp-key", style = sprintf("border-color:%s", fp_kind_cols()[[x$kind]]))),
+      lapply(split(fa, factor(fa$section, unique(fa$section))), function(s) tagList(div(class = "rs-fp-sec", s$section[1]), lapply(seq_len(nrow(s)), function(i) card_fact(s$label[i], s$value[i])),
         if (s$section[1] == "Coverage") div(class = "rs-fp-bars", div(class = "muted", "Area by number of flights over it (km\u00b2)"),
           lapply(seq_len(nrow(b)), function(i) div(class = "rs-fp-bar", span(b$under[i]), div(class = "tr", div(style = sprintf("width:%.1f%%;background:%s", 100 * b$m2[i] / mx, fp_kind_cols()[[x$kind]]))),
                                                    span(sprintf("%.3f", b$m2[i] / 1e6))))))))
