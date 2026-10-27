@@ -91,7 +91,7 @@ read_source_images <- function(files, sdir, chunk = 250L) {
                   error = function(e) { problem(g$folder[1], paste("image metadata not read:", conditionMessage(e))); NULL })
     if (!is.null(r)) got[[length(got) + 1L]] <- r[, meta_from := "read"]
     if (j %% 20L == 0L) keep() }                                                 # a stopped scan keeps what it has read
-  out <- keep()
+  out <- if (!nrow(todo) && identical(old$key, key) && nrow(have) == nrow(old$rows)) have else keep()   # nothing new: left as it is (core output_restore drops cache files a stopped run wrote)
   say("    read ", num(nrow(todo)), " images", if (nrow(have)) paste0("; ", num(nrow(have)), " unchanged since the last scan") else "")
   out[, k := NULL][]
 }

@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (scan cache after a stopped run, 2026-10-26)**
+- A rescan that reads no new image no longer rewrites cache/sources/<id>/exif.rds, so a run that stops later (core output_restore
+  drops the cache files a stopped run wrote) no longer makes the next scan read every image again. Test added.
+- **Output changes**: none.
+
 **Fixed (.bb3 logs with records on two clock offsets, 2026-10-26)**
 - A .bb3 log whose leftover records each fit two known clock offsets stopped with "object 'j' not found" (three 2017 eBee logs);
   those records are now left unplaced and the rest of the log is read (R/read_emotion.R bb3_locate). Test added.

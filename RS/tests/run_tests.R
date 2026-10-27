@@ -122,7 +122,9 @@ check(nrow(read_cfg(file.path(proj, "config", "sources.csv"))) == 2, "both sourc
 
 # an unplugged source stays in the catalogue
 file.rename(B, file.path(tmp, "B_moved"))
+xf <- file.path(source_dir(list(project_dir = proj), "T7"), "exif.rds"); Sys.setFileTime(xf, Sys.time() - 3600); xt <- file.mtime(xf)
 r <- run_pipeline(list(project_dir = proj), scan = A)
+check(identical(file.mtime(xf), xt), "a rescan that reads no new image leaves its image cache file as it is (a stopped run drops the cache files it wrote)")
 check(nrow(r$flights) == 7 && any(grepl("Backup", r$flights$source_id)), "a source that is unplugged keeps its flights")
 file.rename(file.path(tmp, "B_moved"), B)
 
