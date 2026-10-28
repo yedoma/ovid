@@ -93,7 +93,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </style>
 </head>
 <body><main>
-<header class="head"><p class="kicker">ovid · WLR · Quick start</p><h1>Quick start</h1><p class="lede">Water level loggers (HOBO and Solinst), from raw downloads to water above the sensor, water elevation and checked records for each site.</p><p class="meta"><span>WLR 0.12.0</span><span>22 October 2026</span><span>Figures: constructed example, not field data</span></p></header>
+<header class="head"><p class="kicker">ovid · WLR · Quick start</p><h1>Quick start</h1><p class="lede">Water level loggers (HOBO and Solinst), from raw downloads to water above the sensor, water elevation and checked records for each site.</p><p class="meta"><span>WLR 0.12.0</span><span>28 October 2026</span><span>Figures: constructed example, not field data</span></p></header>
 <div class="intro"></div>
 <section class="task">
 <h2>Before you start</h2>
@@ -105,19 +105,31 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <p>Open the app with <strong class="ui">Open WLR (Mac).command</strong> (Windows: <strong class="ui">Ovid_WLR.bat</strong>). The orange numbers in each figure match the list under it. The figures use a constructed example, not field data: one week of a Levelogger and a Barologger from the app's test files (Well A), and a second well and barologger derived from them (Well B). Its values show what the pages do; they are not typical of a field site.</p>
 </section>
 <section class="task">
+<h2>The Simple view</h2>
+<p>For someone new to the data, or a field check: four steps in one column, and nothing that changes a data value. A new install opens in Simple; the switch at the top (<strong class="ui">Simple</strong>, <strong class="ui">Standard</strong>, <strong class="ui">Workbench</strong>) moves between the three views of the same project, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address.</p>
+<figure><img src="img/guide/wlr_simple_view.png" alt="Simple view, step 2 View: a tile per site and one plot" style="width:100%"><figcaption><b>Figure 1.</b> Simple view, step 2 View: a tile per site and one plot</figcaption></figure>
+<ul>
+<li><strong class="ui">Import</strong>: the logger folders, the field sheet folder and the project folder, then <strong class="ui">Read the data</strong>. The first read asks the time zone of files that state none, as on the first run below. A summary says what was read and what to check.</li>
+<li><strong class="ui">View</strong>: one tile per site (last record, depth to water, its barologger, tape − logger; amber or red when it needs a look, with a link to the Standard page that fixes it) and a plot of water level, water temperature, depth below the ground or elevation.</li>
+<li><strong class="ui">Edit</strong>: rename a site, give it a place or a land cover, or drag a logger onto another site. The datum and hang length are shown, not edited: <strong class="ui">set in Standard</strong> opens <strong class="ui">Datum and offsets</strong>. Changes wait in a list until <strong class="ui">Save</strong>, with <strong class="ui">Undo</strong> and a change log. Data values, quality rules and corrections are not changed here.</li>
+<li><strong class="ui">Export</strong>: the field check report (one page, HTML) and the daily water levels (one CSV per site, with a README) or the plots, each as a .zip.</li>
+</ul>
+<figure><img src="img/guide/wlr_simple_edit.png" alt="Simple view, step 3 Edit: sites as cards, loggers as chips" style="width:100%"><figcaption><b>Figure 2.</b> Simple view, step 3 Edit: sites as cards, loggers as chips</figcaption></figure>
+</section>
+<section class="task">
 <h2>The top bar and the pages</h2>
-<figure><img src="img/guide/wlr_qs_00.png" alt="Top bar and page rail" style="width:100%"><figcaption><b>Figure 1.</b> Top bar and page rail</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_00.png" alt="Top bar and page rail" style="width:100%"><figcaption><b>Figure 3.</b> Top bar and page rail</figcaption></figure>
 <ol class="markers">
 <li>The pages, in working order: <strong class="ui">1 Bring in</strong>, <strong class="ui">2 Organize</strong>, <strong class="ui">3 Correct</strong>, <strong class="ui">4 Report</strong>. Each opens a numbered list of steps.</li>
 <li><strong class="ui">More</strong>: Overview, Plot and explore, Hydrology and uncertainty, Audit trail, Set-up check, Configuration, Convert and Reference.</li>
 <li><strong class="ui">Run pipeline</strong>: reads the raw files and rebuilds every output.</li>
 <li>The run state: up to date, or set-up changed and waiting for a run; the counts of corrections, removed and flagged values; unsaved changes.</li>
-<li><strong class="ui">Standard</strong> is the step-by-step view used here; <strong class="ui">Workbench</strong> shows the same project as a chart over a grid of every value.</li>
+<li><strong class="ui">Standard</strong> is the step-by-step view used here; <strong class="ui">Simple</strong> is the field check above; <strong class="ui">Workbench</strong> shows the same project as a chart over a grid of every value, and is where values are changed by hand.</li>
 </ol>
 </section>
 <section class="task">
 <h2><span class="no">1</span>Project</h2>
-<figure><img src="img/guide/wlr_qs_01.png" alt="Project page: folders" style="width:80%"><figcaption><b>Figure 2.</b> Project page: folders</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_01.png" alt="Project page: folders" style="width:80%"><figcaption><b>Figure 4.</b> Project page: folders</figcaption></figure>
 <ol class="markers">
 <li><strong class="ui">Data folders</strong>, one per line, each holding the year folders. The line under it counts the files found.</li>
 <li><strong class="ui">Metadata folder</strong> (optional): the newest .xlsx in it is read as the WL_Metadata workbook.</li>
@@ -127,7 +139,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </section>
 <section class="task">
 <h2>The first run</h2>
-<figure><img src="img/guide/wlr_qs_02.png" alt="Time zone question" style="width:65%"><figcaption><b>Figure 3.</b> Time zone question</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_02.png" alt="Time zone question" style="width:65%"><figcaption><b>Figure 5.</b> Time zone question</figcaption></figure>
 <p>Press <strong class="ui">Run pipeline</strong>. Solinst files and CSVs exported without a zone do not say which time zone their clock was in, so the first run asks:</p>
 <ol class="markers">
 <li>Pick the zone the loggers were set to (the project's time zone is offered first).</li>
@@ -137,7 +149,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </section>
 <section class="task">
 <h2><span class="no">2</span>Bring in files</h2>
-<figure><img src="img/guide/wlr_qs_03.png" alt="Bring in files" style="width:100%"><figcaption><b>Figure 4.</b> Bring in files</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_03.png" alt="Bring in files" style="width:100%"><figcaption><b>Figure 6.</b> Bring in files</figcaption></figure>
 <ol class="markers">
 <li><strong class="ui">Status</strong>: ok, or why a file was not used: a duplicate copy, an empty file, a .hobo without its CSV export, a format WLR does not read, or left out by you.</li>
 <li><strong class="ui">Kind</strong>: water or baro. A file in a <code>baro/</code> folder, or typed Baro in the workbook, is a barologger.</li>
@@ -146,7 +158,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </section>
 <section class="task">
 <h2><span class="no">3</span>Loggers and deployments</h2>
-<figure><img src="img/guide/wlr_qs_04.png" alt="Loggers and deployments" style="width:100%"><figcaption><b>Figure 5.</b> Loggers and deployments</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_04.png" alt="Loggers and deployments" style="width:100%"><figcaption><b>Figure 7.</b> Loggers and deployments</figcaption></figure>
 <ol class="markers">
 <li><strong class="ui">Add what was found</strong> puts a row in the deployment sheet for each logger in the files.</li>
 <li><strong class="ui">Site</strong>: type the site of each logger. From and To left blank cover the logger's whole record; Hang length, Type and the other columns are used when given.</li>
@@ -156,7 +168,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </section>
 <section class="task">
 <h2><span class="no">4</span>Needs you</h2>
-<figure><img src="img/guide/wlr_qs_05.png" alt="Needs you" style="width:100%"><figcaption><b>Figure 6.</b> Needs you</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_05.png" alt="Needs you" style="width:100%"><figcaption><b>Figure 8.</b> Needs you</figcaption></figure>
 <ol class="markers">
 <li><strong class="ui">Accept the suggested matches</strong>: loggers matched to a row by a year, a name in the files or their only deployment are suggestions until accepted. A match by dates is assigned on its own.</li>
 <li><strong class="ui">What the last run found</strong>: decide each finding (Keep, Remove…, Correct… or Not a problem), or follow its link to the page that fixes it. Each decision is saved as you make it; the next run uses it.</li>
@@ -164,7 +176,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 </section>
 <section class="task">
 <h2>Look at each site</h2>
-<figure><img src="img/guide/wlr_qs_06.png" alt="Site page" style="width:100%"><figcaption><b>Figure 7.</b> Site page</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_06.png" alt="Site page" style="width:100%"><figcaption><b>Figure 9.</b> Site page</figcaption></figure>
 <ol class="markers">
 <li>Pick the site; ‹ and › step through them.</li>
 <li>The time step of the plot: half-hourly, as recorded, hourly, daily, monthly or annual. Drag left to right zooms in, right to left zooms out; Shift + drag selects a stretch.</li>
@@ -188,11 +200,12 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <li><strong class="ui">Manual levels and drift</strong>: readings by hand and the tape check at each visit (task 11).</li>
 <li><strong class="ui">Clocks</strong>, <strong class="ui">Quality rules</strong> and <strong class="ui">Automatic corrections</strong>: time zones and clock errors (tasks 7 and 8), limits, and the corrections every run makes on its own.</li>
 </ul>
+<p>Tables that change data values (quality rules, out of water, clock corrections, barologger checks and corrections over a period) are shown in Standard and edited by hand only in the <strong class="ui">Workbench</strong>.</p>
 <p>Run again after a change; only what changed is rebuilt.</p>
 </section>
 <section class="task">
 <h2><span class="no">7</span>Report</h2>
-<figure><img src="img/guide/wlr_qs_07.png" alt="Report" style="width:100%"><figcaption><b>Figure 8.</b> Report</figcaption></figure>
+<figure><img src="img/guide/wlr_qs_07.png" alt="Report" style="width:100%"><figcaption><b>Figure 10.</b> Report</figcaption></figure>
 <ol class="markers">
 <li><strong class="ui">Sites</strong>: pick the sites to export.</li>
 <li><strong class="ui">Format</strong>: a ZIP package, one CSV, one file per site, or the report alone.</li>

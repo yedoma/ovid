@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (2026-10-28)**
+- Quick start and how-to guides cover the Simple view and the three views; clock corrections, quality rules and removals are
+  edited by hand in the Workbench. New figures from the guide project. **Output changes:** none.
+
 **Changed (Simple view, 2026-10-28)**
 - Edit: each site's card shows its land cover (edited there, saved to deployment_sheet.csv through the list of changes, with Undo)
   and its datum (shown, with a link to Datum and offsets in Standard); the separate card below is gone. Barologgers show in purple

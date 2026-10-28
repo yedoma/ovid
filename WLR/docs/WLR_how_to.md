@@ -12,6 +12,16 @@ One task per section: when to use it, the steps, what changes and how to check i
 
 **Check and report:** 15. Look at a site over time; 16. Find out why a value was removed; 17. Run the set-up check; 18. Export data and reports; 19. Back up or share the set-up; 20. Report a problem
 
+## The three views
+
+The same project, data and edits in three views, switched at the top (**Simple**, **Standard**, **Workbench**) or with ?ui=simple, ?ui=standard or ?ui=workbench in the address. A new install opens in Simple.
+
+<figure><img src="img/guide/wlr_simple_import.png" alt="Simple view, step 1 Import" style="width:100%"></figure>
+
+- **Simple**: a field check in four steps (Import, View, Edit, Export). Edit renames sites, places them, sets their land cover and moves loggers between them; it changes no data value.
+- **Standard**: the set-up flow these tasks use: bring in files, organize loggers and sites, correct, report.
+- **Workbench**: every change to the data by hand. Removals, out-of-water periods, quality rules, clock corrections, barologger checks and corrections over a period are edited here; Standard shows those tables and points to the Workbench.
+
 ## 1. Add a new download
 
 **When:** After a field visit, with new .hobo or .xle files.
@@ -114,7 +124,7 @@ One task per section: when to use it, the steps, what changes and how to check i
 
 <figure><img src="img/guide/wlr_ht_08.png" alt="Clocks: clock corrections" style="width:100%"></figure>
 
-1. **Clocks:** under **Clock corrections** (1), **Add row** (2).
+1. Clock corrections change data values, so they are edited by hand in the **Workbench** (top right): open the **Clock corrections** table (1; shown read-only on **Clocks** in Standard) and **Add row** (2).
 2. Fill in the serial, the start and end (blank = all of its record) and `shift_minutes`. With `mode` set to drift, the shift grows from none at the start to `shift_minutes` at the end.
 3. **Save changes** (3), then **Run pipeline**.
 
@@ -186,7 +196,7 @@ One task per section: when to use it, the steps, what changes and how to check i
 
 <figure><img src="img/guide/wlr_ht_13.png" alt="Quality rules" style="width:100%"></figure>
 
-1. **Quality rules:** double-click a cell to change it: **Min** and **Max** (1), the largest single jump (max spike) or the longest flat stretch (max flat h).
+1. Quality rules are edited by hand in the **Workbench** (top right; Standard shows them read-only): open the **Quality rules** table and double-click a cell to change it: **Min** and **Max** (1), the largest single jump (max spike) or the longest flat stretch (max flat h).
 2. **Action** (2): remove or flag. **Applies to** takes water, baro, ec, all, or site names or serials separated by |.
 3. **Save changes** (3), then **Run pipeline**.
 
@@ -216,7 +226,7 @@ One task per section: when to use it, the steps, what changes and how to check i
 <figure><img src="img/guide/wlr_ht_15.png" alt="Plot and explore" style="width:100%"></figure>
 
 1. **Plot and explore** (More): pick the **Site** (1) and **Deployment** (2), and the values to show.
-2. Drag left to right zooms in, right to left zooms out; Shift + drag selects a stretch; double-click shows the whole record. The line is smoothed for display (**Smoothing** in the plot options turns it off); **Save data** gives the readings themselves.
+2. Drag left to right zooms in, right to left zooms out; Shift + drag selects a stretch (to remove it, use the Workbench, task 12); double-click shows the whole record. The line is smoothed for display (**Smoothing** in the plot options turns it off); **Save data** gives the readings themselves.
 3. **Save image** or **Save data** (3) saves what is in view.
 4. **Flags on this record** (4) lists every flag with its check and rule.
 

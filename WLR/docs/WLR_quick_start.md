@@ -10,6 +10,19 @@ Water level loggers (HOBO and Solinst), from raw downloads to water above the se
 
 Open the app with **Open WLR (Mac).command** (Windows: **Ovid_WLR.bat**). The orange numbers in each figure match the list under it. The figures use a constructed example, not field data: one week of a Levelogger and a Barologger from the app's test files (Well A), and a second well and barologger derived from them (Well B). Its values show what the pages do; they are not typical of a field site.
 
+## The Simple view
+
+For someone new to the data, or a field check: four steps in one column, and nothing that changes a data value. A new install opens in Simple; the switch at the top (**Simple**, **Standard**, **Workbench**) moves between the three views of the same project, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address.
+
+<figure><img src="img/guide/wlr_simple_view.png" alt="Simple view, step 2 View: a tile per site and one plot" style="width:100%"></figure>
+
+- **Import**: the logger folders, the field sheet folder and the project folder, then **Read the data**. The first read asks the time zone of files that state none, as on the first run below. A summary says what was read and what to check.
+- **View**: one tile per site (last record, depth to water, its barologger, tape − logger; amber or red when it needs a look, with a link to the Standard page that fixes it) and a plot of water level, water temperature, depth below the ground or elevation.
+- **Edit**: rename a site, give it a place or a land cover, or drag a logger onto another site. The datum and hang length are shown, not edited: **set in Standard** opens **Datum and offsets**. Changes wait in a list until **Save**, with **Undo** and a change log. Data values, quality rules and corrections are not changed here.
+- **Export**: the field check report (one page, HTML) and the daily water levels (one CSV per site, with a README) or the plots, each as a .zip.
+
+<figure><img src="img/guide/wlr_simple_edit.png" alt="Simple view, step 3 Edit: sites as cards, loggers as chips" style="width:100%"></figure>
+
 ## The top bar and the pages
 
 <figure><img src="img/guide/wlr_qs_00.png" alt="Top bar and page rail" style="width:100%"></figure>
@@ -18,7 +31,7 @@ Open the app with **Open WLR (Mac).command** (Windows: **Ovid_WLR.bat**). The or
 2. **More**: Overview, Plot and explore, Hydrology and uncertainty, Audit trail, Set-up check, Configuration, Convert and Reference.
 3. **Run pipeline**: reads the raw files and rebuilds every output.
 4. The run state: up to date, or set-up changed and waiting for a run; the counts of corrections, removed and flagged values; unsaved changes.
-5. **Standard** is the step-by-step view used here; **Workbench** shows the same project as a chart over a grid of every value.
+5. **Standard** is the step-by-step view used here; **Simple** is the field check above; **Workbench** shows the same project as a chart over a grid of every value, and is where values are changed by hand.
 
 ## 1 Project
 
@@ -90,6 +103,8 @@ Each page under **3 Correct** fixes one thing. Most projects need the first thre
 - **Datum and offsets**: logger offsets and survey points, so depths become water elevations (task 10). A wrong hang length is corrected on **Deployment history**, under 2 Organize (task 6).
 - **Manual levels and drift**: readings by hand and the tape check at each visit (task 11).
 - **Clocks**, **Quality rules** and **Automatic corrections**: time zones and clock errors (tasks 7 and 8), limits, and the corrections every run makes on its own.
+
+Tables that change data values (quality rules, out of water, clock corrections, barologger checks and corrections over a period) are shown in Standard and edited by hand only in the **Workbench**.
 
 Run again after a change; only what changed is rebuilt.
 
