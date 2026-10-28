@@ -17,8 +17,9 @@ SETUP_TABLES[, `:=`(file = vapply(id, function(k) CONFIG_FILES[[k]]$file, ""), l
            "Instrument clocks: the offset from UTC of a file's times, by instrument, serial and period (core/timezones.R)."))]
 # electrode_status.csv has no tab: electrodes are turned off on the QC page; its editor stays for the Workbench's Unflag.
 SETUP_TABLES[, tab := id != "electrodes"]
+SETUP_TABLES[, wb_only := id %in% c("qc", "manual", "electrodes", "elevations")]   # these change what the data say or how they are read: edited by hand only in the Workbench (M 28 Oct)
 setup_editors <- function(path_of, tick, mark) setNames(lapply(SETUP_TABLES$id, function(k)
-  ovid_edit_server(k, reactive(path_of(k)), tick, on_change = mark)), SETUP_TABLES$id)
+  ovid_edit_server(k, reactive(path_of(k)), tick, on_change = mark, wb_only = SETUP_TABLES[id == k]$wb_only)), SETUP_TABLES$id)
 # ---- electrodes turned off (the QC page) -------------------------------------------------------------------------------------
 # An electrode_status.csv row (ELECTRODE_COLS): electrodes turned off in survey sid, or on transect tr from one date to
 # another (blank: open-ended), by scope.

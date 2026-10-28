@@ -119,7 +119,7 @@ local({ p2 <- file.path(tmp, "noqc"); unlink(p2, TRUE); dir.create(p2); file.cop
 # ---- the Workbench (preview), on the Standard server: in a copy of the app folder with its own settings, so the real ones are not read
 say("Workbench interface (preview)")
 appd <- file.path(tmp, "app"); dir.create(appd, showWarnings = FALSE)
-for (f in c("app.R", "gs_pipeline.R", "R", "pages", "workbench", "docs")) if (file.exists(file.path(here, f))) file.symlink(file.path(here, f), file.path(appd, f))
+for (f in c("app.R", "gs_pipeline.R", "R", "pages", "workbench", "simple", "docs")) if (file.exists(file.path(here, f))) file.symlink(file.path(here, f), file.path(appd, f))
 saveRDS(list(raw_dirs = dirname(raw), project_dir = p0), file.path(appd, "app_settings.rds"))
 Sys.setenv(OVID_CORE = CORE_DIR)
 app <- new.env(); assign("shinyApp", function(...) invisible(NULL), envir = app)
@@ -174,6 +174,7 @@ if (!requireNamespace("xml2", quietly = TRUE)) say("skip  the Workbench server c
   dvw <- ui_defaults(hw); sid <- o$survey_id; rd <- function(w) read_cfg(cfg_path(p0, w))
   selg <- function(g, c, r1, r2 = r1) list(sig = g$sig, c = as.list(c), r1 = as.list(r1), r2 = as.list(r2), ar = r1[1], ac = c[1])
   both <- function(input, output, session) { std <- app$server(input, output, session, embedded = TRUE); wb <- app$wb_server(input, output, session, std) }
+  Sys.setenv(OVID_UI = "workbench")                   # the Workbench, where flags and electrodes are changed by hand (core editor.R wb_only)
   testServer(both, {
     suppressWarnings({ do.call(session$setInputs, dvw); session$flushReact() })
     session$setInputs(wb_table = sid); d <- app$wb_load(sid); session$setInputs(wb_params = app$wb_params(d))
@@ -198,6 +199,7 @@ if (!requireNamespace("xml2", quietly = TRUE)) say("skip  the Workbench server c
     check(nrow(e) == 1 && e$survey_id == sid && e$electrode == "1" && e$status == "off" && st("A", 1) == "pend" && st("B", 1) == "",
           "Mark off on the QC page writes an electrode_status.csv row, and the Workbench shows the measurements using it as flagged after the next scan")
   })
+  Sys.unsetenv("OVID_UI")
 }
 # error model, inversion files, electrode heights from a GNSS file
 set.seed(3); nq <- 200; qa <- seq_len(nq) * 5L; qd <- data.table(a = qa, b = qa + 3L, m = qa + 1L, n = qa + 2L)
@@ -388,6 +390,37 @@ local({                                                               # a GPR li
   check(gpr_line_year(NULL) == "" && gpr_line_year(data.table(datetime = as.POSIXct(c("2016-09-01", "2015-08-01"), tz = "UTC"))) == "2015", "the year of a line is that of its first GPS fix")
 })
 for (t in c("test_bad_files.R", "test_golden.R", "test_formulas.R")) source(file.path(here, "tests", t), local = new.env())   # damaged files, the golden project, derived values
+say("the Simple view")
+local({
+  h <- as.character(htmltools::renderTags(app$simple_ui(NULL))$html)
+  check(grepl('data-step="export"', h, fixed = TRUE) && all(vapply(c("set_raw", "set_project", "rebuild", "sp_area"), function(i) grepl(paste0('id="', i, '"'), h, fixed = TRUE), NA)) && !anyDuplicated(ids(h)),
+        "the Simple view builds: four steps, the ERT | GPR switch, its own Import with the folders and Scan, and no input twice")
+  check(setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "manual", "electrodes", "elevations")),
+        "QC profiles, flags, electrodes turned off and elevations are edited by hand only in the Workbench")
+  k <- app$rename_spec(app$RENAMES, "site"); allowed <- unique(c(k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
+  check(all(c("sites.csv", "surveys.csv", "transects.csv") %in% allowed), "renaming a site reaches sites.csv, surveys.csv and transects.csv (rename.R)")
+  ps <- file.path(tmp, "simple_p"); dir.create(ps); invisible(file.copy(list.files(p0, full.names = TRUE), ps, recursive = TRUE)); cf <- file.path(ps, "config")
+  md5 <- function() { f <- list.files(cf, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  sv0 <- app$sp_gs_cfg(ps, "surveys", SURVEY_COLS); st0 <- app$sp_gs_cfg(ps, "sites", SITE_COLS); sid <- sv0$survey_id[1]; key <- app$sp_gs_key("X", sid)
+  ops <- rbind(app$SIMPLE_OPS, data.table(type = c("move", "place", "field", "rename", "field", "field", "field"), group = c("", "Pit Site", "Pit Site", "Pit Site", key, key, key),
+    to = c("Pit Site", "", "fen", "Bog Site", "Line A", "2019-07-04", "Good"), item = c(sid, "", "environment", "", "display_name", "acquired_date", "quality"), at = "",
+    lat = c(NA, 61.2, NA, NA, NA, NA, NA), lon = c(NA, -121.2, NA, NA, NA, NA, NA)), fill = TRUE)
+  b0 <- md5(); r <- app$sp_gs_apply(ps, ops, "tt"); b1 <- md5(); ch <- names(b1)[is.na(b0[names(b1)]) | b0[names(b1)] != b1]
+  check(isTRUE(r$ok) && length(ch) && all(ch %in% c("sites.csv", "surveys.csv", "transects.csv")), "Simple's Edit writes only sites.csv, surveys.csv and transects.csv, never a flag, a QC profile or a data file")
+  sv1 <- app$sp_gs_cfg(ps, "surveys", SURVEY_COLS); st1 <- app$sp_gs_cfg(ps, "sites", SITE_COLS)
+  check(sv1[survey_id == sid]$site == "Bog Site" && any(st1$site == "Bog Site" & st1$latitude == "61.2" & st1$environment == "fen") && !any(st1$site == "Pit Site"),
+        "a survey moved onto a new site, the site placed and renamed: surveys.csv and sites.csv follow")
+  check(sv1[survey_id == sid]$display_name == "Line A" && sv1[survey_id == sid]$acquired_date == "2019-07-04" && sv1[survey_id == sid]$quality == "Good",
+        "a survey's name, date and quality land in surveys.csv")
+  check(any(grepl("Simple view", readLines(file.path(cf, "history", "change_log.csv"), warn = FALSE), fixed = TRUE)), "each save keeps the version before, with who changed it")
+  fd <- app$sp_gs_folder_date(c("Scotty Creek March 2018", "2018-03-14 run", "20180314", "14 Mar 2018", "Summer18", "Survey_2019", "Raw-7", "Mar18", "Site B"))
+  check(identical(fd, c("2018-03", "2018-03-14", "2018-03-14", "2018-03-14", "2018", "2019", "", "2018-03", "")),
+        "a folder's name gives a date as precise as it says (a day, a month, a year), and nothing when it holds none")
+  fs <- app$sp_gs_folder_site(c("Angela Site August 2018", "Raw-7", "Suhm_2019_ERT", "Bog_3D_line"))
+  check(identical(fs, c("Angela Site", "", "Suhm", "Bog 3D line")), "a site from a folder's name: the name without its date and words like raw or ERT; none from a name like Raw-7")
+  r$undo(); sv2 <- app$sp_gs_cfg(ps, "surveys", SURVEY_COLS); st2 <- app$sp_gs_cfg(ps, "sites", SITE_COLS)
+  check(identical(sv2, sv0) && identical(st2, st0), "Undo puts surveys.csv and sites.csv back as they were")
+})
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(GS_PROJECT_DIR = file.path(tmp, "project"), GS_RAW_DIRS = dirname(raw), GS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))

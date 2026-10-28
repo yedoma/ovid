@@ -105,7 +105,7 @@
       if (r$status == "cancelled") return(showNotification("Scan cancelled. Files it had written are kept; the next scan redoes what it did not finish.", type = "warning", duration = 10))
       if (r$status != "finished") return(showNotification(r$message, type = "error", duration = NULL))
       rv$tick <- rv$tick + 1; showNotification(paste0("Archive scanned.", run_redone(PROJECT)), type = "message", duration = 8) }) }
-  observeEvent(input$save, {
+  observeEvent(input$save, { if (!wb_made(E$qc)) return()
     nm <- safe_name(trim(input$save_name)); if (!nzchar(nm)) return(ovid_field_error("save_name", "Give the profile a name."))
     new <- copy(live())[, `:=`(profile = nm, applies_to = "all", notes = paste("saved from the QC sliders", format(Sys.Date())))]
     q <- rbind(qc()[profile != nm], new); write_cfg(q, CFG$project_dir, "qc", who = "app"); qc(q)

@@ -34,7 +34,7 @@
   eo_write <- function(rows) { ok <- tryCatch(isTRUE(E$electrodes$append(as.data.frame(rows))), error = function(e) FALSE)
     if (!ok) write_cfg(rbind(ensure_cols(eo_rows(), ELECTRODE_COLS)[, ..ELECTRODE_COLS], rows[, ..ELECTRODE_COLS]), CFG$project_dir, "electrodes", who = "app")
     eo_tick(eo_tick() + 1) }
-  observeEvent(input$eo_add, { req(nzchar(trim(input$eo_list)), nzchar(input$qc_survey %||% ""))
+  observeEvent(input$eo_add, { req(nzchar(trim(input$eo_list)), nzchar(input$qc_survey %||% "")); if (!wb_made(E$electrodes)) return()
     # safe: an empty list is refused on the same line with a message
     el <- tryCatch(ids_from(gsub(" ", "", input$eo_list)), error = function(e) integer()); if (!length(el) || anyNA(el)) { ovid_field_error("eo_list", "Give electrode numbers such as 12, 15-17."); return() }
     scope <- input$eo_scope %||% "survey"; tr <- q1()$transect_id %||% ""
@@ -44,7 +44,7 @@
       if (bad(input$eo_from) || bad(input$eo_to)) return(showNotification("From and to must look like 2024-08-31.", type = "warning")) }
     eo_write(electrode_status_row(input$qc_survey, tr, input$eo_list, input$eo_from, input$eo_to, input$eo_reason, "app", scope)) })
   # back on: this survey's own rows; rows of its transect over a period apply to other surveys too, so they are asked about
-  eo_clear_own <- function(also_transect = FALSE) { e <- eo_rows(); sid <- input$qc_survey %||% ""; if (!nrow(e)) return()
+  eo_clear_own <- function(also_transect = FALSE) { e <- eo_rows(); sid <- input$qc_survey %||% ""; if (!nrow(e) || !wb_made(E$electrodes)) return()
     drop <- trim(e$survey_id) == sid
     if (also_transect) { h <- eo_here(); drop <- drop | (do.call(paste, e[, ..ELECTRODE_COLS]) %in% do.call(paste, h[applies_to != "this survey", ..ELECTRODE_COLS])) }
     write_cfg(e[!drop], CFG$project_dir, "electrodes", who = "app"); eo_tick(eo_tick() + 1) }

@@ -35,6 +35,10 @@ ELECTRODE_COLS <- c("survey_id", "transect_id", "electrode", "status", "from", "
 FILE_RULE_COLS <- c("pattern", "action", "survey_id", "reason")
 ELEV_COLS     <- c("survey_id", "electrode", "distance_m", "elevation_m", "source", "author")   # by electrode number, or by distance along the line
 
+# The Simple view: a survey with more than this share (%) of its measurements flagged under the QC profile needs a look.
+SIMPLE_LOOK_PCT <- 10
+# Renaming a site (core rename.R): the sites table, and the tables that name a site.
+RENAMES <- list(site = list(label = "Site", main = c("sites.csv", "site"), cols = list(c("surveys.csv", "site"), c("transects.csv", "site")), lists = list()))
 QUALITY_CLASSES <- c("Good", "Usable", "Usable with caution", "Poor", "Unusable", "Incomplete", "Unknown")
 QUALITY_REASONS <- c("poor electrode contact", "high contact resistance", "insufficient injected current", "high measurement error",
                      "cable problem", "instrument problem", "geometry problem", "incomplete acquisition", "missing coordinates",

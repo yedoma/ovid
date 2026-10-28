@@ -32,14 +32,14 @@
   output$survey_errcur <- plotly::renderPlotly(view_error_current(vdat()))
   output$survey_geom <- plotly::renderPlotly({ ELEV(); validate(need(has_meas(input$survey), no_meas_msg)); view_geometry(electrodes_of(read_meas(input$survey))) })
   save_elev <- function(e) { write_cfg(e, CFG$project_dir, "elevations", who = "app"); ELEV(e) }
-  observeEvent(input$elev_file, {                                 # an elevation table or a GNSS file (R/inversion.R)
+  observeEvent(input$elev_file, { if (!wb_made(E$elevations)) return()                                 # an elevation table or a GNSS file (R/inversion.R)
     r <- tryCatch(elevation_file_rows(input$elev_file$datapath, input$survey, input$elev_file$name, author = "app"), error = function(e) { showNotification(conditionMessage(e), type = "error"); NULL })
     if (is.null(r)) return()
     e <- ELEV(); save_elev(rbind(e[survey_id != input$survey], r$rows))
     showNotification(sprintf(if (r$kind == "gnss") "Added %d electrode heights from %s" else "Added %d elevations from %s", nrow(r$rows), input$elev_file$name), type = "message") })
   output$survey_errmodel <- renderText({ req(has_meas(input$survey)); e <- error_model(read_meas(input$survey))
     if (e$model == "fixed") e$source else sprintf("%s, e = %s, r\u00b2 %.2f; %s.", e$model, if (e$model == "power") sprintf("%.3g |R|^%.3g", e$a, e$b) else sprintf("%.3g + %.3g |R|", e$a, e$b), e$r2, e$source) })
-  observeEvent(input$elev_clear, { e <- ELEV(); if (input$survey %in% e$survey_id) { save_elev(e[survey_id != input$survey]); showNotification("Added elevations removed", type = "message") } })
+  observeEvent(input$elev_clear, { if (!wb_made(E$elevations)) return(); e <- ELEV(); if (input$survey %in% e$survey_id) { save_elev(e[survey_id != input$survey]); showNotification("Added elevations removed", type = "message") } })
   output$survey_table <- renderDT({ p <- vdat()
     ovid_dt(p[, .(`#` = meas_id, A = a, B = b, M = m, N = n, `App. resistivity (ohm-m)` = signif(rhoa_ohmm, 4), `V/I (ohm)` = signif(resistance_ohm, 4),
                     `Current (mA)` = signif(current_ma, 4), `Voltage (mV)` = signif(voltage_mv, 4), `Error (%)` = error_pct, `Contact (ohm)` = signif(contact_ohm, 4),

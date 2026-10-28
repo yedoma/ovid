@@ -7,6 +7,22 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (the Simple view, 2026-10-28)**
+- simple/simple_gs.R: the Simple view (?ui=simple), on the side the ERT | GPR switch shows. Import: the folders, Scan and a checklist
+  (files sorted, ERT data read, originals found with their derived sets folded, GPR lines complete, surveys with a site and a date)
+  with the archive's folders. View, ERT: filters (by folder, by site, need a look, no date) and a search, a tile per group with a
+  preview, arrays, dates (marked (folder) when only a folder name gives one) and the median share flagged under the QC profile
+  (amber above SIMPLE_LOOK_PCT, 10 %, with a link to QC), the group's surveys (originals; derived sets folded) and the pseudosection
+  of one (apparent resistivity or error, flagged points ringed and kept). View, GPR: lines by day or folder, their GPS tracks and
+  the radargram of one (view only). Edit (ERT): sites (name, place, environment; a rename through rename.R, RENAMES$site new in
+  R/config.R), which site each survey is at, and a survey's name, date, transect and quality, with dates and sites from folder names
+  proposed for review; writes sites.csv, surveys.csv and transects.csv only. Export: the catalogue report (HTML), the catalogue
+  tables, the survey data (measurements with flags beside the original file) and the previews (zip).
+- QC profiles, manual flags, electrodes turned off and elevations are edited by hand only in the Workbench (wb_only); Mark off on QC,
+  saving a QC profile and adding or clearing elevations ask for the Workbench. ?page= opens a Standard page from a link. app.R
+  sources core report.R and rename.R. Tests added.
+- **Output changes**: none.
+
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - The default raw archive is ~/Projects/Ovid/Projects/GS/raw (was ~/Desktop/ERT); projects go in ~/Projects/Ovid/Projects/GS.
 - Set-up: projects and raw data kept in the old Desktop folders are not found by default any more; open them from their new place.

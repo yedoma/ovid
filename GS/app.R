@@ -44,6 +44,9 @@ source(file.path(CORE_DIR, "metasheet.R"), local = TRUE)    # Ovid/metasheet.R a
 source(file.path(CORE_DIR, "import.R"), local = TRUE)           # Ovid/import.R: reading a spreadsheet, matching columns, checking rows
 source(file.path(CORE_DIR, "metasheet_ui.R"), local = TRUE)
 source(file.path(CORE_DIR, "longtable.R"), local = TRUE)        # Ovid/longtable.R: long tables drawn a screen at a time
+source(file.path(CORE_DIR, "rename.R"), local = TRUE)           # Ovid/rename.R: rename a site in every set-up table that names it
+source(file.path(CORE_DIR, "report.R"), local = TRUE)           # Ovid/report.R: the report blocks the Simple report is built from
+source(file.path(CORE_DIR, "simple.R"), local = TRUE)           # Ovid/simple.R: the Simple view's frame, Edit step and report
 downloadHandler <- ovid_downloads("GS")                  # every download is named ovid_gs_<what>_<date>.<ext>
 SETTINGS_FILE <- file.path(APP_DIR, "app_settings.json")
 SETTINGS <- settings_read(SETTINGS_FILE)                          # core util.R: the last good copy if this one is damaged
@@ -90,6 +93,10 @@ server <- function(input, output, session, embedded = FALSE) {
   rv <- reactiveValues(tick = 0, log = character())          # tick: a rebuild finished (in this window, or another one the Workbench noticed)
   proj <- reactiveVal(CFG$project_dir)                         # the catalogue shown (an imported one is opened beside the user's own)
   E <- setup_editors(function(k) cfg_path(proj(), k), reactive(c(rv$tick, proj())), function() mark())
+  wb_made <- function(ed) { if (ed$hand_ok()) return(TRUE)   # flags, electrodes, elevations and QC profiles change only in the Workbench (core editor.R wb_only)
+    showNotification("Flags, electrodes turned off, elevations and QC profiles are changed in the Workbench (the switch at the top right).", type = "warning"); FALSE }
+  if (!embedded) { q0 <- parseQueryString(isolate(session$clientData$url_search) %||% "")             # a link from the Simple view opens its page (?page=QC)
+    if (!is.null(q0$page)) session$onFlushed(function() ovid_go(session, q0$page), once = TRUE) }
   stamps <- reactivePoll(2000, session, function() paste(cfg_mtime(PROJECT), run_mtime(PROJECT)), function() c(cfg = cfg_mtime(PROJECT), run = run_mtime(PROJECT)))
   stale <- reactive({ s <- stamps(); s[["cfg"]] > s[["run"]] + 1 })           # set-up saved after the last rebuild
   # a table saved on Set-up tables (or by the Workbench): what the pages show from it is read again
@@ -120,11 +127,17 @@ server <- function(input, output, session, embedded = FALSE) {
                  gpr_ok = gpr_ok, gpr_tracks = gpr_tracks, gpr_tick = gpr_tick, cat_profile = cat_profile, cmp_kept = stk$cmp_kept))
 }
 
-# Two interfaces on one project: the Standard one above (the default) and the Workbench (preview, workbench/wb_gs.R).
-# ?ui=workbench in the address opens the Workbench and ?ui=standard the Standard one; with neither, OVID_UI and then
-# the "ui" setting decide (core/workbench.R).
+# Three views of one project: Simple (simple/simple_gs.R), Standard (above) and the Workbench (workbench/wb_gs.R).
+# ?ui=simple, ?ui=standard or ?ui=workbench in the address opens one; with none, OVID_UI and then the "ui" setting
+# decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_gs.R"), local = TRUE)
-shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
+source(file.path(APP_DIR, "simple", "simple_gs.R"), local = TRUE)
+# An install whose settings are still in the older app_settings.rds is not new: it keeps Standard, and nothing is written for it.
+FIRST_VIEW_FILE <- if (file.exists(sub("\\.json$", ".rds", SETTINGS_FILE))) NULL else SETTINGS_FILE
+if (is.null(SETTINGS$ui)) SETTINGS$ui <- ovid_first_view(FIRST_VIEW_FILE)   # a new install opens in Simple (core workbench.R)
+shinyApp(ui = function(req) switch(ovid_view(req$QUERY_STRING, SETTINGS$ui), simple = simple_ui(req), workbench = wb_ui(req), ui),
          server = function(input, output, session) {
-           if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
-           wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })
+           v <- ovid_first_view_keep(FIRST_VIEW_FILE, ovid_view(isolate(session$clientData$url_search), SETTINGS$ui))   # a new install keeps Simple (core workbench.R)
+           if (v == "simple") return(simple_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           if (v == "workbench") return(wb_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           server(input, output, session) })
