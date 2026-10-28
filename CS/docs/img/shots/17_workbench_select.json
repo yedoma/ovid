@@ -1,0 +1,983 @@
+[
+  {
+    "text": "PROJECT proj /tmp/ovid_shots.SVtE/proj",
+    "tag": "summary",
+    "cls": "btn btn-default btn-sm",
+    "x": 135,
+    "y": 10,
+    "w": 263,
+    "h": 30
+  },
+  {
+    "text": "▸ Run",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn primary shiny-bound-input",
+    "x": 1191,
+    "y": 10,
+    "w": 61,
+    "h": 30
+  },
+  {
+    "text": "↗ Export view",
+    "tag": "a",
+    "cls": "btn btn-default shiny-download-link wb-btn shiny-bound-output",
+    "x": 1267,
+    "y": 10,
+    "w": 109,
+    "h": 30
+  },
+  {
+    "text": "‹",
+    "tag": "button",
+    "cls": "wb-pbtn",
+    "x": 205,
+    "y": 54,
+    "w": 24,
+    "h": 22
+  },
+  {
+    "text": "battery_v",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 228,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "battery_v [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 235,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "int_rt",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 253,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "int_rt [checked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 260,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "acc_rtnrt",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 278,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "acc_rtnrt [checked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 285,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "acc_nrt",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 303,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "acc_nrt [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 310,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "acc_total",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 328,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "acc_total [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 335,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "bucket_rt",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 354,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "bucket_rt [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 361,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "bucket_nr",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 379,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "bucket_nr [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 386,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "pluvio_temp",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 404,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "pluvio_temp [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 411,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "Result8",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 429,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "Result8 [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 436,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "Result9",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 454,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "Result9 [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 461,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "wind_speed",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 480,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "wind_speed [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 487,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "wind_speed_max",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 505,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "wind_speed_max [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 512,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "wind_speed_min",
+    "tag": "label",
+    "cls": "",
+    "x": 16,
+    "y": 530,
+    "w": 192,
+    "h": 25
+  },
+  {
+    "text": "wind_speed_min [unchecked]",
+    "tag": "input",
+    "cls": "",
+    "x": 16,
+    "y": 537,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": ": Serial number",
+    "tag": "div",
+    "cls": "shiny-input-select selectize-control single plugin-selectize-plugin-a11y",
+    "x": 100,
+    "y": 590,
+    "w": 120,
+    "h": 26
+  },
+  {
+    "text": "Chart + table",
+    "tag": "label",
+    "cls": "radio-inline",
+    "x": 569,
+    "y": 98,
+    "w": 90,
+    "h": 23
+  },
+  {
+    "text": "Table",
+    "tag": "label",
+    "cls": "radio-inline",
+    "x": 659,
+    "y": 98,
+    "w": 50,
+    "h": 23
+  },
+  {
+    "text": "Chart",
+    "tag": "label",
+    "cls": "radio-inline",
+    "x": 709,
+    "y": 98,
+    "w": 50,
+    "h": 23
+  },
+  {
+    "text": ": 2024-07-01",
+    "tag": "input",
+    "cls": "form-control shiny-bound-input",
+    "x": 770,
+    "y": 94,
+    "w": 109,
+    "h": 32
+  },
+  {
+    "text": ": 2024-07-10",
+    "tag": "input",
+    "cls": "form-control shiny-bound-input",
+    "x": 912,
+    "y": 94,
+    "w": 109,
+    "h": 32
+  },
+  {
+    "text": "−",
+    "tag": "button",
+    "cls": "",
+    "x": 258,
+    "y": 180,
+    "w": 26,
+    "h": 24
+  },
+  {
+    "text": "+",
+    "tag": "button",
+    "cls": "",
+    "x": 289,
+    "y": 180,
+    "w": 26,
+    "h": 24
+  },
+  {
+    "text": "◀",
+    "tag": "button",
+    "cls": "",
+    "x": 320,
+    "y": 180,
+    "w": 26,
+    "h": 24
+  },
+  {
+    "text": "▶",
+    "tag": "button",
+    "cls": "",
+    "x": 351,
+    "y": 180,
+    "w": 26,
+    "h": 24
+  },
+  {
+    "text": "Reset",
+    "tag": "button",
+    "cls": "",
+    "x": 382,
+    "y": 180,
+    "w": 40,
+    "h": 24
+  },
+  {
+    "text": "← Back",
+    "tag": "button",
+    "cls": "",
+    "x": 427,
+    "y": 180,
+    "w": 47,
+    "h": 24
+  },
+  {
+    "text": "Use as period",
+    "tag": "button",
+    "cls": "",
+    "x": 492,
+    "y": 180,
+    "w": 69,
+    "h": 24
+  },
+  {
+    "text": "Zoom to this",
+    "tag": "button",
+    "cls": "",
+    "x": 768,
+    "y": 214,
+    "w": 82,
+    "h": 22
+  },
+  {
+    "text": "Correct a period…",
+    "tag": "button",
+    "cls": "",
+    "x": 855,
+    "y": 214,
+    "w": 110,
+    "h": 22
+  },
+  {
+    "text": "Clear",
+    "tag": "button",
+    "cls": "",
+    "x": 970,
+    "y": 214,
+    "w": 45,
+    "h": 22
+  },
+  {
+    "text": "✕ Remove… R",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 574,
+    "y": 486,
+    "w": 104,
+    "h": 26
+  },
+  {
+    "text": "↺ Restore…",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 684,
+    "y": 486,
+    "w": 87,
+    "h": 26
+  },
+  {
+    "text": "Calibrate…",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 777,
+    "y": 486,
+    "w": 80,
+    "h": 26
+  },
+  {
+    "text": "Correct a period…",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 863,
+    "y": 486,
+    "w": 118,
+    "h": 26
+  },
+  {
+    "text": "Clock…",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 987,
+    "y": 486,
+    "w": 61,
+    "h": 26
+  },
+  {
+    "text": "Note…",
+    "tag": "button",
+    "cls": "btn btn-default action-button wb-btn sm shiny-bound-input",
+    "x": 1055,
+    "y": 486,
+    "w": 57,
+    "h": 26
+  },
+  {
+    "text": "Find in the table…: ",
+    "tag": "input",
+    "cls": "wb-gfind shiny-bound-input",
+    "x": 252,
+    "y": 524,
+    "w": 178,
+    "h": 23
+  },
+  {
+    "text": ": ",
+    "tag": "input",
+    "cls": "wb-ggoto",
+    "x": 438,
+    "y": 523,
+    "w": 131,
+    "h": 25
+  },
+  {
+    "text": "Copy",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 577,
+    "y": 523,
+    "w": 49,
+    "h": 26
+  },
+  {
+    "text": "Columns",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 634,
+    "y": 523,
+    "w": 69,
+    "h": 26
+  },
+  {
+    "text": "Wrap",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 711,
+    "y": 523,
+    "w": 50,
+    "h": 26
+  },
+  {
+    "text": "time logger time",
+    "tag": "th",
+    "cls": "cn",
+    "x": 242,
+    "y": 554,
+    "w": 268,
+    "h": 26
+  },
+  {
+    "text": "⋮int_rt⇅",
+    "tag": "th",
+    "cls": "ch",
+    "x": 510,
+    "y": 554,
+    "w": 299,
+    "h": 26
+  },
+  {
+    "text": "⋮acc_rtnrt⇅",
+    "tag": "th",
+    "cls": "ch",
+    "x": 810,
+    "y": 554,
+    "w": 299,
+    "h": 26
+  },
+  {
+    "text": "",
+    "tag": "th",
+    "cls": "cf",
+    "x": 242,
+    "y": 584,
+    "w": 268,
+    "h": 25
+  },
+  {
+    "text": "",
+    "tag": "th",
+    "cls": "gf",
+    "x": 510,
+    "y": 584,
+    "w": 299,
+    "h": 25
+  },
+  {
+    "text": "filter: ",
+    "tag": "input",
+    "cls": "wb-gfilt",
+    "x": 514,
+    "y": 586,
+    "w": 291,
+    "h": 20
+  },
+  {
+    "text": "",
+    "tag": "th",
+    "cls": "gf",
+    "x": 810,
+    "y": 584,
+    "w": 299,
+    "h": 25
+  },
+  {
+    "text": "filter: ",
+    "tag": "input",
+    "cls": "wb-gfilt",
+    "x": 814,
+    "y": 586,
+    "w": 291,
+    "h": 20
+  },
+  {
+    "text": "2024-07-02 21:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": -17,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-02 21:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 10,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-02 22:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 37,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-02 22:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 64,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-02 23:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 91,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-02 23:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 118,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 00:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 145,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 00:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 172,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 01:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 200,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 01:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 227,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 02:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 254,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 02:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 281,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 03:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 308,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 03:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 335,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 04:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 362,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 04:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 389,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 05:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 417,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 05:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 444,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 06:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 471,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 06:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 498,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 07:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 525,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 07:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 552,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 08:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 579,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 08:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 606,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 09:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 634,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 09:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 661,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 10:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 688,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 10:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 715,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 11:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 742,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 11:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 769,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 12:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 796,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 12:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 823,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 13:00",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 851,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "2024-07-03 13:30",
+    "tag": "th",
+    "cls": "rh",
+    "x": 242,
+    "y": 878,
+    "w": 268,
+    "h": 27
+  },
+  {
+    "text": "⧉",
+    "tag": "button",
+    "cls": "wb-pbtn",
+    "x": 1382,
+    "y": 54,
+    "w": 24,
+    "h": 22
+  },
+  {
+    "text": "›",
+    "tag": "button",
+    "cls": "wb-pbtn",
+    "x": 1410,
+    "y": 54,
+    "w": 24,
+    "h": 22
+  },
+  {
+    "text": "183 values",
+    "tag": "h2",
+    "cls": "",
+    "x": 1147,
+    "y": 120,
+    "w": 277,
+    "h": 20
+  },
+  {
+    "text": "INT_RT",
+    "tag": "th",
+    "cls": "",
+    "x": 1147,
+    "y": 187,
+    "w": 206,
+    "h": 22
+  },
+  {
+    "text": "VALUE",
+    "tag": "th",
+    "cls": "",
+    "x": 1353,
+    "y": 187,
+    "w": 71,
+    "h": 22
+  },
+  {
+    "text": "✕ Remove…",
+    "tag": "button",
+    "cls": "wb-btn sm danger",
+    "x": 1147,
+    "y": 454,
+    "w": 87,
+    "h": 26
+  },
+  {
+    "text": "↺ Restore…",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 1242,
+    "y": 454,
+    "w": 87,
+    "h": 26
+  },
+  {
+    "text": "Calibrate…",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 1337,
+    "y": 454,
+    "w": 80,
+    "h": 26
+  },
+  {
+    "text": "Clock…",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 1147,
+    "y": 488,
+    "w": 61,
+    "h": 26
+  },
+  {
+    "text": "Note…",
+    "tag": "button",
+    "cls": "wb-btn sm",
+    "x": 1216,
+    "y": 488,
+    "w": 57,
+    "h": 26
+  }
+]

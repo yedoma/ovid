@@ -1,0 +1,578 @@
+[
+  {
+    "text": "PROJECT proj",
+    "tag": "summary",
+    "cls": "btn btn-default btn-sm",
+    "x": 130,
+    "y": 9,
+    "w": 22,
+    "h": 28
+  },
+  {
+    "text": "No unsaved changes",
+    "tag": "span",
+    "cls": "shiny-html-output d-unsaved shiny-bound-output",
+    "x": 660,
+    "y": 13,
+    "w": 124,
+    "h": 19
+  },
+  {
+    "text": ": Plots: normal",
+    "tag": "div",
+    "cls": "shiny-input-select selectize-control single plugin-selectize-plugin-a11y",
+    "x": 821,
+    "y": 6,
+    "w": 140,
+    "h": 34
+  },
+  {
+    "text": "Run pipeline",
+    "tag": "button",
+    "cls": "btn btn-default action-button btn-primary shiny-bound-input",
+    "x": 969,
+    "y": 7,
+    "w": 131,
+    "h": 32
+  },
+  {
+    "text": "Explanations",
+    "tag": "label",
+    "cls": "d-explain-sw ovid-sw",
+    "x": 1108,
+    "y": 13,
+    "w": 135,
+    "h": 19
+  },
+  {
+    "text": "Explanations [checked]",
+    "tag": "input",
+    "cls": "shiny-bound-input",
+    "x": 1108,
+    "y": 15,
+    "w": 30,
+    "h": 16
+  },
+  {
+    "text": "Standard",
+    "tag": "a",
+    "cls": "on",
+    "x": 1252,
+    "y": 9,
+    "w": 75,
+    "h": 27
+  },
+  {
+    "text": "Workbench",
+    "tag": "a",
+    "cls": "d-to-wb",
+    "x": 1327,
+    "y": 9,
+    "w": 89,
+    "h": 27
+  },
+  {
+    "text": "1 Project",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 92,
+    "y": 51,
+    "w": 72,
+    "h": 29
+  },
+  {
+    "text": "2 Bring in files",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 163,
+    "y": 51,
+    "w": 103,
+    "h": 29
+  },
+  {
+    "text": "3 Loggers and stations",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 358,
+    "y": 51,
+    "w": 154,
+    "h": 29
+  },
+  {
+    "text": "4 Needs you",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 512,
+    "y": 51,
+    "w": 93,
+    "h": 29
+  },
+  {
+    "text": "5 Stations: rename, what shows",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 606,
+    "y": 51,
+    "w": 207,
+    "h": 29
+  },
+  {
+    "text": "Clocks",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 812,
+    "y": 51,
+    "w": 52,
+    "h": 29
+  },
+  {
+    "text": "Combined records",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 865,
+    "y": 51,
+    "w": 121,
+    "h": 29
+  },
+  {
+    "text": "Precipitation corrections",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 14,
+    "y": 83,
+    "w": 156,
+    "h": 29
+  },
+  {
+    "text": "Calibrations and limits",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 170,
+    "y": 83,
+    "w": 142,
+    "h": 29
+  },
+  {
+    "text": "6 Automatic corrections",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 312,
+    "y": 83,
+    "w": 160,
+    "h": 29
+  },
+  {
+    "text": "7 Report",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 551,
+    "y": 83,
+    "w": 69,
+    "h": 29
+  },
+  {
+    "text": "More ▾",
+    "tag": "summary",
+    "cls": "d-rail-link",
+    "x": 1087,
+    "y": 83,
+    "w": 54,
+    "h": 29
+  },
+  {
+    "text": "Overview",
+    "tag": "a",
+    "cls": "d-rail-link active",
+    "x": 908,
+    "y": 128,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Plot and explore",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 158,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Sensor health",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 188,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Station map",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 218,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Audit trail",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 248,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "History",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 278,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Set-up check",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 308,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Configuration",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 338,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Column names",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 368,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Logger programs",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 398,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "CR10X files",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 428,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Sites and field log",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 458,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Loggers and files",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 488,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Logger history",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 518,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Parameter guide",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 548,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Convert",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 578,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Reference",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 608,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "46001",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 81,
+    "y": 122,
+    "w": 59,
+    "h": 26
+  },
+  {
+    "text": "52001",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 144,
+    "y": 122,
+    "w": 58,
+    "h": 26
+  },
+  {
+    "text": "Field data hub",
+    "tag": "h2",
+    "cls": "",
+    "x": 20,
+    "y": 169,
+    "w": 1115,
+    "h": 23
+  },
+  {
+    "text": "wind_speed",
+    "tag": "label",
+    "cls": "checkbox-inline",
+    "x": 119,
+    "y": 413,
+    "w": 90,
+    "h": 19
+  },
+  {
+    "text": "wind_speed [checked]",
+    "tag": "input",
+    "cls": "",
+    "x": 119,
+    "y": 417,
+    "w": 13,
+    "h": 13
+  },
+  {
+    "text": "half-hourly",
+    "tag": "button",
+    "cls": "on",
+    "x": 81,
+    "y": 439,
+    "w": 87,
+    "h": 25
+  },
+  {
+    "text": "as recorded",
+    "tag": "button",
+    "cls": "",
+    "x": 168,
+    "y": 439,
+    "w": 92,
+    "h": 25
+  },
+  {
+    "text": "hourly",
+    "tag": "button",
+    "cls": "",
+    "x": 260,
+    "y": 439,
+    "w": 58,
+    "h": 25
+  },
+  {
+    "text": "daily",
+    "tag": "button",
+    "cls": "",
+    "x": 318,
+    "y": 439,
+    "w": 49,
+    "h": 25
+  },
+  {
+    "text": "monthly",
+    "tag": "button",
+    "cls": "",
+    "x": 367,
+    "y": 439,
+    "w": 68,
+    "h": 25
+  },
+  {
+    "text": "annual",
+    "tag": "button",
+    "cls": "",
+    "x": 435,
+    "y": 439,
+    "w": 60,
+    "h": 25
+  },
+  {
+    "text": "Smoothing",
+    "tag": "label",
+    "cls": "tsv-sw ovid-sw",
+    "x": 511,
+    "y": 442,
+    "w": 123,
+    "h": 19
+  },
+  {
+    "text": "Smoothing [checked]",
+    "tag": "input",
+    "cls": "",
+    "x": 511,
+    "y": 443,
+    "w": 30,
+    "h": 16
+  },
+  {
+    "text": "Ghost",
+    "tag": "label",
+    "cls": "tsv-sw ovid-sw",
+    "x": 648,
+    "y": 442,
+    "w": 94,
+    "h": 19
+  },
+  {
+    "text": "Ghost [checked]",
+    "tag": "input",
+    "cls": "",
+    "x": 648,
+    "y": 443,
+    "w": 30,
+    "h": 16
+  },
+  {
+    "text": "Filled",
+    "tag": "label",
+    "cls": "tsv-sw",
+    "x": 37,
+    "y": 472,
+    "w": 59,
+    "h": 19
+  },
+  {
+    "text": ": #5fb3b3",
+    "tag": "input",
+    "cls": "",
+    "x": 37,
+    "y": 473,
+    "w": 22,
+    "h": 18
+  },
+  {
+    "text": "‹",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 37,
+    "y": 503,
+    "w": 23,
+    "h": 32
+  },
+  {
+    "text": "›",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 66,
+    "y": 503,
+    "w": 23,
+    "h": 32
+  },
+  {
+    "text": ": whole record",
+    "tag": "select",
+    "cls": "",
+    "x": 95,
+    "y": 507,
+    "w": 105,
+    "h": 24
+  },
+  {
+    "text": "Save image",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 562,
+    "y": 503,
+    "w": 89,
+    "h": 32
+  },
+  {
+    "text": "Save data",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 657,
+    "y": 503,
+    "w": 79,
+    "h": 32
+  },
+  {
+    "text": "← Back",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 742,
+    "y": 503,
+    "w": 64,
+    "h": 32
+  },
+  {
+    "text": "46001",
+    "tag": "h4",
+    "cls": "",
+    "x": 852,
+    "y": 411,
+    "w": 266,
+    "h": 15
+  },
+  {
+    "text": "Done to this data",
+    "tag": "h4",
+    "cls": "",
+    "x": 852,
+    "y": 649,
+    "w": 266,
+    "h": 15
+  },
+  {
+    "text": "Edit station",
+    "tag": "a",
+    "cls": "btn btn-default btn-sm",
+    "x": 852,
+    "y": 717,
+    "w": 90,
+    "h": 28
+  },
+  {
+    "text": "Open in Workbench",
+    "tag": "a",
+    "cls": "btn btn-default btn-sm",
+    "x": 948,
+    "y": 717,
+    "w": 144,
+    "h": 28
+  }
+]

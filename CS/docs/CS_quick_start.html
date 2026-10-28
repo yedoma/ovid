@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid CS quick start</title>
+<style>
+:root{color-scheme:dark;--bg:#1D211A;--fg:#FBFCF6;--panel:#272C23;--rule:#4A5243;--muted:#B9C0B1;--accent:#BCCD80;--red:#EA938B;--green:#A5D6CB;--yellow:#F7C775;--blue:#90DDE4;--purple:#DAC3ED;--cyan:#90DDE4;--orange:#F7C775;--code:#2C3227;--grid:#353C30}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+h1{font-size:28px;margin:0 0 4px;color:#e0e2e0}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent);color:#e0e2e0}
+h3{font-size:16.5px;margin:24px 0 6px;color:var(--blue)}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+b,strong{color:#e0e2e0}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel);color:#e0e2e0}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px;background:#222427}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--yellow);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);color:#d6d8d6;padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+.p-air{color:var(--red)}.p-rh{color:var(--cyan)}.p-wind{color:var(--purple)}.p-rad{color:var(--yellow)}.p-rain{color:var(--blue)}.p-snow{color:#d6d8d6}.p-soil{color:var(--orange)}.p-pres{color:var(--green)}
+@media print{.f{white-space:pre-wrap;word-break:break-all;font-size:9pt}body{font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:14mm 14mm}h2,h3{break-after:avoid}nav{break-after:page}.ex,.f,figure,tr{break-inside:avoid}table{display:table;font-size:9pt}}
+@page{size:A4;margin:0}
+
+main figure{margin:10px 0 6px;break-inside:avoid;page-break-inside:avoid}
+main img{display:block;max-width:100%;height:auto;border-radius:6px;border:1px solid var(--rule)}
+main figure+figure{margin-top:8px}
+.task{break-inside:avoid;page-break-inside:avoid}
+@media print{h2{margin:14px 0 6px;padding-top:4px;font-size:18px}h1{font-size:24px}li{line-height:1.4}main figure{margin:6px 0 4px}main p{margin:6px 0}main ol,main ul{margin:4px 0}figure,img,.task{break-inside:avoid;page-break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid CS quick start</h1>
+<p>Climate station loggers (Campbell Scientific), from raw .dat files to checked, gap-aware records per station.</p>
+
+<section class="task">
+<h2>Before you start</h2>
+<ul>
+<li><strong>Raw files.</strong> Put every .dat download in one or more raw folders; subfolders are searched. TOA5 (LoggerNet, PC400, CardConvert), TOB3 straight from a card and CR10X mixed-array files are read. Keep every download, overlapping ones too: CS sorts them out.</li>
+<li><strong>CR10X only.</strong> Have the Edlog .FSL file for each program, so the columns get names.</li>
+<li><strong>Optional.</strong> A field log of visits and servicing, and each station's latitude, longitude and elevation (needed for evapotranspiration and daylight albedo).</li>
+</ul>
+<p>Open the app with <strong>Open CS (Mac).command</strong> (Windows: <strong>Ovid_CS.bat</strong>). The numbers in each figure match the list under it.</p>
+</section>
+<section class="task">
+<h2>The top bar and the pages</h2>
+<figure><img src="img/guide/cs_qs_01.png" alt="Top bar and page bar" style="width:100%"></figure>
+<ol>
+<li>The pages, in working order: <strong>1 Bring in</strong>, <strong>2 Organize</strong>, <strong>3 Correct</strong>, <strong>4 Report</strong>.</li>
+<li><strong>More</strong>: tools and set-up pages (Plot and explore, Audit trail, Set-up check, CR10X files and others).</li>
+<li><strong>Run pipeline</strong>: reads the raw files and rebuilds every output.</li>
+<li>The run state: up to date, or set-up changed and waiting for a run.</li>
+</ol>
+</section>
+<section class="task">
+<h2>1 Project</h2>
+<figure><img src="img/guide/cs_qs_02.png" alt="Project page: folders" style="width:70%"></figure>
+<ol>
+<li><strong>Raw .dat folders, one per line.</strong> Raw files are never changed.</li>
+<li><strong>Browse…</strong> to pick a folder instead of typing it.</li>
+<li><strong>Project folder</strong>: holds config/ (set-up tables) and output/. Default Ovid_Projects/CS/Untitled.</li>
+</ol>
+</section>
+<section class="task">
+<h2>2 Bring in files</h2>
+<figure><img src="img/guide/cs_qs_03.png" alt="Bring in files" style="width:100%"></figure>
+<ol>
+<li>Filter the list: <strong>All files</strong>, <strong>Read</strong>, <strong>Not read</strong>, <strong>With a rule</strong>, <strong>With dropped or conflicting records</strong>.</li>
+<li>Select a file to see where its records went. Below its details: send it to another station or leave it out.</li>
+<li><strong>Rescan this file</strong> reads it again. CR10X files: on <strong>CR10X files</strong> (More), press <strong>Find files and match FSLs</strong>.</li>
+</ol>
+<p>Then press <strong>Run pipeline</strong>. The first run writes the set-up tables with the built-in defaults.</p>
+</section>
+<section class="task">
+<h2>3 Loggers and stations</h2>
+<figure><img src="img/guide/cs_qs_04.png" alt="Loggers and stations" style="width:100%"></figure>
+<ol>
+<li><strong>Station</strong>: pick a station or type a new name. <strong>ignore</strong> sets a logger aside.</li>
+<li><strong>Apply to selected rows</strong>.</li>
+<li>The loggers found in the files; <strong>not named</strong> ones still need a station.</li>
+<li><strong>Deployment sheet</strong>: one row per logger and period; a logger that moved gets a row per station.</li>
+</ol>
+</section>
+<section class="task">
+<h2>4 Needs you</h2>
+<figure><img src="img/guide/cs_qs_05.png" alt="Needs you" style="width:100%"></figure>
+<ol>
+<li><strong>Accept the suggested matches</strong> of loggers to stations.</li>
+<li><strong>Add these to the sheet</strong>: loggers found in the files but in no row.</li>
+<li>Decide each finding of the last run: <strong>Keep</strong>, <strong>Remove…</strong>, <strong>Correct…</strong> or <strong>Not a problem</strong>.</li>
+</ol>
+</section>
+<section class="task">
+<h2>5 Stations: rename, what shows</h2>
+<figure><img src="img/guide/cs_qs_06.png" alt="Stations: rename, what shows" style="width:100%"></figure>
+<ol>
+<li>Pick <strong>What</strong> and the <strong>Name now</strong>, type the <strong>New name</strong>.</li>
+<li><strong>Preview</strong> lists every set-up table that changes.</li>
+<li><strong>Rename</strong> changes it everywhere; <strong>Undo the last rename</strong> puts it back.</li>
+<li><strong>Shown</strong>: untick to hide a station from the strip, Home and Needs you. It is still processed and exported.</li>
+</ol>
+</section>
+<section class="task">
+<h2>Clocks</h2>
+<figure><img src="img/guide/cs_qs_07.png" alt="Clocks" style="width:100%"></figure>
+<ol>
+<li>Pick the kind of finding, or <strong>Every kind of finding</strong>.</li>
+<li>Select a finding (a restart, a reset clock, files that disagree in time).</li>
+<li>Below: what it means; move the timestamps or remove the records, then <strong>Add this correction</strong>.</li>
+<li><strong>Corrections already set</strong> lists the clock corrections in use.</li>
+</ol>
+</section>
+<section class="task">
+<h2>Precipitation corrections</h2>
+<figure><img src="img/guide/cs_qs_08.png" alt="Precipitation corrections, Gauge set-up" style="width:100%"></figure>
+<ol>
+<li>Weighing gauges (Pluvio2, Geonor): tab <strong>Gauge set-up</strong>. Check each gauge is listed.</li>
+<li><strong>Add</strong> a gauge whose columns are not recognised. Enter servicing in the field log (Sites and field log, More).</li>
+<li><strong>Reprocess precipitation only</strong> reruns this step in seconds.</li>
+</ol>
+</section>
+<section class="task">
+<h2>Calibrations and limits</h2>
+<figure><img src="img/guide/cs_qs_09.png" alt="Calibrations and limits" style="width:100%"></figure>
+<ol>
+<li><strong>Automatic limits</strong>: check the min, max, spike, step and flat-line limits.</li>
+<li><strong>Corrections over a period</strong>: calibrations and bad periods.</li>
+<li><strong>Fill in suggested spike and step limits</strong> fills only blank cells.</li>
+<li><strong>Save changes</strong> after editing a table.</li>
+</ol>
+</section>
+<section class="task">
+<h2>6 Automatic corrections</h2>
+<figure><img src="img/guide/cs_qs_10.png" alt="Automatic corrections" style="width:100%"></figure>
+<ol>
+<li>A switch per correction, on by default. Leave them on unless you have a reason.</li>
+<li>Where two files disagree, which file's values are kept (default: the newest).</li>
+<li><strong>Where to change it</strong>: corrections driven by a set-up table name that table.</li>
+</ol>
+</section>
+<section class="task">
+<h2>Apply and check</h2>
+<figure><img src="img/guide/cs_qs_11.png" alt="Unsaved changes and Apply" style="width:100%"></figure>
+<ol>
+<li>An edited cell in a set-up table.</li>
+<li><strong>Unsaved changes</strong> shows beside <strong>Save changes</strong>.</li>
+<li><strong>Apply 1</strong> (top bar; the number of edits): its <strong>Apply</strong> button saves every edited table.</li>
+<li><strong>Run pipeline</strong> also saves them, then runs.</li>
+</ol>
+<figure><img src="img/guide/cs_qs_12.png" alt="Set-up check" style="width:100%"></figure>
+<ol>
+<li><strong>Set-up check</strong> (More): clear anything it lists before trusting a run. <strong>Safe to run</strong> means nothing is ignored or misapplied.</li>
+<li><strong>Check again</strong> after a change. The check also runs before every pipeline run.</li>
+</ol>
+</section>
+<section class="task">
+<h2>7 Report</h2>
+<figure><img src="img/guide/cs_qs_13.png" alt="Report" style="width:100%"></figure>
+<ol>
+<li><strong>Station tables</strong>: pick one or more (<strong>Select all</strong>).</li>
+<li><strong>Flag style</strong>: WMO codes 0 to 7, or letters S, R, M.</li>
+<li><strong>Build and export (ZIP)</strong>: a CSV per station table with flag columns, daily and monthly summaries, a report per table and a readme.</li>
+<li><strong>Export report</strong>: the report alone, for the first station picked.</li>
+</ol>
+</section>
+<section class="task">
+<h2>What you have at the end</h2>
+<p>One continuous record per station and parameter, stitched from every file. Every removed or changed value is in the audit trail with its old value and the rule that changed it, and the same raw files and set-up give the same result again.</p>
+</section>
+<section class="task">
+<h2>Next</h2>
+<p>See the CS how-to guide: add a new download, fix a logger's clock, remove a bad stretch, add a calibration, set up a weighing gauge, combine stations into one record, share a set-up.</p>
+</section>
+</main></body>
+</html>

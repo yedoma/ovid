@@ -1,0 +1,704 @@
+[
+  {
+    "text": "PROJECT proj",
+    "tag": "summary",
+    "cls": "btn btn-default btn-sm",
+    "x": 130,
+    "y": 9,
+    "w": 22,
+    "h": 28
+  },
+  {
+    "text": "No unsaved changes",
+    "tag": "span",
+    "cls": "shiny-html-output d-unsaved shiny-bound-output",
+    "x": 660,
+    "y": 13,
+    "w": 124,
+    "h": 19
+  },
+  {
+    "text": ": Plots: normal",
+    "tag": "div",
+    "cls": "shiny-input-select selectize-control single plugin-selectize-plugin-a11y",
+    "x": 821,
+    "y": 6,
+    "w": 140,
+    "h": 34
+  },
+  {
+    "text": "Run pipeline",
+    "tag": "button",
+    "cls": "btn btn-default action-button btn-primary shiny-bound-input",
+    "x": 969,
+    "y": 7,
+    "w": 131,
+    "h": 32
+  },
+  {
+    "text": "Explanations",
+    "tag": "label",
+    "cls": "d-explain-sw ovid-sw",
+    "x": 1108,
+    "y": 13,
+    "w": 135,
+    "h": 19
+  },
+  {
+    "text": "Explanations [checked]",
+    "tag": "input",
+    "cls": "shiny-bound-input",
+    "x": 1108,
+    "y": 15,
+    "w": 30,
+    "h": 16
+  },
+  {
+    "text": "Standard",
+    "tag": "a",
+    "cls": "on",
+    "x": 1252,
+    "y": 9,
+    "w": 75,
+    "h": 27
+  },
+  {
+    "text": "Workbench",
+    "tag": "a",
+    "cls": "d-to-wb",
+    "x": 1327,
+    "y": 9,
+    "w": 89,
+    "h": 27
+  },
+  {
+    "text": "1 Project",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 92,
+    "y": 51,
+    "w": 72,
+    "h": 29
+  },
+  {
+    "text": "2 Bring in files",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 163,
+    "y": 51,
+    "w": 103,
+    "h": 29
+  },
+  {
+    "text": "3 Loggers and stations",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 358,
+    "y": 51,
+    "w": 154,
+    "h": 29
+  },
+  {
+    "text": "4 Needs you",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 512,
+    "y": 51,
+    "w": 93,
+    "h": 29
+  },
+  {
+    "text": "5 Stations: rename, what shows",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 606,
+    "y": 51,
+    "w": 207,
+    "h": 29
+  },
+  {
+    "text": "Clocks",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 812,
+    "y": 51,
+    "w": 52,
+    "h": 29
+  },
+  {
+    "text": "Combined records",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 865,
+    "y": 51,
+    "w": 121,
+    "h": 29
+  },
+  {
+    "text": "Precipitation corrections",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 14,
+    "y": 83,
+    "w": 156,
+    "h": 29
+  },
+  {
+    "text": "Calibrations and limits",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 170,
+    "y": 83,
+    "w": 142,
+    "h": 29
+  },
+  {
+    "text": "6 Automatic corrections",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 312,
+    "y": 83,
+    "w": 160,
+    "h": 29
+  },
+  {
+    "text": "7 Report",
+    "tag": "a",
+    "cls": "d-rail-link d-step",
+    "x": 551,
+    "y": 83,
+    "w": 69,
+    "h": 29
+  },
+  {
+    "text": "More ▾",
+    "tag": "summary",
+    "cls": "d-rail-link",
+    "x": 1087,
+    "y": 83,
+    "w": 54,
+    "h": 29
+  },
+  {
+    "text": "Overview",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 128,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Plot and explore",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 158,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Sensor health",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 188,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Station map",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 218,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Audit trail",
+    "tag": "a",
+    "cls": "d-rail-link active",
+    "x": 908,
+    "y": 248,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "History",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 278,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Set-up check",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 308,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Configuration",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 338,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Column names",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 368,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Logger programs",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 398,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "CR10X files",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 428,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Sites and field log",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 458,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Loggers and files",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 488,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Logger history",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 518,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Parameter guide",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 548,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Convert",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 578,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "Reference",
+    "tag": "a",
+    "cls": "d-rail-link",
+    "x": 908,
+    "y": 608,
+    "w": 226,
+    "h": 30
+  },
+  {
+    "text": "46001",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 81,
+    "y": 122,
+    "w": 59,
+    "h": 26
+  },
+  {
+    "text": "52001",
+    "tag": "button",
+    "cls": "btn btn-default",
+    "x": 144,
+    "y": 122,
+    "w": 58,
+    "h": 26
+  },
+  {
+    "text": "Audit trail",
+    "tag": "h2",
+    "cls": "d-title",
+    "x": 20,
+    "y": 173,
+    "w": 82,
+    "h": 23
+  },
+  {
+    "text": "About",
+    "tag": "summary",
+    "cls": "btn btn-default btn-sm",
+    "x": 112,
+    "y": 171,
+    "w": 75,
+    "h": 28
+  },
+  {
+    "text": "1. What was done, and why",
+    "tag": "h4",
+    "cls": "",
+    "x": 20,
+    "y": 335,
+    "w": 1115,
+    "h": 15
+  },
+  {
+    "text": "Columns",
+    "tag": "button",
+    "cls": "d-colsb",
+    "x": 28,
+    "y": 389,
+    "w": 76,
+    "h": 28
+  },
+  {
+    "text": "What happened ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 20,
+    "y": 424,
+    "w": 221,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 215,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Data lost? ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 241,
+    "y": 424,
+    "w": 158,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 374,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Count ▾",
+    "tag": "th",
+    "cls": "dt-right sorting",
+    "x": 400,
+    "y": 424,
+    "w": 120,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 494,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Unit ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 520,
+    "y": 424,
+    "w": 101,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 595,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Stations or loggers ▾",
+    "tag": "th",
+    "cls": "dt-right sorting",
+    "x": 621,
+    "y": 424,
+    "w": 245,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 840,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Rule name in the files ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 866,
+    "y": 424,
+    "w": 269,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 1109,
+    "y": 433,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "2. Where it happened",
+    "tag": "h4",
+    "cls": "",
+    "x": 20,
+    "y": 551,
+    "w": 1115,
+    "h": 15
+  },
+  {
+    "text": ": All",
+    "tag": "div",
+    "cls": "shiny-input-select form-control selectize-control single plugin-selectize-plugin-a11y",
+    "x": 233,
+    "y": 576,
+    "w": 260,
+    "h": 34
+  },
+  {
+    "text": ": All",
+    "tag": "div",
+    "cls": "shiny-input-select form-control selectize-control single plugin-selectize-plugin-a11y",
+    "x": 501,
+    "y": 576,
+    "w": 220,
+    "h": 34
+  },
+  {
+    "text": "Export CSV",
+    "tag": "a",
+    "cls": "btn btn-default shiny-download-link shiny-bound-output",
+    "x": 1016,
+    "y": 584,
+    "w": 119,
+    "h": 32
+  },
+  {
+    "text": "Filter:",
+    "tag": "label",
+    "cls": "",
+    "x": 857,
+    "y": 814,
+    "w": 194,
+    "h": 31
+  },
+  {
+    "text": ": ",
+    "tag": "input",
+    "cls": "",
+    "x": 894,
+    "y": 814,
+    "w": 157,
+    "h": 31
+  },
+  {
+    "text": "Columns",
+    "tag": "button",
+    "cls": "d-colsb",
+    "x": 1059,
+    "y": 815,
+    "w": 76,
+    "h": 28
+  },
+  {
+    "text": "#Station or logger ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 20,
+    "y": 848,
+    "w": 180,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 174,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "What happened ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 200,
+    "y": 848,
+    "w": 141,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 314,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Column ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 340,
+    "y": 848,
+    "w": 142,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 457,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Records or values ▾",
+    "tag": "th",
+    "cls": "dt-right sorting",
+    "x": 483,
+    "y": 848,
+    "w": 153,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 610,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "First ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 636,
+    "y": 848,
+    "w": 165,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 776,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Last ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 802,
+    "y": 848,
+    "w": 165,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 941,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Table ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 967,
+    "y": 848,
+    "w": 98,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 1039,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  },
+  {
+    "text": "Stage ▾",
+    "tag": "th",
+    "cls": "sorting",
+    "x": 1065,
+    "y": 848,
+    "w": 77,
+    "h": 38
+  },
+  {
+    "text": "▾",
+    "tag": "button",
+    "cls": "d-sortb",
+    "x": 1116,
+    "y": 856,
+    "w": 20,
+    "h": 20
+  }
+]
