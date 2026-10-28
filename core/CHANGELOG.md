@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (Simple view: changes an app proposes, 2026-10-28)**
+- simple.R: simple_edit_server returns propose(ops), and ops(): an app adds changes of its own (a rename from a registry, a
+  template's depths) to the list of changes, shown, dropped, saved and undone like the user's; proposing one again for the
+  same group and field replaces it. Opt-in: CS and WLR do not use it. Test added.
+- **Output changes**: none.
+
 **Added (Simple view: fields, item kinds and tile links, 2026-10-28)**
 - simple.R, www/simple.css: three options an app may use; with none the Simple view is as before (CS). simple_edit_server(fields =):
   more per group, shown on each card; a text field is edited with the name and place and waits in the list as a "field" op

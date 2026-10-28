@@ -100,4 +100,17 @@ local({ rows <- reactive(data.table(item = c("1", "2"), label = c("1", "2 · bar
     session$setInputs(who = "tt", save = 1)
     check("Save hands it to the app as a field op", !is.null(got) && nrow(got) == 1 && got$type == "field" && got$item == "land_cover" && got$to == "Bog" && got$group == "A") }) })
 
+local({ rows <- reactive(data.table(item = c("1", "2"), label = c("1", "2"), group = c("A_1", "B"), first = "", last = "", lat = NA_real_, lon = NA_real_))
+  got <- list(); undone <- 0L
+  testServer(simple_edit_server, args = list(rows = rows, noun = "site", apply = function(ops, who) { got[[length(got) + 1L]] <<- ops; list(ok = TRUE, message = "saved", undo = function() undone <<- undone + 1L) }), {
+    api <- session$getReturned()
+    api$propose(data.table(type = "rename", group = "A_1", to = "Bog A")); api$propose(data.table(type = "rename", group = "A_1", to = "Bog A2"))
+    ch <- paste(as.character(output$changes$html), collapse = "")
+    check("an app's proposed change is listed like the user's own, and proposing it again replaces it", grepl("renamed Bog A2", ch, fixed = TRUE) && !grepl("renamed Bog A<", ch, fixed = TRUE) && api$pending() == 1)
+    session$setInputs(drop_all = 1)
+    check("a proposed change can be dropped", api$pending() == 0)
+    api$propose(data.table(type = "rename", group = "A_1", to = "Bog A")); session$setInputs(who = "tt", save = 1)
+    check("a proposed change is saved through the app's apply, and can be undone", length(got) == 1 && got[[1]]$type == "rename" && got[[1]]$to == "Bog A" &&
+          { session$setInputs(undo = 1); undone == 1L }) }) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

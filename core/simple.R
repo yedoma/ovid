@@ -110,6 +110,7 @@ simple_hero <- function(level, head, sub = NULL, action = NULL)
 #   gap(item): the date (text) of the first record after a long gap in the item's files, or NA
 #   busy():   the set-up tables with unsaved edits in another view (OVID_PENDING, editor.R): Save waits for them
 #   noun, items: the words for a group and for what it holds ("station", "loggers")
+# Returns pending() (the number of changes waiting), ops() (them) and propose(ops): the app adds changes of its own to the list.
 SIMPLE_OPS <- data.table(type = character(), group = character(), to = character(), item = character(), at = character(), lat = numeric(), lon = numeric())
 simple_edit_ui <- function(id, noun = "station", items = "loggers") { ns <- NS(id)
   div(class = "sp-edit", `data-ns` = ns(""),
@@ -220,7 +221,13 @@ simple_edit_server <- function(id, rows, apply, gap = function(item) NA_characte
     # safe: as above
     ok <- tryCatch({ l$undo(); TRUE }, error = function(e) { showNotification(paste("Not undone:", conditionMessage(e)), type = "error", duration = NULL); FALSE })
     if (ok) { last(NULL); showNotification("The last save was taken back.", type = "message") } })
-  invisible(list(pending = reactive(nrow(ops()[type != "new"]))))
+  # propose(ops): an app adds changes to the list (a rename it suggests, a template's depths), shown, dropped, saved and undone
+  # as the user's own; a change already waiting for the same group and field (or rename) is replaced, not repeated
+  propose <- function(o) { o <- rbind(SIMPLE_OPS, as.data.table(o), fill = TRUE); if (!nrow(o)) return(invisible(0L))
+    for (v in c("group", "to", "item", "at")) set(o, which(is.na(o[[v]])), v, ""); x <- ops()
+    k <- paste(o$type, o$group, o$item); x <- x[!paste(type, group, item) %in% k[o$type %in% c("rename", "field", "place")]]
+    ops(rbind(x, o, fill = TRUE)); invisible(nrow(o)) }
+  invisible(list(pending = reactive(nrow(ops()[type != "new"])), propose = propose, ops = reactive(ops())))
 })
 # Where the groups lie relative to one another (no base map: the Simple view needs no network); the picked one stands out.
 simple_locator <- function(v, k) {
