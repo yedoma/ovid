@@ -95,26 +95,62 @@ html.d-layout-notebook body{padding-left:0;padding-right:var(--d-rail)} html.d-l
 .d-layout-notebook .d-cardx,.d-layout-notebook .panel-x,.d-layout-notebook .d-nb-facts{border-radius:8px}
 .d-layout-notebook .d-rail-link{padding-left:14px}
 .d-layout-notebook .d-rail-link.active{box-shadow:inset 2px 0 0 var(--acc)}
-/* tabs (CS): the steps as tabs under the top bar, the strip below */
-html.d-layout-tabs body{padding-left:0} html.d-layout-tabs .d-rail-toggle{display:none}
-.d-tabs{position:sticky;top:var(--d-top);z-index:1010;background:var(--bgh);border-bottom:1px solid var(--bg2);padding:5px 14px 0}
-.d-tabs-row{display:flex;flex-wrap:wrap;align-items:center;gap:0 0}
-.d-tabs .d-rail-sec{padding:0 4px 0 8px;margin:0;font-size:10px;letter-spacing:.05em}
-.d-tabs .d-rail-sec:first-child{padding-left:2px}
-.d-tabs .d-rail-link{height:29px;min-height:0;padding:0 6px;margin:0 0 3px;font-size:12.5px;gap:4px;border-radius:3px;align-items:center}
-.d-tabs .d-rail-link i,.d-tabs .d-rail-link svg{display:none}
-.d-tabs .d-step-st{display:none}
-.d-tabs .d-rail-link.active{box-shadow:inset 0 -2px 0 var(--acc);background:var(--bg1)}
-.d-tabs .d-step-n{margin:0}
-.d-tabs-more{margin-left:auto} .d-tabs-more>summary.d-rail-link{list-style:none;cursor:pointer}
-.d-tabs-more .d-pop-body{min-width:240px;padding:6px;display:flex;flex-direction:column;max-height:70vh;overflow:auto}
-.d-tabs-more .d-pop-body .d-rail-link{height:30px;margin:0} .d-tabs-more .d-pop-body .d-rail-sec{padding:8px 8px 2px}
-.d-strip{display:flex;align-items:center;gap:6px;padding:6px 0;border-top:1px solid var(--bg2);overflow-x:auto;white-space:nowrap}
+/* tabs (CS): one bar, the stages a switch on it; the pages of the stage shown listed on the left with their status lines */
+html.d-layout-tabs{--d-rail:232px}
+html.d-layout-tabs body.d-rail-min{padding-left:0} html.d-layout-tabs body.d-rail-min .d-pages{display:none}
+html.d-layout-tabs .d-context{display:none}
+/* the bar fits on one row at 1280 px: the project by name, the run state cut short, "No unsaved changes" left out (Apply n shows) */
+.d-layout-tabs .d-project{flex:0 0 auto;max-width:220px;margin-left:4px} .d-layout-tabs .d-project summary .dim{display:none}
+.d-layout-tabs .d-unsaved>.dim{display:none}
+.d-run-st{display:inline-block;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+.d-layout-tabs .d-views a{padding:4px 8px}
+@media (max-width:1360px){.d-run-st{max-width:150px}}
+.d-pg-grp[hidden],.d-strip[hidden],.d-goto-pal[hidden]{display:none!important}
+.d-stages{display:flex;align-self:stretch;align-items:stretch;flex:0 0 auto}
+.d-stage-btn{position:relative;display:flex;align-items:center;gap:7px;padding:0 11px;background:none;border:0;color:var(--fg4);font-size:13px;white-space:nowrap;cursor:pointer}
+.d-stage-btn:hover{color:var(--fg)}
+.d-stage-btn:focus-visible,.d-goto:focus-visible,.d-pages .d-rail-link:focus-visible,.d-pg-more>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.d-stg-k{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--bg3);font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.d-stage-btn.done .d-stg-k{border-color:var(--green);color:var(--green)}
+.d-stage-btn[aria-current="true"]{color:var(--fg)}
+.d-stage-btn[aria-current="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:2px;background:var(--acc)}
+.d-stage-btn[aria-current="true"] .d-stg-k{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+.d-stg-cnt{font-size:10.5px;font-weight:700;background:var(--yellow);color:var(--bg);border-radius:3px;padding:0 5px;line-height:16px}
+.d-stg-cnt:empty{display:none}
+.d-goto{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px;border:1px solid var(--bg3);border-radius:5px;background:var(--bg);color:var(--fg4);font-size:12.5px;cursor:pointer}
+.d-goto:hover{color:var(--fg);border-color:var(--gray)}
+.d-goto kbd,.d-goto-foot{font-size:10.5px;color:var(--fg4)} .d-goto kbd{background:none;box-shadow:none;border:1px solid var(--bg3);border-radius:3px;padding:0 4px;margin-left:6px}
+@media (max-width:1500px){.d-goto-lab{display:none} .d-goto kbd{margin-left:0}}
+.d-goto-pal{position:fixed;inset:0;z-index:1060;background:rgba(0,0,0,.45);display:flex;justify-content:center;align-items:flex-start;padding-top:70px}
+.d-goto-box{width:min(540px,calc(100vw - 32px));background:var(--bgh);border:1px solid var(--bg3);border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden}
+.d-goto-in{width:100%;box-sizing:border-box;background:transparent;border:0;border-bottom:1px solid var(--bg2);color:var(--fg);padding:12px 14px;font-size:14px;outline:none}
+.d-goto-list{max-height:min(380px,60vh);overflow:auto;padding:4px}
+.d-goto-item{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:7px 10px;border:0;border-radius:5px;background:none;color:var(--fg);font-size:13px}
+.d-goto-item small{color:var(--fg4);font-size:11px} .d-goto-item.sel,.d-goto-item:hover{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.d-goto-none{padding:10px;color:var(--fg4)} .d-goto-foot{display:flex;gap:14px;border-top:1px solid var(--bg2);padding:7px 12px}
+.d-pages{display:flex;flex-direction:column;padding:4px 0 0}
+.d-pg-head{display:flex;justify-content:space-between;padding:12px 14px 6px} .d-pg-head span+span{font-weight:400;letter-spacing:.04em;text-transform:none}
+.d-pages .d-rail-link{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:0 6px;height:auto;min-height:0;margin:0;padding:7px 12px 7px 10px;
+  border-radius:0;border-left:2px solid transparent;white-space:normal;font-size:13px;line-height:1.35}
+.d-pages .d-rail-link i,.d-pages .d-rail-link svg{display:none}
+.d-pages .d-rail-label{grid-column:2} .d-pages .d-step-n{margin:1px 0 0;min-width:0}
+.d-pages .d-rail-link.active{background:color-mix(in srgb,var(--acc) 11%,transparent);border-left-color:var(--acc);color:var(--fg);font-weight:600}
+.d-pages .d-step-st{display:flex;align-items:center;gap:5px;margin-top:2px;font-weight:400;color:var(--fg4)}
+.d-pages .d-step-st:empty{display:none}
+.d-pages .d-step-st::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--bg3)}
+.d-pages .d-step-st.ok::before{background:var(--green)} .d-pages .d-step-st.warn::before{background:var(--yellow);border-radius:1px} .d-pages .d-step-st.error::before{background:var(--red);border-radius:1px}
+.d-pg-more{margin-top:auto;border-top:1px solid var(--bg2);padding-bottom:6px}
+.d-pg-more>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;padding:10px 14px;color:var(--fg4);font-size:12.5px}
+.d-pg-more>summary::-webkit-details-marker{display:none} .d-pg-more>summary:hover{color:var(--fg)}
+.d-pg-more>summary>span:first-child::before{content:"\25b8  "} .d-pg-more[open]>summary>span:first-child::before{content:"\25be  "}
+.d-pg-more .d-rail-link{padding-top:4px;padding-bottom:4px}
+.d-shell-set .d-explain-sw{margin:4px 0 10px}
+.d-strip,.d-strip>.shiny-html-output{display:flex;align-items:center;gap:6px;flex-wrap:wrap} .d-strip{margin:0 0 12px}
 .d-strip .lab{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-right:4px}
 .d-strip .btn{min-height:26px;padding:2px 10px;font-size:12.5px;border-radius:3px}
 .d-strip .btn.on{border-color:var(--acc);color:var(--fg);box-shadow:inset 0 0 0 1px var(--acc)}
 @media (max-width:1240px){html.d-has-aside body{padding-right:0} .d-aside{display:none}}
-@media (max-width:900px){html.d-layout-tabs body{padding-left:0} .d-project{display:none}}
+@media (max-width:900px){html.d-layout-tabs{--d-rail:190px} .d-project{display:none}}
 html.d-has-aside .d-context{display:none}
 
 .d-rl-group{display:flex;gap:8px;align-items:baseline;padding:12px 0 2px;border-top:1px solid var(--bg2);font-size:14px}.d-rl-group+.d-chk-row{border-top:0}.d-rl-what{font-weight:600}

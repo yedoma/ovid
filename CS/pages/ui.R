@@ -226,7 +226,7 @@ std_pages <- function(sources = TRUE) list(
           code("flag"), " to keep every value and flag it, ", code("remove"), " to remove flat lines too. ", code("max_step_per_hour"), " flags (never removes) a change faster than that between two readings."),
           p(class = "dim", "New projects start with wide spike and step limits that catch sensor glitches, not weather (Zahumensky 2004; Estevez et al. 2011). A project made before them keeps its table as it is; ",
             "the button fills only blank spike and step cells of the standard rows, and you can change or clear any of them."),
-          div(class = "btnrow editor-only", actionButton("qc_suggest", "Fill in suggested spike and step limits", icon = icon("wand-magic-sparkles"))),
+          div(class = "btnrow editor-only d-hide-std", actionButton("qc_suggest", "Fill in suggested spike and step limits", icon = icon("wand-magic-sparkles"))),
           editUI("qc")),
         tabPanel("Corrections over a period", period_help(), p(class = "dim", code("stream"), ": one stream of the station (blank: all). ", code("output"), ": for offset, scale or drift of one parameter, ",
           "a column to write the result to, keeping the original (a tipping bucket: parameter ", code("rain_tips"), ", output ", code("rain"), ", scale = mm per tip). ",
@@ -426,51 +426,53 @@ std_pages <- function(sources = TRUE) list(
         p(class = "dim", style = "margin-top:8px", "The first pattern that matches a parameter name is used. ", code("typical_min"), " and ", code("typical_max"),
           " drive the shading on plots and the \"outside the usual range\" check."), editUI("pinfo")))
 )
-# The Standard view as the set-up flow (core 1.2): five stages, nine shared steps, CS's own pages beside them, and the rest
-# under More. The Workbench shows the same pages in its own frame (sources = FALSE: the folders are under its Import data).
+# The Standard view as the set-up flow (core 1.2), grouped by what a regular user does (M 28 Oct): Set up, Assess, Decide,
+# Report, with the rest under More. Values are assessed here, not edited: rules, removals and clock shifts are shown and
+# made in the Workbench (wb_only, utils_setup.R). The Workbench shows the same pages in its own frame (sources = FALSE: the
+# folders are under its Import data).
 cs_flow_pages <- function(sources = TRUE) {
   pg <- Filter(function(x) inherits(x, "ovid_tool"), std_pages(sources)); by <- setNames(pg, vapply(pg, `[[`, "", "value"))
   step <- function(v, n = NULL, title = NULL) ovid_retitle(by[[v]], n, title)
   nxt <- function(label, go) ovid_next(paste("Next:", label), go)
   E <- !VIEWER
   list(
-    ovid_stage(1, "Bring in"),
+    ovid_stage(1, "Set up"),
     if (E) ovid_tool("Project", value = "Project", icon = "folder-tree", n = 1,
       ovid_step_head(1, "Project", "Where the raw data are read from and where this project keeps its set-up tables and outputs. Raw files are never changed."),
       if (sources) std_folders() else p(class = "dim", "The folders are under Import data in the Workbench."), nxt("Bring in files", "Raw files")),
-    if (E) step("Raw files", 2, "Bring in files"),
-    ovid_stage(2, "Organize"),
+    if (E) step("Raw files", 2, "Loggers and files"),
     if (E) step("Stations", 3, "Loggers and stations"),
-    if (E) ovid_tool("Needs you", value = "Needs", icon = "circle-question", n = 4,
-      ovid_step_head(4, "Needs you", "Only a match by dates is assigned on its own. Everything else (a year, a name in the files, a logger's only deployment) is a suggestion here, accepted with one click. Below them, what the last run flagged and found, each decided here."),
-      deploy_check_ui("depcheck"), div(class = "d-cardx", h3("What the last run found"), review_list_ui("rl")), nxt("Stations: rename, what shows", "Shown")),
-    if (E) ovid_tool("Stations: rename, what shows", value = "Shown", icon = "eye", n = 5,
-      ovid_step_head(5, "Stations: rename, what shows", "Rename a station once and it is renamed in every set-up table (with a preview and Undo). Choose which stations show on the strip, Home and Needs you (they are still processed and exported)."),
+    if (E) ovid_tool("Stations: rename, what shows", value = "Shown", icon = "eye", n = 4,
+      ovid_step_head(4, "Stations: rename, what shows", "Rename a station once and it is renamed in every set-up table (with a preview and Undo). Choose which stations show on the strip, Home and Needs you (they are still processed and exported)."),
       div(class = "d-cardx", rename_ui("ren")), div(class = "d-cardx", h3("What shows"), display_ui("disp", "station")), nxt("Automatic corrections", "Corrections")),
-    if (E) step("Clock checks", NULL, "Clocks"), step("Composite", NULL, "Combined records"),
-    ovid_stage(3, "Correct"),
-    step("Precipitation", NULL, "Precipitation corrections"), if (E) step("Quality rules", NULL, "Calibrations and limits"),
-    if (E) ovid_tool("Automatic corrections", value = "Corrections", icon = "wand-magic-sparkles", n = 6,
-      ovid_step_head(6, "Automatic corrections", "Corrections every run makes on its own, each with a switch. They are on by default."),
-      div(class = "d-cardx", corrections_ui("corr")), nxt("Report", "Export")),
+    ovid_stage(2, "Assess"),
+    step("Explore", NULL, "Plot and explore"), step("Precipitation"), step("Health", NULL, "Sensor health"), step("Composite", NULL, "Combined records"), step("Map"),
+    if (E) step("Quality rules", NULL, "Calibrations and limits"),
+    if (E) ovid_tool("Automatic corrections", value = "Corrections", icon = "wand-magic-sparkles", n = 5,
+      ovid_step_head(5, "Automatic corrections", "Corrections every run makes on its own, each with a switch. They are on by default."),
+      div(class = "d-cardx", corrections_ui("corr")), nxt("Needs you", "Needs")),
+    ovid_stage(3, "Decide"),
+    if (E) ovid_tool("Needs you", value = "Needs", icon = "circle-question", n = 6,
+      ovid_step_head(6, "Needs you", "Only a match by dates is assigned on its own. Everything else (a year, a name in the files, a logger's only deployment) is a suggestion here, accepted with one click. Below them, what the last run flagged and found, each decided here."),
+      deploy_check_ui("depcheck"), div(class = "d-cardx", h3("What the last run found"), review_list_ui("rl")), nxt("Report", "Export")),
+    if (E) step("Clock checks", NULL, "Clocks"),
     ovid_stage(4, "Report"),
-    step("Export", 7, "Report"),
+    step("Export", 7, "Reports and export"), step("Audit", NULL, "Audit trail"),
     "More",
-    step("Home", NULL, "Overview"), step("Explore"), step("Health"), step("Map"), step("Audit"),
-    step("History"), step("Preflight"), step("Config"), step("Column names"), step("Logger programs"), step("CR10X files"),
+    step("Home", NULL, "Overview"), step("History"), step("Preflight"), step("Config"), step("Column names"), step("Logger programs"), step("CR10X files"),
     step("Sites and field log"), step("Metadata"), step("Logger history"), step("Parameter guide"))
 }
 
 ui <- do.call(ovid_page, c(list("CS", GB, css = std_css(), head = std_head(),
   status = uiOutput("runstate", inline = TRUE),
   layout = "tabs", project = if (!VIEWER) projects_switch_ui("proj"), context = uiOutput("flow_ctx", inline = TRUE),
-  aside = uiOutput("flow_info"), strip = uiOutput("cs_strip", inline = TRUE),
+  aside = uiOutput("flow_info"), strip = uiOutput("cs_strip", inline = TRUE), strip_on = c("Explore", "Home"),   # the pages that read the strip's station
   actions = tagList(applied_ui("applied"), if (!VIEWER) unsaved_ui("uns"),
-                    div(class = "jump", selectInput("plot_size", NULL, c("Plots: compact" = "compact", "Plots: normal" = "normal", "Plots: tall" = "tall"), selected = "normal", width = "140px")),
-                    if (VIEWER) span(class = "modebadge", "Viewer") else actionButton("run", "Run pipeline", class = "btn-primary", icon = icon("play"))),
+                    if (VIEWER) span(class = "modebadge", "Viewer") else actionButton("run", "Run", class = "btn-primary", icon = icon("play"), title = "Run the pipeline")),
   help = if (file.exists(file.path(APP_DIR, "docs", "CS_reference_guide.html"))) "docs/CS_reference_guide.html", settings = "Settings"), cs_flow_pages(),
   list(convert_tool(), reference_tool("CS"), ovid_tool("Settings", value = "Settings", icon = "sliders", rail = FALSE,
     page_head("Settings", "The time zone and how CS looks. Both are saved with the app; the colour scheme is used from its next start, in the Workbench too."),
     time_zone_ui(), dataset_card_ui(),
+    div(class = "panel-x", h3("Plots"), selectInput("plot_size", "Plot height", c("Compact" = "compact", "Normal" = "normal", "Tall" = "tall"), selected = "normal", width = "200px")),
     div(class = "panel-x", h3("Colours"), colours_ui()),
     projects_panel()))))

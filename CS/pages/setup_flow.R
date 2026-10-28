@@ -65,6 +65,6 @@
       Stations = if (un) list("warn", paste(un, "without a station")) else if (!is.null(o)) list("ok", "Every logger named") else list("off", ""),
       Shown = list("info", sprintf("%d of %d shown", length(st_shown()), length(st_all()))),
       Corrections = list("info", "On by default"),
-      Needs = if (nrow(x)) list("warn", paste(nrow(x), "to look at")) else if (!is.null(o)) list("ok", "Nothing waits") else list("off", "Run once first"),
+      Needs = if (nrow(x)) list("warn", paste(nrow(x), "to look at"), nrow(x)) else if (!is.null(o)) list("ok", "Nothing waits") else list("off", "Run once first"),
       Export = if (!is.null(o)) list("info", "One report, every station") else list("off", "")))
   })

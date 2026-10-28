@@ -4,11 +4,75 @@
   function go(v){ var a = document.querySelector('#nav a[data-value="' + CSS.escape(v) + '"]'); if (a) a.click(); }
   window.ovidGo = go;
   var titles = null;
+  function getTitles(){ if (!titles) { try { titles = JSON.parse(document.getElementById('d-titles').textContent); } catch(e) { titles = {}; } } return titles; }
   function mark(v){
-    document.querySelectorAll('.d-rail-link').forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-ovid-go') === v); });
-    if (!titles) { try { titles = JSON.parse(document.getElementById('d-titles').textContent); } catch(e) { titles = {}; } }
-    var p = document.querySelector('.d-ctx-page'); if (p) p.textContent = titles[v] || v;
+    document.querySelectorAll('.d-rail-link').forEach(function(a){ var on = a.getAttribute('data-ovid-go') === v; a.classList.toggle('active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    var p = document.querySelector('.d-ctx-page'); if (p) p.textContent = getTitles()[v] || v;
+    // tabs: the stage of the page shown is lit and lists its pages; a page under More opens that group and leaves the stage as it is
+    var a = document.querySelector('.d-pages .d-rail-link.active');
+    if (a) { var g = a.closest('.d-pg-grp'); if (g) { stageShow(g.getAttribute('data-stage')); stageLast[stageCur] = v; }
+             var m = a.closest('.d-pg-more'); if (m) m.open = true; }
+    stripPlace(v);
   }
+  // tabs (CS): the stage switch on the top bar, each stage's last page used (the first page the first time)
+  var stageCur = null, stageLast = {};
+  function stageShow(i){ stageCur = String(i);
+    document.querySelectorAll('.d-stage-btn').forEach(function(b){ b.setAttribute('aria-current', b.getAttribute('data-stage') === stageCur ? 'true' : 'false'); });
+    document.querySelectorAll('.d-pg-grp').forEach(function(g){ g.hidden = g.getAttribute('data-stage') !== stageCur; }); stageMarks(); }
+  document.addEventListener('click', function(e){ var b = e.target.closest('.d-stage-btn'); if (!b) return; var i = b.getAttribute('data-stage');
+    var f = document.querySelector('.d-pg-grp[data-stage="' + i + '"] .d-rail-link'); stageShow(i);
+    var v = stageLast[i] || (f && f.getAttribute('data-ovid-go')); if (v) go(v); });
+  // a stage is done (a tick) when its steps' status lines are all ok or info, one at least ok; the counts of its steps show beside it
+  function stageMarks(){ document.querySelectorAll('.d-stage-btn').forEach(function(b){ var i = b.getAttribute('data-stage'), n = 0, lv = [];
+    document.querySelectorAll('.d-pg-grp[data-stage="' + i + '"] .d-step-st').forEach(function(s){ n += +(s.getAttribute('data-count') || 0);
+      var l = ['ok', 'info', 'warn', 'error', 'off'].filter(function(c){ return s.classList.contains(c); })[0]; if (l && s.textContent) lv.push(l); });
+    var done = lv.length && lv.indexOf('ok') >= 0 && lv.every(function(l){ return l === 'ok' || l === 'info'; });
+    b.classList.toggle('done', !!done); var k = b.querySelector('.d-stg-k'); if (k) k.textContent = done && i !== stageCur ? '✓' : k.getAttribute('data-n');
+    var c = b.querySelector('.d-stg-cnt'); if (c) { c.textContent = n > 999 ? '999+' : n > 0 ? n : ''; c.title = n > 0 ? n + ' waiting' : ''; } }); }
+  // the strip (e.g. the stations) shows at the top of the pages that use it, under the page's heading
+  function stripPlace(v){ var s = document.querySelector('.d-strip[data-pages]'); if (!s) return;
+    var on = s.getAttribute('data-pages').split('|').indexOf(v) >= 0, t = on && document.querySelector('.d-work > .tabbable > .tab-content > .tab-pane[data-value="' + CSS.escape(v) + '"] > .d-tool');
+    s.hidden = !t; if (!t) return;
+    var h = t.firstElementChild; while (h && h.tagName === 'SCRIPT') h = h.nextElementSibling;
+    if (h && (h.matches('.d-head, h2, .d-step-head') || h.querySelector('h2'))) h.after(s); else t.prepend(s); resize(); }
+  // Go to (tabs): every page with its stage, every station on the strip, Settings; Cmd/Ctrl+K opens it, arrows choose, Enter opens, Esc closes
+  var gotoHits = [], gotoSel = 0;
+  function gotoItems(){ var it = [], seen = {}, t = getTitles(), s = document.querySelector('.d-strip[data-pages]');
+    document.querySelectorAll('.d-pages .d-rail-link[data-ovid-go]').forEach(function(a){ var v = a.getAttribute('data-ovid-go'); seen[v] = 1;
+      var g = a.closest('.d-pg-grp'); it.push({ t: t[v] || v, k: g ? g.getAttribute('data-name') : 'More', go: function(){ go(v); } }); });
+    Object.keys(t).forEach(function(v){ if (!seen[v]) it.push({ t: t[v], k: '', go: function(){ go(v); } }); });
+    if (s) { var to = s.getAttribute('data-pages').split('|')[0];
+      s.querySelectorAll('button').forEach(function(b){ var n = b.textContent.trim(); if (n) it.push({ t: n, k: 'Station', go: function(){ b.click(); if (to) go(to); } }); }); }
+    return it; }
+  function gotoList(){ var pal = document.querySelector('.d-goto-pal'), q = pal.querySelector('.d-goto-in').value.trim().toLowerCase(), box = pal.querySelector('.d-goto-list');
+    gotoHits = gotoItems().filter(function(i){ return !q || i.t.toLowerCase().indexOf(q) >= 0 || i.k.toLowerCase().indexOf(q) >= 0; }).slice(0, 14);
+    gotoSel = Math.max(0, Math.min(gotoSel, gotoHits.length - 1)); box.textContent = '';
+    if (!gotoHits.length) { var e = document.createElement('div'); e.className = 'd-goto-none'; e.textContent = 'Nothing by that name.'; box.appendChild(e); }
+    gotoHits.forEach(function(h, i){ var b = document.createElement('button'); b.type = 'button'; b.className = 'd-goto-item' + (i === gotoSel ? ' sel' : '');
+      b.id = 'd-goto-' + i; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', i === gotoSel ? 'true' : 'false'); b.setAttribute('data-i', i); b.tabIndex = -1;
+      var a = document.createElement('span'); a.textContent = h.t; var k = document.createElement('small'); k.textContent = h.k; b.appendChild(a); b.appendChild(k); box.appendChild(b); });
+    var sel = box.querySelector('.sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+    pal.querySelector('.d-goto-in').setAttribute('aria-activedescendant', gotoHits.length ? 'd-goto-' + gotoSel : ''); }
+  function gotoOpen(){ var pal = document.querySelector('.d-goto-pal'); if (!pal) return; pal.hidden = false; var i = pal.querySelector('.d-goto-in'); i.value = ''; gotoSel = 0; gotoList(); i.focus(); }
+  function gotoClose(back){ var pal = document.querySelector('.d-goto-pal'); if (!pal || pal.hidden) return; pal.hidden = true; var b = document.querySelector('.d-goto'); if (back && b) b.focus(); }
+  function gotoPick(h){ gotoClose(false); if (h) h.go(); }
+  window.ovidGoto = gotoOpen;
+  document.addEventListener('mouseover', function(e){ var r = e.target.closest && e.target.closest('.d-run-st'); if (r) r.title = r.textContent.trim(); });   // the run state cut short reads in full
+  document.addEventListener('click', function(e){ if (e.target.closest('.d-goto')) { gotoOpen(); return; }
+    var it = e.target.closest('.d-goto-item'); if (it) { gotoPick(gotoHits[+it.getAttribute('data-i')]); return; }
+    if (e.target.classList && e.target.classList.contains('d-goto-pal')) gotoClose(true); });
+  document.addEventListener('input', function(e){ if (e.target.classList && e.target.classList.contains('d-goto-in')) { gotoSel = 0; gotoList(); } });
+  document.addEventListener('keydown', function(e){ var pal = document.querySelector('.d-goto-pal'); if (!pal) return;
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); if (pal.hidden) gotoOpen(); else gotoClose(true); return; }
+    if (pal.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); gotoClose(true); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); gotoSel = Math.min(gotoSel + 1, gotoHits.length - 1); gotoList(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); gotoSel = Math.max(gotoSel - 1, 0); gotoList(); }
+    else if (e.key === 'Enter') { e.preventDefault(); gotoPick(gotoHits[gotoSel]); }
+    else if (e.key === 'Tab') e.preventDefault(); }, true);
+  document.addEventListener('DOMContentLoaded', function(){ var k = document.querySelector('.d-goto kbd');
+    if (k && !/Mac|iPhone|iPad/.test(navigator.platform || '')) k.textContent = 'Ctrl K'; });
   function focusIcon(box, on){ var i = box.querySelector('.d-focus-btn i'); if (i) { i.classList.toggle('fa-expand', !on); i.classList.toggle('fa-compress', on); } }
   function focusOff(){ document.querySelectorAll('.d-focused').forEach(function(f){ f.classList.remove('d-focused'); focusIcon(f, false); }); document.body.classList.remove('d-has-focus'); resize(); }
   // an open menu closes on a click outside it, or on Esc
@@ -82,7 +146,8 @@
   document.addEventListener('DOMContentLoaded', function(){
     $(function(){ if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('ovid-steps', function(m){
       Object.keys(m).forEach(function(k){ document.querySelectorAll('.d-step-st[data-step="' + CSS.escape(k) + '"]').forEach(function(el){
-        el.className = 'd-step-st ' + m[k].level; el.textContent = m[k].text ? (MARK[m[k].level] || '') + ' ' + m[k].text : ''; }); }); }); });
+        el.className = 'd-step-st ' + m[k].level; el.setAttribute('data-count', m[k].count || 0);
+        el.textContent = m[k].text ? (el.closest('.d-pages') ? '' : (MARK[m[k].level] || '') + ' ') + m[k].text : ''; }); }); stageMarks(); }); });
     var ex = document.getElementById('d_explain'); if (ex) { var off = false; try { off = localStorage.getItem('ovid-explain') === '0'; } catch(_) {}
       ex.checked = !off; document.body.classList.toggle('d-quiet', off);
       ex.addEventListener('change', function(){ document.body.classList.toggle('d-quiet', !ex.checked); try { localStorage.setItem('ovid-explain', ex.checked ? '1' : '0'); } catch(_) {} }); }

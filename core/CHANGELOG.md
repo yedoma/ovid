@@ -5,6 +5,19 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (the tabs layout: one bar, pages on the left, 2026-10-28)**
+- shell.R, www/flow.css, www/shell.js: in the "tabs" layout (CS's Standard view) the top bar holds the stages as one switch
+  (number and name, a tick when every step's status is ok or info, the count a step sends with ovid_steps beside its stage),
+  Go to, the run state, the main action, the views, help and settings, on one row at 1280 px. The pages of the stage shown are
+  listed on the left (about 230 px) with each step's status line and level dot; the pages after "More" are folded at the
+  bottom. A stage opens its last page used (its first page the first time). The list folds away with the menu button
+  (remembered per browser). Go to (click or Cmd/Ctrl+K) lists every page with its stage, every station on the strip and
+  Settings; arrows, Enter, Esc. strip_on (new) names the pages the strip shows on, under the page's heading; Go to opens a
+  station on the first. The Explanations switch and the troubleshooting zip move to the Settings page. Stage buttons and page
+  links carry aria-current. ovid_steps takes an optional count. The rail, icons and notebook layouts, the Workbench and the
+  Simple view are unchanged. Test added.
+- **Output changes**: none.
+
 **Changed (a stopped run keeps an app's input-only cache, 2026-10-27)**
 - manifest.R output_restore: cache sub-folders an app names in CACHE_INPUT_ONLY (what was read from its inputs only) are kept when
   a run fails, is cancelled or is killed; every other cache file the run wrote is still dropped. Default none, so CS, WLR, GT

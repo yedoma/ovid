@@ -926,4 +926,18 @@ local({ js <- paste(readLines(file.path(CORE_DIR, "www", "tsview.js"), warn = FA
   check("the Precipitation switch is hidden when no plot has precipitation to draw (it showed On and drew nothing)",
         grepl("data-tsv-opt=\"bars\"", js, fixed = TRUE) && grepl("l.hidden = !anyBars", js, fixed = TRUE)) })
 
+cat("the tabs layout: one bar, pages on the left (shell.R)\n")
+if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(shiny)); for (.f in c("theme", "shell", "flow")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  h <- as.character(ovid_page("CS", olive_crt_palette(), layout = "tabs", settings = "Settings", strip = span("strip"), strip_on = c("Explore", "Home"),
+    ovid_stage(1, "Set up"), ovid_tool("Project", n = 1), ovid_stage(2, "Assess"), ovid_tool("Plot", value = "Explore"),
+    "More", ovid_tool("Home"), ovid_tool("Settings", rail = FALSE)))
+  n <- function(p) lengths(regmatches(h, gregexpr(p, h)))
+  check("the stages are buttons on the top bar, the first lit by the script", n("class=\"d-stage-btn\"") == 2 && grepl("aria-label=\"Stages\"", h))
+  check("each stage lists its pages on the left, only the first shown; the pages after More are folded at the bottom",
+        n("class=\"d-pg-grp\"") == 2 && n("d-pg-grp\" data-stage=\"2\"[^>]*hidden") == 1 && grepl("<details class=\"d-pg-more\">", h) && n("class=\"d-rail-link") == 3)
+  check("the page links keep data-ovid-go (the click-through, Go to and links in pages use it)", all(sapply(c("Project", "Explore", "Home"), function(v) grepl(sprintf("d-rail-link[^>]*data-ovid-go=\"%s\"", v), h))))
+  check("Go to is on the bar and its box is outside it; the strip waits for the pages that use it", grepl("class=\"d-goto\"", h) && grepl("class=\"d-goto-pal\" hidden", h) &&
+        grepl("class=\"d-strip\" hidden data-pages=\"Explore|Home\"", h, fixed = TRUE))
+  check("the Explanations switch and the troubleshooting zip move from the bar to Settings", n("id=\"d_explain\"") == 1 && n("id=\"ovid_troubleshoot\"") == 1 && grepl("d-shell-set", h)) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

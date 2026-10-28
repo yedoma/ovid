@@ -59,14 +59,16 @@ ovid_stage <- function(n, title) structure(list(n = n, title = title), class = "
 # theme: a bslib theme for Bootstrap 5 apps, NULL for plain Shiny. css: the app's own extra CSS, added after the shell's.
 #
 # The set-up flow (core 1.2): layout is how the steps are listed, each app its own: "rail" (a list on the left), "icons"
-# (WLR: an icon rail, the name under each icon), "notebook" (GT: numbered contents on the left) or "tabs" (CS: the steps
-# as tabs under the top bar, strip below them, e.g. the station strip). project: the project switcher (projects_switch_ui)
+# (WLR: an icon rail, the name under each icon), "notebook" (GT: numbered contents on the left) or "tabs" (CS: the stages
+# as a switch on the top bar, the pages of the stage shown listed on the left with their status lines, Go to (Cmd/Ctrl+K)
+# for any page, station or setting; strip, e.g. the station strip, shows at the top of the pages named in strip_on, the
+# first of which Go to opens on a station). project: the project switcher (projects_switch_ui)
 # shown in the top bar with what else is open (context); aside: the information panel on the right (project figures,
 # data gaps, the sources of the step). views: the Standard | Workbench switch; explain: the Explanations switch, which
 # hides the longer help text (.lede, .d-explain) when off.
 ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL, settings = NULL, tokens = list(),
                         css = NULL, head = NULL, theme = NULL, layout = c("rail", "icons", "notebook", "tabs"), project = NULL,
-                        context = NULL, aside = NULL, strip = NULL, views = TRUE, explain = TRUE, areas = NULL) {
+                        context = NULL, aside = NULL, strip = NULL, strip_on = NULL, views = TRUE, explain = TRUE, areas = NULL) {
   layout <- match.arg(layout)
   items <- list(...); items <- items[!vapply(items, is.null, NA)]
   tk <- utils::modifyList(ovid_tokens(pal), tokens)
@@ -83,16 +85,44 @@ ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL,
   page <- if (is.null(theme)) fluidPage else function(...) fluidPage(..., theme = theme)
   ic <- ovid_icon(app)
   if (!is.null(ovid_font_dir())) shiny::addResourcePath("ovid-fonts", ovid_font_dir())
-  views_ui <- if (isTRUE(views)) div(class = "d-views", title = "Two views of the same project, data and edits",
+  views_ui <- if (isTRUE(views)) div(class = "d-views", title = "Three views of the same project, data and edits: Simple, Standard, Workbench",
+    tags$a(href = "?ui=simple", class = "d-to-view", `data-ui` = "simple", "Simple"),
     tags$a(class = "on", href = "?ui=standard", "Standard"), tags$a(href = "?ui=workbench", class = "d-to-wb", "Workbench"))
   explain_ui <- if (isTRUE(explain)) tags$label(class = "d-explain-sw ovid-sw", title = "Show or hide the longer explanations on each page",
     tags$input(type = "checkbox", role = "switch", id = "d_explain", checked = NA), span("Explanations"))
-  if (layout == "tabs") { k <- which(vapply(items, function(x) identical(x, "More"), NA))          # the pages after "More" go in its menu
-    if (length(k)) { kk <- k[1]; rest <- rail[(kk + 1):length(rail)]; rail <- c(rail[seq_len(kk - 1)], list(tags$details(class = "d-pop d-pop-right d-tabs-more",
-      tags$summary(class = "d-rail-link", "More \u25be"), div(class = "d-pop-body", rest)))) } }
-  nav <- if (layout == "tabs") tags$nav(class = "d-tabs", div(class = "d-tabs-row", rail), if (!is.null(strip)) div(class = "d-strip", strip))
+  if (layout == "tabs") {        # one bar: the stages as a switch on the top bar; the pages of the stage shown listed on the left with
+                                 # their status lines, the pages after "More" folded at the bottom of the list (shell.js)
+    grp <- list(list(head = NULL, links = list(), n = 0L))
+    for (i in seq_along(items)) { x <- items[[i]]
+      if (inherits(x, "ovid_stage") || identical(x, "More")) grp[[length(grp) + 1L]] <- list(head = x, links = list(), n = 0L)
+      else if (!is.null(rail[[i]])) { k <- length(grp); grp[[k]]$links <- c(grp[[k]]$links, list(rail[[i]])); grp[[k]]$n <- grp[[k]]$n + inherits(x, "ovid_tool") } }
+    more <- Find(function(g) identical(g$head, "More"), grp)
+    stg <- Filter(function(g) g$n > 0 && !identical(g$head, "More"), grp)
+    nm <- function(g, i) if (inherits(g$head, "ovid_stage")) g$head else list(n = i, title = if (is.character(g$head)) g$head else "Pages")
+    stages_ui <- tags$nav(class = "d-stages", `aria-label` = "Stages", lapply(seq_along(stg), function(i) { h <- nm(stg[[i]], i)
+      tags$button(type = "button", class = "d-stage-btn", `data-stage` = i, `aria-current` = "false",
+        span(class = "d-stg-k", `data-n` = h$n, h$n), span(h$title), span(class = "d-stg-cnt")) }))
+    rail <- tagList(lapply(seq_along(stg), function(i) { h <- nm(stg[[i]], i)
+        div(class = "d-pg-grp", `data-stage` = i, `data-name` = h$title, hidden = if (i > 1) NA,
+          div(class = "d-rail-sec d-pg-head", span(paste(h$n, "\u00b7", h$title)), span(sprintf("%d pages", stg[[i]]$n))), stg[[i]]$links) }),
+      if (!is.null(more) && more$n > 0) tags$details(class = "d-pg-more", tags$summary(span("More pages"), span(more$n)), more$links))
+    strip <- if (!is.null(strip)) div(class = "d-strip", hidden = NA, `data-pages` = paste(strip_on, collapse = "|"), strip)
+    goto <- tags$button(type = "button", class = "d-goto", title = "Go to a page, station or setting", icon("magnifying-glass"),
+        span(class = "d-goto-lab", "Go to page or station"), tags$kbd("\u2318K"))
+    goto_pal <- div(class = "d-goto-pal", hidden = NA, div(class = "d-goto-box", role = "dialog", `aria-label` = "Go to",
+        tags$input(class = "d-goto-in", placeholder = "Go to a page, station or setting\u2026", `aria-label` = "Go to",
+                   role = "combobox", `aria-expanded` = "true", `aria-controls` = "d-goto-list"),
+        div(class = "d-goto-list", id = "d-goto-list", role = "listbox"),
+        div(class = "d-goto-foot", span("\u2191\u2193 choose"), span("\u21b5 open"), span("Esc close")))) }
+  nav <- if (layout == "tabs") tags$nav(class = "d-rail d-pages", `aria-label` = "Pages", rail)
          else tags$nav(class = "d-rail", if (layout == "notebook") div(class = "d-nb-head", "Contents"),
                        if (layout == "notebook" && !is.null(views_ui)) div(class = "d-nb-views", views_ui), rail)
+  trouble <- function() downloadLink("ovid_troubleshoot", icon("life-ring"), class = "d-icon-btn", title = "Troubleshooting zip: versions, logs, problems and the set-up, no raw data")
+  if (layout == "tabs" && !is.null(settings))          # tabs: the Explanations switch and the troubleshooting zip leave the bar for Settings
+    panels <- lapply(seq_along(tools), function(i) if (!identical(tools[[i]]$value, settings)) panels[[i]] else
+      tabPanel(tools[[i]]$title, value = tools[[i]]$value, div(class = "d-tool", tools[[i]]$ui,
+        div(class = "panel-x d-shell-set", h3("Display and support"), explain_ui,
+          p(downloadLink("ovid_troubleshoot", tagList(icon("life-ring"), " Troubleshooting zip")), span(class = "dim", ": versions, logs, problems and the set-up, no raw data."))))))
   page(title = paste0("ovid // ", app),
     tags$head(if (!is.null(ic)) tags$link(rel = "icon", type = "image/png", href = ic),
               tags$style(HTML(paste0(ovid_font_css(), ovid_css(tk)))), if (exists("OVID_FILES_CSS")) tags$style(HTML(OVID_FILES_CSS)), if (!is.null(css)) tags$style(HTML(css)),
@@ -105,15 +135,18 @@ ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL,
       div(class = "d-brand", if (!is.null(ic)) tags$img(class = "d-brand-icon", src = ic, alt = ""), span(class = "d-brand-d", "ovid"), span(class = "d-brand-sep", "//"), span(class = "d-brand-app", app)),
       ovid_areas_ui(areas),
       if (!is.null(project)) div(class = "d-project", project),
+      if (layout == "tabs") stages_ui,
       div(class = "d-context", span(class = "d-crumb d-ctx-page"), uiOutput("d_context", inline = TRUE), context),
-      div(class = "d-top-right", status, actions, explain_ui, if (layout != "notebook") views_ui,
-        downloadLink("ovid_troubleshoot", icon("life-ring"), class = "d-icon-btn", title = "Troubleshooting zip: versions, logs, problems and the set-up, no raw data"),
+      div(class = "d-top-right", if (layout == "tabs") goto, if (layout == "tabs" && !is.null(status)) span(class = "d-run-st", status) else status, actions, if (layout != "tabs") explain_ui, if (layout != "notebook") views_ui,
+        if (layout != "tabs" || is.null(settings)) trouble(),
         if (!is.null(help)) tags$a(class = "d-icon-btn", href = help, target = "_blank", title = "Help: the reference guide", icon("circle-question")),
         if (!is.null(settings)) tags$a(class = "d-icon-btn", href = "#", `data-ovid-go` = settings, title = "Settings", icon("gear")))),
     nav,
     div(class = "d-work", if (layout == "notebook" && !is.null(aside)) div(class = "d-nb-facts", aside),     # notebook: the facts are a card at the top, not a side panel
+        if (layout == "tabs") strip,                                                                          # tabs: shell.js moves it onto the pages in strip_on
         do.call(tabsetPanel, c(list(id = "nav", type = "hidden"), panels))),
     if (!is.null(aside) && layout != "notebook") tags$aside(class = "d-aside", aside),
+    if (layout == "tabs") goto_pal,
     if (exists("run_ui", mode = "function")) run_ui())                  # the progress box of a background run (core runner.R)
 }
 
@@ -160,8 +193,10 @@ OVID_ICONS <- list(
 # looked at; empty ones are dropped). output$d_context <- renderUI(ovid_context(site, deployment))
 ovid_go <- function(session, value) updateTabsetPanel(session, "nav", selected = value)
 # The status line under each step of the flow: a named list, step value = list(level, text), level one of ok, warn,
-# error, info, off ("off": not started). ovid_steps(session, list(Project = list("ok", "Folders checked")))
-ovid_steps <- function(session, x) session$sendCustomMessage("ovid-steps", lapply(x, function(v) list(level = .level(v[[1]]), text = as.character(v[[2]]))))
+# error, info, off ("off": not started), and an optional count shown on the step's stage in the tabs layout (what waits).
+# ovid_steps(session, list(Project = list("ok", "Folders checked"), Needs = list("warn", "3 to look at", 3)))
+ovid_steps <- function(session, x) session$sendCustomMessage("ovid-steps", lapply(x, function(v)
+  list(level = .level(v[[1]]), text = as.character(v[[2]]), count = if (length(v) > 2) as.integer(v[[3]]) else 0L)))
 ovid_context <- function(...) {
   x <- unlist(list(...)); x <- x[!is.na(x) & nzchar(x)]
   tagList(lapply(x, function(v) span(class = "d-crumb", v)))
@@ -412,13 +447,13 @@ colours_ui <- function(choices = get0("APP_SCHEMES"), pal_of = get0("app_palette
 }
 # Which view opens when the app starts: the "ui" setting that the app reads at start (core workbench.R wb_wanted(); ?ui= in
 # the address and OVID_UI still win). Shown with the colours, so every app's Settings has it.
-START_VIEWS <- c("Standard view" = "standard", "Workbench" = "workbench")
+START_VIEWS <- c("Simple view" = "simple", "Standard view" = "standard", "Workbench" = "workbench")
 # safe: no saved view means the default one
 saved_view <- function(settings_file = get0("SETTINGS_FILE")) { v <- if (!is.null(settings_file)) tryCatch(settings_read(settings_file)$ui, error = function(e) NULL)
-  if (identical(v, "workbench")) "workbench" else "standard" }
+  if (length(v) == 1 && v %in% START_VIEWS) v else "standard" }
 start_view_ui <- function() div(class = "mt-3", tags$b("Opens in"),
   radioButtons("start_view", NULL, choices = START_VIEWS, selected = saved_view(), inline = TRUE),
-  p(class = "muted", "The view the app opens in. Applies the next time the app starts."))
+  p(class = "muted", "The view the app opens in. Simple: look at the data and fix names and places. Standard: the processes to assess it. Workbench: change the data. Applies the next time the app starts."))
 colours_server <- function(input, output, app, settings_file = get0("SETTINGS_FILE"), choices = get0("APP_SCHEMES"), pal_of = get0("app_palette")) {
   if (is.null(choices) || is.null(pal_of)) return(invisible())
   now <- get0("APP_SCHEME", ifnotfound = choices[[1]])                       # what this run of the app uses

@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Standard view: one bar, pages on the left, 2026-10-28)**
+- The Standard view uses the core tabs layout as approved (option 2): stages on the top bar with the Needs you count on
+  Decide, the pages of the stage on the left with their status lines, Go to (Cmd/Ctrl+K) for pages, stations and settings.
+  The station strip shows at the top of Plot and explore and Overview instead of above every page. The Plots size moved
+  to Settings (Plot height); Run pipeline is labelled Run.
+- **Output changes**: none.
+
 **Changed (folders under ~/Projects/Ovid, 2026-10-21)**
 - Projects go in ~/Projects/Ovid/Projects/CS when none is set (was ~/Desktop/Ovid_Projects/CS).
 - Default raw folder is ~/Projects/Ovid/Projects/CS/raw (was ~/Desktop/dat/RAW and ~/Desktop/Dat_Files, both retired).
