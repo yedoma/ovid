@@ -5,6 +5,15 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (Simple view: fields, item kinds and tile links, 2026-10-28)**
+- simple.R, www/simple.css: three options an app may use; with none the Simple view is as before (CS). simple_edit_server(fields =):
+  more per group, shown on each card; a text field is edited with the name and place and waits in the list as a "field" op
+  ("<group>: <label> set to <value>") until Save, with the change log and Undo; a read-only field shows its value and a "set in
+  Standard" link. rows() may carry kind: the chip gets sp-chip-<kind> and the scheme's second accent (purple, --sp-kind2).
+  simple_tile(link =): a link to a Standard page (?ui=standard&page=) in the card, outside its select button (the tile is now a
+  card holding a button, so no control sits in another). simple_std_href() builds the address. Tests added.
+- **Output changes**: none.
+
 **Changed (the tabs layout: one bar, pages on the left, 2026-10-28)**
 - shell.R, www/flow.css, www/shell.js: in the "tabs" layout (CS's Standard view) the top bar holds the stages as one switch
   (number and name, a tick when every step's status is ok or info, the count a step sends with ovid_steps beside its stage),

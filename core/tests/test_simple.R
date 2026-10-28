@@ -76,4 +76,28 @@ if (requireNamespace("ggplot2", quietly = TRUE)) local({
   check("the report writes the name all lowercase", grepl("ovid // XX", x, fixed = TRUE) && !grepl("Ovid Core", x, fixed = TRUE))
   check("the report's ink reads on paper (contrast 4.5:1 or more)", contrast_ratio(simple_ink(pal), "#fbfaf7") >= 4.5) })
 
+cat("tiles, chips and fields an app can add\n")
+local({ t <- as.character(simple_tile("Bog 1", "warn", facts = list(A = "1"), link = list(label = "Open in Standard", page = "Visits", site = "Bog 1")))
+  sel <- regmatches(t, regexpr("<button[^>]*sp-tile-sel.*?</button>", t))
+  check("a tile's link sits in the card, outside its select button: no control inside another, and it opens the Standard page",
+        length(sel) == 1 && !grepl("<a |<button", sub("^<button", "", sel)) && grepl('class="sp-tile-link" href="?ui=standard&amp;page=Visits&amp;site=Bog%201"', t, fixed = TRUE))
+  t0 <- as.character(simple_tile("Bog 1", "ok"))
+  check("a tile without a link has none", !grepl("sp-tile-link", t0, fixed = TRUE) && grepl("sp-tile-sel", t0, fixed = TRUE))
+  check("the second accent comes from the scheme (purple), for items of another kind", grepl("--sp-kind2:#c678dd", simple_css(pal), fixed = TRUE) && grepl(".sp-chip.sp-chip-alt", SIMPLE_CSS, fixed = TRUE)) })
+local({ rows <- reactive(data.table(item = c("1", "2"), label = c("1", "2 · baro"), kind = c("", "baro"), group = "A", first = "", last = "", lat = NA_real_, lon = NA_real_))
+  got <- NULL
+  fields <- list(list(id = "land_cover", label = "Land cover", type = "text", get = function(k) "Fen"),
+                 list(id = "datum", label = "Datum", type = "readonly", get = function(k) "reference T at 1.200 m", link = "Datum"))
+  testServer(simple_edit_server, args = list(rows = rows, apply = function(ops, who) { got <<- ops; list(ok = TRUE, message = "saved", undo = NULL) }, noun = "site", fields = fields), {
+    g <- paste(as.character(output$groups$html), collapse = "")
+    check("an item of a kind gets its class (sp-chip-baro) and its label still says what it is", grepl('class="sp-chip sp-chip-baro sp-chip-alt"', g, fixed = TRUE) && grepl("2 · baro", g, fixed = TRUE))
+    check("each card shows its fields; a read-only one links to Standard", grepl("Land cover:", g, fixed = TRUE) && grepl("Fen", g, fixed = TRUE) &&
+          grepl("reference T at 1.200 m", g, fixed = TRUE) && grepl('href="?ui=standard&amp;page=Datum"', g, fixed = TRUE) && grepl("set in Standard", g, fixed = TRUE))
+    session$setInputs(pick = "A"); d <- paste(as.character(output$detail$html), collapse = "")
+    check("a text field is edited with the name and place; a read-only one is not", grepl("f_land_cover", d, fixed = TRUE) && !grepl("f_datum", d, fixed = TRUE))
+    session$setInputs(name = "A", f_land_cover = "Bog", keep = 1); ch <- paste(as.character(output$changes$html), collapse = "")
+    check("a changed field waits in the list: \"A: Land cover set to Bog\"", grepl("A: Land cover set to Bog", ch, fixed = TRUE))
+    session$setInputs(who = "tt", save = 1)
+    check("Save hands it to the app as a field op", !is.null(got) && nrow(got) == 1 && got$type == "field" && got$item == "land_cover" && got$to == "Bog" && got$group == "A") }) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

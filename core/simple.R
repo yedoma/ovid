@@ -10,7 +10,8 @@
 #                       three-view switch, four large steps (Import, View, Edit, Export) and one column under them. hidden: the
 #                       Standard pages the app's Standard server needs (their inputs), kept out of sight in the "nav" tab set.
 #   simple_steps_server(session, done)   marks the steps done (done(): a named logical, import/view/edit/export)
-#   simple_tile(), simple_spark(), simple_hero()   the status tile of a station or site, its sparkline, the line at the top
+#   simple_tile(), simple_spark(), simple_hero()   the status tile of a station or site (link: a Standard page from it), its
+#                       sparkline, the line at the top
 #   simple_edit_ui(id), simple_edit_server(id, rows, apply, ...)   names, places and grouping (below)
 #   simple_report_doc(...), simple_report_write(doc, base, formats, pal)   the Simple report (below)
 # The look: larger type, one column, rounded tiles on the scheme's raised ground, plain words. Colours from the app's palette
@@ -23,7 +24,7 @@ SIMPLE_JS <- paste(readLines(file.path(CORE_DIR, "www", "simple.js"), encoding =
 
 simple_css <- function(pal) { tk <- ovid_tokens(pal)
   v <- c(bar = tk$bgh, bg = tk$bg, raised = tk$bg1, line = tk$bg2, line2 = tk$bg3, fg = tk$fg, fg2 = tk$fg4, mut = tk$gray, acc = tk$acc, onacc = tk$onacc,
-         ok = tk$green, warn = tk$yellow, err = tk$red, info = tk$blue)
+         ok = tk$green, warn = tk$yellow, err = tk$red, info = tk$blue, kind2 = .or(pal$purple, pal$magenta, tk$blue))
   paste0(":root{", paste0("--sp-", names(v), ":", v, ";", collapse = ""), "}\n", SIMPLE_CSS) }
 
 simple_page <- function(app, pal, import, view, edit, export, project = NULL, hidden = list(), head = NULL, theme = NULL, actions = NULL) {
@@ -72,13 +73,20 @@ simple_spark <- function(v, n = 120, level = "ok") {
     paste0('<polyline fill="none" class="sp-spark-', level, '" points="', pts, '"/>', collapse = "")))
 }
 # One station or site: its name, a state (ok, warn, error, off) with a word or two, a sparkline, label/value pairs and a note.
-simple_tile <- function(title, level = "ok", state = NULL, spark = NULL, facts = list(), note = NULL, on = FALSE, value = title, input = "sp_pick") {
+# The card holds a button (selects it) and, outside the button, an optional link: list(label, page) opens that page of the
+# Standard view (?ui=standard&page=; extra query fields as further named elements, e.g. site), so no control sits in another.
+simple_tile <- function(title, level = "ok", state = NULL, spark = NULL, facts = list(), note = NULL, on = FALSE, value = title, input = "sp_pick", link = NULL) {
   level <- if (level %in% OVID_LEVELS) level else "info"
-  tags$button(type = "button", class = paste("sp-tile", paste0("sp-", level), if (on) "on"), onclick = sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'})", input, jsonlite::toJSON(value, auto_unbox = TRUE)),
-    div(class = "sp-tile-h", tags$b(title), span(class = paste0("sp-state sp-", level), span(class = "sp-dot"), state %||% c(ok = "all good", warn = "look at", error = "stopped", off = "no data", info = "")[[level]])),
-    spark, if (length(facts)) tags$dl(lapply(names(facts), function(k) tagList(tags$dt(k), tags$dd(facts[[k]])))),
-    if (!is.null(note)) p(class = "sp-tile-note", note))
+  div(class = paste("sp-tile", paste0("sp-", level), if (on) "on"),
+    tags$button(type = "button", class = "sp-tile-sel", `aria-pressed` = if (on) "true" else "false", onclick = sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'})", input, jsonlite::toJSON(value, auto_unbox = TRUE)),
+      div(class = "sp-tile-h", tags$b(title), span(class = paste0("sp-state sp-", level), span(class = "sp-dot"), state %||% c(ok = "all good", warn = "look at", error = "stopped", off = "no data", info = "")[[level]])),
+      spark, if (length(facts)) tags$dl(lapply(names(facts), function(k) tagList(tags$dt(k), tags$dd(facts[[k]])))),
+      if (!is.null(note)) p(class = "sp-tile-note", note)),
+    if (length(link)) tags$a(class = "sp-tile-link", href = simple_std_href(link$page, link[setdiff(names(link), c("label", "page"))]), link$label))
 }
+# The address of a page of the Standard view, with any other query fields (named list).
+simple_std_href <- function(page, extra = list()) { q <- c(list(ui = "standard", page = page), Filter(function(v) length(v) == 1 && !is.na(v) && nzchar(v), extra))
+  paste0("?", paste0(names(q), "=", vapply(q, function(v) utils::URLencode(as.character(v), reserved = TRUE), ""), collapse = "&")) }
 # The line at the top of View: a mark, a sentence and the detail under it.
 simple_hero <- function(level, head, sub = NULL, action = NULL)
   div(class = paste("sp-hero", paste0("sp-", level)), span(class = "sp-hero-mark", c(ok = "✓", warn = "!", error = "×", off = "–", info = "i")[[level %||% "info"]]),
@@ -92,8 +100,12 @@ simple_hero <- function(level, head, sub = NULL, action = NULL)
 # its own set-up tables (the deployment sheet, or the app's list of loggers) with the version before kept in config/history
 # and the change log; Undo takes the last save back. Only names, places and grouping change here, never data values.
 #
-#   rows():   item, label, group ("" = in none yet), first, last (text dates), lat, lon (the group's place, numbers or NA)
-#   apply(ops, who): ops is a data.table (type: rename | move | place, group, to, item, at, lat, lon); returns
+#   rows():   item, label, group ("" = in none yet), first, last (text dates), lat, lon (the group's place, numbers or NA);
+#             optional kind: the item's kind, shown as an accent (class sp-chip-<kind> sp-chip-alt), e.g. "baro"
+#   fields:   more per group, each list(id, label, type = "text" | "readonly", get = function(group) value, link = a Standard
+#             page): shown on each card; a text field is edited with the name and place (a "field" op: item = id, to = value);
+#             a read-only one shows its value and, with link, "set in Standard"
+#   apply(ops, who): ops is a data.table (type: rename | move | place | field, group, to, item, at, lat, lon); returns
 #             list(ok = TRUE/FALSE, message = "", undo = function() or NULL)
 #   gap(item): the date (text) of the first record after a long gap in the item's files, or NA
 #   busy():   the set-up tables with unsaved edits in another view (OVID_PENDING, editor.R): Save waits for them
@@ -117,7 +129,8 @@ simple_ops_preview <- function(rows, ops) {
     else if (o$type == "place") r[group == o$group, `:=`(lat = o$lat, lon = o$lon)]
     else if (o$type == "new") r <- rbind(r, data.table(item = "", label = "", group = o$to, first = "", last = "", lat = NA_real_, lon = NA_real_), fill = TRUE) }
   r }
-simple_ops_text <- function(o, noun = "station") switch(o$type,
+simple_ops_text <- function(o, noun = "station", fields = list()) switch(o$type,
+  field = { f <- Filter(function(f) identical(f$id, o$item), fields); sprintf("%s: %s set to %s", o$group, if (length(f)) f[[1]]$label else o$item, if (nzchar(o$to)) o$to else "nothing") },
   rename = sprintf("“%s” renamed %s", o$group, o$to),
   move = sprintf("%s moved to %s%s", o$item, if (nzchar(o$to)) o$to else paste("no", noun), if (nzchar(o$at)) paste(" from", substr(o$at, 1, 10)) else ", whole record"),
   place = sprintf("Place of %s set to %.5f, %.5f", o$group, o$lat, o$lon),
@@ -125,10 +138,14 @@ simple_ops_text <- function(o, noun = "station") switch(o$type,
 simple_coord <- function(x, lim) { v <- suppressWarnings(as.numeric(gsub(",", ".", trim(as.character(x %||% ""))))); if (length(v) == 1 && is.finite(v) && abs(v) <= lim) v else NA_real_ }
 
 simple_edit_server <- function(id, rows, apply, gap = function(item) NA_character_, busy = function() character(), who = function() "",
-                               noun = "station", items = "loggers") moduleServer(id, function(input, output, session) {
+                               noun = "station", items = "loggers", fields = list()) moduleServer(id, function(input, output, session) {
   ns <- session$ns
   ops <- reactiveVal(SIMPLE_OPS); sel <- reactiveVal(NULL); ask <- reactiveVal(NULL); last <- reactiveVal(NULL)
   add <- function(o) { x <- ops(); ops(rbind(x, o, fill = TRUE)) }
+  # a field's value: the last change waiting for it, else the app's, under the group's name before any rename waiting
+  was <- function(k) { o <- ops()[type == "rename"]; for (i in rev(seq_len(nrow(o)))) if (identical(o$to[i], k)) k <- o$group[i]; k }
+  fval <- function(f, k) { o <- ops()[type == "field" & group == k & item == f$id]; if (nrow(o)) return(o$to[nrow(o)])
+    v <- tryCatch(f$get(was(k)), error = function(e) ""); if (length(v) != 1 || is.na(v)) "" else as.character(v) }
   view <- reactive({ r <- rows(); if (is.null(r) || !nrow(r)) return(data.table(item = character(), label = character(), group = character(), first = character(), last = character(), lat = numeric(), lon = numeric()))
     simple_ops_preview(r, ops()) })
   groups <- reactive({ v <- view(); g <- unique(v$group); c(sort(g[nzchar(g)]), if ("" %in% g) "") })
@@ -139,7 +156,10 @@ simple_edit_server <- function(id, rows, apply, gap = function(item) NA_characte
           onclick = if (!none) sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'})", ns("pick"), jsonlite::toJSON(k, auto_unbox = TRUE)),
         div(class = "sp-group-h", tags$b(if (none) paste("Not in a", noun, "yet") else k), span(class = "sp-dim", nrow(x), if (nrow(x) == 1) sub("s$", "", items) else items)),
         div(class = "sp-group-place sp-mono", if (none) paste0("Drag onto a ", noun, ", or use Move to") else if (nrow(place) && is.finite(place$lat[1]) && is.finite(place$lon[1])) sprintf("%.4f, %.4f", place$lat[1], place$lon[1]) else "no place yet"),
-        div(class = "sp-chips", lapply(seq_len(nrow(x)), function(i) span(class = "sp-chip", draggable = "true", `data-item` = x$item[i], `data-from` = k,
+        if (!none) lapply(fields, function(f) { v <- fval(f, k)
+          div(class = "sp-group-field", span(paste0(f$label, ":")), tags$b(if (nzchar(v)) v else "—"),
+              if (identical(f$type, "readonly") && length(f$link)) tags$a(href = simple_std_href(f$link), onclick = "event.stopPropagation()", "set in Standard")) }),
+        div(class = "sp-chips", lapply(seq_len(nrow(x)), function(i) span(class = paste("sp-chip", if ("kind" %in% names(x) && !is.na(x$kind[i]) && nzchar(x$kind[i])) paste0("sp-chip-", x$kind[i], " sp-chip-alt")), draggable = "true", `data-item` = x$item[i], `data-from` = k,
           title = paste0(x$label[i], if (nzchar(x$first[i]) || nzchar(x$last[i])) paste0(" · ", substr(x$first[i], 1, 10), " to ", substr(x$last[i], 1, 10)) else ""), x$label[i]))),
         if (none && nrow(x)) div(class = "sp-move", selectInput(ns("move_item"), NULL, stats::setNames(x$item, x$label), width = "100%"),
           selectInput(ns("move_to"), NULL, c(stats::setNames("", paste("Move to a", noun, "…")), stats::setNames(g[nzchar(g)], g[nzchar(g)])), width = "100%"))) }
@@ -165,9 +185,10 @@ simple_edit_server <- function(id, rows, apply, gap = function(item) NA_characte
     p1 <- v[group == k & !is.na(lat)][1]
     div(class = "sp-card sp-detail", div(class = "sp-h", noun, " · ", k),
       textInput(ns("name"), "Name", k, width = "100%"),
-      div(class = "sp-two", textInput(ns("lat"), "Latitude", if (nrow(p1)) format(p1$lat, digits = 9) else "", width = "100%", placeholder = "45.4215"),
-                            textInput(ns("lon"), "Longitude", if (nrow(p1)) format(p1$lon, digits = 9) else "", width = "100%", placeholder = "-75.6972")),
+      div(class = "sp-two", textInput(ns("lat"), "Latitude", if (nrow(p1) && is.finite(p1$lat)) format(p1$lat, digits = 9) else "", width = "100%", placeholder = "45.4215"),   # no place: empty, not "NA"
+                            textInput(ns("lon"), "Longitude", if (nrow(p1) && is.finite(p1$lon)) format(p1$lon, digits = 9) else "", width = "100%", placeholder = "-75.6972")),
       p(class = "sp-dim sp-small", "Decimal degrees, WGS 84: north and east positive."),
+      lapply(Filter(function(f) !identical(f$type, "readonly"), fields), function(f) textInput(ns(paste0("f_", f$id)), f$label, fval(f, k), width = "100%")),
       simple_locator(v, k),
       actionButton(ns("keep"), "Keep these", class = "sp-btn2")) })
   observeEvent(input$keep, { k <- sel(); req(k); n <- trim(input$name %||% "")
@@ -176,10 +197,12 @@ simple_edit_server <- function(id, rows, apply, gap = function(item) NA_characte
     la <- trim(input$lat %||% ""); lo <- trim(input$lon %||% "")
     if (nzchar(la) || nzchar(lo)) { a <- simple_coord(la, 90); b <- simple_coord(lo, 180)
       if (is.na(a) || is.na(b)) return(showNotification("Latitude is a number from -90 to 90 and longitude from -180 to 180, in decimal degrees.", type = "warning"))
-      p0 <- view()[group == k & !is.na(lat)][1]; if (!nrow(p0) || !isTRUE(all.equal(c(p0$lat, p0$lon), c(a, b)))) add(data.table(type = "place", group = k, lat = a, lon = b)) } })
+      p0 <- view()[group == k & !is.na(lat)][1]; if (!nrow(p0) || !isTRUE(all.equal(c(p0$lat, p0$lon), c(a, b)))) add(data.table(type = "place", group = k, lat = a, lon = b)) }
+    for (f in Filter(function(f) !identical(f$type, "readonly"), fields)) { x <- trim(input[[paste0("f_", f$id)]] %||% "")
+      if (!identical(x, fval(f, k))) add(data.table(type = "field", group = k, item = f$id, to = x)) } })
   output$changes <- renderUI({ o <- ops(); b <- busy(); l <- last()
     div(class = "sp-card sp-changes", div(class = "sp-h", "Changes not saved · ", nrow(o[type != "new"])),
-      if (!nrow(o)) p(class = "sp-dim", "None yet.") else tags$ul(lapply(seq_len(nrow(o)), function(i) tags$li(simple_ops_text(o[i], noun)))),
+      if (!nrow(o)) p(class = "sp-dim", "None yet.") else tags$ul(lapply(seq_len(nrow(o)), function(i) tags$li(simple_ops_text(o[i], noun, fields)))),
       if (length(b)) p(class = "sp-warn-t", "Unsaved edits to ", paste(b, collapse = ", "), " are open in the Standard view or the Workbench. Save or drop them there first; they are not overwritten."),
       if (nrow(o[type != "new"])) textInput(ns("who"), "Your initials (go in the change log)", isolate(input$who) %||% who(), width = "220px"),
       div(class = "sp-row", actionButton(ns("save"), "Save", class = "sp-btn", disabled = if (!nrow(o[type != "new"]) || length(b)) NA),

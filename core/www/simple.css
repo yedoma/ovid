@@ -62,9 +62,13 @@ html.sp-root, html.sp-root body { background: var(--sp-bg); }
 
 /* station or site tiles */
 .sp-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.sp-tile { display: block; width: 100%; text-align: left; font: inherit; color: var(--sp-fg); cursor: pointer; padding: 14px 16px 12px;
+.sp-tile { display: flex; flex-direction: column; color: var(--sp-fg); padding: 14px 16px 12px;
   background: var(--sp-raised); border: 1px solid var(--sp-line); border-radius: 14px; border-top: 4px solid var(--sp-info); }
 .sp-tile:hover { border-color: var(--sp-line2); }
+/* the tile's select control (header, sparkline, facts) and, outside it, an optional link to a Standard page */
+.sp-tile-sel { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+.sp-tile-sel:focus-visible, .sp-tile-link:focus-visible { outline: 2px solid var(--sp-acc); outline-offset: 3px; border-radius: 6px; }
+.sp-tile-link { align-self: flex-start; margin-top: 8px; font-size: 13px; color: var(--sp-acc); text-decoration: underline; text-underline-offset: 2px; }
 .sp-tile.on { box-shadow: 0 0 0 2px var(--sp-acc); }
 .sp-tile.sp-ok { border-top-color: var(--sp-ok); }
 .sp-tile.sp-warn { border-top-color: var(--sp-warn); }
@@ -104,6 +108,11 @@ html.sp-root, html.sp-root body { background: var(--sp-bg); }
 .sp-chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--sp-line2); background: var(--sp-bg); font-size: 13px; cursor: grab; user-select: none; }
 .sp-chip:active { cursor: grabbing; }
 .sp-chip.sp-dragging { opacity: .4; }
+/* an item of another kind (an app names it: a barologger among water loggers) in the scheme's second accent */
+.sp-chip.sp-chip-alt { border-color: var(--sp-kind2); color: var(--sp-kind2); }
+.sp-group-field { font-size: 12.5px; line-height: 1.4; color: var(--sp-fg2); margin: -4px 0 6px; }
+.sp-group-field b { font-weight: 500; color: var(--sp-fg); margin-left: 4px; }
+.sp-group-field a { color: var(--sp-acc); margin-left: 6px; white-space: nowrap; }
 .sp-move { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; margin-top: 10px; }
 .sp-move .form-group { margin: 0; }
 .sp-changes ul { margin: 0 0 4px; padding-left: 18px; font-size: 13.5px; }
