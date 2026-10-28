@@ -5,6 +5,26 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (the Simple view, 2026-10-28)**
+- simple/simple_gt.R: the Simple view (?ui=simple; a new install opens in it, an install with settings in app_settings.rds keeps
+  Standard). Import: the folders, Read the data and a checklist (downloads read, clocks fixed, every string at a site, site names,
+  sensor depths set or assumed, places) with the strings' files. View: filters (all, need a look, not named, depths assumed) and a
+  search, a tile per site (depths, * when assumed; last record; MAGT at the deepest sensor; ALT of the last complete year; the
+  registry's name for a site still named after its logger; amber when stopped or a sensor reads like air, with a link to Standard),
+  and a plot over time (daily means by depth) or as a profile (last complete year, with the ALT). Edit: names, places, land cover,
+  sensor depths (set by hand) and which site each string is at, in sites.csv and sensors.csv only (a rename through rename.R);
+  "Use registry names" (registry_dir setting; REGISTRY_NAMES in R/config.R) and "Use <model> template" add their changes to the
+  list to review. Sensor depths have their own editor in Edit (opened from a tile's Set depths, the site's card, or "n assumed ·
+  next"): one box per sensor in string order (assumed ones dashed; a leading + for a sensor above the ground, e.g. +0.10, kept as
+  Sensors and depths keeps it; comma decimals read), a live profile with the mean temperature by depth (a depth to fix
+  in red), Even steps, Copy from site, Use <model> template and Paste a list (which only fill the boxes), then Add to changes, Apply
+  to all sites of the same model and sensor count, or Save as template for <model> (sensor_templates.csv), all through the list of
+  changes with Save and Undo. Export: the field check report (HTML), daily temperatures and plots (zip).
+- Quality rules, clock corrections, corrections over a period and ground-surface changes are edited by hand only in the Workbench
+  (wb_only); removals drawn on Plot and explore are offered in the Workbench only. ?page= opens a Standard page from a link;
+  GT_REGISTRY_DIR sets the registry folder. Tests added.
+- **Output changes**: none.
+
 **Changed (folder layout, 2026-10-21)**
 - Default raw folder is ~/Projects/Ovid/Projects/GT/raw (logger files only); the metadata folder is in the project (project/metadata).
 - **Output changes**: none.

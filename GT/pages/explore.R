@@ -6,6 +6,7 @@
   q0 <- shiny::parseQueryString(isolate(session$clientData$url_search) %||% ""); q0site <- reactiveVal(q0$site)   # switching views keeps the site and period (core shell.R)
   observe({ s <- site_names(); cur <- isolate(input$ex_site) %||% isolate(q0site()); updateSelectInput(session, "ex_site", choices = s, selected = if (isTRUE(cur %in% s)) cur else s[1]) })
   if (!embedded) { if (!is.null(q0$from) && !is.null(q0$to)) session$onFlushed(function() updateDateRangeInput(session, "ex_dates", start = q0$from, end = q0$to), once = TRUE)
+    if (!is.null(q0$page)) session$onFlushed(function() ovid_go(session, q0$page), once = TRUE)   # a link from the Simple view opens its page (?page=Health)
     observe(ovid_ctx(session, "site", input$ex_site, NULL, input$ex_dates[1], input$ex_dates[2])) }
   site_raw <- reactive({ req(input$ex_site); rv$tick; load_site(input$ex_site, pd()) })
   site_removed <- reactive({ req(input$ex_site); rv$tick; load_removed(input$ex_site, pd()) })
@@ -109,7 +110,7 @@
   # flagged and removed readings. Drag selects a stretch; dragging up a panel's value axis narrows it to a band of
   # temperatures (the old box). The edits are on the bar above the selection, each with a reason and initials; they go to
   # Quality rules > Corrections over a period and apply at the next run (the raw files are not touched), with Undo.
-  ot_acts <- function(all) if (!VIEWER) list(
+  ot_acts <- function(all) if (!VIEWER && E$period$hand_ok()) list(                     # removals are drawn in the Workbench only (core editor.R wb_only)
     list(id = "box", label = "Remove the points in the band", kind = "bad", band = TRUE),
     list(id = "flag", label = "Flag them", kind = "warn", band = TRUE, title = "Flag the points in the band; they are kept"),
     list(id = "period", label = "Remove every depth in this period", label_band = if (!all) "Remove {panel} in this period", kind = "bad"),
@@ -138,7 +139,7 @@
   output$qc_removed <- renderDT({ o <- outs(); req(o); ix <- o$index[site == input$ex_site | (is.na(site) & logger_id %in% unique(site_raw()$logger_id))]
     req(nrow(ix) > 0); x <- ix[, .(values = sum(n)), by = .(stage, rule, logger_id, channel)][order(-values)]; ovid_dt(cbind(x, rule_info(x$rule)[, .(what = title)]), page = 10) })
   ts_view_undo(input, session, "ot_tsv")
-  observeEvent(input$ot_tsv_act, { a <- input$ot_tsv_act; if (VIEWER) return()
+  observeEvent(input$ot_tsv_act, { a <- input$ot_tsv_act; if (VIEWER || !wb_made(E$period)) return()
     why <- trim(a$reason %||% ""); if (!nzchar(why)) return(note("Give a reason first.", type = "warning"))
     r <- as.POSIXct(c(a$t0, a$t1), origin = "1970-01-01", tz = "UTC"); k <- a$key %||% ""; z <- if (nzchar(k) && k != "all") format(depth_typed(as.numeric(k), proj_sgn())) else ""   # in the project's depth convention
     d <- site_raw(); req(d); first <- min(d$TIMESTAMP); last <- max(d$TIMESTAMP)

@@ -547,6 +547,67 @@ local({                                                               # depths, 
         length(unlist(rc)) == 8 && identical(report_pick(rc$PDF[["B|2 (PDF)"]]), list(format = "pdf", what = "B|2")) && identical(report_pick("html|"), list(format = "html", what = "")) &&
         identical(report_pick(NULL)$format, "html") && report_pick(rc$HTML[["Every report, as a ZIP (HTML)"]])$what == "*")
   check("the shallow/deep cut is fixed at 3 m; the profile column of sites.csv still decides", PROFILE_CUT_M == 3 && is.null(formals(write_gt_reports)$profile_cut))
+
+  cat("the Simple view\n")
+  h <- as.character(htmltools::renderTags(app$simple_ui(NULL))$html); ids <- regmatches(h, gregexpr(' id="[^"]+"', h))[[1]]
+  check("the Simple view builds: four steps, its own Import with the folder inputs, and no input twice", grepl('data-step="export"', h, fixed = TRUE) &&
+        grepl('id="raw_dirs"', h, fixed = TRUE) && grepl('id="registry_dir"', h, fixed = TRUE) && grepl('id="run"', h, fixed = TRUE) && !anyDuplicated(ids))
+  check("values (and every depth's ground surface) are edited by hand only in the Workbench: quality rules, clocks, corrections over a period, surface changes",
+        setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "time", "period", "surface")))
+  ps <- file.path(root, "simple_p"); dir.create(ps); invisible(file.copy(list.files(proj, full.names = TRUE), ps, recursive = TRUE)); cf <- file.path(ps, "config")
+  md5 <- function() { f <- list.files(cf, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  se0 <- app$sp_gt_cfg(ps, "sensors", SENSOR_COLS); st0 <- app$sp_gt_cfg(ps, "sites", SITE_COLS); auto0 <- app$sp_gt_auto(se0)
+  s0 <- se0[nzchar(site) & nzchar(sensor)]$site[1]; sn <- se0[site == s0 & nzchar(sensor)]$serial[1]; ns <- nrow(se0[site == s0 & nzchar(sensor) & !nzchar(end)])
+  z <- format(seq(0.05, by = 0.15, length.out = ns))
+  ops <- rbind(app$SIMPLE_OPS, data.table(type = c("rename", "place", "field", "field"), group = c(s0, "Pit A", "Pit A", "Pit A"), to = c("Pit A", "", "Bog", paste(z, collapse = ", ")),
+                                      item = c("", "", "landcover", "depths"), lat = c(NA, 61.3, NA, NA), lon = c(NA, -121.3, NA, NA)), fill = TRUE)
+  for (v in c("item", "at", "to", "group")) set(ops, which(is.na(ops[[v]])), v, "")
+  b0 <- md5(); r <- app$sp_gt_apply(ps, ops, "tt"); b1 <- md5(); ch <- names(b1)[is.na(b0[names(b1)]) | b0[names(b1)] != b1]
+  k <- app$rename_spec(app$RENAMES, "site"); ok_files <- unique(c("sites.csv", "sensors.csv", "sensor_templates.csv", k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
+  check("Simple's Edit writes only sites.csv, sensors.csv, sensor_templates.csv and the tables that name a site, never a rule, a clock or a correction", isTRUE(r$ok) && length(ch) && all(ch %in% ok_files))
+  se1 <- app$sp_gt_cfg(ps, "sensors", SENSOR_COLS); st1 <- app$sp_gt_cfg(ps, "sites", SITE_COLS); x1 <- app$sp_gt_order(se1[site == "Pit A" & nzchar(sensor) & !nzchar(end)])
+  check("a rename reaches sites.csv and sensors.csv; the place and land cover land in sites.csv", !any(se1$site == s0) && any(st1$site == "Pit A") &&
+        st1[site == "Pit A", latitude][1] == "61.3" && st1[site == "Pit A", landcover][1] == "Bog")
+  check("depths typed for a site go to its sensors in their order on the string, noted set by hand (a run keeps them)",
+        identical(trimws(x1$depth_m), trimws(z)) && all(x1$depth_source == "set by hand"))
+  check("each save keeps the version before, with who changed it", any(grepl("Simple view", readLines(file.path(cf, "history", "change_log.csv"), warn = FALSE), fixed = TRUE)))
+  mv <- rbind(app$SIMPLE_OPS, data.table(type = "move", group = "Pit A", to = "Pit B", item = sn, at = "2020-06-01"), fill = TRUE); for (v in c("lat", "lon")) set(mv, j = v, value = NA_real_)
+  r2 <- app$sp_gt_apply(ps, mv, "tt"); se2 <- app$sp_gt_cfg(ps, "sensors", SENSOR_COLS)
+  check("a string moved from a date: its rows at the old site end the day before and start again at the new site",
+        isTRUE(r2$ok) && all(se2[site == "Pit A" & serial == sn & nzchar(sensor)]$end == "2020-05-31") && nrow(se2[site == "Pit B" & serial == sn & start == "2020-06-01" & nzchar(sensor)]) == nrow(se2[site == "Pit A" & serial == sn & nzchar(sensor)]))
+  md <- se0[site %in% auto0]$model[1]; tz <- format(seq(0.1, by = 0.25, length.out = ns))
+  fwrite(data.table(make = "", model = md %||% "", depths = paste(tz, collapse = ", "), notes = "test"), cfg_path(ps, "templates"))
+  tp <- app$sp_gt_cfg(ps, "templates", TEMPLATE_COLS); s3 <- setdiff(auto0, s0)[1]
+  if (!is.na(s3)) { n3 <- nrow(se0[site == s3 & nzchar(sensor) & !nzchar(end)]); tz <- format(seq(0.1, by = 0.25, length.out = n3)); tp$depths <- paste(tz, collapse = ", ")
+    r3 <- app$sp_gt_apply(ps, rbind(app$SIMPLE_OPS, data.table(type = "field", group = s3, item = "depths", to = tp$depths, at = ""), fill = TRUE), "tt")
+    x3 <- app$sp_gt_order(app$sp_gt_cfg(ps, "sensors", SENSOR_COLS)[site == s3 & nzchar(sensor) & !nzchar(end)])
+    check("a model's template fills a site's depths in order", isTRUE(r3$ok) && identical(trimws(x3$depth_m), trimws(tz)) && all(x3$depth_source == "set by hand")) }
+  rgd <- file.path(root, "registry"); dir.create(rgd); named <- "Pit A"
+  fwrite(data.table(serial = c(se0[site %in% auto0]$serial[1], sn), station = c("Bog 7", "Fen 2"), start = "2020-01-01"), file.path(rgd, app$REGISTRY_NAMES$file))
+  sg <- app$sp_gt_reg_names(app$sp_gt_cfg(ps, "sensors", SENSOR_COLS), app$sp_gt_registry(rgd))
+  check("the registry names only the sites still named after their logger", nrow(sg) >= 1 && all(sg$site %in% auto0) && !named %in% sg$site && "Bog 7" %in% sg$name)
+  check("depth editor: even steps fill the boxes from a first depth and a step", identical(app$sp_gt_even(0.05, 0.1, 3), c(0.05, 0.15, 0.25)))
+  pl <- app$sp_gt_parse_list("0.1 0.2", 3); pl2 <- app$sp_gt_parse_list("0.1, 0.2\n0.4", 3)
+  check("depth editor: a pasted list is read with commas, spaces or lines, and a count that does not match is refused", nzchar(pl$error) && grepl("2 depths", pl$error) && !nzchar(pl2$error) && identical(pl2$z, c("0.10", "0.20", "0.40")))
+  pb <- app$sp_gt_depth_problems(c("0.1", "0.1", "", "x", "0.5"))
+  check("depth editor: a depth not deeper than the one above, blank or not a number is refused, row by row", nzchar(pb[2]) && nzchar(pb[3]) && nzchar(pb[4]) && !nzchar(pb[1]) && !nzchar(pb[5]))
+  check("depth editor: '+0.1' is a sensor 0.1 m above the ground, kept as GT keeps it ('+' text, read by typed_depth) and shown back as +0.10",
+        identical(app$sp_gt_norm(c("+0.1", "+.1", "0,25")), c("+0.10", "+0.10", "0.25")) && typed_depth(app$sp_gt_norm("+0.1")) == -0.1 && typed_depth("0.25") == 0.25)
+  check("depth editor: a string with sensors above the ground runs from its top down (+0.2, +0.1, 0.05, 0.2 accepted; +0.1, +0.2 refused)",
+        !any(nzchar(app$sp_gt_depth_problems(c("+0.2", "+0.1", "0.05", "0.2")))) && nzchar(app$sp_gt_depth_problems(c("+0.1", "+0.2"))[2]) &&
+        !nzchar(app$sp_gt_parse_list("+0.2, +0.1, 0.05, 0.2", 4)$error))
+  sm <- app$sp_gt_same_model(app$sp_gt_cfg(ps, "sensors", SENSOR_COLS), s3 %||% s0); mo <- app$sp_gt_depth_ops(c("A", "B", "C"), c("+0.1", "0.2"))
+  check("depth editor: applying to many proposes one change per ticked site, with the same depths, the '+' kept", nrow(mo) == 3 && all(mo$item == "depths") && uniqueN(mo$to) == 1 && mo$to[1] == "+0.10, 0.20" && is.character(sm))
+  tp0 <- app$sp_gt_cfg(ps, "templates", TEMPLATE_COLS); b5 <- md5()
+  r5 <- app$sp_gt_apply(ps, rbind(app$SIMPLE_OPS, data.table(type = "field", group = "Test model", item = "template", to = "0.1, 0.3, 0.6", at = ""), fill = TRUE), "tt")
+  tp1 <- app$sp_gt_cfg(ps, "templates", TEMPLATE_COLS); b6 <- md5(); ch5 <- names(b6)[is.na(b5[names(b6)]) | b5[names(b6)] != b6]
+  check("depth editor: Save as template writes sensor_templates.csv only, and Undo takes it back", identical(ch5, "sensor_templates.csv") && any(tp1$model == "Test model" & tp1$depths == "0.1, 0.3, 0.6") &&
+        { r5$undo(); identical(app$sp_gt_cfg(ps, "templates", TEMPLATE_COLS), tp0) })
+  tl <- as.character(app$sp_gt_depth_link(app$simple_tile("Pit X", "warn"), "Pit X"))
+  check("a View tile's Set depths link opens the Edit step's depth editor on that site, outside the tile's button",
+        grepl("sp_set_depths", tl, fixed = TRUE) && grepl("&quot;Pit X&quot;", tl, fixed = TRUE) && !grepl("sp_set_depths", regmatches(tl, regexpr("(?s)<button.*?</button>", tl, perl = TRUE)), fixed = TRUE))
+  r$undo(); se4 <- app$sp_gt_cfg(ps, "sensors", SENSOR_COLS)
+  check("Undo puts the tables back as they were before that save", identical(se4[site == s0]$serial, se0[site == s0]$serial) && !any(se4$site == "Pit A" & se4$depth_source == "set by hand"))
 })
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)

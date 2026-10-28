@@ -9,9 +9,10 @@ SETUP_TABLES <- data.table(
   id  = c("sensors", "sites", "templates", "tz", "time", "frules", "qc", "campbell", "air", "surface", "depsheet", "period"),
   cfg = c("sensors", "sites", "templates", "timezones", "time", "file_rules", "qc", "campbell", "air", "surface", "deploy_sheet", "period"))
 SETUP_TABLES[, `:=`(file = vapply(cfg, function(k) CONFIG_FILES[[k]]$file, ""), label = vapply(cfg, function(k) CONFIG_FILES[[k]]$label, ""))]
+SETUP_TABLES[, wb_only := id %in% c("qc", "time", "period", "surface")]   # these change data values (or every depth): edited by hand only in the Workbench (M 28 Oct)
 # skip: tables another editor keeps (the deployment sheet: meta_sheet_server() in app.R), so no two editors save one file.
 setup_editors <- function(cfgp, tick, mark, skip = character()) { i <- which(!SETUP_TABLES$id %in% skip)
-  setNames(lapply(i, function(i) editServer(SETUP_TABLES$id[i], cfgp(SETUP_TABLES$cfg[i]), tick, on_change = mark)), SETUP_TABLES$id[i]) }
+  setNames(lapply(i, function(i) editServer(SETUP_TABLES$id[i], cfgp(SETUP_TABLES$cfg[i]), tick, on_change = mark, wb_only = SETUP_TABLES$wb_only[i])), SETUP_TABLES$id[i]) }
 
 # The tables the Workbench lists: the set-up tables (the deployment sheet with the logger list's columns, core/metasheet_ui.R).
 SETUP_TREE <- SETUP_TABLES

@@ -136,6 +136,9 @@ CORRECTIONS <- list(
        what = "Days on which a site departs from the other sites at the same depth are flagged."))
 
 # Where a site's name is held (core rename.R): renaming one changes every table here.
+# The registry the Simple view's Edit offers names from (the project's registry_dir setting): its file, and the columns that
+# hold the serial, the station name and the start of each deployment (the latest one names the serial).
+REGISTRY_NAMES <- list(file = "deployments.csv", serial = "serial", name = "station", order = "start")
 RENAMES <- list(
   site = list(label = "Site", main = c("sites.csv", "site"),
     cols = list(c("sensors.csv", "site"), c("air_temperature.csv", "site"), c("surface_changes.csv", "site"),

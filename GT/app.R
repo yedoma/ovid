@@ -33,6 +33,7 @@ source(file.path(CORE_DIR, "rename.R"), local = TRUE)       # Ovid/rename.R: ren
 source(file.path(CORE_DIR, "files.R"), local = TRUE)        # Ovid/files.R: Browse buttons and export names
 source(file.path(CORE_DIR, "editor.R"), local = TRUE)       # Ovid/editor.R: the set-up table editor
 source(file.path(CORE_DIR, "metasheet_ui.R"), local = TRUE) # Ovid/metasheet_ui.R: the logger list (metadata sheet)
+source(file.path(CORE_DIR, "simple.R"), local = TRUE)       # Ovid/simple.R: the Simple view's frame, Edit step and report
 downloadHandler <- ovid_downloads("GT")                  # every download is named ovid_gt_<what>_<date>.<ext>
 
 # The pipeline's console messages go to the app (log panel and progress bar).
@@ -47,7 +48,7 @@ ADV_KEYS <- c("min_year", "gap_factor", "spike_k", "zero_offset_limit", "surface
               "air_like_daily_range", "air_like_min_depth", "pre_install_spread", "pre_install_days")
 NUM_KEYS <- c("base_offset_h", "default_first_depth", "default_step", "min_complete", "year_complete", "water_year_start", "zero_band",
               "zero_curtain_days", "trend_min_years", "permafrost_years", ADV_KEYS)
-SET_KEYS <- c("raw_dirs", "metadata_dir", "project_dir", NUM_KEYS, "unzoned_offset_h", "depth_positive")
+SET_KEYS <- c("raw_dirs", "metadata_dir", "project_dir", NUM_KEYS, "unzoned_offset_h", "depth_positive", "registry_dir")
 CORR_KEYS <- vapply(Filter(function(x) isTRUE(x$panel) && nzchar(x$setting %||% ""), CORRECTIONS), function(x) x$setting, "")   # the Automatic corrections switches
 for (k in SET_KEYS) if (is.null(SETTINGS[[k]])) SETTINGS[k] <- list(CFG[[k]])
 if (nzchar(Sys.getenv("GT_PROJECT_DIR"))) SETTINGS$project_dir <- Sys.getenv("GT_PROJECT_DIR")
@@ -55,6 +56,7 @@ SETTINGS$project_dir <- ovid_project_dir(SETTINGS$project_dir)   # none set: ~/P
 SETTINGS$permafrost_years <- gt_permafrost_years(SETTINGS$permafrost_years, SETTINGS$project_dir)   # not saved yet: the old calibration_options.csv (R/config.R)
 if (nzchar(Sys.getenv("GT_RAW_DIRS"))) SETTINGS$raw_dirs <- strsplit(Sys.getenv("GT_RAW_DIRS"), ";")[[1]]
 if (nzchar(Sys.getenv("GT_METADATA_DIR"))) SETTINGS$metadata_dir <- Sys.getenv("GT_METADATA_DIR")
+if (nzchar(Sys.getenv("GT_REGISTRY_DIR"))) SETTINGS$registry_dir <- Sys.getenv("GT_REGISTRY_DIR")
 BASE_OFFSET <- SETTINGS$base_offset_h
 VIEWER <- identical(Sys.getenv("GT_VIEWER"), "1") || isTRUE(SETTINGS$viewer)       # colleagues can look but not change the set-up
 LOCAL <- identical(Sys.getenv("GT_LOCAL"), "1")                                   # started from Ovid_GT.bat
@@ -126,6 +128,8 @@ server <- function(input, output, session, embedded = FALSE) {
   E$depsheet <- M$E
   E$manual <- period_view(E$period, c("remove", "flag"), gt_manual_to_period, gt_period_to_manual)   # removals are rows of the corrections over a period (R/config.R)
   m_sens <- E$sensors; m_site <- E$sites; m_tmpl <- E$templates; m_tz <- E$tz; m_time <- E$time; m_fr <- E$frules; m_qc <- E$qc; m_man <- E$manual; m_camp <- E$campbell
+  wb_made <- function(ed) { if (ed$hand_ok()) return(TRUE)   # values change only in the Workbench (core editor.R wb_only)
+    note("Removals, flags, quality rules and clock shifts are made in the Workbench (the switch at the top right).", type = "warning"); FALSE }
   all_tables <- function() unname(E)                 # every editor (the set-up tables and the logger list): a run saves each one's unsaved edits
 
   current_cfg <- function() {
@@ -165,11 +169,17 @@ server <- function(input, output, session, embedded = FALSE) {
   invisible(list(E = E, outs = outs, pd = pd, rv = rv, mark = mark, pf = pf_data, cfg = current_cfg, needs = dcheck, review = review))
 }
 
-# Two interfaces on one project: the Standard one above (the default) and the Workbench (preview, workbench/wb_gt.R).
-# ?ui=workbench in the address opens the Workbench and ?ui=standard the Standard one; with neither, OVID_UI and then
-# the "ui" setting decide (core/workbench.R).
+# Three views of one project: Simple (simple/simple_gt.R), Standard (above) and the Workbench (workbench/wb_gt.R).
+# ?ui=simple, ?ui=standard or ?ui=workbench in the address opens one; with none, OVID_UI and then the "ui" setting
+# decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_gt.R"), local = TRUE)
-shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
+source(file.path(APP_DIR, "simple", "simple_gt.R"), local = TRUE)
+# An install whose settings are still in the older app_settings.rds is not new: it keeps Standard, and nothing is written for it.
+FIRST_VIEW_FILE <- if (file.exists(sub("\\.json$", ".rds", SETTINGS_FILE))) NULL else SETTINGS_FILE
+if (is.null(SETTINGS$ui)) SETTINGS$ui <- ovid_first_view(FIRST_VIEW_FILE)   # a new install opens in Simple (core workbench.R)
+shinyApp(ui = function(req) switch(ovid_view(req$QUERY_STRING, SETTINGS$ui), simple = simple_ui(req), workbench = wb_ui(req), ui),
          server = function(input, output, session) { track_session(session, "GT")
-           if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
-           wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })
+           v <- ovid_first_view_keep(FIRST_VIEW_FILE, ovid_view(isolate(session$clientData$url_search), SETTINGS$ui))   # a new install keeps Simple (core workbench.R)
+           if (v == "simple") return(simple_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           if (v == "workbench") return(wb_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           server(input, output, session) })
