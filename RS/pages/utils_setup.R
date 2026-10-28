@@ -22,6 +22,7 @@ SETUP_TABLES[, `:=`(file = vapply(id, function(k) CONFIG_FILES[[k]]$file, ""), l
            paste("Drone cameras: a photo counts as a drone photo when it carries a drone tag (DJI drone-dji, senseFly or Camera: XMP) or its EXIF make and model match a row here",
                  "(make in any case; model as the start of the EXIF model, blank for any model of that make). drone \"no\" leaves a camera out even with drone tags (DJI handhelds). Other photos (phones, compact cameras, trail cameras, screenshots) are left out",
                  "of the flights and listed in catalogue/other_photos.csv. A change applies on the next rebuild.")))]
+SETUP_TABLES[, wb_only := id %in% c("links", "file_rules", "timezones", "gnss_bases", "calibration")]   # what flights are made of and how they are read: edited by hand only in the Workbench (M 28 Oct)
 setup_editors <- function(path_of, tick, mark) setNames(lapply(SETUP_TABLES$id, function(k)
-  ovid_edit_server(k, reactive(path_of(k)), tick, on_change = mark)), SETUP_TABLES$id)
+  ovid_edit_server(k, reactive(path_of(k)), tick, on_change = mark, wb_only = SETUP_TABLES[id == k]$wb_only)), SETUP_TABLES$id)
 # Set-up saved after the last catalogue build (the newest file in config/, and the build's manifest), as seconds.

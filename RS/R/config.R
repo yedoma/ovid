@@ -106,6 +106,11 @@ CONFIG_FILES <- list(
 
 # Site names found in folder names, mapped through config/site_names.csv (found -> site; any case): a blank site there means
 # the name is not a site. Names with no row are kept as found.
+# The Simple view: folder names that are a camera's, a card's or a backup's, never a site (Edit offers no site for them, View
+# marks their groups "camera folder"). A regular expression, any case.
+SIMPLE_GENERIC_FOLDERS <- "^(dcim|\\d{3}media|\\d{3}_?[a-z]*|camera|cameras|photos?|pictures?|images?|img|backup|backups|raw|data|sd ?card|card ?\\d*|new folder|untitled|misc|other|unsorted)$"
+# Renaming a site (core rename.R): the sites table, and the tables that name a site.
+RENAMES <- list(site = list(label = "Site", main = c("sites.csv", "site"), cols = list(c("flights.csv", "site"), c("site_names.csv", "site")), lists = list()))
 site_apply_names <- function(found, names) {
   if (is.null(names) || !nrow(names)) return(found)
   k <- match(tolower(trimws(found)), tolower(trimws(as.character(names$found))))

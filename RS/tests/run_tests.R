@@ -585,6 +585,42 @@ local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE); source(file.path
   check(nrow(r) > 0 && all(r$rerun_identical) && !any(r$matches_expected %in% FALSE) && all(r$rows > 0) && all(r$accepted) && !any(r$reference_ok %in% FALSE),
         "every sample file reads, the same twice and the same as its expected result, accepted, and equal to its hand-checked reference values") })
 for (t in c("test_bad_files.R", "test_golden.R", "test_formulas.R")) source(file.path(here, "tests", t), local = new.env())   # damaged files, the golden project, derived values
+say("the Simple view")
+local({
+  Sys.setenv(RS_PROJECT_DIR = proj, RS_NO_RUN = "1"); on.exit(Sys.unsetenv(c("RS_PROJECT_DIR", "RS_NO_RUN")))
+  app <- new.env(); assign("shinyApp", function(...) invisible(NULL), envir = app)
+  local({ old <- setwd(here); on.exit(setwd(old)); suppressWarnings(suppressMessages(sys.source("app.R", envir = app, keep.source = FALSE))) })
+  h <- as.character(htmltools::renderTags(app$simple_ui(NULL))$html); ids <- regmatches(h, gregexpr(' id="[^"]+"', h))[[1]]
+  check(grepl('data-step="export"', h, fixed = TRUE) && grepl('id="sp_path"', h, fixed = TRUE) && grepl('id="s_rescan"', h, fixed = TRUE) && !anyDuplicated(ids),
+        "the Simple view builds: four steps, the sources and Scan, and no input twice")
+  check(setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("links", "file_rules", "timezones", "gnss_bases", "calibration")),
+        "links, file rules, clocks, GNSS bases and calibration options are edited by hand only in the Workbench")
+  k <- app$rename_spec(app$RENAMES, "site"); allowed <- unique(c(k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
+  check(all(c("sites.csv", "flights.csv", "site_names.csv") %in% allowed), "renaming a site reaches sites.csv, flights.csv and site_names.csv (rename.R)")
+  check(identical(app$sp_rs_generic(c("100MEDIA", "DCIM", "Camera", "Photos", "Backup", "Scotty", "GooseLake")), c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE)),
+        "a camera's, a card's or a backup's folder is not offered as a site (the list is in R/config.R)")
+  ps <- file.path(tmp, "simple_p"); dir.create(file.path(ps, "config"), recursive = TRUE); invisible(file.copy(list.files(file.path(proj, "config"), full.names = TRUE), file.path(ps, "config"), recursive = TRUE))
+  cf <- file.path(ps, "config"); md5 <- function() { f <- list.files(cf, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  fl0 <- app$sp_rs_cfg(ps, "flights", app$FLIGHT_COLS); st0 <- app$sp_rs_cfg(ps, "sites", app$SITE_COLS); nm0 <- app$sp_rs_cfg(ps, "site_names", app$SITE_NAME_COLS)
+  id <- if (nrow(fl0)) fl0$flight_id[1] else "TEST-1"; pos0 <- if (nrow(fl0)) fl0$positioning_status[1] else ""; key <- app$sp_rs_key("x", id)
+  ops <- rbind(app$SIMPLE_OPS, data.table(type = c("field", "move", "place", "field", "field", "field", "field", "field", "field"),
+    group = c("Scotty2", "", "Pit", "Pit", key, key, key, key, key), to = c("Scotty", "Pit", "", "boreal", "Line 7", "P1", "a note", "yes", "RTK corrected"),
+    item = c(app$SP_RS_FOLDER_ITEM, id, "", "region", "display_name", "project", "notes", "exclude_from_archive", "positioning_status"), at = "",
+    lat = c(NA, NA, 61.3, NA, NA, NA, NA, NA, NA), lon = c(NA, NA, -121.3, NA, NA, NA, NA, NA, NA)), fill = TRUE)
+  b0 <- md5(); r <- app$sp_rs_apply(ps, ops, "tt"); b1 <- md5(); ch <- names(b1)[is.na(b0[names(b1)]) | b0[names(b1)] != b1]
+  check(isTRUE(r$ok) && length(ch) && all(ch %in% c("sites.csv", "flights.csv", "site_names.csv")), "Simple's Edit writes only sites.csv, flights.csv and site_names.csv, never a link, a rule or a clock")
+  fl1 <- app$sp_rs_cfg(ps, "flights", app$FLIGHT_COLS); st1 <- app$sp_rs_cfg(ps, "sites", app$SITE_COLS); nm1 <- app$sp_rs_cfg(ps, "site_names", app$SITE_NAME_COLS)
+  check(any(nm1$found == "Scotty2" & nm1$site == "Scotty") && identical(app$site_apply_names(c("Scotty2", "Other"), nm1), c("Scotty", "Other")) && any(st1$site == "Scotty"),
+        "a folder name given a site lands in site_names.csv, and the next build names its flights with it")
+  r1 <- fl1[flight_id == id]
+  check(r1$site == "Pit" && any(st1$site == "Pit" & st1$latitude == "61.3" & st1$region == "boreal"), "a flight moved onto a new site, the site placed: flights.csv and sites.csv follow")
+  check(r1$display_name == "Line 7" && r1$project == "P1" && r1$notes == "a note" && r1$exclude_from_archive == "yes", "a flight's name, project, notes and archive status land in flights.csv")
+  check(identical(r1$positioning_status, pos0), "positioning is not written from the Simple view (it is set in the Workbench)")
+  check(any(grepl("Simple view", readLines(file.path(cf, "history", "change_log.csv"), warn = FALSE), fixed = TRUE)), "each save keeps the version before, with who changed it")
+  r$undo()
+  check(identical(app$sp_rs_cfg(ps, "flights", app$FLIGHT_COLS), fl0) && identical(app$sp_rs_cfg(ps, "sites", app$SITE_COLS), st0) && nrow(app$sp_rs_cfg(ps, "site_names", app$SITE_NAME_COLS)) == nrow(nm0),
+        "Undo puts flights.csv, sites.csv and site_names.csv back as they were")
+})
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   ui <- tryCatch(ui_click_through(normalizePath(here), c(RS_PROJECT_DIR = proj, RS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))

@@ -5,6 +5,22 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (the Simple view, 2026-10-28)**
+- simple/simple_rs.R: the Simple view (?ui=simple). Import: the sources with a plugged-in dot and their last scan, Scan plugged-in
+  drives and add a drive or folder (the Sources page's own scan), and a checklist (files listed, image details read, flights grouped
+  with copies counted once, logs and geotags linked, flights with a site, corrected positions). View: filters (by folder guess, by
+  year, by site, need a look) and a search, a tile per group (flights, sensors, dates, % corrected; "camera folder" for a folder
+  name SIMPLE_GENERIC_FOLDERS in R/config.R lists; a link to QA), the group's footprints on a map with a year switch, its flights
+  with the five checks (✓ ! ✕), and one flight's facts (sensor, positions, GSD, sun elevation, copies) with each check's reason.
+  Edit: folder names to sites (site_names.csv, with the suggestion of each, camera folders left out), sites (name, place, region;
+  a rename through rename.R, RENAMES$site new in R/config.R), which site each flight is at, and a flight's name, project, notes
+  and archive status, all through the list of changes; writes sites.csv, flights.csv and site_names.csv only. Export: the
+  catalogue report (HTML), the catalogue tables (zip) and the footprints (GeoJSON); the offline viewer stays on Sources.
+- Links, file rules, time zones, GNSS bases and calibration options are edited by hand only in the Workbench (wb_only); a flight's
+  positioning is saved only from the Workbench (pages/flight.R). ?page= opens a Standard page from a link. app.R sources core
+  report.R and rename.R. Tests added.
+- **Output changes**: none.
+
 **Changed (Map page type and icons, 2026-10-27)**
 - One Inter type scale on the Map page (11, 12.5, 13.5, 14 and 26 px); the map's controls and legend use Inter, not Leaflet's Helvetica.
 - Footprint switch: three equal parts, as tall as the inputs, the chosen one in the accent colour.
