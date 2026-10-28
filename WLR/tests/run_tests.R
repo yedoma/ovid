@@ -556,6 +556,37 @@ check("both interfaces build their table editors from one list, and the Workbenc
       all(app$SETUP_TABLES$cfg %in% names(CONFIG_FILES)) && !anyDuplicated(app$SETUP_TABLES$id) && setequal(names(app$WB_OPEN), app$SETUP_TREE$id) &&
       any(grepl("setup_editors(cfgp, tick, mark, skip = \"depsheet\")", deparse(app$server), fixed = TRUE)))
 app$SETTINGS$project_dir <- pw; app$SETTINGS$raw_dirs <- wraw; app$SETTINGS$metadata_dir <- file.path(wb_root, "no_workbook"); app$SETTINGS$dgps_dir <- ""
+cat("the Simple view\n")
+local({
+  h <- as.character(htmltools::renderTags(app$simple_ui(NULL))$html); ids <- regmatches(h, gregexpr(' id="[^"]+"', h))[[1]]
+  check("the Simple view builds: four steps, its own Import with the folder inputs, and no input twice", grepl('data-step="export"', h, fixed = TRUE) &&
+        grepl('id="raw_dirs"', h, fixed = TRUE) && grepl('id="metadata_dir"', h, fixed = TRUE) && grepl('id="run"', h, fixed = TRUE) && !anyDuplicated(ids))
+  check("values are edited by hand only in the Workbench: quality rules, out of water, clock and barologger corrections, corrections over a period",
+        setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "oow", "time", "bcor", "period")))
+  ps <- tempfile("wlr_simple"); dir.create(ps); invisible(file.copy(list.files(pw, full.names = TRUE), ps, recursive = TRUE)); cfg <- file.path(ps, "config")
+  md5 <- function() { f <- list.files(cfg, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  o <- suppressWarnings(app$load_outputs(ps)); s1 <- o$summary[serial == "20000001"]; g0 <- s1$site[1]
+  view <- data.table(item = "20000001", label = "20000001", group = g0, first = substr(as.character(s1$start[1]), 1, 16), last = substr(as.character(s1$end[1]), 1, 16), lat = NA_real_, lon = NA_real_)
+  ops <- rbind(app$SIMPLE_OPS, data.table(type = c("rename", "place", "field", "move"), group = c(g0, "Pond A", "Pond A", "Pond A"), to = c("Pond A", "", "Bog", "Pond B"),
+                                      item = c("", "", "land_cover", "20000001"), at = c("", "", "", "2025-06-05 00:00"), lat = c(NA, 60.1, NA, NA), lon = c(NA, -120.2, NA, NA)), fill = TRUE)
+  sh0 <- if (file.exists(file.path(cfg, "deployment_sheet.csv"))) fread(file.path(cfg, "deployment_sheet.csv"), colClasses = "character", na.strings = NULL) else NULL
+  b0 <- md5(); r <- app$sp_wlr_apply(ps, ops, "tt", view, o); b1 <- md5()
+  ch <- names(b1)[is.na(b0[names(b1)]) | b0[names(b1)] != b1]
+  k <- app$rename_spec(app$RENAMES, "site"); ok_files <- unique(c("deployment_sheet.csv", k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
+  check("Simple's Edit writes only the deployment sheet and the tables that name a site, never a rule or a correction", isTRUE(r$ok) && length(ch) && all(ch %in% ok_files))
+  sh <- fread(file.path(cfg, "deployment_sheet.csv"), colClasses = "character", na.strings = NULL)
+  check("a rename, a place, a land cover and a move from a date land in the deployment sheet: the logger's row ends the day before, a new one starts at the new site",
+        any(sh$serial == "20000001" & sh$site == "Pond A" & sh$to == "2025-06-04") && any(sh$serial == "20000001" & sh$site == "Pond B" & sh$from == "2025-06-05") &&
+        any(sh$site == "Pond A" & sh$latitude == "60.1") && any(sh$site == "Pond A" & sh$land_cover == "Bog"))
+  check("each save keeps the version before, with who changed it", any(grepl("Simple view", readLines(file.path(cfg, "history", "change_log.csv"), warn = FALSE), fixed = TRUE)))
+  invisible(quiet_run(modifyList(wcfg("x"), list(project_dir = ps)))); o2 <- suppressWarnings(app$load_outputs(ps))
+  check("the next run reads them: the logger's record is split between the two sites", all(c("Pond A", "Pond B") %in% o2$summary[serial == "20000001"]$site))
+  r$undo(); sh1 <- if (file.exists(file.path(cfg, "deployment_sheet.csv"))) fread(file.path(cfg, "deployment_sheet.csv"), colClasses = "character", na.strings = NULL) else NULL
+  check("Undo puts the deployment sheet back as it was", if (is.null(sh0)) is.null(sh1) || !nrow(sh1) else isTRUE(all.equal(sh1, sh0, check.attributes = FALSE)))
+  f <- app$sp_wlr_facts(o2, ps)
+  check("View has a tile per water site with its barologger, and none for the barologger itself", !is.null(f) && all(c("Pond A", "Pond B") %in% f$f$site) && all(nzchar(f$f$baro)) &&
+        !any(grepl("20000002", f$f$site)))
+})
 hw <- as.character(htmltools::renderTags(app$wb_ui(list(QUERY_STRING = "ui=workbench")))$html)
 idw <- regmatches(hw, gregexpr(' id="[^"]+"', hw))[[1]]
 toolw <- vapply(Filter(function(x) inherits(x, "ovid_tool"), app$std_pages(FALSE)), `[[`, "", "value")

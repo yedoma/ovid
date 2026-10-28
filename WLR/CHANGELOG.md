@@ -5,6 +5,27 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Simple view, 2026-10-28)**
+- Edit: each site's card shows its land cover (edited there, saved to deployment_sheet.csv through the list of changes, with Undo)
+  and its datum (shown, with a link to Datum and offsets in Standard); the separate card below is gone. Barologgers show in purple
+  and keep their "baro" label. View: a tile that needs a look links to its Standard page (Barometric compensation, Needs you, or
+  Manual levels and drift); the line under the tiles no longer lists them. Links into Standard keep their page.
+- **Output changes**: none.
+
+**Added (the Simple view, 2026-10-28)**
+- simple/simple_wlr.R: the Simple view (?ui=simple; a new install opens in it, an install with settings in app_settings.rds keeps
+  Standard). Import: the folders, Read the data and a checklist (files paired with their CSV, field sheet years, every water logger
+  at a site, every site with a barologger, tape readings at each visit) with the file list. View: a tile per site (last record,
+  water below the ground or depth to water, its barologger, tape − logger at the last visit, amber above simple_tape_m, 0.02 m)
+  and a plot of daily means (water level or temperature; below ground or elevation; last 30 days or since install) with tape
+  readings as dots, flagged service visits, air and out-of-water periods shaded, and the ground line. Edit: names, places,
+  land cover and which site each logger is at, written to deployment_sheet.csv only (a rename through rename.R), with the change
+  log and Undo; the datum is shown, set in Standard. Export: the field check report (HTML), daily water levels and plots (zip).
+- Quality rules, out of water, clock and barologger corrections and corrections over a period are edited by hand only in the
+  Workbench (wb_only, as in CS); removals drawn on Plot and explore are offered in the Workbench only. ?page= opens a Standard
+  page from a link. Tests added.
+- **Output changes**: none.
+
 **Added (guides, 2026-10-22)**
 - docs/WLR_quick_start and docs/WLR_how_to (.md, .html, .pdf): a first project page by page, and 20 tasks one at a time, each with a
   figure of the app and numbered markers. The figures come from a small project built from tests/golden (no site data):

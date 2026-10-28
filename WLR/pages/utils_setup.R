@@ -15,12 +15,13 @@ SETUP_TABLES <- data.table(
             "Logger offsets", "File sorting rules", "Other barometric records", "Logger accuracy", "Pairs of wells", "Specific yield", "Approvals",
             "Deployment sheet", "Corrections over a period"))
 SETUP_TABLES[, file := vapply(cfg, function(k) CONFIG_FILES[[k]]$file, "")]
+SETUP_TABLES[, wb_only := id %in% c("qc", "oow", "time", "bcor", "period")]   # these change data values: edited by hand only in the Workbench (M 28 Oct)
 # skip: tables another editor keeps (the deployment sheet: meta_sheet_server() in app.R), so no two editors save one file.
 setup_editors <- function(cfgp, tick, mark, skip = character()) { i <- which(!SETUP_TABLES$id %in% skip)
-  setNames(lapply(i, function(i) editServer(SETUP_TABLES$id[i], cfgp(SETUP_TABLES$cfg[i]), tick, on_change = mark)), SETUP_TABLES$id[i]) }
+  setNames(lapply(i, function(i) editServer(SETUP_TABLES$id[i], cfgp(SETUP_TABLES$cfg[i]), tick, on_change = mark, wb_only = SETUP_TABLES$wb_only[i])), SETUP_TABLES$id[i]) }
 # The tables the Workbench lists: the set-up tables (the deployment sheet with the logger list's columns, core/metasheet_ui.R),
 # and the barologgers by year, set with the per-year pickers on Barometric (its editor is made in app.R, with no table on screen).
-SETUP_TREE <- rbind(SETUP_TABLES, data.table(id = "bgrp", cfg = "baro_groups", label = "Barologgers by year", file = CONFIG_FILES$baro_groups$file))
+SETUP_TREE <- rbind(SETUP_TABLES, data.table(id = "bgrp", cfg = "baro_groups", label = "Barologgers by year", file = CONFIG_FILES$baro_groups$file, wb_only = FALSE))
 LOGGER_LIST_INTRO <- paste(DEPLOY_SHEET_INTRO, "Instead of (or as well as) a WL_Metadata workbook, the optional columns say what you know about each logger:",
   "a name, a year, a type or a hang length are used when given. Start from the loggers found, paste rows from a spreadsheet,",
   "or import one, and add columns of your own with Columns. Leave the year blank for every year the logger has files.")

@@ -46,6 +46,7 @@
   if (!embedded) {                                              # switching views keeps the site and period (core shell.R)
     q0 <- shiny::parseQueryString(isolate(session$clientData$url_search) %||% "")
     if (!is.null(q0$site)) site_cur(q0$site)
+    if (!is.null(q0$page)) session$onFlushed(function() go(q0$page), once = TRUE)   # a link from the Simple view opens its page (?page=Visits)
     observe(ovid_ctx(session, "site", site_cur(), NULL, q0$from, q0$to)) }
   observe({ s <- site_shown(); cur <- isolate(site_cur()); if (!length(s)) return(); if (is.null(cur) || !cur %in% s) site_cur(s[1])
     updateSelectInput(session, "site_pick", choices = s, selected = isolate(site_cur())) })

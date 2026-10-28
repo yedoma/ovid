@@ -18,7 +18,7 @@
   # narrows it to a band of values (the old box). The edits are on the bar above the selection, each with a reason and initials,
   # and go to the set-up tables (Corrections over a period, Out of water, Deployments) to apply at the next run, with Undo (plot standards A11).
   ex_lab <- function(p) { l <- param_label(p); list(name = sub(" \\([^)]*\\)$", "", l), unit = if (grepl("\\)$", l)) sub("^.*\\(([^)]*)\\)$", "\\1", l) else "") }
-  ex_acts <- function(one) if (!VIEWER) c(list(
+  ex_acts <- function(one) if (!VIEWER) c(if (E$period$hand_ok()) list(                 # removals are drawn in the Workbench only (core editor.R wb_only)
       list(id = "box", label = "Remove the points in the band", kind = "bad", band = TRUE, title = "Only the points of that panel inside the band; a level, depth or elevation is removed at its water pressure"),
       list(id = "remove", label = "Remove every value in this period", kind = "bad"),
       list(id = "oow", label = "Out of the water", kind = "warn")),
@@ -63,6 +63,7 @@
       row <- data.frame(serial = dp$serial, year = as.character(dp$year), site = "", deployed = "", removed = "", T_ST_m = "", T_ST_from_year = "", reference = "",
                         reason = why, author = who, stringsAsFactors = FALSE); row[[col]] <- fmt_ts(when)
       done(m_dep$append(row), paste0("Deployment ", if (col == "deployed") "start" else "end", " set to ", fmt_ts(when), ".")) }
+    if (a$act %in% c("box", "remove") && !wb_made(E$period) || identical(a$act, "oow") && !wb_made(m_oow)) return()
     switch(a$act,
       box = { p <- a$key %||% ""; lo <- as.numeric(a$lo %||% NA); hi <- as.numeric(a$hi %||% NA); req(p %in% names(d), is.finite(lo), is.finite(hi))
         if (p %in% c("depth_m", "elev_m", "dtw_m", "dp_kpa")) {

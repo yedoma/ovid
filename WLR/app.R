@@ -33,6 +33,7 @@ source(file.path(CORE_DIR, "rename.R"), local = TRUE)       # Ovid/rename.R: ren
 source(file.path(CORE_DIR, "files.R"), local = TRUE)        # Ovid/files.R: Browse buttons and export names
 source(file.path(CORE_DIR, "editor.R"), local = TRUE)       # Ovid/editor.R: the set-up table editor
 source(file.path(CORE_DIR, "metasheet_ui.R"), local = TRUE) # Ovid/metasheet_ui.R: the logger list (metadata sheet)
+source(file.path(CORE_DIR, "simple.R"), local = TRUE)       # Ovid/simple.R: the Simple view's frame, Edit step and report
 downloadHandler <- ovid_downloads("WLR")                  # every download is named ovid_wlr_<what>_<date>.<ext>
 
 # The pipeline's console messages go to the app (log panel and progress bar).
@@ -45,7 +46,7 @@ SET_KEYS <- c("raw_dirs", "metadata_dir", "dgps_dir", "project_dir", "years", "b
               "gravity", "baro_max_gap_h", "service_window_h", "out_of_water_m", "ec_alpha", "check_window_h", "baro_fill", "auto_trim_air",
               "air_max_hours", "dgps_pick", "solinst_altitude", "unzoned_offset_h", "drift_correction",
               "hang_measured_to", "sigma_baro_m", "sigma_fill_m", "sigma_tape_m", "sigma_survey_m", "be_flag", "casing_tol_m", "precip_file", "water_year_start",
-              "add_sensor_offset", "air_same_as_oow", "air_threshold_cm", "drift_min_m", "tape_warn_m", "drift_one_visit",
+              "add_sensor_offset", "air_same_as_oow", "air_threshold_cm", "drift_min_m", "tape_warn_m", "simple_tape_m", "drift_one_visit",
               "drop_stray_records", "drop_bad_clock", "baro_interp", "hide_accepted_flags")   # the last four: switches on the Automatic corrections list (R/config.R CORRECTIONS)
 for (k in SET_KEYS) if (is.null(SETTINGS[[k]])) SETTINGS[k] <- list(CFG[[k]])
 BASE_OFFSET <- SETTINGS$base_offset_h; UTM_ZONE <- SETTINGS$utm_zone   # exports made before a run use the saved zones
@@ -148,6 +149,8 @@ server <- function(input, output, session, embedded = FALSE) {
                           offset_m = off, source = src, notes = trim(input$of_note %||% ""))
     if (isTRUE(m_offs$replace(tab))) { mark(); note(sprintf("Offset for %s set to %s cm. Run the pipeline to apply it.", tgt, format(round(off * 100, 3)))) } })
   m_drift <- E$drift
+  wb_made <- function(ed) { if (ed$hand_ok()) return(TRUE)   # values change only in the Workbench (core editor.R wb_only)
+    note("Removals, out-of-water periods, quality rules and clock shifts are made in the Workbench (the switch at the top right).", type = "warning"); FALSE }
   m_fr   <- E$frules
   # every set-up table editor, the logger list included (a run saves their unsaved edits first, as Apply does)
   all_tables <- function() Filter(function(x) is.list(x) && is.function(x$save) && is.function(x$dirty), E)
@@ -220,11 +223,17 @@ server <- function(input, output, session, embedded = FALSE) {
   invisible(list(E = E, outs = outs, pd = pd, rv = rv, mark = mark, pf = pf_data, cfg = current_cfg, needs = dcheck, review = review))
 }
 
-# Two interfaces on one project: the Standard one above (the default) and the Workbench (preview, workbench/wb_wlr.R).
-# ?ui=workbench in the address opens the Workbench and ?ui=standard the Standard one; with neither, OVID_UI and then
-# the "ui" setting decide (core/workbench.R).
+# Three views of one project: Simple (simple/simple_wlr.R), Standard (above) and the Workbench (workbench/wb_wlr.R).
+# ?ui=simple, ?ui=standard or ?ui=workbench in the address opens one; with none, OVID_UI and then the "ui" setting
+# decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_wlr.R"), local = TRUE)
-shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
+source(file.path(APP_DIR, "simple", "simple_wlr.R"), local = TRUE)
+# An install whose settings are still in the older app_settings.rds is not new: it keeps Standard, and nothing is written for it.
+FIRST_VIEW_FILE <- if (file.exists(sub("\\.json$", ".rds", SETTINGS_FILE))) NULL else SETTINGS_FILE
+if (is.null(SETTINGS$ui)) SETTINGS$ui <- ovid_first_view(FIRST_VIEW_FILE)   # a new install opens in Simple (core workbench.R)
+shinyApp(ui = function(req) switch(ovid_view(req$QUERY_STRING, SETTINGS$ui), simple = simple_ui(req), workbench = wb_ui(req), ui),
          server = function(input, output, session) { track_session(session, "WLR")
-           if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
-           wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })
+           v <- ovid_first_view_keep(FIRST_VIEW_FILE, ovid_view(isolate(session$clientData$url_search), SETTINGS$ui))   # a new install keeps Simple (core workbench.R)
+           if (v == "simple") return(simple_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           if (v == "workbench") return(wb_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           server(input, output, session) })

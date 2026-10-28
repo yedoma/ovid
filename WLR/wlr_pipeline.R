@@ -78,6 +78,7 @@ CFG <- list(
   drift_min_m       = 0.01,                 # apply tape offsets only where the largest is at least this many metres
   drift_one_visit   = "constant",           # with one tape check: hold the offset all through ("constant") or grow it from zero at the start ("linear")
   tape_warn_m       = 0.05,                 # tape and logger differing by more than this (median of a deployment's checks) is listed as a likely metadata error
+  simple_tape_m     = 0.02,                 # the Simple view marks a site when tape and logger differ by more than this at the last visit (display only)
   hide_accepted_flags = TRUE,               # flags decided not a problem leave the exported flag columns (flags.csv keeps them, marked accepted)
   make_plots        = TRUE,
   incremental       = TRUE,                 # keep each file as read, and each plot, in <project>/cache; a rerun reads and draws only what changed
