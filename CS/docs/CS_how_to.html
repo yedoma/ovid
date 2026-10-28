@@ -40,7 +40,7 @@ main figure+figure{margin-top:8px}
 </head>
 <body><main>
 <h1>ovid CS how-to guide</h1>
-<p>One task per section: when to use it, the steps, what changes and how to check it. Page names are those in the page bar at the top; pages under <strong>More</strong> are in the menu at its right end. Numbers in brackets point to the markers in the figure. For what CS does to the data and why, see the CS reference guide.</p>
+<p>One task per section: when to use it, the steps, what changes and how to check it. Page names are those of the Standard view: the stages are on the top bar, the pages of the stage shown are listed on the left, and those under <strong>More pages</strong> are folded at the bottom of that list; <strong>Go to</strong> (⌘K or Ctrl K) finds any page. Numbers in brackets point to the markers in the figure. For what CS does to the data and why, see the CS reference guide.</p>
 
 <section class="task">
 <h2>Contents</h2>
@@ -50,12 +50,22 @@ main figure+figure{margin-top:8px}
 <p><strong>Check and report:</strong> 14. Find out why a value was removed; 15. Find failing sensors; 16. Export data and reports; 17. Back up or share the set-up; 18. Report a problem</p>
 </section>
 <section class="task">
+<h2>The three views</h2>
+<p>The same project, data and edits in three views, switched at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) or with ?ui=simple, ?ui=standard or ?ui=workbench in the address. A new install opens in Simple.</p>
+<figure><img src="img/guide/cs_simple_import.png" alt="Simple view, step 1 Import" style="width:100%"></figure>
+<ul>
+<li><strong>Simple</strong>: a field check in four steps (Import, View, Edit, Export). Edit renames stations, places them and moves loggers between them; it changes no data value.</li>
+<li><strong>Standard</strong>: the set-up flow these tasks use: bring in files, organize loggers and stations, assess the records, decide what the run found, report.</li>
+<li><strong>Workbench</strong>: every change to the data. Removing values, quality limits, corrections over a period and clock shifts made by hand are edited here; the Standard view shows them and links to it.</li>
+</ul>
+</section>
+<section class="task">
 <h2>1. Add a new download</h2>
 <p><strong>When:</strong> after a field visit, with new .dat files.</p>
 <figure><img src="img/guide/cs_ht_01.png" alt="Run pipeline and Bring in files" style="width:100%"></figure>
 <ol>
 <li>Copy the files into a raw folder of the project. Keep the overlapping old ones.</li>
-<li>Press <strong>Run pipeline</strong> (1).</li>
+<li>Press <strong>Run</strong> (1).</li>
 </ol>
 <p><strong>Result:</strong> only logger tables with new or changed files are read again; the rest come from cache/. Overlapping records are merged, the newest download's values winning.</p>
 <p><strong>Check:</strong> <strong>2 Bring in files</strong> lists each new file and where its records went (2). To read a file again, select it and press <strong>Rescan this file</strong> (3).</p>
@@ -67,7 +77,7 @@ main figure+figure{margin-top:8px}
 <ol>
 <li><strong>2 Bring in files:</strong> select the file (1).</li>
 <li>Below its details, give a reason and your initials, then <strong>Send to this station</strong>, <strong>Leave out of the next run</strong>, or drag across its plot and <strong>Remove these records from this file</strong>.</li>
-<li>Press <strong>Run pipeline</strong>. The rule is saved at once.</li>
+<li>Press <strong>Run</strong>. The rule is saved at once.</li>
 </ol>
 <p><strong>Result:</strong> a file rule in the set-up tables, applied on the next run. The raw file is not changed.</p>
 <p><strong>Check:</strong> <strong>With a rule</strong> (2) lists the file; the <strong>Rule</strong> column (3) shows it. The <strong>Audit trail</strong> says why.</p>
@@ -77,13 +87,13 @@ main figure+figure{margin-top:8px}
 <p><strong>When:</strong> CR10X mixed-array files show columns without names.</p>
 <figure><img src="img/guide/cs_ht_03.png" alt="CR10X files" style="width:100%"></figure>
 <ol>
-<li>Add the .FSL files on <strong>Logger programs</strong> (More).</li>
-<li><strong>CR10X files</strong> (More): press <strong>Find files and match FSLs</strong> (1). Tick <strong>Also name each logger from its FSL</strong> (2) so files from one site stitch together.</li>
+<li>Add the .FSL files on <strong>Logger programs</strong> (More pages).</li>
+<li><strong>CR10X files</strong> (More pages): press <strong>Find files and match FSLs</strong> (1). Tick <strong>Also name each logger from its FSL</strong> (2) so files from one site stitch together.</li>
 <li>Check each file has an FSL and a logger id; set missing ones with <strong>Set on selected rows</strong> (3), then <strong>Save changes</strong> (4).</li>
-<li>Press <strong>Run pipeline</strong>.</li>
+<li>Press <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> each array gets time stamps and column names from its FSL.</p>
-<p><strong>Check:</strong> <strong>Loggers and files</strong> (More) lists the logger with its columns named.</p>
+<p><strong>Check:</strong> <strong>Loggers and files</strong> (More pages) lists the logger with its columns named.</p>
 </section>
 <section class="task">
 <h2>4. Give a logger a station</h2>
@@ -93,18 +103,18 @@ main figure+figure{margin-top:8px}
 <li><strong>3 Loggers and stations:</strong> select the logger rows (3).</li>
 <li>Pick the <strong>Station</strong> (1) and press <strong>Apply to selected rows</strong> (2).</li>
 <li>A logger that moved: one row per station and period in the <strong>Deployment sheet</strong> (4).</li>
-<li>To set a logger aside, name its station <strong>ignore</strong>: its files are not read. Press <strong>Run pipeline</strong>.</li>
+<li>To set a logger aside, name its station <strong>ignore</strong>: its files are not read. Press <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> records go to stations by logger, header name, table and date.</p>
-<p><strong>Check:</strong> <strong>Logger history</strong> (More), tab <strong>Station lineage</strong>.</p>
+<p><strong>Check:</strong> <strong>Logger history</strong> (More pages), tab <strong>Station lineage</strong>.</p>
 </section>
 <section class="task">
 <h2>5. Give a raw column a common name</h2>
 <p><strong>When:</strong> a column keeps its raw name (for example a new sensor or a renamed program variable).</p>
 <figure><img src="img/guide/cs_ht_05.png" alt="Column names" style="width:100%"></figure>
 <ol>
-<li><strong>Column names</strong> (More): pick the column under <strong>Raw columns with no alias yet</strong> (1) and the <strong>Common parameter</strong> (2).</li>
-<li>Press <strong>Add alias</strong> (3), then <strong>Run pipeline</strong>.</li>
+<li><strong>Column names</strong> (More pages): pick the column under <strong>Raw columns with no alias yet</strong> (1) and the <strong>Common parameter</strong> (2).</li>
+<li>Press <strong>Add alias</strong> (3), then <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> the raw column is renamed to the common parameter (AirTC_Avg becomes air_temp) in every table that has it.</p>
 <p><strong>Check:</strong> the <strong>All columns</strong> tab (4); output/audit/column_dictionary.csv.</p>
@@ -128,8 +138,8 @@ main figure+figure{margin-top:8px}
 <figure><img src="img/guide/cs_ht_07.png" alt="Clocks" style="width:100%"></figure>
 <ol>
 <li><strong>Clocks:</strong> pick the kind (1) and select the finding (2). Read what it means below (3).</li>
-<li>Choose <strong>Move the timestamps</strong> (by minutes, or the real time of the first record) or <strong>Remove the records</strong>. Give a reason, then <strong>Add this correction</strong>.</li>
-<li>Press <strong>Run pipeline</strong>.</li>
+<li>A suggested shift: accept it here or in <strong>Needs you</strong>. Any other correction is made in the Workbench: <strong>Move the timestamps</strong> (by minutes, or the real time of the first record) or <strong>Remove the records</strong>, with a reason, then <strong>Add this correction</strong>.</li>
+<li>Press <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> a row in the clock corrections, applied before stitching.</p>
 <p><strong>Check:</strong> <strong>Corrections already set</strong> (4) lists it; the finding is gone from <strong>Clocks</strong>; output/audit/timestamp_checks.csv.</p>
@@ -141,8 +151,8 @@ main figure+figure{margin-top:8px}
 <figure><img src="img/guide/cs_ht_08b.png" alt="Sites and field log: Station details" style="width:100%"></figure>
 <ol>
 <li><strong>Settings</strong> (gear, top right): <strong>Time zone</strong> as a UTC offset in hours (1), for example -7.</li>
-<li>A logger on another clock: <strong>Sites and field log</strong> (More), tab <strong>Station details</strong> (2). Set its <strong>Utc offset (h)</strong> (3); blank uses the Settings time zone.</li>
-<li><strong>Save changes</strong> (4), then <strong>Run pipeline</strong>.</li>
+<li>A logger on another clock: <strong>Sites and field log</strong> (More pages), tab <strong>Station details</strong> (2). Set its <strong>Utc offset (h)</strong> (3); blank uses the Settings time zone.</li>
+<li><strong>Save changes</strong> (4), then <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> every time stamp is moved to the project time zone; exports say which.</p>
 </section>
@@ -151,9 +161,9 @@ main figure+figure{margin-top:8px}
 <p><strong>When:</strong> a sensor was down, being serviced or plainly wrong.</p>
 <figure><img src="img/guide/cs_ht_09.png" alt="Plot and explore: remove a stretch" style="width:100%"></figure>
 <ol>
-<li><strong>Plot and explore</strong> (More): Shift + drag across the stretch (1).</li>
+<li>Switch to the <strong>Workbench</strong> (top right): removing values is done there. Its <strong>Plot and explore</strong>: Shift + drag across the stretch (1).</li>
 <li>Give a reason and your initials (2), then <strong>Remove values</strong> (3). The row is saved at once.</li>
-<li>Press <strong>Run pipeline</strong>.</li>
+<li>Press <strong>Run</strong>.</li>
 </ol>
 <p>In the Workbench: select the stretch, <strong>Remove…</strong>, then <strong>Write rows</strong>. To keep the values but mark them, use <strong>Correct a period…</strong> with action flag.</p>
 <p><strong>Result:</strong> a row in <strong>Corrections over a period</strong>. The values are blanked on the next run; the old values stay in the audit trail. <strong>Restore…</strong> in the Workbench deletes the row.</p>
@@ -164,10 +174,10 @@ main figure+figure{margin-top:8px}
 <p><strong>When:</strong> a sensor needs a multiplier or an offset over a period, or a tipping bucket needs mm per tip.</p>
 <figure><img src="img/guide/cs_ht_10.png" alt="Corrections over a period" style="width:100%"></figure>
 <ol>
-<li><strong>Calibrations and limits</strong>, tab <strong>Corrections over a period</strong> (1): <strong>Add row</strong> (2).</li>
+<li>In the <strong>Workbench</strong> (calibrations change data values, so the table is edited there): <strong>Calibrations and limits</strong>, tab <strong>Corrections over a period</strong> (1): <strong>Add row</strong> (2).</li>
 <li>Fill in Target (station), Parameter, From, To, <strong>Action</strong> scale or offset and its <strong>Value</strong> (3).</li>
 <li>To keep the original, name an <strong>Output</strong> column (4). Tipping bucket: parameter rain_tips, output rain, scale = mm per tip.</li>
-<li><strong>Save changes</strong>, then <strong>Run pipeline</strong>.</li>
+<li><strong>Save changes</strong>, then <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> scale multiplies the values by Value, offset adds Value, over the period.</p>
 <p><strong>Check:</strong> output/audit/calibrations_applied.csv.</p>
@@ -177,10 +187,10 @@ main figure+figure{margin-top:8px}
 <p><strong>When:</strong> a limit removes good values or lets bad ones through.</p>
 <figure><img src="img/guide/cs_ht_11.png" alt="Automatic limits" style="width:100%"></figure>
 <ol>
-<li><strong>Calibrations and limits</strong>, tab <strong>Automatic limits</strong> (1). <strong>Pattern</strong> picks the parameters, <strong>Applies to</strong> the stations.</li>
+<li>In the <strong>Workbench</strong>: <strong>Calibrations and limits</strong>, tab <strong>Automatic limits</strong> (1). <strong>Pattern</strong> picks the parameters, <strong>Applies to</strong> the stations. The Standard view shows the limits.</li>
 <li>Edit <strong>Min</strong>, <strong>Max</strong>, <strong>Max spike</strong>, <strong>Max flat (h)</strong> or <strong>Max step per hour</strong> (2), and the <strong>Action</strong> (3): blank, remove or flag.</li>
 <li><strong>Fill in suggested spike and step limits</strong> (4) fills only blank spike and step cells.</li>
-<li><strong>Save changes</strong>, then <strong>Run pipeline</strong>.</li>
+<li><strong>Save changes</strong>, then <strong>Run</strong>.</li>
 </ol>
 <p><strong>Result:</strong> values outside the limits are removed or flagged and written to the audit trail with the rule. Max step per hour only flags.</p>
 <p><strong>Check:</strong> <strong>Set-up check</strong> warns of a limit that would remove everything.</p>
@@ -192,7 +202,7 @@ main figure+figure{margin-top:8px}
 <figure><img src="img/guide/cs_ht_12b.png" alt="Field log" style="width:100%"></figure>
 <ol>
 <li><strong>Precipitation corrections</strong>, tab <strong>Gauge set-up</strong> (1): check the gauge is listed, or set its station, gauge and columns and <strong>Add</strong> (2).</li>
-<li><strong>Sites and field log</strong> (More), tab <strong>Field log</strong>: for each emptying, top-up or service, pick <strong>What</strong> gauge serviced (4) and <strong>Add</strong> (5).</li>
+<li><strong>Sites and field log</strong> (More pages), tab <strong>Field log</strong>: for each emptying, top-up or service, pick <strong>What</strong> gauge serviced (4) and <strong>Add</strong> (5).</li>
 <li><strong>Reprocess precipitation only</strong> (3).</li>
 </ol>
 <p><strong>Result:</strong> bucket content turned into precipitation per interval and per day, with undercatch correction where a wind station is set.</p>
@@ -204,8 +214,8 @@ main figure+figure{margin-top:8px}
 <figure><img src="img/guide/cs_ht_13.png" alt="Station details" style="width:100%"></figure>
 <figure><img src="img/guide/cs_ht_13b.png" alt="Calibration options" style="width:100%"></figure>
 <ol>
-<li><strong>Sites and field log</strong> (More), tab <strong>Station details</strong> (1): enter <strong>Latitude</strong>, <strong>Longitude</strong> and <strong>Elevation (m)</strong> (2); <strong>Wind height (m)</strong> (3) if the anemometer is not at 2 m.</li>
-<li><strong>Save changes</strong> (4), then <strong>Run pipeline</strong>.</li>
+<li><strong>Sites and field log</strong> (More pages), tab <strong>Station details</strong> (1): enter <strong>Latitude</strong>, <strong>Longitude</strong> and <strong>Elevation (m)</strong> (2); <strong>Wind height (m)</strong> (3) if the anemometer is not at 2 m.</li>
+<li><strong>Save changes</strong> (4), then <strong>Run</strong>.</li>
 <li>The daylight limit is <strong>albedo_max_zenith</strong> (6) under <strong>Calibration options</strong> (5): default 70, the sun more than 20 degrees above the horizon.</li>
 </ol>
 <p><strong>Result:</strong> daily ET from radiation, temperature, humidity and wind; daily albedo from daylight records only.</p>
@@ -215,7 +225,7 @@ main figure+figure{margin-top:8px}
 <h2>14. Find out why a value was removed</h2>
 <figure><img src="img/guide/cs_ht_14.png" alt="Audit trail" style="width:100%"></figure>
 <ol>
-<li><strong>Audit trail</strong> (More): read it top down: the totals (1), what was done and why (2), where it happened (3), then the single records and values (4).</li>
+<li><strong>Audit trail</strong> (More pages): read it top down: the totals (1), what was done and why (2), where it happened (3), then the single records and values (4).</li>
 <li>Click a line in (2) to see what it means, what to do about it and where it happened.</li>
 </ol>
 <p><strong>Result:</strong> each removed or changed value with its old value, the rule and the set-up row behind it.</p>
@@ -224,7 +234,7 @@ main figure+figure{margin-top:8px}
 <h2>15. Find failing sensors</h2>
 <figure><img src="img/guide/cs_ht_15.png" alt="Sensor health" style="width:100%"></figure>
 <ol>
-<li><strong>Sensor health</strong> (More): with <strong>Only those that are not ok</strong> (1), every parameter that needs a look, worst first. <strong>Health</strong> (2): dead, stopped, failing, dying, stuck, intermittent or suspect.</li>
+<li><strong>Sensor health</strong> (More pages): with <strong>Only those that are not ok</strong> (1), every parameter that needs a look, worst first. <strong>Health</strong> (2): dead, stopped, failing, dying, stuck, intermittent or suspect.</li>
 <li>Click a row (3) to open its plot in <strong>Plot and explore</strong>. Remove its bad stretch (task 9) or note it in the field log.</li>
 </ol>
 </section>
@@ -243,7 +253,7 @@ main figure+figure{margin-top:8px}
 <h2>17. Back up or share the set-up</h2>
 <figure><img src="img/guide/cs_ht_17.png" alt="Configuration" style="width:100%"></figure>
 <ol>
-<li><strong>Configuration</strong> (More): <strong>Export configuration (ZIP)</strong> (1) writes every set-up table and the folder settings.</li>
+<li><strong>Configuration</strong> (More pages): <strong>Export configuration (ZIP)</strong> (1) writes every set-up table and the folder settings.</li>
 <li>In another project: <strong>Browse…</strong> for the zip (2), pick <strong>How</strong> (3), then <strong>Apply the import</strong> (4).</li>
 </ol>
 <p><strong>Result:</strong> the replaced tables are kept in config/history; the History page undoes the import.</p>

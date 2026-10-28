@@ -10,14 +10,32 @@ Climate station loggers (Campbell Scientific), from raw .dat files to checked, g
 
 Open the app with **Open CS (Mac).command** (Windows: **Ovid_CS.bat**). The numbers in each figure match the list under it.
 
+## The Simple view
+
+For someone new to the data, or a field check: four steps in one column, and nothing that changes a data value. A new install opens in Simple; the switch at the top (**Simple**, **Standard**, **Workbench**) moves between the three views of the same project, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address.
+
+<figure><img src="img/guide/cs_simple_view.png" alt="Simple view, step 2 View: a tile per station and one plot" style="width:100%"></figure>
+
+- **Import**: the raw folders and the project folder, then **Read the data**. A summary says what was read.
+- **View**: one tile per station (last record, days with data, lowest battery; amber or red when it needs a look) and a plot of the daily air temperature, rain and snow, snow depth or sunlight.
+- **Edit**: rename a station, give it a place (latitude and longitude), or drag a logger onto another station, from its whole record or from a date. Changes wait in a list until **Save**, with **Undo** and a change log. Data values, quality rules and corrections are not changed here.
+- **Export**: the Simple report (one page, HTML or PDF) and the daily values (one CSV per station, with a README).
+
+<figure><img src="img/guide/cs_simple_edit.png" alt="Simple view, step 3 Edit: stations as cards, loggers as chips" style="width:100%"></figure>
+
 ## The top bar and the pages
 
-<figure><img src="img/guide/cs_qs_01.png" alt="Top bar and page bar" style="width:100%"></figure>
+This and the rest of this guide are the Standard view.
 
-1. The pages, in working order: **1 Bring in**, **2 Organize**, **3 Correct**, **4 Report**.
-2. **More**: tools and set-up pages (Plot and explore, Audit trail, Set-up check, CR10X files and others).
-3. **Run pipeline**: reads the raw files and rebuilds every output.
-4. The run state: up to date, or set-up changed and waiting for a run.
+<figure><img src="img/guide/cs_qs_01.png" alt="Standard view: one top bar, the pages of the stage listed on the left" style="width:100%"></figure>
+
+1. The stages, in working order, on the top bar: **1 Set up**, **2 Assess**, **3 Decide**, **4 Report**. A tick marks a stage that is done; the number on **Decide** is what waits in **Needs you**.
+2. The pages of the stage shown are listed on the left, each step with a line saying where it stands. **More pages** at the bottom holds the tools and set-up pages (Overview, History, Set-up check, Column names, CR10X files and others). The ☰ button folds the list away.
+3. **Go to** (⌘K or Ctrl K): any page, station or setting by typing a few letters.
+4. **Run**: reads the raw files and rebuilds every output. Beside it, the run state: up to date, or set-up changed and waiting for a run.
+5. **Settings** (gear): the time zone, plot height, the Explanations switch and the troubleshooting zip.
+
+Removing values, adding a quality rule and shifting a clock by hand are done in the Workbench; the Standard pages show them and say so.
 
 ## 1 Project
 
@@ -33,9 +51,9 @@ Open the app with **Open CS (Mac).command** (Windows: **Ovid_CS.bat**). The numb
 
 1. Filter the list: **All files**, **Read**, **Not read**, **With a rule**, **With dropped or conflicting records**.
 2. Select a file to see where its records went. Below its details: send it to another station or leave it out.
-3. **Rescan this file** reads it again. CR10X files: on **CR10X files** (More), press **Find files and match FSLs**.
+3. **Rescan this file** reads it again. CR10X files: on **CR10X files** (More pages), press **Find files and match FSLs**.
 
-Then press **Run pipeline**. The first run writes the set-up tables with the built-in defaults.
+Then press **Run**. The first run writes the set-up tables with the built-in defaults.
 
 ## 3 Loggers and stations
 
@@ -69,7 +87,7 @@ Then press **Run pipeline**. The first run writes the set-up tables with the bui
 
 1. Pick the kind of finding, or **Every kind of finding**.
 2. Select a finding (a restart, a reset clock, files that disagree in time).
-3. Below: what it means; move the timestamps or remove the records, then **Add this correction**.
+3. Below: what it means. Accepting a suggested shift is done here (or in **Needs you**); moving the timestamps or removing the records by hand is done in the Workbench.
 4. **Corrections already set** lists the clock corrections in use.
 
 ## Precipitation corrections
@@ -86,8 +104,7 @@ Then press **Run pipeline**. The first run writes the set-up tables with the bui
 
 1. **Automatic limits**: check the min, max, spike, step and flat-line limits.
 2. **Corrections over a period**: calibrations and bad periods.
-3. **Fill in suggested spike and step limits** fills only blank cells.
-4. **Save changes** after editing a table.
+3. Both tables are shown here and edited in the Workbench (**Fill in suggested spike and step limits** too), because they change data values.
 
 ## 6 Automatic corrections
 
@@ -104,11 +121,11 @@ Then press **Run pipeline**. The first run writes the set-up tables with the bui
 1. An edited cell in a set-up table.
 2. **Unsaved changes** shows beside **Save changes**.
 3. **Apply 1** (top bar; the number of edits): its **Apply** button saves every edited table.
-4. **Run pipeline** also saves them, then runs.
+4. **Run** also saves them, then runs.
 
 <figure><img src="img/guide/cs_qs_12.png" alt="Set-up check" style="width:100%"></figure>
 
-1. **Set-up check** (More): clear anything it lists before trusting a run. **Safe to run** means nothing is ignored or misapplied.
+1. **Set-up check** (More pages): clear anything it lists before trusting a run. **Safe to run** means nothing is ignored or misapplied.
 2. **Check again** after a change. The check also runs before every pipeline run.
 
 ## 7 Report
