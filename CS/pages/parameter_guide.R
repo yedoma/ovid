@@ -37,7 +37,7 @@
           tags$dt("Manuals"), tags$dd(span(class = "dim", i$source[k]))),
         yours,
         if (!is.na(lo) && !is.na(hi)) div(class = "btnrow editor-only", style = "margin-bottom:0",
-          actionButton(paste0("pg_rule_", k), "Use the usual range as a quality rule", onclick = sprintf("Shiny.setInputValue('pg_rule', %d, {priority: 'event'})", k))))
+          actionButton(paste0("pg_rule_", k), "Use the usual range as a quality rule", class = "d-hide-std", onclick = sprintf("Shiny.setInputValue('pg_rule', %d, {priority: 'event'})", k))))
     })
     cards <- Filter(Negate(is.null), cards)
     if (!length(cards)) return(empty_msg(switch(show, mine = "No columns in your data match the guide yet. Run the pipeline, or choose Everything.",
@@ -45,7 +45,7 @@
     tagList(cards)
   })
   observeEvent(input$pg_rule, {
-    i <- info(); k <- input$pg_rule; req(k >= 1, k <= nrow(i))
+    i <- info(); k <- input$pg_rule; req(k >= 1, k <= nrow(i)); if (!wb_made(m_qc)) return()
     q <- m_qc$data()
     if (!is.null(q) && i$pattern[k] %in% q$pattern) return(note("There is already a quality rule with this pattern. Edit it on the Quality rules page.", type = "warning"))
     ok <- m_qc$append(data.frame(pattern = i$pattern[k], min = i$typical_min[k], max = i$typical_max[k], max_spike = "", notes = paste("usual range,", i$topic[k])))

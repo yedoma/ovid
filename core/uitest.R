@@ -1,7 +1,7 @@
 # Ovid/uitest.R  --  Click-through tests of an app in a real browser, shared by the apps' tests. Not sourced by any app.
 #
 # The app runs in its own R process on a free port; a headless Chrome (chromote) opens it, clicks every page in the
-# navigation rail and then opens the Workbench, and after each click waits for the app to settle. A page fails when it shows
+# navigation rail (?ui=standard), then opens the Workbench and each step of the Simple view (an app that has one), and after each click waits for the app to settle. A page fails when it shows
 # an output error (a message from validate(need()) is not one: that is the app explaining an empty page), when the browser
 # throws a JavaScript error, or when the app writes "Warning: Error in" (an observer or output that stopped). Returns one row
 # per page, plus a row for the Workbench and one for errors the server wrote, so a test can say which page broke.
@@ -17,7 +17,7 @@ own_draw <- function(expr) {
   on.exit(if (had) assign(".Random.seed", seed, g) else if (exists(".Random.seed", g, inherits = FALSE)) rm(".Random.seed", envir = g))
   set.seed(NULL); expr
 }
-ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout = 30, first_load = 90, workbench = TRUE, stack = 4L,
+ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout = 30, first_load = 90, workbench = TRUE, simple = TRUE, stack = 4L,
                              ignore_js = "Mapbox error|tile|net::ERR|Failed to fetch|getNorthWest") {
   stopifnot(requireNamespace("chromote", quietly = TRUE), requireNamespace("processx", quietly = TRUE))
   port <- own_draw(httpuv::randomPort()); url <- sprintf("http://127.0.0.1:%d/", port)
@@ -52,7 +52,7 @@ ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout =
     if (must && !connected()) stop("the page did not connect to the app within ", wait, " s")
     settle_now() }
   errors_on_page <- function(scope) js(sprintf("Array.from(document.querySelectorAll('%s .shiny-output-error')).filter(e => !/shiny-output-error-(validation|shiny\\.silent\\.error)/.test(e.className) && e.offsetParent !== null).map(e => (e.id || e.className) + ': ' + e.textContent.trim().slice(0, 160))", scope))
-  open(url, first_load, must = TRUE)
+  open(paste0(url, "?ui=standard"), first_load, must = TRUE)
   pages <- unlist(js("Array.from(document.querySelectorAll('.d-rail-link')).map(a => a.getAttribute('data-ovid-go'))"))
   out <- list()
   for (pg in pages) { n0 <- length(js_err); js(sprintf("document.querySelector('.d-rail-link[data-ovid-go=\"%s\"]').click()", pg)); settle_now(); grab()
@@ -62,6 +62,12 @@ ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout =
   if (workbench) { n0 <- length(js_err); open(paste0(url, "?ui=workbench")); grab()
     e <- c(unlist(errors_on_page("body")), js_err[seq_along(js_err) > n0])
     out[["workbench"]] <- data.table(page = "workbench", shown = isTRUE(js("document.body.innerText.length > 200")), errors = paste(e, collapse = " | ")) }
+  if (simple) { open(paste0(url, "?ui=simple")); grab()                                   # the Simple view, in an app that has one:
+    if (isTRUE(js("!!document.querySelector('.sp-step')"))) for (st in c("import", "view", "edit", "export")) { n0 <- length(js_err)   # each of its four steps
+      js(sprintf("document.querySelector('.sp-step[data-step=\"%s\"]').click()", st)); settle_now(); grab()
+      shown <- isTRUE(js(sprintf("!!document.querySelector('.sp-body .tab-pane.active[data-value=\"%s\"]')", st)))
+      e <- c(unlist(errors_on_page(".sp-body .tab-pane.active")), js_err[seq_along(js_err) > n0])
+      out[[paste0("simple:", st)]] <- data.table(page = paste("simple", st), shown = shown, errors = paste(e, collapse = " | ")) } }
   Sys.sleep(0.5); grab()
   i <- grep("Warning: Error in|^Error", log)                                               # each error with the first lines of its stack
   srv <- vapply(i, function(k) paste(trimws(log[k:min(length(log), k + stack)]), collapse = " / "), "")

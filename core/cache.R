@@ -16,7 +16,7 @@ hash_of <- function(x, n = 16L) {
 # Hash of the code that produces the output: every .R file in the given folders (and any extra files), except the core
 # files that only build screens (CORE_UI_FILES: no pipeline sources them), so a change to an interface never makes an
 # app redo its work.
-CORE_UI_FILES <- c("shell.R", "runner.R", "workbench.R", "editor.R", "metasheet_ui.R", "files.R", "launcher.R", "projects.R", "rename.R", "tsview.R", "flow.R", "sheet.R", "reference.R", "convert_page.R", "grouping.R", "table.R")
+CORE_UI_FILES <- c("shell.R", "runner.R", "workbench.R", "editor.R", "metasheet_ui.R", "files.R", "launcher.R", "projects.R", "rename.R", "tsview.R", "flow.R", "sheet.R", "reference.R", "convert_page.R", "grouping.R", "table.R", "simple.R")
 code_hash <- function(dirs, extra = character()) {
   f <- c(unlist(lapply(dirs[dir.exists(dirs)], list.files, pattern = "\\.R$", full.names = TRUE)), extra[file.exists(extra)])
   if (exists("CORE_DIR")) f <- f[!normalizePath(f, winslash = "/", mustWork = FALSE) %in% normalizePath(file.path(CORE_DIR, CORE_UI_FILES), winslash = "/", mustWork = FALSE)]

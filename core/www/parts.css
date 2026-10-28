@@ -55,3 +55,7 @@ input[type=checkbox][role=switch]:disabled{opacity:.5;cursor:not-allowed}
 .ovid-switch input[role=switch]+span::after,label.ovid-sw input[role=switch]+span::after{content:"Off";margin-left:6px;font-size:.85em;opacity:.6;font-variant-numeric:tabular-nums}
 .ovid-switch input[role=switch]:checked+span::after,label.ovid-sw input[role=switch]:checked+span::after{content:"On"}
 @media (prefers-reduced-motion:reduce){input[type=checkbox][role=switch],input[type=checkbox][role=switch]::after{transition:none}}
+
+/* Workbench-only controls (M 28 Oct: values change only in the Workbench): hidden in the other views */
+body:not(:has(.wb)) .d-hide-std { display: none !important; }
+.d-wb-only-note { margin: 4px 0 8px; font-size: 12.5px; }

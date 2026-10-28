@@ -9,8 +9,12 @@
 #
 #   ui:      ovid_edit_ui(id)
 #   server:  E <- ovid_edit_server(id, path = reactive(<csv>), reload = reactive(<tick>), locked = <columns>,
-#                                    on_change = <called after a save that changed the table>, dt = <the app's table renderer>)
-#   E$data() the table; E$save(); E$dirty(); E$fresh(); E$select(rows); E$selected(); E$append(rows); E$mutate(fn);
+#                                    on_change = <called after a save that changed the table>, dt = <the app's table renderer>,
+#                                    wb_only = <TRUE for a table that changes data values: edited by hand only in the Workbench>)
+# wb_only (M 28 Oct: values change only in the Workbench): outside the Workbench the table is shown, not edited by hand (no
+# cell edits, Add, Delete, Paste, Import or Save); what a page does with it in code (append, mutate: accepting a suggested
+# clock shift) still works; a page's own hand-made change (a removal drawn on a plot) asks E$hand_ok() first.
+#   E$data() the table; E$hand_ok() (FALSE in viewer mode, or for a wb_only table outside the Workbench); E$save(); E$dirty(); E$fresh(); E$select(rows); E$selected(); E$append(rows); E$mutate(fn);
 #   E$replace(d); E$set_selected(col, value); E$discard()
 # Paste and Import (core/metasheet_ui.R, when the app sources it) add rows copied from a spreadsheet, or a CSV or Excel
 # file, with its columns matched to the table's by heading.
@@ -139,8 +143,11 @@ edit_read <- function(p) {
     for (k in miss) d[, (k) := ""] }
   yesno_as(as.data.frame(d, stringsAsFactors = FALSE), basename(p)) }
 
-ovid_edit_server <- function(id, path, reload, locked = character(), on_change = function() NULL, dt = NULL) moduleServer(id, function(input, output, session) {
+ovid_edit_server <- function(id, path, reload, locked = character(), on_change = function() NULL, dt = NULL, wb_only = FALSE) moduleServer(id, function(input, output, session) {
   ro <- function() isTRUE(get0("VIEWER", inherits = TRUE))
+  in_wb <- isTRUE(tryCatch(exists("wb_wanted", mode = "function") && wb_wanted(isolate(session$clientData$url_search), get0("SETTINGS")$ui), error = function(e) FALSE))
+  ro_hand <- function() ro() || (isTRUE(wb_only) && !in_wb)          # edits by hand refused (viewer mode, or a Workbench-only table elsewhere)
+  if (isTRUE(wb_only) && !in_wb) session$sendCustomMessage("ovid-wb-only", list(id = session$ns("tbl")))
   show <- if (is.function(dt)) dt else function(d, ..., page = 25, opts = list())
     DT::datatable(d, rownames = FALSE, ..., options = utils::modifyList(list(pageLength = page, scrollX = TRUE), opts))
   data <- reactiveVal(NULL); ver <- reactiveVal(0); dirty <- reactiveVal(FALSE); loaded <- reactiveVal(""); want <- reactiveVal(NULL)
@@ -178,14 +185,13 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     ver(); d <- isolate(data())
     validate(need(!is.null(d), "This table is created the first time the pipeline runs."))
     yn <- setdiff(table_yesno_cols(basename(isolate(path())), names(d)), locked)     # yes/no cells pick Yes or No (www/yesno.js)
-    session$sendCustomMessage("ovid-yesno", list(id = session$ns("tbl"), cols = I(if (ro()) integer() else match(yn, names(d)) - 1L)))
+    session$sendCustomMessage("ovid-yesno", list(id = session$ns("tbl"), cols = I(if (ro_hand()) integer() else match(yn, names(d)) - 1L)))
     w <- isolate(want()); w <- w[w <= nrow(d)]                           # rows asked for by select(), on their page
     show(d, selection = list(mode = "multiple", selected = if (length(w)) w else NULL), page = 25,
          opts = if (length(w)) list(displayStart = (min(w) - 1) %/% 25 * 25) else list(),
-         editable = if (ro()) FALSE else list(target = "cell", disable = list(columns = which(names(d) %in% c(locked, yn)) - 1L)))
+         editable = if (ro_hand()) FALSE else list(target = "cell", disable = list(columns = which(names(d) %in% c(locked, yn)) - 1L)))
   }, server = FALSE)
   # In the Workbench the table is a sheet (core/sheet.R): sent whenever it is read or saved, and its Apply saves it here.
-  in_wb <- isTRUE(tryCatch(exists("wb_wanted", mode = "function") && wb_wanted(isolate(session$clientData$url_search), get0("SETTINGS")$ui), error = function(e) FALSE))
   if (in_wb) observe({ ver(); d <- isolate(data()); p <- isolate(path())
     base <- if (isolate(dirty()) && length(p) == 1 && file.exists(p)) edit_read(p) else NULL       # the saved table, so unsaved edits show as changes
     ovid_sheet_send(session, session$ns("sheet"), d, locked, ro(), label = if (length(p) == 1) basename(p) else "", base = base) })
@@ -197,13 +203,13 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     if (!identical(file_stamp(isolate(path())), isolate(loaded()))) { if (isolate(dirty())) conflict() else { load_disk(); showNotification(paste(basename(isolate(path())), "was saved elsewhere and has been read again: make the changes once more."), type = "warning", duration = 8) }; return() }
     data(nd); dirty(TRUE); write_now(nd, quiet = TRUE)
     showNotification(paste("Saved", basename(isolate(path())), "\u00b7 the version before is in history. Run to apply."), type = "message", duration = 5); bump() })
-  observeEvent(input$tbl_cell_edit, { if (ro()) return()
+  observeEvent(input$tbl_cell_edit, { if (ro_hand()) return()
     e <- input$tbl_cell_edit; d <- data()
     d[e$row, e$col + 1L] <- trim(as.character(e$value)); change(d, redraw = FALSE) })
-  observeEvent(input$add, { d <- data(); req(d); d[nrow(d) + 1L, ] <- ""; change(d) })
-  observeEvent(input$dup, { d <- data(); s <- input$tbl_rows_selected; req(d, length(s) > 0)
+  observeEvent(input$add, { if (ro_hand()) return(); d <- data(); req(d); d[nrow(d) + 1L, ] <- ""; change(d) })
+  observeEvent(input$dup, { if (ro_hand()) return(); d <- data(); s <- input$tbl_rows_selected; req(d, length(s) > 0)
     change(rbind(d, d[s, , drop = FALSE])) })
-  observeEvent(input$del, { d <- data(); s <- input$tbl_rows_selected; req(d, length(s) > 0)
+  observeEvent(input$del, { if (ro_hand()) return(); d <- data(); s <- input$tbl_rows_selected; req(d, length(s) > 0)
     change(d[-s, , drop = FALSE]) })
   observeEvent(input$undo, { u <- undo(); if (!length(u)) return(showNotification("Nothing to undo since the table was saved.", type = "message"))
     data(u[[length(u)]]); undo(u[-length(u)]); dirty(length(u) > 1L); bump() })   # back to the saved table: nothing to save
@@ -234,12 +240,12 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     }
     write_now(d, quiet)
   }
-  observeEvent(input$save, save())
+  observeEvent(input$save, if (!ro_hand()) save())
   if (exists("table_import_server", mode = "function"))         # Paste and Import (core/metasheet_ui.R): rows added, or the table replaced
     table_import_server(input, output, session, reactive({ d <- data(); s <- get0("IMPORT_SPECS", ifnotfound = list())[[basename(isolate(path()))]]   # headings and aliases a table declares
       if (!is.null(s)) meta_defaults(s) else {                                              # no declared fields: types judged from the column names and the table's rules (core import.R)
         ent <- Filter(function(x) identical(x$file, basename(isolate(path()))), get0("CONFIG_FILES", ifnotfound = list())); meta_defaults(import_spec_guess(if (is.null(d)) character() else names(d), if (length(ent)) ent[[1]])) } }),
-      put = function(new, mode, s) { if (ro() || !fresh()) return(FALSE); d <- isolate(data()); if (is.null(d)) return(FALSE)
+      put = function(new, mode, s) { if (ro_hand() || !fresh()) return(FALSE); d <- isolate(data()); if (is.null(d)) return(FALSE)
         new <- as.data.frame(ensure_cols(as.data.table(new), names(d))[, names(d), with = FALSE], stringsAsFactors = FALSE)
         new <- new[rowSums(new != "") > 0, , drop = FALSE]
         data(if (identical(mode, "replace")) new else rbind(d, new)); dirty(TRUE); save(quiet = TRUE); bump(); TRUE },
@@ -256,6 +262,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
   keep_undo <- function(before) { p <- isolate(path()); session$userData$ovid_undo <- list(at = Sys.time(), file = basename(p), fn = function() {
     if (ro() || !identical(isolate(path()), p)) return(FALSE); data(before); dirty(TRUE); save(quiet = TRUE); bump(); TRUE }) }
   list(data = data, save = save, dirty = dirty, path = path, fresh = fresh, selected = reactive(input$tbl_rows_selected),
+       hand_ok = function() !isolate(ro_hand()),
        discard = function() if (isolate(dirty())) { dirty(FALSE); load_disk(restore = FALSE) },        # unsaved edits dropped: the saved table again
        select = function(rows) { want(rows); bump() },
        mutate = function(fn) {                              # fn(saved table) -> new table, saved at once
@@ -272,7 +279,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
        },
        set_selected = function(col, value) {
          d <- isolate(data()); s <- isolate(input$tbl_rows_selected)
-         if (is.null(d) || !length(s) || ro()) return(FALSE)
+         if (is.null(d) || !length(s) || ro_hand()) return(FALSE)
          d[s, col] <- value; data(d); dirty(TRUE); bump(); TRUE
        },
        append = function(rows) {                            # rows added to the saved version, saved at once
@@ -285,5 +292,5 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
 })
 
 # The editor with the core table (table.R ovid_dt), as every app's set-up pages call it.
-editServer <- function(id, path, reload, locked = character(), on_change = function() NULL)
-  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt)
+editServer <- function(id, path, reload, locked = character(), on_change = function() NULL, wb_only = FALSE)
+  ovid_edit_server(id, path, reload, locked, on_change, dt = ovid_dt, wb_only = wb_only)

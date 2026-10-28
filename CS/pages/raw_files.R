@@ -92,17 +92,17 @@
       labs(x = NULL, y = p, subtitle = paste0(x$station, " / ", x$stream, "   ", num(x$n), " records kept from this file")) }, bg = GB$bg, res = 96)
   output$rf_brush_ui <- renderUI({ b <- input$rf_brush; if (is.null(b) || VIEWER) return(NULL)
     t0 <- as.POSIXct(b$xmin, origin = "1970-01-01", tz = "UTC"); t1 <- as.POSIXct(b$xmax, origin = "1970-01-01", tz = "UTC")
-    div(class = "btnrow editor-only", tags$b(fmt_ts(t0), " to ", fmt_ts(t1)),
+    div(class = "btnrow editor-only d-hide-std", tags$b(fmt_ts(t0), " to ", fmt_ts(t1)),
         actionButton("rf_rm_rows", "Remove these records from this file", class = "btn-danger"), actionButton("rf_rm_vals", paste0("Blank only ", input$rf_param), class = "btn-danger"),
         span(class = "dim", "Uses the reason and initials below.")) })
   rf_range <- function() { b <- input$rf_brush; if (is.null(b)) NULL else as.POSIXct(c(b$xmin, b$xmax), origin = "1970-01-01", tz = "UTC") }
   rf_need_reason <- function() { if (!nzchar(trim(input$rf_reason %||% ""))) { note("Give a reason first; it goes in the audit log.", type = "warning"); FALSE } else TRUE }
-  observeEvent(input$rf_rm_rows, { r <- rf_range(); x <- rf_data(); req(r); if (!rf_need_reason()) return()
+  observeEvent(input$rf_rm_rows, { r <- rf_range(); x <- rf_data(); req(r); if (!wb_made(m_tc) || !rf_need_reason()) return()
     if (is.null(m_tc$data())) return(note("Run the pipeline once first.", type = "warning"))
     r <- logger_time(r, clock_shifts(pd(), x$row$logger_id, x$row$table, x$row$file), x$row$file)   # the file's own clock times (R/stitch.R)
     if (m_tc$append(data.frame(logger_id = x$row$logger_id, table = x$row$table, source_file = x$row$file, start = fmt_ts(r[1]), end = fmt_ts(r[2]), action = "remove", shift_minutes = "",
                                reason = trim(input$rf_reason), author = trim(input$rf_author)))) { mark(); session$resetBrush("rf_brush"); note("Those records will be removed from this file on the next run.") } })
-  observeEvent(input$rf_rm_vals, { r <- rf_range(); x <- rf_data(); req(r, input$rf_param); if (!rf_need_reason()) return()
+  observeEvent(input$rf_rm_vals, { r <- rf_range(); x <- rf_data(); req(r, input$rf_param); if (!wb_made(E$period) || !rf_need_reason()) return()
     if (m_mn$append(data.frame(station = x$station, stream = x$stream, parameter = rx_escape(input$rf_param), start = fmt_ts(r[1]), end = fmt_ts(r[2]),
                                reason = trim(input$rf_reason), author = trim(input$rf_author)))) { mark(); session$resetBrush("rf_brush"); note("Those values will be blanked on the next run.") } })
   output$rf_text <- renderText({ r <- rf_sel(); req(r); f <- r$path[1]; validate(need(file.exists(f), "The raw file is not on this machine (viewer copies hold the cleaned data only)."))

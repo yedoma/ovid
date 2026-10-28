@@ -2,13 +2,26 @@
 (function(){ var CTX = {}, on = false;
   function reg(){ if (on || !window.Shiny || !Shiny.addCustomMessageHandler) return; on = true; Shiny.addCustomMessageHandler('ovid-ctx', function(m){ CTX = m || {}; }); }
   reg(); $(document).on('shiny:connected', reg);
-  $(document).on('click', 'a.d-to-wb, #wb_to_standard', function(e){ var toWb = this.classList.contains('d-to-wb');
-    if (window.ovidSheetFlush && ovidSheetFlush()) { e.preventDefault(); var h = href(toWb); setTimeout(function(){ location.href = h; }, 500); return; }   // unapplied sheet changes reach the server first
-    this.setAttribute('href', href(toWb)); });
-  function href(toWb){ var u = new URLSearchParams(); u.set('ui', toWb ? 'workbench' : 'standard');
+  // a[data-ui] names the view it opens (simple, standard, workbench); a.d-to-wb and #wb_to_standard are the older two
+  $(document).on('click', 'a.d-to-wb, a.d-to-view, #wb_to_standard', function(e){ var to = this.getAttribute('data-ui') || (this.classList.contains('d-to-wb') ? 'workbench' : 'standard');
+    if (window.ovidSheetFlush && ovidSheetFlush()) { e.preventDefault(); var h = href(to); setTimeout(function(){ location.href = h; }, 500); return; }   // unapplied sheet changes reach the server first
+    this.setAttribute('href', href(to)); });
+  function href(to){ if (to === true) to = 'workbench'; else if (to === false || !to) to = 'standard';
+    var u = new URLSearchParams(); u.set('ui', to);
     if (CTX.key && CTX.value) u.set(CTX.key, CTX.value); if (CTX.params && CTX.params.length) u.set('params', [].concat(CTX.params).join(','));
     ['from', 'to', 't', 't1'].forEach(function(k){ if (CTX[k]) u.set(k, CTX[k]); }); return '?' + u.toString(); }
   window.ovidSwitchHref = href;
+  // a table that changes data values, outside the Workbench (core editor.R wb_only): its edit buttons are hidden and a line
+  // says where it is edited
+  function wbOnly(m){ var t = document.getElementById(m.id); if (!t) return false; var host = t.closest('.dt-host'); var row = host && host.previousElementSibling;
+    if (row && row.classList.contains('btnrow') && !row.getAttribute('data-wb-only')) { row.setAttribute('data-wb-only', '1'); row.style.display = 'none';
+      var n = document.createElement('p'); n.className = 'dim d-wb-only-note';
+      n.innerHTML = 'Shown here; changed in the <a href="?ui=workbench" class="d-to-view" data-ui="workbench">Workbench</a>, where every change to the data is made.';
+      row.parentNode.insertBefore(n, row); }
+    return true; }
+  function regWb(){ if (!window.Shiny || !Shiny.addCustomMessageHandler || window.dWbOnly) return; window.dWbOnly = true;
+    Shiny.addCustomMessageHandler('ovid-wb-only', function(m){ if (!wbOnly(m)) $(function(){ setTimeout(function(){ wbOnly(m); }, 300); }); }); }
+  regWb(); $(document).on('shiny:connected', regWb);
   // before the first run (output has_out false), in the notebook layout only the first stage is ready: the later steps are dimmed,
   // marked available after import, and still open when clicked
   $(document).on('shiny:value', function(e){ if (e.name !== 'has_out') return; var none = !e.value; document.body.classList.toggle('d-noout', none);

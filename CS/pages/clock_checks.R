@@ -50,11 +50,11 @@
           column(3, ovid_switch("ckf_file", paste0("Only in ", sub("#A[0-9_f]+$", "", basename(r$source_file))), TRUE, width = "100%"),
                     textInput("ckf_reason", "Reason (goes in the audit trail)", width = "100%"),
                     textInput("ckf_author", "Your initials", isolate(who()), width = "100%"))),
-        div(class = "btnrow", actionButton("ckf_add", "Add this correction", class = "btn-primary"),
+        div(class = "btnrow d-hide-std", actionButton("ckf_add", "Add this correction", class = "btn-primary"),
             span(class = "dim", "It is applied the next time the pipeline runs, and recorded in the audit trail."))))
   })
   observeEvent(input$ckf_add, {
-    r <- ck_sel(); req(r)
+    r <- ck_sel(); req(r); if (!wb_made(m_tc)) return()
     if (!nzchar(trim(input$ckf_reason))) return(note("Give a reason for the correction.", type = "warning"))
     a <- trim(input$ckf_from); b <- trim(input$ckf_to); mins <- input$ckf_min
     if (input$ckf_action == "shift") {

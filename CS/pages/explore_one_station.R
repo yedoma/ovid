@@ -298,14 +298,14 @@
                                    selected = input$ex_params, multiple = TRUE, width = "100%")),
           column(4, textInput("br_reason", "Reason (goes in the audit log)", width = "100%")),
           column(2, textInput("br_author", "Your initials", isolate(who()), width = "100%")),
-          column(2, div(style = "margin-top:24px", actionButton("br_add", "Remove values", class = "btn-danger")))))
+          column(2, div(style = "margin-top:24px", actionButton("br_add", "Remove values", class = "btn-danger d-hide-std")))))
   })
   # the stretch selected on Over time with a drag (input$ex_tsv_sel from the shared plot)
   brush_range <- function() { b <- input$ex_tsv_sel
     if (!identical(input$ex_kind %||% "ts", "ts") || is.null(b$t0)) return(NULL)
     as.POSIXct(round(c(b$t0, b$t1)), origin = "1970-01-01", tz = "UTC") }
   observeEvent(input$br_add, {
-    r <- brush_range(); req(r)
+    r <- brush_range(); req(r); if (!wb_made(E$period)) return()
     if (!nzchar(trim(input$br_reason)) || !length(input$br_params)) return(note("Give a reason and at least one parameter.", type = "warning"))
     k <- ex_key()
     par <- if ("*" %in% input$br_params) "" else paste(rx_escape(input$br_params), collapse = "|")

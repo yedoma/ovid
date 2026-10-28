@@ -37,6 +37,7 @@ source(file.path(CORE_DIR, "editor.R"), local = TRUE)       # Ovid/editor.R: the
 source(file.path(CORE_DIR, "metasheet.R"), local = TRUE)    # Ovid/metasheet.R and metasheet_ui.R: Paste and Import in every table editor
 source(file.path(CORE_DIR, "import.R"), local = TRUE)           # Ovid/import.R: reading a spreadsheet, matching columns, checking rows
 source(file.path(CORE_DIR, "metasheet_ui.R"), local = TRUE)
+source(file.path(CORE_DIR, "simple.R"), local = TRUE)        # Ovid/simple.R: the Simple view's frame, Edit step and report
 source(file.path(APP_DIR, "home.R"), local = TRUE)          # CS/home.R: the Standard home (before import, and with data)
 downloadHandler <- ovid_downloads("CS")                  # every download is named ovid_cs_<what>_<date>.<ext>
 
@@ -120,6 +121,8 @@ server <- function(input, output, session, embedded = FALSE) {
   dcheck <- deploy_check_server("depcheck", pd, list(file = "output/audit/file_manifest.csv", serial = "logger_id", name = "station_name", file_col = "path"),   # core metasheet_ui.R
                       tick, on_change = function() { rv$tick <- rv$tick + 1; mark() })
   m_st <- E$stations; m_al <- E$aliases; m_qc <- E$qc; m_mn <- E$manual; m_cx <- E$cr10x; m_gr <- E$groups; m_tc <- E$timecorr
+  wb_made <- function(ed) { if (ed$hand_ok()) return(TRUE)   # values change only in the Workbench (core editor.R wb_only)
+    note("Removals, quality rules and clock shifts are made in the Workbench (the switch at the top right).", type = "warning"); FALSE }
   m_cal <- E$cal; m_pi <- E$pinfo; m_pg <- E$gauges; m_si <- E$sites; m_fl <- E$fieldlog; m_fr <- E$filerules
   observeEvent(input$qc_suggest, { n <- 0L
     ok <- m_qc$mutate(function(d) { r <- qc_fill_suggested(d); n <<- r$filled; as.data.frame(r$table[, intersect(c(names(d), QC_COLS), names(r$table)), with = FALSE]) })
@@ -189,11 +192,15 @@ server <- function(input, output, session, embedded = FALSE) {
   invisible(list(E = E, outs = outs, pd = pd, rv = rv, mark = mark, pf = pf, needs = dcheck, review = review))
 }
 
-# Two interfaces on one project: the Standard one above (the default) and the Workbench (preview, workbench/wb_cs.R).
-# ?ui=workbench in the address opens the Workbench and ?ui=standard the Standard one; with neither, OVID_UI and then
-# the "ui" setting decide (core/workbench.R).
+# Three views of one project: Simple (simple/simple_cs.R), Standard (above) and the Workbench (workbench/wb_cs.R).
+# ?ui=simple, ?ui=standard or ?ui=workbench in the address opens one; with none, OVID_UI and then the "ui" setting
+# decide (core/workbench.R).
 source(file.path(APP_DIR, "workbench", "wb_cs.R"), local = TRUE)
-shinyApp(ui = function(req) if (wb_wanted(req$QUERY_STRING, SETTINGS$ui)) wb_ui(req) else ui,
+source(file.path(APP_DIR, "simple", "simple_cs.R"), local = TRUE)
+if (is.null(SETTINGS$ui)) SETTINGS$ui <- ovid_first_view(SETTINGS_FILE)   # a new install opens in Simple (core workbench.R)
+shinyApp(ui = function(req) switch(ovid_view(req$QUERY_STRING, SETTINGS$ui), simple = simple_ui(req), workbench = wb_ui(req), ui),
          server = function(input, output, session) { track_session(session, "CS")
-           if (!wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui)) return(server(input, output, session))
-           wb_server(input, output, session, server(input, output, session, embedded = TRUE)) })
+           v <- ovid_first_view_keep(SETTINGS_FILE, ovid_view(isolate(session$clientData$url_search), SETTINGS$ui))   # a new install keeps Simple (core workbench.R)
+           if (v == "simple") return(simple_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           if (v == "workbench") return(wb_server(input, output, session, server(input, output, session, embedded = TRUE)))
+           server(input, output, session) })

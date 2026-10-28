@@ -700,6 +700,45 @@ testServer(app$editServer, args = list(id = "t", path = reactive(f17), reload = 
   check("a correction added from either interface starts from the saved version", isTRUE(ok) && identical(fread(f17, colClasses = "character")$a, c("1", "2", "3", "4", "5", "z")))
 })
 
+group("16b. Simple view")
+local({
+  h <- as.character(htmltools::renderTags(app$simple_ui(NULL))$html); ids <- regmatches(h, gregexpr(' id="[^"]+"', h))[[1]]
+  check("the Simple view builds: four steps, its own Import with the folder inputs, and no input twice", grepl('data-step="export"', h, fixed = TRUE) &&
+        grepl('id="raw_dirs"', h, fixed = TRUE) && grepl('id="run"', h, fixed = TRUE) && !anyDuplicated(ids))
+  check("values are edited by hand only in the Workbench: quality rules, clock corrections and corrections over a period",
+        setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "timecorr", "period")))
+  st <- vapply(Filter(function(x) inherits(x, "ovid_stage"), app$cs_flow_pages()), `[[`, "", "title")
+  check("the Standard view is grouped Set up, Assess, Decide, Report", identical(st, c("Set up", "Assess", "Decide", "Report")))
+  ps <- file.path(root, "p16s"); dir.create(ps); invisible(file.copy(list.files(p16, full.names = TRUE), ps, recursive = TRUE))
+  cfg <- file.path(ps, "config"); md5 <- function() { f <- list.files(cfg, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  o <- suppressWarnings(app$load_outputs(ps)); g0 <- o$registry[logger_id == "99016"]$station[1]
+  view <- data.table(item = "99016", label = "99016", group = g0, first = "2021-06-01 12:00", last = "2021-06-04 11:00", lat = NA_real_, lon = NA_real_)
+  ops <- rbind(app$SIMPLE_OPS, data.table(type = c("rename", "place", "move"), group = c(g0, "Bog tower", "Bog tower"), to = c("Bog tower", NA, "Fen"),
+                                      item = c(NA, NA, "99016"), at = c(NA, NA, "2021-06-02 12:00"), lat = c(NA, 60.1, NA), lon = c(NA, -120.2, NA)), fill = TRUE)
+  ops[is.na(item), item := ""][is.na(at), at := ""][is.na(to), to := ""][is.na(group), group := ""]
+  s0 <- fread(file.path(cfg, "stations.csv"), colClasses = "character", na.strings = NULL); si0 <- fread(file.path(cfg, "station_info.csv"), colClasses = "character", na.strings = NULL)
+  b0 <- md5(); r <- app$sp_cs_apply(ps, ops, "tt", view); b1 <- md5()
+  ch <- names(b1)[is.na(b0[names(b1)]) | b0[names(b1)] != b1]
+  k <- app$rename_spec(app$RENAMES, "station"); ok_files <- unique(c("stations.csv", "station_info.csv", k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
+  check("Simple's Edit writes only tables that name a station, and its places and grouping", isTRUE(r$ok) && length(ch) && all(ch %in% ok_files))
+  ps2 <- file.path(root, "p16s2"); dir.create(ps2); invisible(file.copy(list.files(p16, full.names = TRUE), ps2, recursive = TRUE)); cfg2 <- file.path(ps2, "config")
+  md5b <- function() { f <- list.files(cfg2, full.names = TRUE, recursive = FALSE); f <- f[!dir.exists(f)]; stats::setNames(tools::md5sum(f), basename(f)) }
+  ops2 <- rbind(app$SIMPLE_OPS, data.table(type = c("place", "move"), group = g0, to = c("", "Fen"), item = c("", "99016"), at = c("", "2021-06-02 12:00"),
+                                       lat = c(60.1, NA), lon = c(-120.2, NA)), fill = TRUE)
+  c0 <- md5b(); r2 <- app$sp_cs_apply(ps2, ops2, "tt", view); c1 <- md5b(); ch2 <- names(c1)[is.na(c0[names(c1)]) | c0[names(c1)] != c1]
+  check("a move or a place changes stations.csv and station_info.csv only, never a rule or a correction", isTRUE(r2$ok) && length(ch2) && all(ch2 %in% c("stations.csv", "station_info.csv")))
+  s <- fread(file.path(cfg, "stations.csv"), colClasses = "character", na.strings = NULL); si <- fread(file.path(cfg, "station_info.csv"), colClasses = "character", na.strings = NULL)
+  check("a rename, a place and a move from a date land in stations.csv and station_info.csv",
+        any(s$logger_id == "99016" & s$station == "Bog tower" & nzchar(s$end)) && any(s$logger_id == "99016" & s$station == "Fen" & s$start == "2021-06-02 12:00") &&
+        si[station == "Bog tower", as.numeric(latitude)] == 60.1)
+  check("each save keeps the version before, with who changed it", any(grepl("Simple view", readLines(file.path(cfg, "history", "change_log.csv"), warn = FALSE), fixed = TRUE)))
+  invisible(run(raw16, ps)); o2 <- suppressWarnings(app$load_outputs(ps))
+  check("the next run reads them: the logger's record is split between the two stations", all(c("Bog tower", "Fen") %in% o2$stations$station))
+  rd <- function(f) fread(file.path(cfg, f), colClasses = "character", na.strings = NULL)
+  r$undo()
+  check("Undo puts the tables back as they were", isTRUE(all.equal(rd("stations.csv"), s0, check.attributes = FALSE)) && isTRUE(all.equal(rd("station_info.csv"), si0, check.attributes = FALSE)))
+})
+
 group("6. Each cached step depends only on the code it runs")
 local({ e <- globalenv(); h0 <- step_hashes(e)
   ps <- plot_station; assign("plot_station", function(...) NULL, envir = e); h1 <- step_hashes(e); assign("plot_station", ps, envir = e)

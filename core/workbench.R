@@ -12,22 +12,36 @@
 # at x and y coloured by a value (wb_xy_ui: an ERT pseudosection, image positions); either highlights the grid's selection
 # and selects in the grid.
 #
-# The two interfaces run in one app process on one project: ?ui=workbench in the address opens this one, ?ui=standard
-# the Standard one; with neither, OVID_UI and then the app's "ui" setting decide (Standard by default).
+# The three views run in one app process on one project: ?ui=workbench in the address opens this one, ?ui=standard the
+# Standard one, ?ui=simple the Simple one (core simple.R); with none, OVID_UI and then the app's "ui" setting decide (ovid_view()).
 
 OVID_WORKBENCH_VERSION <- "0.9.0"
 
 wb_query <- function(query) if (is.null(query) || !length(query) || !nzchar(query)) list() else shiny::parseQueryString(query)
 
-# TRUE when a request (its query string) should get the Workbench.
-wb_wanted <- function(query, setting = NULL) {
+# The three views of an app (M 28 Oct): Simple (new users, a field check), Standard (regular users, the processes to assess the
+# data) and Workbench (advanced users, every change to the data). ?ui= in the address wins, then OVID_UI, then the app's "ui"
+# setting; with none, Standard (an app gives a new install Simple through ovid_first_view()).
+OVID_VIEWS <- c("simple", "standard", "workbench")
+ovid_view <- function(query, setting = NULL) {
   q <- wb_query(query)
-  if (identical(q$ui, "workbench")) return(TRUE)
-  if (identical(q$ui, "standard")) return(FALSE)
+  if (length(q$ui) == 1 && q$ui %in% OVID_VIEWS) return(q$ui)
   env <- Sys.getenv("OVID_UI")
-  if (nzchar(env)) return(identical(env, "workbench"))
-  identical(setting, "workbench")
+  if (env %in% OVID_VIEWS) return(env)
+  if (length(setting) == 1 && setting %in% OVID_VIEWS) setting else "standard"
 }
+# TRUE when a request (its query string) should get the Workbench, or the Simple view.
+wb_wanted <- function(query, setting = NULL) identical(ovid_view(query, setting), "workbench")
+simple_wanted <- function(query, setting = NULL) identical(ovid_view(query, setting), "simple")
+# The view a start with no saved one opens in: a new install (no settings file yet) opens in Simple, an existing install
+# without one stays on Standard. Nothing is written here (sourcing an app has no side effects): the app keeps "simple" as
+# its saved view when the first session opens (ovid_first_view_keep).
+ovid_first_view <- function(settings_file) {
+  if (is.null(settings_file) || file.exists(settings_file) || file.exists(paste0(settings_file, ".bak"))) "standard" else "simple" }
+ovid_first_view_keep <- function(settings_file, view) {
+  if (identical(view, "simple") && !is.null(settings_file) && !file.exists(settings_file))
+    try(settings_save(settings_file, list(ui = "simple")), silent = TRUE)   # safe: the view still opens; only remembering it failed
+  invisible(view) }
 
 WB_TITLE_FONT <- "'IBM Plex Sans',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"   # the interface (core/fonts, else a system sans)
 WB_MONO_FONT <- "'IBM Plex Mono','JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"   # numbers, ids and dates
@@ -75,6 +89,7 @@ wb_page <- function(app, pal, project = NULL, standard_href = "?ui=standard", ac
         ovid_areas_ui(areas, class = "wb-switch"),                                                  # sides of the app, as in the Standard bar (shell.R)
         if (!is.null(project)) span(class = "wb-project", project),
         div(class = "wb-switch", role = "group", `aria-label` = "Interface",
+            tags$a(href = "?ui=simple", class = "d-to-view", `data-ui` = "simple", title = "Open the Simple view on this project", "Simple"),
             tags$a(href = standard_href, id = "wb_to_standard", title = "Open the Standard interface on this project", "Standard"),
             span(class = "on", "Workbench", span(class = "wb-pv", "preview"))),
         div(class = "wb-fill"), actions),

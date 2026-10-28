@@ -53,6 +53,7 @@ suites[[length(suites) + 1]] <- suite("core", repo, "core/tests/run_tests.R")
 suites[[length(suites) + 1]] <- suite("core import", repo, "core/tests/test_import.R")
 suites[[length(suites) + 1]] <- suite("core areas", repo, "core/tests/test_areas.R")
 suites[[length(suites) + 1]] <- suite("core panels", repo, "core/tests/test_wb_panels.R")
+suites[[length(suites) + 1]] <- suite("core simple", repo, "core/tests/test_simple.R")
 
 # How many suites at once: the cores less one (forked, so macOS and Linux; Windows runs one at a time). Each suite's
 # own file reading (core util.R par_map) then gets a share of the cores, so the suites do not crowd each other out.

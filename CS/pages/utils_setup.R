@@ -16,9 +16,10 @@ SETUP_TABLES <- data.table(
              "Parameter guide", "Precipitation gauges", "Station details", "Field log", "File rules", "Deployment sheet", "Calibration options", "Corrections over a period", "Time zones"),
   locked = c("logger_id|seen_as", "", "", "file", "", "", "", "", "station", "", "", "", "", "", ""),
   run    = c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE))
+SETUP_TABLES[, wb_only := id %in% c("qc", "timecorr", "period")]   # these change data values: edited by hand only in the Workbench (M 28 Oct)
 setup_editors <- function(cfg_path, tick, mark) setNames(lapply(seq_len(nrow(SETUP_TABLES)), function(i) { s <- SETUP_TABLES[i]
   editServer(s$id, cfg_path(s$file), tick, locked = if (nzchar(s$locked)) strsplit(s$locked, "|", fixed = TRUE)[[1]] else character(),
-             on_change = if (s$run) mark else function() NULL) }), SETUP_TABLES$id)
+             on_change = if (s$run) mark else function() NULL, wb_only = s$wb_only) }), SETUP_TABLES$id)
 
 # One pipeline run, from either interface, in the background (core runner.R): the app stays usable, the corner box shows
 # its progress and Cancel. When it ends its log goes to LOG$lines and done(res, r) is called: res is what run_pipeline()
