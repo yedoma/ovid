@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid GT how-to guide</title>
+<style>
+
+:root{color-scheme:dark;--bg:#292727;--fg:#D8CFC4;--muted:#B7AAA3;--rule:#5A5050;--panel:#353232;--code:#1F1D1D;--accent:#E36A5B;--red:#E36A5B;--green:#65AA88;--yellow:#D1B078;--blue:#7AA7CC;--purple:#C58F9D;--cyan:#45A39E;--grey:#A3A187}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:0 0 4px;color:var(--fg)}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--yellow);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+@media print{html,body{background:var(--bg)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-size:10.5pt}main{max-width:none;padding:14mm 14mm}h2,h3{break-after:avoid}nav{break-after:page}.ex,.f,figure,tr{break-inside:avoid}table{display:table;font-size:9pt}.f{white-space:pre-wrap}}
+@page{size:A4;margin:0}
+
+
+section.task{border:1px solid var(--rule);border-radius:10px;padding:4px 22px 14px;margin:26px 0;background:var(--panel)}
+section.task h2{border-top:0;margin:14px 0 10px;padding:0 0 8px;border-bottom:1px solid var(--rule)}
+figure{margin:14px 0;padding:8px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;break-inside:avoid;page-break-inside:avoid}
+figure img{display:block;max-width:100%;height:auto;border-radius:4px}
+figcaption{font-size:13px;color:var(--muted);margin:6px 2px 0}
+p.co{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0;background:rgba(255,255,255,.03)}
+p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--blue)} p.co.note{border-left-color:var(--yellow,var(--amber))}
+.foot{margin-top:32px;font-size:12.5px;color:var(--muted)}
+@media print{section.task{break-inside:auto;border:0;background:none;padding:0;margin:0 0 8mm}section.task h2{break-after:avoid}figure,p.co,li{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid GT how-to guide</h1>
+<p>One task per section: when to use it, the steps, what changes and how to check it. Page names are those in the contents on the right of the Standard view (<strong>1 Bring in</strong>, <strong>2 Organize</strong>, <strong>3 Correct</strong>, <strong>4 Report</strong> and <strong>More</strong>). For a first project, start with the GT quick start; for what GT does to the data and why, see the GT reference guide.</p>
+
+<section class="task">
+<h2>Contents</h2>
+<p><strong>Simple:</strong> 1. Check the sites after a field visit; 2. Set the depths of a string</p>
+<p><strong>Bring in:</strong> 3. Add a new download; 4. Read a download that needs an export</p>
+<p><strong>Organize:</strong> 5. Give a string a site, dates or depths; 6. Decide what the run found; 7. Rename a site or hide it</p>
+<p><strong>Correct:</strong> 8. Set the time zone of files that state none; 9. Fix a logger clock; 10. Remove a stretch of data; 11. Change a quality limit; 12. Switch an automatic correction off</p>
+<p><strong>Check and report:</strong> 13. Look at a site over time; 14. Export data and reports; 15. Report a problem</p>
+</section>
+<section class="task">
+<h2>The three views</h2>
+<p>The same project, data and edits in three views, switched at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) or with ?ui=simple, ?ui=standard or ?ui=workbench in the address. A new install opens in Simple.</p>
+<figure><img src="img/guide/gt_simple_import.png" alt="Simple view, step 1 Import" style="width:100%"><figcaption>Simple view, step 1 Import</figcaption></figure>
+<ul>
+<li><strong>Simple</strong>: a field check in four steps (Import, View, Edit, Export). Edit sets sensor depths, renames sites, places them, sets their land cover and moves strings between them; it changes no data value.</li>
+<li><strong>Standard</strong>: the set-up flow these tasks use: bring in files, organize strings, sites and depths, correct, report.</li>
+<li><strong>Workbench</strong>: every change to the data by hand. Removals, quality rules, clock corrections, corrections over a period and ground-surface changes are edited here; Standard shows those tables and points to the Workbench.</li>
+</ul>
+</section>
+<section class="task">
+<h2>1. Check the sites after a field visit</h2>
+<p class="co when"><strong>when:</strong> New downloads are in the data folder and you want to know whether every string is recording.</p>
+<ol>
+<li><strong>Simple</strong>, <strong>Import</strong>: press <strong>Read the data</strong>. <strong>What was read</strong> lists the files and the checklist.</li>
+<li><strong>View</strong>: a tile per site. Amber or red tiles need a look; <strong>Need a look</strong> shows only those. Each tile's link opens the Standard page that fixes it (Needs you, Sensor health, or the depths).</li>
+<li><strong>Export</strong>: <strong>Download the report (HTML)</strong> with your initials, for a one-page record of the check.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Nothing changes in the set-up; the report records the period, the sites, what needs a look and the methods with their sources.</p>
+</section>
+<section class="task">
+<h2>2. Set the depths of a string</h2>
+<p class="co when"><strong>when:</strong> A site's depths are assumed (<em>default</em> or <em>template</em>), or a string was reinstalled at other depths.</p>
+<ol>
+<li><strong>Simple</strong>, <strong>Edit</strong>: pick the site under <strong>Sensor depths</strong>.</li>
+<li>Type each depth in metres below the surface; add <strong>+</strong> for a sensor above the ground, e.g. +0.10. <strong>Even steps</strong>, <strong>Paste a list</strong>, <strong>Copy from site…</strong> or the model's template fill several at once.</li>
+<li><strong>Add to changes</strong>, then <strong>Save</strong>. To give every site with the same model and sensor count these depths, use the option under the list.</li>
+<li><strong>Import</strong>, <strong>Read the data</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The depths are written to the set-up tables (the old version is kept in the project's history); MAGT and ALT are computed at the new depths.</p>
+<p class="co check"><strong>check:</strong> The tile's sensor count and depth range, and <strong>Sensor depths</strong> in the checklist under <strong>What was read</strong>.</p>
+</section>
+<section class="task">
+<h2>3. Add a new download</h2>
+<p class="co when"><strong>when:</strong> After a field visit, with new logger files.</p>
+<ol>
+<li>Copy the files into a data folder, each logger's file with its export.</li>
+<li>Press <strong>Run pipeline</strong> (Standard) or <strong>Read the data</strong> (Simple).</li>
+</ol>
+<p class="co result"><strong>result:</strong> Only loggers whose files or set-up changed are read again; a logger's downloads are joined into one record.</p>
+<p class="co check"><strong>check:</strong> <strong>Bring in files</strong> lists each file with its status.</p>
+</section>
+<section class="task">
+<h2>4. Read a download that needs an export</h2>
+<p class="co when"><strong>when:</strong> <strong>Bring in files</strong> shows a bundle as <em>needs export</em>: a <code>.f2b</code> or <code>.hobo</code> with no readable export beside it.</p>
+<ol>
+<li>Open the file in FG2-Shell (GeoPrecision) or HOBOware Pro's <strong>Bulk Export</strong> (Onset) and write the CSV into the same folder.</li>
+<li>Press <strong>Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The bundle is read from its export. A Campbell table that is not TOA5 must be converted with CardConvert first.</p>
+</section>
+<section class="task">
+<h2>5. Give a string a site, dates or depths</h2>
+<p class="co when"><strong>when:</strong> A string has no site, is at the wrong site, or moved during the record.</p>
+<ol>
+<li><strong>Loggers, sensors and depths</strong> (2 Organize): each sensor's site, depth, start and end.</li>
+<li>Double-click a cell to change it, then <strong>Save changes</strong> and <strong>Run pipeline</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The string's records are given to the site for those dates. A match by dates is assigned on its own; anything else is a suggestion on <strong>Needs you</strong>.</p>
+<p class="co check"><strong>check:</strong> <strong>Sites: rename, what shows, landcover</strong> lists each site with its strings.</p>
+</section>
+<section class="task">
+<h2>6. Decide what the run found</h2>
+<p class="co when"><strong>when:</strong> <strong>Needs you</strong> shows a count.</p>
+<ol>
+<li><strong>Needs you</strong> (2 Organize): each line is grouped by site and says what to do: <strong>decide</strong> a flag (keep, remove or note), <strong>fix in ovid</strong> a set-up change, <strong>raw data</strong> a problem in the files, or <strong>add a file</strong> that may exist.</li>
+<li>Use the line's button, or follow its link to the page that settles it.</li>
+</ol>
+<p class="co result"><strong>result:</strong> A kept flag stays in the data as a flag. A removal becomes a row in Corrections over a period.</p>
+</section>
+<section class="task">
+<h2>7. Rename a site or hide it</h2>
+<ol>
+<li><strong>Sites: rename, what shows, landcover</strong> (2 Organize): rename a site once and it is renamed in every set-up table, with a preview and <strong>Undo</strong>.</li>
+<li><strong>What shows</strong> chooses which sites appear on the strip, the overview and Needs you; a hidden site is still processed.</li>
+</ol>
+</section>
+<section class="task">
+<h2>8. Set the time zone of files that state none</h2>
+<p class="co when"><strong>when:</strong> Some files that state no time zone were logged in a different zone from the one given at the first run.</p>
+<ol>
+<li><strong>Clocks</strong> (3 Correct): the files and the zone each was read in.</li>
+<li>In the <strong>Time zones</strong> table, <strong>Add row</strong> with the serial, model, file pattern or dates, and the offset from UTC; <strong>Save changes</strong>, then <strong>Run pipeline</strong>.</li>
+</ol>
+<p class="co check"><strong>check:</strong> The site plot has no whole-hour step at the download.</p>
+</section>
+<section class="task">
+<h2>9. Fix a logger clock</h2>
+<p class="co when"><strong>when:</strong> A logger's clock was wrong by a known amount, or reset.</p>
+<ol>
+<li><strong>Clocks</strong> shows <strong>Clock corrections</strong>; it changes data values, so it is edited by hand in the <strong>Workbench</strong> (the link under it, or the switch at the top right).</li>
+<li>In the Workbench, add a row with the serial, the start and end (blank = all of its record) and <code>shift_minutes</code>; save, then <strong>Run</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The readings are moved in time; each shifted record is in the audit trail. Without a known offset, the records after a reset stay out.</p>
+</section>
+<section class="task">
+<h2>10. Remove a stretch of data</h2>
+<p class="co when"><strong>when:</strong> A sensor was exposed, frost-heaved, or logging before it was in the ground.</p>
+<ol>
+<li>Switch to <strong>Workbench</strong>. In the tree, pick the site.</li>
+<li>Shift + drag across the chart to select the stretch; the inspector shows its count, mean, minimum, maximum and how many are already removed or flagged.</li>
+<li><strong>Remove</strong>, <strong>Flag</strong> or <strong>Restore</strong>, with a reason and your initials. Then <strong>Run</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> A row is added to Corrections over a period. The old values stay in the audit trail; raw files are never changed.</p>
+</section>
+<section class="task">
+<h2>11. Change a quality limit</h2>
+<p class="co when"><strong>when:</strong> A limit removes good readings, or lets bad ones through.</p>
+<ol>
+<li><strong>Quality rules</strong> (3 Correct) shows the rules; they are edited by hand in the <strong>Workbench</strong>.</li>
+<li>In the Workbench, change <strong>min</strong>, <strong>max</strong>, <strong>max_spike</strong> or <strong>max_flat_hours</strong>, and the <strong>action</strong> (remove or flag); save, then <strong>Run</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Each removal or flag carries the rule's ID. The seeded limits are ovid defaults with no published source (reference guide, section 17): check them against your sensors.</p>
+</section>
+<section class="task">
+<h2>12. Switch an automatic correction off</h2>
+<ol>
+<li><strong>Automatic corrections</strong> (3 Correct) lists everything a run changes on its own, each with a switch.</li>
+<li>Turn it off, then <strong>Run pipeline</strong>.</li>
+</ol>
+<p class="co check"><strong>check:</strong> The <strong>Audit trail</strong> (More) no longer lists that correction.</p>
+</section>
+<section class="task">
+<h2>13. Look at a site over time</h2>
+<ol>
+<li><strong>Plot and explore</strong> (More): pick the site and the depths. The view bar sets half-hourly, hourly, daily, monthly or annual values.</li>
+<li>Drag left to right zooms in, right to left zooms out; Shift + drag selects a stretch; double-click shows the whole record. To remove a stretch, use the Workbench (task 10).</li>
+<li><strong>Compare sites</strong> (More) shows the between-site check: a site that does not follow the others.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Nothing changes in the project.</p>
+</section>
+<section class="task">
+<h2>14. Export data and reports</h2>
+<ol>
+<li><strong>Report</strong> (4 Report): pick the sites and the format (HTML, PDF or both).</li>
+<li>In Simple, <strong>Export</strong> gives the one-page field check report and the daily temperatures per site.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Every run also writes <code>output/report.html</code>. Exports carry WMO quality codes and a README of the methods and their sources.</p>
+</section>
+<section class="task">
+<h2>15. Report a problem</h2>
+<p class="co when"><strong>when:</strong> A page shows a notice with a reference (E- and six characters), or a run stops.</p>
+<ol>
+<li>Press the life-ring button on the top bar: it downloads the troubleshooting zip (versions, logs, problems and the set-up; no raw data).</li>
+<li>Send it with the reference.</li>
+</ol>
+<p>The GT reference guide's Troubleshooting section lists the common messages and what to do.</p>
+</section>
+<p class="foot">ovid GT. For what GT does to the data and why, see the <a href="GT_reference_guide.html">GT reference guide</a>.</p>
+</main></body>
+</html>

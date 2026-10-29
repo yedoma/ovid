@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid GT quick start</title>
+<style>
+
+:root{color-scheme:dark;--bg:#292727;--fg:#D8CFC4;--muted:#B7AAA3;--rule:#5A5050;--panel:#353232;--code:#1F1D1D;--accent:#E36A5B;--red:#E36A5B;--green:#65AA88;--yellow:#D1B078;--blue:#7AA7CC;--purple:#C58F9D;--cyan:#45A39E;--grey:#A3A187}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:0 0 4px;color:var(--fg)}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--yellow);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+@media print{html,body{background:var(--bg)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-size:10.5pt}main{max-width:none;padding:14mm 14mm}h2,h3{break-after:avoid}nav{break-after:page}.ex,.f,figure,tr{break-inside:avoid}table{display:table;font-size:9pt}.f{white-space:pre-wrap}}
+@page{size:A4;margin:0}
+
+
+section.task{border:1px solid var(--rule);border-radius:10px;padding:4px 22px 14px;margin:26px 0;background:var(--panel)}
+section.task h2{border-top:0;margin:14px 0 10px;padding:0 0 8px;border-bottom:1px solid var(--rule)}
+figure{margin:14px 0;padding:8px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;break-inside:avoid;page-break-inside:avoid}
+figure img{display:block;max-width:100%;height:auto;border-radius:4px}
+figcaption{font-size:13px;color:var(--muted);margin:6px 2px 0}
+p.co{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0;background:rgba(255,255,255,.03)}
+p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--blue)} p.co.note{border-left-color:var(--yellow,var(--amber))}
+.foot{margin-top:32px;font-size:12.5px;color:var(--muted)}
+@media print{section.task{break-inside:auto;border:0;background:none;padding:0;margin:0 0 8mm}section.task h2{break-after:avoid}figure,p.co,li{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid GT quick start</h1>
+<p>Ground temperature strings (RBR, GeoPrecision, HOBO, EM50 and Campbell loggers), from raw downloads to daily temperatures at each depth, MAGT, thaw depth and active-layer thickness for each site.</p>
+
+<section class="task">
+<h2>Before you start</h2>
+<ul>
+<li><strong>Raw files.</strong> Put the logger downloads in a data folder, in any layout (<code>rbr/2024</code>, <code>geoprecision/2024</code> … or all in one folder). Keep each logger's own file and its export together: an RBR <code>.hex</code> with its Ruskin <code>.txt</code>, a GeoPrecision <code>.f2b</code> with its FG2-Shell <code>.csv</code>, a <code>.hobo</code> with its HOBOware <code>.csv</code>. RBR <code>.hex</code> files are read directly; the others are read from their export. Raw files are never changed.</li>
+<li><strong>Optional.</strong> A registry workbook (a sheet with Name, Type and SN columns), borehole metadata workbooks and field notes in a metadata folder, or a deployment sheet in the project's <code>config/</code> folder with each string's site and sensor depths.</li>
+</ul>
+<p>Open the app with <strong>Open GT (Mac).command</strong> (Windows: <strong>Ovid_GT.bat</strong>). The figures use the app's test project (four constructed sites, Pit A, Pit B, Pit D and Borehole C), not field data.</p>
+</section>
+<section class="task">
+<h2>The Simple view</h2>
+<p>For someone new to the data, or a field check: four steps in one column, and nothing that changes a data value. A new install opens in Simple; the switch at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) moves between the three views of the same project, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address.</p>
+<figure><img src="img/guide/gt_simple_view.png" alt="Simple view, step 2 View: a tile per site and one plot" style="width:100%"><figcaption>Simple view, step 2 View: a tile per site and one plot</figcaption></figure>
+<ul>
+<li><strong>Import</strong>: the data folders and the project folder, then <strong>Read the data</strong>. The first read asks the time zone of files that state none. <strong>What was read</strong> lists the files, strings, sensors and sites, and a checklist: downloads read, clocks fixed, every string has a site, site names, sensor depths and places.</li>
+<li><strong>View</strong>: one tile per site (sensors and their depth range, last record, MAGT at the deepest sensor, ALT of the last year; amber or red when it needs a look, with a link to the Standard page that fixes it). The buttons above the tiles show all sites, those that need a look, those not named, or those with assumed depths. The plot shows a site <strong>Over time</strong> or as a <strong>Profile by depth</strong>.</li>
+<li><strong>Edit</strong>: sensor depths, site names, land cover and grouping (below).</li>
+<li><strong>Export</strong>: the field check report (one page, HTML) and the daily temperatures (one CSV per site, with a README) or the plots, each as a .zip.</li>
+</ul>
+</section>
+<section class="task">
+<h2>Sensor depths in Simple</h2>
+<figure><img src="img/guide/gt_simple_edit.png" alt="Simple view, step 3 Edit: the sensor depths of one site" style="width:100%"><figcaption>Simple view, step 3 Edit: the sensor depths of one site</figcaption></figure>
+<ol>
+<li>Pick the site under <strong>Sensor depths</strong>. Each sensor (T1, T2 …) has its depth in metres below the surface, with where it came from.</li>
+<li>Type a depth, or add <strong>+</strong> for a sensor above the ground, e.g. +0.10. <strong>Fill</strong> with <strong>Even steps</strong>, <strong>Paste a list</strong>, copy from another site, or use the model's template where there is one.</li>
+<li><strong>Add to changes</strong>. The list of changes below waits until <strong>Save</strong> (with <strong>Undo</strong> and a change log); the next <strong>Read the data</strong> uses the new depths.</li>
+</ol>
+<p>Depths change MAGT and ALT. The plot beside the list shows the sensors as typed (a square above the ground, red for a depth to fix) and the mean temperature at each depth so far. Below the depths, rename a site, give it a place or a land cover, or drag a string onto another site. Data values, quality rules and corrections are not changed here.</p>
+</section>
+<section class="task">
+<h2>The Standard view</h2>
+<figure><img src="img/guide/gt_standard.png" alt="Standard view: the contents on the right and the Project page" style="width:100%"><figcaption>Standard view: the contents on the right and the Project page</figcaption></figure>
+<p>The contents on the right list the steps in working order: <strong>1 Bring in</strong> (Project, Bring in files), <strong>2 Organize</strong> (Loggers, sensors and depths; Needs you; Sites: rename, what shows, landcover), <strong>3 Correct</strong> (Clocks, Quality rules, Automatic corrections) and <strong>4 Report</strong> (Site results, Thaw depth and summaries, Report). <strong>More</strong> holds Overview, Plot and explore, Compare sites, Soil moisture and EC, Site details, Sensor health, Audit trail, Configuration, Set-up check and Settings. Each step shows its state under its name.</p>
+<p>The top bar has the project, the run state, the corrections the last run applied, <strong>Run pipeline</strong>, the Explanations switch and the view switch. <strong>This project</strong> at the top of a page counts the files, loggers, sites and records, and lists the data gaps.</p>
+</section>
+<section class="task">
+<h2>The first run</h2>
+<ol>
+<li><strong>1 Project:</strong> set the data folders, the metadata folder (optional) and the project folder; <strong>Browse…</strong> picks a folder. The line under each says what was found.</li>
+<li>Run the <strong>Set-up check</strong> (More) and fix anything in red.</li>
+<li>Press <strong>Run pipeline</strong>. Files that state no time zone ask for one; the answer is kept for later runs. The first run fills <code>sites.csv</code> and <code>sensors.csv</code> from the registry or the deployment sheet.</li>
+<li><strong>Loggers, sensors and depths:</strong> every sensor needs a site and a depth. Depths marked <em>default</em> or <em>template</em> are assumptions: replace them with measured depths.</li>
+<li><strong>Bring in files</strong> lists bundles that <em>need export</em> (a <code>.f2b</code> or <code>.hobo</code> with no readable export): export them with FG2-Shell or HOBOware Pro's Bulk Export, which write a CSV beside each file, then run again.</li>
+<li><strong>Needs you:</strong> decide each finding (keep, remove or note), or follow its link to the page that fixes it.</li>
+</ol>
+<p>Only loggers whose files or set-up changed are read again; the rest are reused from the last run.</p>
+</section>
+<section class="task">
+<h2>What the results mean</h2>
+<ul>
+<li><strong>Daily means</strong> use complete days only (80 % of the expected records unless set in Settings).</li>
+<li><strong>MAGT</strong> is the mean of the daily means over a complete year (90 % of its days), at each depth, for the calendar year and the water year (October to September) (van Everdingen 1998; Romanovsky et al. 2010).</li>
+<li><strong>Thaw depth</strong> each day is the 0 °C crossing, interpolated linearly between the deepest sensor above 0 °C and the first at or below it; <strong>ALT</strong> is the year's deepest thaw depth, given only where a sensor stays at or below 0 °C for two years running (Brown et al. 2000; Nelson and Hinkel 2003; van Everdingen 1998).</li>
+<li><strong>Zero curtain</strong> is a run of at least 3 days within 0.2 °C of 0 °C (Outcalt et al. 1990).</li>
+</ul>
+<p>The GT reference guide gives every formula, its sources and the defaults with no published source.</p>
+</section>
+<section class="task">
+<h2>Report</h2>
+<p><strong>Report</strong> (4 Report) exports the data and reports (HTML, PDF or both) for the sites picked; every run also writes <code>output/report.html</code>. <strong>Site results</strong> and <strong>Thaw depth and summaries</strong> show each site's annual statistics, trumpet curves, thaw depth and ALT.</p>
+</section>
+<p class="foot">ovid GT. For what GT does to the data and why, see the <a href="GT_reference_guide.html">GT reference guide</a>.</p>
+</main></body>
+</html>

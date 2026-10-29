@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (2026-10-29)**
+- New quick start and how-to guide (docs/GT_quick_start.*, docs/GT_how_to.*: md, html and pdf), built by docs/build_guides.R in
+  the reference guide's colours, with figures from the test project. **Output changes:** none.
+
 **Fixed (side panel, 2026-10-29)**
 - With no run problems and nothing to count, the Needs you notes were a TRUE matrix instead of an empty table: a blank
   Needs you row, and the side panel ("This project") failed with "argument is not interpretable as logical". **Output changes:** none.
