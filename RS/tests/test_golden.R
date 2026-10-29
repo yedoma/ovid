@@ -87,7 +87,9 @@ local({
   d <- golden_diff(ed, r1$out); for (x in utils::head(d, 30)) cat("  ", x, "\n")
   acc <- if (file.exists(file.path(gdir, "accepted.csv"))) fread(file.path(gdir, "accepted.csv"), colClasses = "character") else data.table()
   ok_acc <- nrow(acc) == 1 && identical(acc$expected_md5, golden_md5(ed))
-  if (!ok_acc) cat("  not accepted. Check tests/golden/expected, then Rscript tests/test_golden.R accept \"<your name>\"\n")
+  if (!ok_acc) { cat("  not accepted. Check tests/golden/expected, then Rscript tests/test_golden.R accept \"<your name>\"\n")
+    cat("  accepted md5", acc$expected_md5, "now", golden_md5(ed), "from", length(list.files(ed, recursive = TRUE)), "files:\n")   # which differs, where it differs
+    cat(paste("   ", stringi::stri_sort(list.files(ed, recursive = TRUE), locale = "en"), tools::md5sum(file.path(ed, stringi::stri_sort(list.files(ed, recursive = TRUE), locale = "en")))), sep = "\n") }
   check(!length(d) && ok_acc, "the golden project's run gives the outputs a person checked and accepted")
   unlink(c(r1$out, r2$out, dirname(raw)), recursive = TRUE) })
 

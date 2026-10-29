@@ -356,6 +356,9 @@ one <- im0[!is.na(flight_id) & primary %in% TRUE & source_id == "T7" & !is.na(ti
 fwrite(data.table(pattern = paste0("^", gsub("([.|()\\\\^{}+$*?\\[\\]])", "\\\\\\1", one$rel, perl = TRUE), "$"), action = "ignore", reason = "test"), file.path(proj, "config", "file_rules.csv"))
 r6 <- run_pipeline(list(project_dir = proj), scan = character())
 fa6 <- fread(file.path(proj, "output", "audit", "file_audit.csv"))
+if (!(!one$rel %in% r6$images[source_id == one$source_id, rel] && r6$flights[flight_id == fid, n_images] == n0 - 1L))   # what it found, when the check below fails
+  say("  ignore rule: ", one$rel, " still listed ", one$rel %in% r6$images[source_id == one$source_id, rel], ", images ", n0, " -> ", paste(r6$flights[flight_id == fid, n_images], collapse = " "),
+      ", status ", paste(r6$files[source_id == one$source_id & rel == one$rel, status], collapse = " "))
 check(!one$rel %in% r6$images[source_id == one$source_id, rel] && r6$flights[flight_id == fid, n_images] == n0 - 1L &&
       r6$files[source_id == one$source_id & rel == one$rel, status] == "ignored",
       "an ignore rule added after a scan applies on the next rebuild, without reading the source again")
