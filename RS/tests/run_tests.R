@@ -518,7 +518,7 @@ local({                                                               # the .bb3
                    path = c("/x/plan.mis3", "/x/EP-01_0359.bb3", "/x/EP-01_0359_em.bb3"))
   n0 <- emotion_key_auto(fs[1:2][, format := c("kml", "sensefly_log")], ring, build)
   ok <- emotion_key_auto(fs, ring, build); again <- { got <- NULL; emotion_key_auto(fs, ring, build) }
-  check(!n0 && ok && file.exists(ring) && again && is.null(got) && identical(bb3_ring_path(dirname(dirname(ring))), ring),
+  check(!n0 && ok && file.exists(ring) && again && is.null(got) && identical(normalizePath(bb3_ring_path(dirname(dirname(ring))), "/", FALSE), normalizePath(ring, "/", FALSE)),   # same path, whichever separators (Windows' dirname gives "/")
         "a scan builds the .bb3 key from a source's .mis3 and .bb3 logs when the project has none, into its config folder, and only once")
 })
 local({                                                               # the set-up check of gnss_bases.csv and drone_cameras.csv (R/preflight.R)
