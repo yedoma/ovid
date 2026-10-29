@@ -597,6 +597,8 @@ local({
         "links, file rules, clocks, GNSS bases and calibration options are edited by hand only in the Workbench")
   k <- app$rename_spec(app$RENAMES, "site"); allowed <- unique(c(k$main[1], vapply(c(k$cols, k$lists), `[`, "", 1)))
   check(all(c("sites.csv", "flights.csv", "site_names.csv") %in% allowed), "renaming a site reaches sites.csv, flights.csv and site_names.csv (rename.R)")
+  check(identical(app$sp_rs_corrected(data.table(kind = c("photo set", "flight", "flight"), positioning_status = c(app$CORRECTED_STATES[1], app$CORRECTED_STATES[1], "unknown"))), 1L),
+        "Corrected positions counts flights only, as its denominator does (a corrected photo set gave 1 of 0 flights)")
   check(identical(app$sp_rs_generic(c("100MEDIA", "DCIM", "Camera", "Photos", "Backup", "Scotty", "GooseLake")), c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE)),
         "a camera's, a card's or a backup's folder is not offered as a site (the list is in R/config.R)")
   ps <- file.path(tmp, "simple_p"); dir.create(file.path(ps, "config"), recursive = TRUE); invisible(file.copy(list.files(file.path(proj, "config"), full.names = TRUE), file.path(ps, "config"), recursive = TRUE))

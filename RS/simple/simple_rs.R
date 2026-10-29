@@ -9,6 +9,9 @@
 
 SP_RS_TILES <- 8                                # groups shown before "Show all"
 SP_RS_FOLDER_ITEM <- "site for this folder name"   # the list-of-changes entry that maps a folder name to a site (site_names.csv)
+# Flights (photo sets left out) whose positions are RTK or PPK corrected: counted over the same rows the check divides by
+# (it said "1 of 0 flights" when a photo set was corrected).
+sp_rs_corrected <- function(f) sum(f[kind != "photo set"]$positioning_status %in% CORRECTED_STATES)
 sp_rs_generic <- function(x) grepl(SIMPLE_GENERIC_FOLDERS, trim(as.character(x)), ignore.case = TRUE, perl = TRUE)   # a camera's or a backup's folder (R/config.R)
 
 sp_rs_chr <- function(d, cols) { d <- as.data.table(d); for (v in names(d)) set(d, j = v, value = { x <- as.character(d[[v]]); x[is.na(x)] <- ""; x }); ensure_cols(d, cols) }
@@ -143,7 +146,7 @@ simple_server <- function(input, output, session, std) {
   output$sp_checks <- renderUI({ x <- C(); f <- F(); if (is.null(f)) return(NULL); fa <- file.path(CAT(), "files.csv")
     nfiles <- if (file.exists(fa)) max(0L, length(readLines(fa, warn = FALSE)) - 1L) else NA_integer_
     cp <- sum(sp_rs_num(f$n_copies) > 1, na.rm = TRUE); lk <- sum(f$has_log %in% c(TRUE, "TRUE") | f$has_geotags %in% c(TRUE, "TRUE") | f$has_mrk %in% c(TRUE, "TRUE") | f$has_mission %in% c(TRUE, "TRUE"), na.rm = TRUE)
-    fl <- f[kind != "photo set"]; nos <- sum(!nzchar(f$place)); cor <- sum(f$positioning_status %in% CORRECTED_STATES)
+    fl <- f[kind != "photo set"]; nos <- sum(!nzchar(f$place)); cor <- sp_rs_corrected(f)
     row <- function(lv, what, detail, fix = NULL) div(class = paste("sp-check", paste0("sp-", lv)), span(class = "sp-dot"), tags$b(what), span(class = "sp-dim", detail), div(class = "sp-fill"), fix)
     div(class = "sp-checks",
       row("ok", "Files listed", if (is.na(nfiles)) "—" else sprintf("%s files; %s left unassigned", num(nfiles), num(nrow(x$unassigned)))),

@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (Simple view, 2026-10-29)**
+- Import's "Corrected positions" counted corrected photo sets over the flights only ("1 of 0 flights"); it now counts flights
+  over flights (sp_rs_corrected). **Output changes:** none.
+
 **Added (the Simple view, 2026-10-28)**
 - simple/simple_rs.R: the Simple view (?ui=simple). Import: the sources with a plugged-in dot and their last scan, Scan plugged-in
   drives and add a drive or folder (the Sources page's own scan), and a checklist (files listed, image details read, flights grouped
