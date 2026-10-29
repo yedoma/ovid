@@ -105,6 +105,10 @@ html.d-layout-tabs .d-context{display:none}
 .d-run-st{display:inline-block;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 .d-layout-tabs .d-views a{padding:4px 8px}
 @media (max-width:1360px){.d-run-st{max-width:150px}}
+/* narrow: the stages by number and the Explanations switch without its word (each named in its tooltip), "No unsaved changes"
+   left out (Apply n shows), the run state cut shorter */
+@media (max-width:1180px){.d-stage-btn .d-stg-t{display:none} .d-stage-btn{padding:0 8px} .d-top-right>.d-run-st{min-width:16px}
+  .d-unsaved>.dim{display:none} .d-explain-sw>span{display:none}}
 .d-pg-grp[hidden],.d-strip[hidden],.d-goto-pal[hidden]{display:none!important}
 .d-stages{display:flex;align-self:stretch;align-items:stretch;flex:0 0 auto}
 .d-stage-btn{position:relative;display:flex;align-items:center;gap:7px;padding:0 11px;background:none;border:0;color:var(--fg4);font-size:13px;white-space:nowrap;cursor:pointer}

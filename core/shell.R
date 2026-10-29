@@ -100,8 +100,8 @@ ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL,
     stg <- Filter(function(g) g$n > 0 && !identical(g$head, "More"), grp)
     nm <- function(g, i) if (inherits(g$head, "ovid_stage")) g$head else list(n = i, title = if (is.character(g$head)) g$head else "Pages")
     stages_ui <- tags$nav(class = "d-stages", `aria-label` = "Stages", lapply(seq_along(stg), function(i) { h <- nm(stg[[i]], i)
-      tags$button(type = "button", class = "d-stage-btn", `data-stage` = i, `aria-current` = "false",
-        span(class = "d-stg-k", `data-n` = h$n, h$n), span(h$title), span(class = "d-stg-cnt")) }))
+      tags$button(type = "button", class = "d-stage-btn", `data-stage` = i, `aria-current` = "false", title = h$title,
+        span(class = "d-stg-k", `data-n` = h$n, h$n), span(class = "d-stg-t", h$title), span(class = "d-stg-cnt")) }))
     rail <- tagList(lapply(seq_along(stg), function(i) { h <- nm(stg[[i]], i)
         div(class = "d-pg-grp", `data-stage` = i, `data-name` = h$title, hidden = if (i > 1) NA,
           div(class = "d-rail-sec d-pg-head", span(paste(h$n, "\u00b7", h$title)), span(sprintf("%d pages", stg[[i]]$n))), stg[[i]]$links) }),
@@ -137,7 +137,7 @@ ovid_page <- function(app, pal, ..., status = NULL, actions = NULL, help = NULL,
       if (!is.null(project)) div(class = "d-project", project),
       if (layout == "tabs") stages_ui,
       div(class = "d-context", span(class = "d-crumb d-ctx-page"), uiOutput("d_context", inline = TRUE), context),
-      div(class = "d-top-right", if (layout == "tabs") goto, if (layout == "tabs" && !is.null(status)) span(class = "d-run-st", status) else status, actions, if (layout != "tabs") explain_ui, if (layout != "notebook") views_ui,
+      div(class = "d-top-right", if (layout == "tabs") goto, if (!is.null(status)) span(class = "d-run-st", status), actions, if (layout != "tabs") explain_ui, if (layout != "notebook") views_ui,
         if (layout != "tabs" || is.null(settings)) trouble(),
         if (!is.null(help)) tags$a(class = "d-icon-btn", href = help, target = "_blank", title = "Help: the reference guide", icon("circle-question")),
         if (!is.null(settings)) tags$a(class = "d-icon-btn", href = "#", `data-ovid-go` = settings, title = "Settings", icon("gear")))),

@@ -137,7 +137,14 @@
     $(function(){ if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('ovid-suggest', function(m){
       SUG[m.word ? 'word:' + String(m.word).toLowerCase().replace(/[^a-z0-9 ]/g, '') : 'id:' + m.id + ':' + (m.set || 'typed')] = m.values || []; sugAll(); }); });
   });
+  // the top bar never overflows (shell.css): the corrections chip is cut short first; once cut, it shows its short form, whole
+  function fitBar(){ document.querySelectorAll('.d-applied').forEach(function(c){ var s = c.querySelector(':scope>summary'); if (!s) return;
+    c.classList.remove('d-short'); if (s.scrollWidth > s.clientWidth + 1) c.classList.add('d-short'); }); }
+  var fitT = null; function fitSoon(){ clearTimeout(fitT); fitT = setTimeout(fitBar, 60); }
+  window.addEventListener('resize', fitSoon);
+  $(document).on('shiny:value', function(e){ if (/(^|-)chip$/.test(e.name)) setTimeout(fitBar, 0); });
   document.addEventListener('DOMContentLoaded', function(){
+    var bar = document.querySelector('.d-top'); if (bar && window.MutationObserver) new MutationObserver(fitSoon).observe(bar, { childList: true, subtree: true, characterData: true });
     try { if (localStorage.getItem('ovid-rail-min') === '1') document.body.classList.add('d-rail-min'); } catch(_) {}
     var a = document.querySelector('#nav li.active a, #nav a.active'); if (a) mark(a.getAttribute('data-value'));
   });

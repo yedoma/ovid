@@ -20,6 +20,10 @@ label,.control-label{color:var(--fg4);font-weight:500;font-size:12.5px;margin-bo
 .d-crumb{overflow:hidden;text-overflow:ellipsis} .d-crumb+.d-crumb:before,.d-context .shiny-html-output .d-crumb:before{content:'\203A';color:var(--gray);margin:0 8px}
 .d-ctx-page{color:var(--fg);font-weight:600}
 .d-top-right{margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap}
+/* the bar never overflows: the corrections chip gives way first (cut short, then the short form), then the run state; the view
+   switch, Settings and the other controls keep their size */
+.d-top>*{flex:none} .d-top>.d-context,.d-top>.d-project{flex:0 1 auto;min-width:0} .d-top>.d-top-right{flex:0 1 auto;min-width:0}
+.d-top-right>*{flex:none} .d-top-right>.d-applied-out{flex:0 1000 auto;min-width:44px} .d-top-right>.d-run-st{flex:0 1 auto;min-width:48px}
 .d-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:var(--d-ctl);height:var(--d-ctl);border-radius:var(--d-r);border:0;background:transparent;color:var(--fg4);font-size:15px;cursor:pointer;padding:0}
 .d-icon-btn:hover,.d-icon-btn:focus{background:var(--bg2);color:var(--fg)} .d-icon-btn .fa,.d-icon-btn .fas,.d-icon-btn svg{margin:0}
 

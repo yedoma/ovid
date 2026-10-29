@@ -90,6 +90,9 @@ applied_report <- function(project_dir, scope = "") { a <- applied_read(project_
 
 # ---- the chip in the top bar -----------------------------------------------------------------------------------------------
 APPLIED_CSS <- ".d-applied>summary{border-radius:999px;font-size:12.5px;padding:3px 10px;font-variant-numeric:tabular-nums;background:transparent;border:1px solid var(--bg3);color:var(--fg)}
+.d-applied-out{flex:0 1000 auto;min-width:44px;max-width:100%} .d-applied-out .d-applied{display:block;max-width:100%}
+.d-applied>summary{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;list-style:none} .d-applied>summary::-webkit-details-marker{display:none}
+.d-applied.d-short .w{display:none} .d-top-right>.d-applied-out:has(.d-short){flex:none}   /* cut short: the short form, 9 \u00b7 250 \u00b7 5, whole (shell.js) */
 .d-applied .d-applied-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);display:inline-block}
 .d-applied .sep{color:var(--gray)} .d-applied .fl{color:var(--yellow)}
 .d-applied>.d-pop-body{width:min(380px,90vw);padding:0;font-size:13px}
@@ -102,7 +105,7 @@ APPLIED_CSS <- ".d-applied>summary{border-radius:999px;font-size:12.5px;padding:
 .d-applied li small{display:block;color:var(--fg4)} .d-applied li .n.fl{color:var(--yellow)}
 .d-applied-foot{padding:7px 12px;font-size:12px} .d-applied-foot a{color:var(--acc)}"
 
-applied_ui <- function(id) tagList(tags$style(HTML(APPLIED_CSS)), uiOutput(NS(id, "chip"), inline = TRUE))
+applied_ui <- function(id) tagList(tags$style(HTML(APPLIED_CSS)), uiOutput(NS(id, "chip"), inline = TRUE, class = "d-applied-out"))
 
 # project_dir: a function giving the project folder; seen: a reactive that changes when the output folder does (core shell.R
 # ovid_output_watch()); edit: the tool the "Edit corrections" link opens.
@@ -116,8 +119,10 @@ applied_server <- function(id, project_dir, seen = NULL, edit = NULL) moduleServ
         tags$ul(lapply(seq_len(nrow(d)), function(i) tags$li(span(d$item[i], if (nzchar(d$detail[i] %|% "")) tags$small(d$detail[i])),
           span(class = paste("n", if (d$does[i] == "flagged") "fl"), if (is.na(d$n[i])) d$does[i] else paste(.applied_num(d$n[i]), d$does[i])))))) }
     tags$details(class = "d-pop d-pop-right d-applied",
-      tags$summary(title = "Corrections applied in the last run", span(class = "d-applied-dot"), paste(num("corrections"), "corrections"), span(class = "sep", "·"),
-                   paste(num("removed"), "removed"), span(class = "sep", "·"), span(class = "fl", paste(num("flagged"), "flagged"))),
+      tags$summary(title = sprintf("Corrections applied in the last run: %s corrections, %s removed, %s flagged", num("corrections"), num("removed"), num("flagged")),
+                   span(class = "d-applied-dot"), " ", num("corrections"), span(class = "w", " corrections"), span(class = "sep", " · "),   # .w: the words, left out
+                   num("removed"), span(class = "w", " removed"), span(class = "sep", " · "),                                              # on a narrow bar
+                   span(class = "fl", num("flagged"), span(class = "w", " flagged"))),
       div(class = "d-pop-body",
         div(class = "d-applied-head", tags$b(paste(num("corrections"), "corrections applied")), span(paste("run", when))),
         div(class = "d-applied-line", "Values: ", if (!is.na(tot("values"))) tagList(tags$b(num("values")), " in output · "), tags$b(num("removed")), " removed · ",

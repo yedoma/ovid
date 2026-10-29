@@ -938,6 +938,18 @@ if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(
   check("the page links keep data-ovid-go (the click-through, Go to and links in pages use it)", all(sapply(c("Project", "Explore", "Home"), function(v) grepl(sprintf("d-rail-link[^>]*data-ovid-go=\"%s\"", v), h))))
   check("Go to is on the bar and its box is outside it; the strip waits for the pages that use it", grepl("class=\"d-goto\"", h) && grepl("class=\"d-goto-pal\" hidden", h) &&
         grepl("class=\"d-strip\" hidden data-pages=\"Explore|Home\"", h, fixed = TRUE))
-  check("the Explanations switch and the troubleshooting zip move from the bar to Settings", n("id=\"d_explain\"") == 1 && n("id=\"ovid_troubleshoot\"") == 1 && grepl("d-shell-set", h)) })
+  check("the Explanations switch and the troubleshooting zip move from the bar to Settings", n("id=\"d_explain\"") == 1 && n("id=\"ovid_troubleshoot\"") == 1 && grepl("d-shell-set", h))
+  check("each stage button carries its name as a tooltip (a narrow bar shows the numbers only)", n("class=\"d-stage-btn\"[^>]*title=\"(Set up|Assess)\"") == 2 && n("class=\"d-stg-t\"") == 2) })
+
+cat("the top bar never overflows (shell.css, applied.R, shell.js)\n")
+local({ rd <- function(f) paste(readLines(file.path(CORE_DIR, f), warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  css <- rd("www/shell.css"); js <- rd("www/shell.js"); ap <- rd("applied.R")
+  check("the bar's controls keep their size; the right side may shrink; the corrections chip gives way first, then the run state",
+        grepl(".d-top-right>*{flex:none}", css, fixed = TRUE) && grepl(".d-top>.d-top-right{flex:0 1 auto;min-width:0}", css, fixed = TRUE) &&
+        grepl(".d-top-right>.d-applied-out{flex:0 1000 auto", css, fixed = TRUE) && grepl(".d-top-right>.d-run-st{flex:0 1 auto", css, fixed = TRUE))
+  check("the chip is cut with an ellipsis, then shown in its short form (numbers only), with the full text in its tooltip",
+        grepl("text-overflow:ellipsis", ap, fixed = TRUE) && grepl(".d-applied.d-short .w{display:none}", ap, fixed = TRUE) &&
+        grepl("Corrections applied in the last run: %s corrections, %s removed, %s flagged", ap, fixed = TRUE) &&
+        grepl("class = \"d-applied-out\"", ap, fixed = TRUE) && grepl("function fitBar()", js, fixed = TRUE) && grepl("classList.add('d-short')", js, fixed = TRUE)) })
 
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (top bar, 2026-10-29)**
+- The top bar never overflows (it cut off the view switch and Settings when the corrections chip was long, e.g. CS at 1280 px).
+  The corrections chip gives way first: cut with an ellipsis, then its short form (9 · 250 · 5, measured in shell.js), with the
+  full text in its tooltip; then the run state, now cut short in every layout. Below 1180 px the stages show their numbers
+  and the Explanations switch its switch only (each named in its tooltip), and "No unsaved changes" is left out. The view
+  switch, Run, Settings and the other buttons keep their size. Checked at 1024, 1280 and 1440 px (CS, WLR). **Output changes:** none.
+
 **Added (Simple view: changes an app proposes, 2026-10-28)**
 - simple.R: simple_edit_server returns propose(ops), and ops(): an app adds changes of its own (a rename from a registry, a
   template's depths) to the list of changes, shown, dropped, saved and undone like the user's; proposing one again for the
