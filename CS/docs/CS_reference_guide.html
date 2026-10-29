@@ -76,8 +76,8 @@ code{background:var(--code);color:#d6d8d6;padding:0 4px;border-radius:3px;font-s
 <li>For CR10X files, open <b>CR10X files</b> and give each file a logger id and its Edlog <code>.FSL</code> file, so the columns get names.</li>
 <li>On <b>Stations</b>, give each logger a station name. Split a logger by date if it moved, or set the station to <code>ignore</code> to set the logger aside: its files are then not read at all.</li>
 <li>On <b>Column names</b> (aliases), check that each raw column maps to the common name you want. Unmapped columns keep their raw name.</li>
-<li>Read <b>Clock checks</b>. Add a clock correction (shift or remove) where a logger's clock was wrong, and run again.</li>
-<li>Check <b>Quality rules</b> and <b>Sensor health</b>. Add manual removals for periods you know are bad (a sensor down for repair, a bucket being serviced).</li>
+<li>Read <b>Clock checks</b>. Add a clock correction (shift or remove) in the <b>Workbench</b> where a logger's clock was wrong, and run again.</li>
+<li>Check <b>Quality rules</b> and <b>Sensor health</b>. Add manual removals in the <b>Workbench</b> for periods you know are bad (a sensor down for repair, a bucket being serviced).</li>
 <li>For weighing gauges, check <b>Gauge set-up</b> and enter servicing in the <b>Field log</b>. Then look at the data in <b>Plot and explore</b> and export from <b>Reports and export</b>.</li>
 </ol>
 <p>A run only rebuilds what changed (<code>incremental = TRUE</code>): a logger table whose files, clock corrections and settings are the same as last time is read back from <code>cache/</code>. Use <b>Rescan</b> on the Raw files page to make the app read particular files again.</p>
@@ -855,7 +855,7 @@ own days.</p>
 </table>
 
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
-<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
+<p>The app has three views of the same project, data and edits: <strong>Simple</strong>, a field check in four steps (Import, View, Edit, Export) that changes no data value; the <strong>Standard</strong> view, the stages on the top bar (1 Set up, 2 Assess, 3 Decide, 4 Report), the pages of each listed on the left; and the <strong>Workbench</strong>, a chart over a grid of every value, where every change to the data by hand is made (tables that change data values are shown in Standard and edited here). The switch at the top right moves between them, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address; a new install opens in Simple, and an edit made in one shows in the others at once.</p>
 <h3>Check the data</h3>
 <ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>

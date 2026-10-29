@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs fixes (2026-10-29)**
+- Guides checked against the app: reference guide: three views (Simple first); clock corrections and manual removals in the Workbench; how-to task 9 removes a stretch through Open in Workbench. **Output changes:** none.
+
 **Fixed (side panel, 2026-10-29)**
 - With no run problems and nothing to count, the Needs you notes were a TRUE matrix instead of an empty table: a blank
   Needs you row, and the side panel ("This project") failed with "argument is not interpretable as logical". **Output changes:** none.

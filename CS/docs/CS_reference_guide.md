@@ -56,9 +56,9 @@ with their defaults; change them in the app or at the top of
 7.  On **Column names** (aliases), check that each raw column maps to
     the common name you want. Unmapped columns keep their raw name.
 8.  Read **Clock checks**. Add a clock correction (shift or remove)
-    where a logger's clock was wrong, and run again.
+    in the **Workbench** where a logger's clock was wrong, and run again.
 9.  Check **Quality rules** and **Sensor health**. Add manual removals
-    for periods you know are bad (a sensor down for repair, a bucket
+    in the **Workbench** for periods you know are bad (a sensor down for repair, a bucket
     being serviced).
 10. For weighing gauges, check **Gauge set-up** and enter servicing in
     the **Field log**. Then look at the data in **Plot and explore** and
@@ -966,7 +966,7 @@ continental site). `parameter_stats.csv` marks a parameter
 
 ## Using the app: the set-up flow and the Workbench
 
-The app has two views of the same project, data and edits: the **Standard** view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the **Workbench**, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.
+The app has three views of the same project, data and edits: **Simple**, a field check in four steps (Import, View, Edit, Export) that changes no data value; the **Standard** view, the stages on the top bar (1 Set up, 2 Assess, 3 Decide, 4 Report), the pages of each listed on the left; and the **Workbench**, a chart over a grid of every value, where every change to the data by hand is made (tables that change data values are shown in Standard and edited here). The switch at the top right moves between them, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address; a new install opens in Simple, and an edit made in one shows in the others at once.
 
 ### Check the data
 

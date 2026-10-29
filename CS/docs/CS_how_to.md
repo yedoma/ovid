@@ -140,11 +140,9 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 <figure><img src="img/guide/cs_ht_09.png" alt="Plot and explore: remove a stretch" style="width:100%"></figure>
 
-1. Switch to the **Workbench** (top right): removing values is done there. Its **Plot and explore**: Shift + drag across the stretch (1).
-2. Give a reason and your initials (2), then **Remove values** (3). The row is saved at once.
+1. **Plot and explore** (More pages): Shift + drag across the stretch (1), then **Open in Workbench**: removing values is done there.
+2. In the Workbench the stretch stays selected: **Remove…**, give a reason and your initials, then **Write rows**. To keep the values but mark them, use **Correct a period…** with action flag.
 3. Press **Run**.
-
-In the Workbench: select the stretch, **Remove…**, then **Write rows**. To keep the values but mark them, use **Correct a period…** with action flag.
 
 **Result:** a row in **Corrections over a period**. The values are blanked on the next run; the old values stay in the audit trail. **Restore…** in the Workbench deletes the row.
 
