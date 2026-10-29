@@ -4,7 +4,8 @@ suppressPackageStartupMessages(library(shiny))
 here <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) dirname(dirname(normalizePath(sub("^--file=", "", a[1])))) else getwd() })
 td <- file.path(tempdir(), "app"); proj <- file.path(td, "rs_test", "project")           # the synthetic archive and catalogue
 Sys.setenv(RS_TEST_DIR = td)
-if (system2(file.path(R.home("bin"), "Rscript"), file.path(here, "tests", "run_tests.R"), stdout = FALSE) != 0) stop("tests/run_tests.R failed")
+rt <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), file.path(here, "tests", "run_tests.R"), stdout = TRUE, stderr = TRUE))
+if (!is.null(attr(rt, "status")) && attr(rt, "status") != 0) { cat(grep("FAIL|Error", rt, value = TRUE), utils::tail(rt, 10), sep = "\n"); stop("tests/run_tests.R failed") }   # its FAIL lines, so the log says which
 setwd(here); Sys.setenv(RS_PROJECT_DIR = proj)
 ae <- new.env(); app <- source(file.path(here, "app.R"), local = ae)$value
 ae$SETTINGS_FILE <- file.path(td, "app_settings.json")                                  # the viewer title saved here, not in the app folder
