@@ -21,9 +21,10 @@ jobs:
           r-version: release
           use-public-rspm: true
 
-      # ncdf4 comes as a binary that links to the system NetCDF library, which the runner does not have.
+      # The binaries link to system libraries the runner does not have: NetCDF (ncdf4), Node (V8: libnode.so.109, which
+      # Ubuntu 24.04's libnode-dev provides), curl and libuv; cmake and pandoc are what renv lists for building and the docs.
       - name: Install system libraries
-        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev libnode-dev libcurl4-openssl-dev libuv1-dev cmake pandoc
 
       - name: Cache packages
         uses: actions/cache@v4
