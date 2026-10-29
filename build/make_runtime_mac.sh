@@ -38,7 +38,12 @@ else
   sub=$([ "$ARCH" = arm64 ] && echo sonoma-arm64 || echo big-sur-x86_64)
   pkg="$PKGDIR/R-$RVER-$ARCH.pkg"
   [ -f "$pkg" ] || { echo "Downloading CRAN's R $RVER for $ARCH"; curl -sSfL -o "$pkg" "https://cloud.r-project.org/bin/macosx/$sub/base/R-$RVER-$ARCH.pkg"; }
-  pkgutil --check-signature "$pkg" | grep -q "trusted by the Apple notary service" || { echo "$pkg is not notarized by Apple" >&2; exit 1; }
+  # notarized (pkgutil asks Apple online, spctl reads the stapled ticket); else, where neither can tell (a CI runner), signed
+  # with a valid Developer ID by CRAN's macOS signer (team VZLD955F6P)
+  sig=$(pkgutil --check-signature "$pkg" || true)
+  if grep -q "trusted by the Apple notary service" <<<"$sig" || spctl -a -t install -vv "$pkg" 2>&1 | grep -q "source=Notarized"; then echo "   notarized by Apple"
+  elif grep -q "signed by a developer certificate issued by Apple for distribution" <<<"$sig" && grep -q "Developer ID Installer: .*(VZLD955F6P)" <<<"$sig"; then echo "   signed by CRAN's Developer ID (notarization not checkable here)"
+  else echo "$pkg is neither notarized nor signed by CRAN's Developer ID" >&2; exit 1; fi
   rm -rf "$PKGDIR/x-$ARCH"; pkgutil --expand-full "$pkg" "$PKGDIR/x-$ARCH"
   SRC="$(cd "$PKGDIR/x-$ARCH/R-fw.pkg/Payload/R.framework/Versions/Current/Resources" && pwd -P)"
 fi
