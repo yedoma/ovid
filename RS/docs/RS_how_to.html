@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid RS how-to guide</title>
+<style>
+
+:root{color-scheme:dark;--bg:#282c34;--fg:#bcbfc4;--muted:#999999;--rule:#484c54;--panel:#383c44;--accent:#e5c07b;--blue:#61afe7;--red:#e06c75;--green:#98c379;--amber:#ee9360;--code:#30343c;--purple:#c688cd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:40px 0 8px;padding-top:8px;border-top:2px solid var(--accent)}
+h3{font-size:16.5px;margin:24px 0 6px}
+p,li{max-width:76ch}
+.sub{color:var(--muted);margin:0 0 20px}
+nav ol{columns:2;column-gap:32px;padding-left:20px;margin:0}
+nav{background:var(--panel);padding:12px 16px;border-radius:8px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--rule);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.f{background:var(--code);border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+.ex{border:1px solid var(--rule);border-radius:8px;padding:8px 12px;margin:8px 0 14px}
+.ex b:first-child{color:var(--green)}
+.note{border-left:4px solid var(--amber);padding:6px 12px;background:var(--panel);margin:8px 0}
+code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
+.where{color:var(--muted);font-size:13.5px}
+.chk li{list-style:"☐  "}
+@media print{body{font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}main{max-width:none;padding:0}h2{break-after:avoid}h3{break-after:avoid}nav{break-after:page}.ex,.f,table{break-inside:avoid}}
+@page{size:A4;margin:0}
+@media print{main{padding:14mm 14mm}}
+html{background:var(--bg)}
+
+
+section.task{border:1px solid var(--rule);border-radius:10px;padding:4px 22px 14px;margin:26px 0;background:var(--panel)}
+section.task h2{border-top:0;margin:14px 0 10px;padding:0 0 8px;border-bottom:1px solid var(--rule)}
+figure{margin:14px 0;padding:8px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;break-inside:avoid;page-break-inside:avoid}
+figure img{display:block;max-width:100%;height:auto;border-radius:4px}
+figcaption{font-size:13px;color:var(--muted);margin:6px 2px 0}
+p.co{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0;background:rgba(255,255,255,.03)}
+p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--blue)} p.co.note{border-left-color:var(--yellow,var(--amber))}
+.foot{margin-top:32px;font-size:12.5px;color:var(--muted)}
+@media print{section.task{break-inside:auto;border:0;background:none;padding:0;margin:0 0 8mm}section.task h2{break-after:avoid}figure,p.co,li{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid RS how-to guide</h1>
+<p>One task per section: when to use it, the steps, what changes and how to check it. Page names are those on the left of the Standard view (<strong>Map</strong>, <strong>Timeline</strong>, <strong>Flight</strong>, <strong>Imagery</strong>, <strong>GNSS</strong>, <strong>QA</strong>, <strong>Sources</strong>, <strong>Set-up tables</strong>). For a first project, start with the RS quick start; for what RS does to the files and why, see the RS reference guide.</p>
+
+<section class="task">
+<h2>Contents</h2>
+<p><strong>Simple:</strong> 1. Check the archive after a field season; 2. Give flights their sites</p>
+<p><strong>Archive:</strong> 3. Add a drive or folder; 4. Rescan the sources; 5. Look at a flight; 6. Name a flight and give it a project</p>
+<p><strong>Workbench:</strong> 7. Confirm or reject a file linked to a flight; 8. Set the time zone of a camera; 9. Set a GNSS base or a positioning status</p>
+<p><strong>Review and share:</strong> 10. Work through QA; 11. Stitch GNSS survey points; 12. Send the catalogue to someone without R; 13. Report a problem</p>
+</section>
+<section class="task">
+<h2>The three views</h2>
+<p>The same project, catalogue and edits in three views, switched at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) or with ?ui=simple, ?ui=standard or ?ui=workbench in the address. A new install opens in Simple.</p>
+<figure><img src="img/guide/rs_simple_import.png" alt="Simple view, step 1 Import" style="width:100%"><figcaption>Simple view, step 1 Import</figcaption></figure>
+<ul>
+<li><strong>Simple</strong>: a field check in four steps (Import, View, Edit, Export). Edit gives folders and flights their sites and names; it changes nothing about what a flight is made of.</li>
+<li><strong>Standard</strong>: the map, flight, QA and source pages these tasks use.</li>
+<li><strong>Workbench</strong>: what flights are made of and how files are read. Confirmed and rejected links, file rules, time zones, GNSS bases and calibration are edited here; Standard shows those tables and points to the Workbench.</li>
+</ul>
+</section>
+<section class="task">
+<h2>1. Check the archive after a field season</h2>
+<p class="co when"><strong>when:</strong> New flights are on a drive.</p>
+<ol>
+<li><strong>Simple</strong>, <strong>Import</strong>: <strong>Scan plugged-in drives</strong>. <strong>What was read</strong> gives the counts and the checklist.</li>
+<li><strong>View</strong>: a tile per folder guess, year or site; <strong>Need a look</strong> shows the groups with a check to look at. The footprints card draws the group's flights.</li>
+<li><strong>Export</strong>: <strong>Download the report (HTML)</strong>, with your initials.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Nothing changes in the catalogue; the report records, per site, the flights, dates, sensors, images, corrected positions, ground sample distance, products and checks, with the methods and their sources.</p>
+</section>
+<section class="task">
+<h2>2. Give flights their sites</h2>
+<ol>
+<li><strong>Simple</strong>, <strong>Edit</strong>: under <strong>Folder names → sites</strong>, give each folder name the site it means; camera and backup folders (DCIM, 100MEDIA …) are left out.</li>
+<li><strong>Add to changes</strong>, then <strong>Save</strong>. Drag a single flight onto a site to place it on its own.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Every flight in that folder takes the site at the next rebuild of the catalogue.</p>
+<p class="co check"><strong>check:</strong> <strong>Import</strong>: <strong>Flights with a site</strong>.</p>
+</section>
+<section class="task">
+<h2>3. Add a drive or folder</h2>
+<ol>
+<li><strong>Sources</strong>: <strong>Browse…</strong> to the drive or folder, give it a short name, <strong>Scan folder</strong>. In Simple: <strong>Add a drive or folder</strong> on <strong>Import</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The source is added and scanned; its flights join the catalogue.</p>
+</section>
+<section class="task">
+<h2>4. Rescan the sources</h2>
+<ol>
+<li><strong>Sources</strong> (or <strong>Scan plugged-in drives</strong> in Simple).</li>
+</ol>
+<p class="co result"><strong>result:</strong> Plugged-in sources are read again, only the folders whose files changed; a drive that is not plugged in keeps its last scan.</p>
+</section>
+<section class="task">
+<h2>5. Look at a flight</h2>
+<ol>
+<li><strong>Map</strong>: click a flight on the map or in the table; the flight shows beside the map. <strong>Timeline</strong> lists the flights by date.</li>
+<li><strong>Flight</strong>: its files, images, positioning, footprint and checks.</li>
+</ol>
+</section>
+<section class="task">
+<h2>6. Name a flight and give it a project</h2>
+<ol>
+<li><strong>Flight</strong>: give it a display name, project and site; or in Simple, <strong>Flight details</strong> on <strong>Edit</strong>.</li>
+<li>Everything typed is saved to <code>config/</code> and backed up.</li>
+</ol>
+</section>
+<section class="task">
+<h2>7. Confirm or reject a file linked to a flight</h2>
+<p class="co when"><strong>when:</strong> A log, geotag file or mission was linked to the wrong flight, or a link was missed.</p>
+<ol>
+<li>Links change what a flight is made of, so they are edited in the <strong>Workbench</strong> (the switch at the top right): open <strong>Confirmed and rejected links</strong>.</li>
+<li>Confirm or reject the file for the flight; save, then rebuild the catalogue.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The link is kept or left out at every later scan.</p>
+</section>
+<section class="task">
+<h2>8. Set the time zone of a camera</h2>
+<p class="co when"><strong>when:</strong> Image times are off by whole hours from the logs.</p>
+<ol>
+<li>In the <strong>Workbench</strong>, open <strong>Time zones</strong> and add a row for the camera or folder with its offset from UTC.</li>
+<li>Save and rebuild.</li>
+</ol>
+<p class="co check"><strong>check:</strong> The flight's images and its log line up in time on <strong>Flight</strong>.</p>
+</section>
+<section class="task">
+<h2>9. Set a GNSS base or a positioning status</h2>
+<ol>
+<li>In the <strong>Workbench</strong>, open <strong>GNSS bases</strong> to give a base station's position and height, used for flights corrected after the flight (PPK).</li>
+<li>Save and rebuild.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The flight's positioning status (RTK or PPK corrected, standalone GNSS, unknown) is shown on the map and on <strong>Flight</strong>.</p>
+</section>
+<section class="task">
+<h2>10. Work through QA</h2>
+<ol>
+<li><strong>QA</strong>: the flights with flags (! or ✕) and the files tied to no flight.</li>
+<li>For each, follow the link to the page or table that settles it.</li>
+</ol>
+</section>
+<section class="task">
+<h2>11. Stitch GNSS survey points</h2>
+<ol>
+<li><strong>GNSS</strong>: upload the survey files (Emlid Reach, DJI RTK or Leica exports). They are stitched into one table: exact repeats dropped, a point name reused with other coordinates flagged.</li>
+<li>Points with latitude and longitude show on the map; grid-only points need a UTM zone typed on the page.</li>
+<li><strong>Export stitched points (CSV)</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Coordinates are copied as found; nothing is converted. For the accuracy of a product against checkpoints, RMSE_H = √(RMSE_x² + RMSE_y²), with the checkpoint survey error added in quadrature (ASPRS 2023): see the reference guide.</p>
+</section>
+<section class="task">
+<h2>12. Send the catalogue to someone without R</h2>
+<ol>
+<li><strong>Sources</strong>: <strong>Create viewer</strong>, then <strong>Export viewer (ZIP)</strong>.</li>
+<li>In Simple, <strong>Export</strong> gives the catalogue tables and the footprints as GeoJSON.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The viewer is a folder that opens in a browser, with the map and the flights.</p>
+</section>
+<section class="task">
+<h2>13. Report a problem</h2>
+<ol>
+<li>Press the life-ring button on the top bar: it downloads the troubleshooting zip (versions, logs, problems and the set-up; no raw data).</li>
+<li>Send it with the reference shown in the notice (E- and six characters).</li>
+</ol>
+<p>The RS reference guide's Troubleshooting section lists the common messages and what to do.</p>
+</section>
+<p class="foot">ovid RS. For what RS does to the data and why, see the <a href="RS_reference_guide.html">RS reference guide</a>.</p>
+</main></body>
+</html>

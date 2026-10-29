@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (2026-10-29)**
+- New quick start and how-to guide (docs/RS_quick_start.*, docs/RS_how_to.*: md, html and pdf), built by docs/build_guides.R in
+  the reference guide's colours, with figures from the test archive (map imagery hidden). **Output changes:** none.
+
 **Fixed (Simple view, 2026-10-29)**
 - Import's "Corrected positions" counted corrected photo sets over the flights only ("1 of 0 flights"); it now counts flights
   over flights (sp_rs_corrected). **Output changes:** none.
