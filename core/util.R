@@ -263,6 +263,7 @@ run_workers <- function() {
 }
 par_map <- function(X, FUN, workers = run_workers(), what = "") {
   one <- function(x) tryCatch(FUN(x), error = function(e) e)
+  if (.Platform$OS.type == "windows") workers <- 1L                                       # no forking on Windows, whatever was asked
   if (workers < 2L || length(X) < 2L * workers) return(lapply(X, one))
   out <- vector("list", length(X)); b <- split(seq_along(X), ceiling(seq_along(X) / (4L * workers)))
   for (k in b) { run_tick(max(k), length(X), what)
@@ -317,6 +318,6 @@ ovid_project_dir <- function(x, app = get0("OVID_APP", ifnotfound = "ovid"), rep
   x <- if (length(x) >= 1 && !is.na(x[1])) trim(as.character(x[1])) else ""
   if (!nzchar(x)) return(ovid_default_project(app))
   n <- norm_any(x)
-  if (n %in% c("/", norm_any("~"))) return(ovid_default_project(app))
+  if (n == norm_any("~") || grepl("^([A-Za-z]:)?/$", n)) return(ovid_default_project(app))
   if (!is.null(repo) && startsWith(paste0(n, "/"), paste0(norm_any(repo), "/"))) return(ovid_default_project(app))
   x }
