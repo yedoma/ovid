@@ -886,4 +886,7 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
   ui <- tryCatch(ui_click_through(normalizePath(.app), c(CS_PROJECT_DIR = p16)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad)) })
+local({ library(data.table); src <- paste(readLines(file.path(.app, "pages/folders.R"), warn = FALSE), collapse = "\n")
+  check("Needs you notes with no problems and no counts are an empty table, not a TRUE matrix (it gave a blank row that broke the side panel)",
+        grepl("rbindlist(list(pr, ", src, fixed = TRUE) && !grepl("rbind(pr, ", src, fixed = TRUE) && nrow(rbindlist(list(NULL, NULL), fill = TRUE)) == 0) })
 cat(sprintf("\n%d passed, %d failed\n", RES$pass, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

@@ -39,7 +39,7 @@
     go <- c(ck = "Clock checks", du = "Metadata", pg = "Parameter guide", st = "Stations", al = "Column names", md = "Metadata", fl = "Raw files")
     k <- names(lab)[n[names(lab)] > 0]
     pr <- o$problems; pr <- if (!is.null(pr) && nrow(pr)) data.table(kind = "note", where = as.character(pr$where), what = as.character(pr$problem), detail = "the last run", go = "Metadata", to = "problems")
-    rbind(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k]), to = k), fill = TRUE) })
+    rbindlist(list(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k]), to = k)), fill = TRUE) })   # rbind() of two NULLs gave a TRUE matrix: a blank Needs you row that broke the side panel
   cs_note_go <- function(r) switch(r$to %||% "", problems = md_go("problems"), du = md_go("dups"), md = md_go("gaps"),
     pg = { go("Parameter guide"); updateRadioButtons(session, "pg_show", selected = "out") }, st = { go("Stations"); updateRadioButtons(session, "st_show", selected = "unnamed") }, go(r$go))
   md_go <- function(v) { go("Metadata"); updateRadioButtons(session, "md_view", selected = v) }

@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (side panel, 2026-10-29)**
+- With no run problems and nothing to count, the Needs you notes were a TRUE matrix instead of an empty table: a blank
+  Needs you row, and the side panel ("This project") failed with "argument is not interpretable as logical". **Output changes:** none.
+
 **Changed (Standard view: one bar, pages on the left, 2026-10-28)**
 - The Standard view uses the core tabs layout as approved (option 2): stages on the top bar with the Needs you count on
   Decide, the pages of the stage on the left with their status lines, Go to (Cmd/Ctrl+K) for pages, stations and settings.

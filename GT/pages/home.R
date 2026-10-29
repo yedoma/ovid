@@ -31,7 +31,7 @@
     lab <- c(rf = "downloads that need an export (or cannot be read)", he = "sensors failed or failing", au = "logger sensors whose counts do not reconcile")
     go <- c(rf = "Files", he = "Health", au = "Audit"); k <- names(lab)[n[names(lab)] > 0]
     pr <- o$problems; pr <- if (!is.null(pr) && nrow(pr)) data.table(kind = "note", where = as.character(pr$where), what = as.character(pr$problem), detail = "the last run", go = "Preflight")
-    rbind(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k])), fill = TRUE) })
+    rbindlist(list(pr, if (length(k)) data.table(kind = "note", where = num(n[k]), what = unname(lab[k]), detail = "", go = unname(go[k]))), fill = TRUE) })   # rbind() of two NULLs gave a TRUE matrix: a blank Needs you row that broke the side panel
   home_rows <- reactive({ o <- outs(); req(o); o$ss[order(site), .(site, instrument, landcover, site_group, loggers, depths, `assumed depths` = assumed_depths, from = substr(first, 1, 10), to = substr(last, 1, 10), values, flagged)] })
   output$home_sites <- renderDT(ovid_dt(home_rows(), selection = "single", page = 12))
   observeEvent(input$home_sites_rows_selected, { r <- home_rows()[input$home_sites_rows_selected]; updateSelectInput(session, "ex_site", selected = r$site); go("Explore") })

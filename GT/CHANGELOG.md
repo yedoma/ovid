@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (side panel, 2026-10-29)**
+- With no run problems and nothing to count, the Needs you notes were a TRUE matrix instead of an empty table: a blank
+  Needs you row, and the side panel ("This project") failed with "argument is not interpretable as logical". **Output changes:** none.
+
 **Added (the Simple view, 2026-10-28)**
 - simple/simple_gt.R: the Simple view (?ui=simple; a new install opens in it, an install with settings in app_settings.rds keeps
   Standard). Import: the folders, Read the data and a checklist (downloads read, clocks fixed, every string at a site, site names,
