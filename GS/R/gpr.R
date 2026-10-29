@@ -110,7 +110,7 @@ gpr_scan <- function(dirs) {
 
 # Markers (.mrk): a header line ("HEADER VERSION:100"), then one line per marker: trace number, then two more numbers (30 and 1 in these
 # files; what they are is not given in the manuals read, so they are kept as a and b). REFLEXW reads the first column as the trace number.
-read_mrk <- function(path) {
+read_gpr_mrk <- function(path) {
   L <- trimws(readLines(path, warn = FALSE)); L <- L[grepl("^[0-9]", L)]
   e <- data.table(marker = integer(), trace = integer(), a = numeric(), b = numeric())
   if (!length(L)) return(e)

@@ -184,7 +184,7 @@ read_rbr_xls <- function(path, header_only = FALSE) {
   if (header_only || is.na(hr)) return(list(meta = meta, data = empty_data(), events = empty_events()))
   body <- d[(hr + 1):nrow(d)]; body <- body[!is.na(body[[1]]) & nzchar(body[[1]])]
   tt <- parse_dt(body[[1]], c("%d/%m/%Y %H:%M:%OS", "%Y-%m-%d %H:%M:%OS"))
-  if (all(is.na(tt))) tt <- excel_time(body[[1]])
+  if (all(is.na(tt))) tt <- excel_datetime(body[[1]])
   nch <- ncol(body) - 1L; chans <- sprintf("T%d", seq_len(nch))
   wide <- data.table(TIMESTAMP = tt, ord = seq_along(tt))
   for (k in seq_len(nch)) set(wide, j = chans[k], value = num_cells(body[[k + 1L]]))
@@ -291,7 +291,7 @@ read_em50_xls <- function(path, header_only = FALSE) {
                offset_hours = NA_real_, interval_s = NA_real_, rows = max(0L, nrow(d) - 3L), download = NA)
   if (header_only) return(list(meta = meta))
   body <- d[-(1:3)]; body <- body[!is.na(body[[1]]) & nzchar(body[[1]])]
-  tt <- excel_time(suppressWarnings(as.numeric(body[[1]])))
+  tt <- excel_datetime(suppressWarnings(as.numeric(body[[1]])))
   var <- ifelse(grepl("VWC", unit), "vwc", ifelse(grepl("Temp", unit), "temp", ifelse(grepl("EC", unit), "ec", NA_character_)))
   keep <- which(!is.na(var) & !is.na(port))
   raw <- NULL; ri <- grep("^Unprocessed", sh)[1]

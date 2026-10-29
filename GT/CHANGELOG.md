@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (names, 2026-10-29)**
+- excel_time is now excel_datetime (it returns a date-time; WLR's excel_time returns seconds after midnight). **Output changes:** none.
+
 **Changed (Run, 2026-10-29)**
 - The top bar's Run pipeline button reads Run, as in CS; guides and the Standard figure updated. Reference guide: degree days and n-factors (12b), as in the hub. **Output changes:** none.
 

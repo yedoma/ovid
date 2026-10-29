@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (names, 2026-10-29)**
+- read_mrk is now read_dji_mrk (DJI geotag files; GS reads MALA GPR markers). **Output changes:** none.
+
 **Docs (citations, 2026-10-29)**
 - Reference guide and code comment: sun elevation is within about 4° (Cooper 1969 declination, no equation of time), not about a degree, as the hub's gap 6 says. **Output changes:** none.
 

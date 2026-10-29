@@ -21,7 +21,7 @@ app_palette <- function(scheme = APP_SCHEMES[1]) {
 MI <- app_palette(APP_SCHEME)
 PAL <- MI                                            # console colours (say() in the shared core)
 
-excel_time <- function(n) as.POSIXct(round(as.numeric(n) * 86400), origin = "1899-12-30", tz = "UTC")
+excel_datetime <- function(n) as.POSIXct(round(as.numeric(n) * 86400), origin = "1899-12-30", tz = "UTC")
 
 # Serial numbers: RBR 000123 and the registry's 123 are one logger; GeoPrecision ids (E00001) are kept as letters and digits.
 

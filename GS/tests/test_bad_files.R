@@ -68,7 +68,7 @@ local({
   check(is.data.table(x) && nrow(x) == 3, "GPR lines with damaged files are listed, not a stopped scan")
   check(identical(st[["ZERO"]], "no traces (the header says 0)") && identical(st[["NOHDR"]], "header not read"), "a GPR line with no traces says so; a header with no sample count says 'header not read'")
   check(identical(st[["SHORT"]], "truncated") && x[stem == "SHORT"]$file_traces == 10, "a GPR data file cut to 10 traces and a few bytes is 'truncated', 10 of 223 traces")
-  check(is.null(gpr_distance(read_cor(file.path(gd, "ZERO.rad")), 0)) && !nrow(read_mrk(file.path(gd, "ZERO.rd3"))), "a text file read as GPS fixes or markers gives none")
+  check(is.null(gpr_distance(read_cor(file.path(gd, "ZERO.rad")), 0)) && !nrow(read_gpr_mrk(file.path(gd, "ZERO.rd3"))), "a text file read as GPS fixes or markers gives none")
 
   # coordinates in the wrong system: UTM or swapped latitude/longitude are refused, a GNSS file with no elevation column says what it needs
   check(is.null(parse_latlon("500000 6800000")) && is.null(parse_latlon("-121.3, 61.3")) && identical(parse_latlon("61.3, -121.3"), c(61.3, -121.3)),

@@ -103,7 +103,7 @@ read_source_records <- function(files) {
       r <- tryCatch(fun(f$path[i]), error = function(e) { problem(f$rel[i], conditionMessage(e)); NULL })
       if (!is.null(r)) data.table(rel = f$rel[i], as.data.table(r))
     }), fill = TRUE) }
-  list(mrk = rd("dji_mrk", read_mrk), rpt = rd("dji_rpt", read_rpt), geo = rd("emotion_geoinfo", read_geoinfo), kml = rd("kml", read_kml), p4d = rd("pix4d_project", read_p4d),
+  list(mrk = rd("dji_mrk", read_dji_mrk), rpt = rd("dji_rpt", read_rpt), geo = rd("emotion_geoinfo", read_geoinfo), kml = rd("kml", read_kml), p4d = rd("pix4d_project", read_p4d),
        rinex = rd("rinex", read_rinex, "\\.([0-9]{2}o|obs|rnx)$"))   # observation files only, not navigation
 }
 

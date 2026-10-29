@@ -42,7 +42,7 @@ bm <- gpr_background(mm, "mean"); check(max(abs(rowMeans(bm))) < 1e-8, "backgrou
 bv <- gpr_background(matrix(rep(1:10, each = 6), 6), "moving", 4); check(all(dim(bv) == c(6, 10)), "moving background removal keeps the shape")
 for (nm in names(GPR_PRESETS)) { R <- gpr_process(mm, h, c(GPR_PRESETS[[nm]], list(bp1 = 0.25, bp2 = 1, bp3 = 2, bp4 = 4))); check(all(is.finite(R$m)) && ncol(R$m) == 40, paste("preset runs:", nm)) }
 check(all(abs(GPR_GROUND - 0.3 / sqrt(c(4.5, 15, 59.2, 30.9, 44.4, 1))) < c(2e-3, 2e-3, 2e-3, 2e-3, 2e-3, 1e-9)), "velocities match the permittivities they are given with")
-mk <- read_mrk(file.path(tmp, "other", "DAT_0001.mrk")); check(identical(mk$trace, c(10L, 60L, 150L)) && identical(mk$marker, 1:3), "markers read (header line skipped)")
+mk <- read_gpr_mrk(file.path(tmp, "other", "DAT_0001.mrk")); check(identical(mk$trace, c(10L, 60L, 150L)) && identical(mk$marker, 1:3), "markers read (header line skipped)")
 check(!is.na(x[stem == "DAT_0001"]$mrk) && basename(x[stem == "DAT_0001"]$mrk) == "DAT_0001.mrk", "the .mrk in another folder is matched")
 md <- gpr_marker_distance(mk, 5, 200); check(md[10] == 0 && md[60] == 5 && md[150] == 10 && abs(md[35] - 2.5) < 1e-9 && md[1] < 0 && md[200] > 10, "distance from markers: spacing at each marker, interpolated between, continued beyond")
 check(is.null(gpr_marker_distance(mk[1], 5, 200)) && is.null(gpr_marker_distance(mk, NA, 200)), "no marker distance without two markers and a spacing")

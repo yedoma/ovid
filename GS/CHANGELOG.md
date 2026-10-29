@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (names, 2026-10-29)**
+- read_mrk is now read_gpr_mrk (MALA marker files; RS reads DJI geotag files). **Output changes:** none.
+
 **Docs (2026-10-29)**
 - Reference guide: the reciprocal error model, as in the hub. **Output changes:** none.
 

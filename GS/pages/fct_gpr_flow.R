@@ -56,7 +56,7 @@ gpr_step_summary <- function(step, p, mhz = NA) switch(step,
 
 # A line read from its files (header, traces, GPS, markers); r: one row of gpr_scan().
 gpr_read_line <- function(r) list(r = r, h = read_rad(r$rad), m = read_gpr_data(r$data, r$samples, if (grepl("\\.rd7$", r$data, ignore.case = TRUE)) 4L else 2L),
-  cor = if (!is.na(r$cor)) read_cor(r$cor) else NULL, mrk = if (!is.na(r$mrk)) read_mrk(r$mrk) else NULL)
+  cor = if (!is.na(r$cor)) read_cor(r$cor) else NULL, mrk = if (!is.na(r$mrk)) read_gpr_mrk(r$mrk) else NULL)
 
 # The radargram's distance across, for a line read by gpr_read_line(): mode "distance" (from its GPS, else the header's
 # distance interval), "markers" (the field markers, spacing m apart; gpr_marker_distance()) or "trace". full: the distance of

@@ -128,7 +128,7 @@ drone_why <- function(make, model, xmp, cams) {
 # ---- DJI _Timestamp.MRK -------------------------------------------------------------------------------------------
 # One line per exposure, tab separated: shot, GPS seconds of week, [GPS week], N/E/V offsets (mm), "lat,Lat", "lon,Lon",
 # "height,Ellh", three standard deviations (m) and "flag,Q" (50 fixed, 34 float, 16 single).
-read_mrk <- function(path) {
+read_dji_mrk <- function(path) {
   L <- read_lines_any(path); L <- L[grepl(",Lat", L, fixed = TRUE)]
   g <- function(re) suppressWarnings(as.numeric(ifelse(grepl(re, L), sub(re, "\\1", L), NA)))
   d <- data.table(shot = as.integer(sub("^\\s*([0-9]+).*", "\\1", L)), lat = g(".*\\s(-?[0-9.]+),Lat.*"),
