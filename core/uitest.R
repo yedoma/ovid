@@ -40,6 +40,9 @@ ui_click_through <- function(app_dir, env = character(), settings = list(), sett
     if (!p$is_alive()) stop("the app stopped before it started:\n", paste(utils::tail(log, 20), collapse = "\n"))
     if (difftime(Sys.time(), t0, units = "secs") > 3 * timeout) stop("the app did not start within ", 3 * timeout, " s"); Sys.sleep(0.5) }
   op <- options(chromote.timeout = max(60, getOption("chromote.timeout", 10)))   # Chrome itself may take a while to start on a busy computer
+  # Maps draw with WebGL; a computer with no usable graphics chip (a cloud test machine) gets Chrome's own software WebGL
+  # instead of a "Failed to initialize WebGL" error. Set once, before the first browser starts.
+  if (!chromote::has_default_chromote_object()) chromote::set_chrome_args(unique(c(chromote::default_chrome_args(), "--use-angle=swiftshader", "--enable-unsafe-swiftshader")))
   # safe: test tool; closing a browser already closed
   b <- own_draw(chromote::ChromoteSession$new(width = 1400, height = 900)); options(op); on.exit(try(b$close(), silent = TRUE), add = TRUE)
   js_err <- character(); b$Runtime$enable()

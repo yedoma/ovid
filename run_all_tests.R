@@ -59,7 +59,8 @@ suites[[length(suites) + 1]] <- suite("core simple", repo, "core/tests/test_simp
 # own file reading (core util.R par_map) then gets a share of the cores, so the suites do not crowd each other out.
 cores <- max(1L, parallel::detectCores(logical = FALSE) - 1L)
 jobs <- if ("--one" %in% flags || .Platform$OS.type == "windows") 1L else min(cores, length(suites))
-child_env <- c(paste0("OVID_WORKERS=", max(1L, cores %/% jobs)))
+# Set here for every suite (each inherits it): system2(env =) puts "NAME=value" before the command, which Windows cannot run.
+Sys.setenv(OVID_WORKERS = max(1L, cores %/% jobs))
 
 # The "N passed, M failed" line most suites print last; NA where a suite only prints its own wording.
 counts <- function(lines) {
@@ -78,7 +79,7 @@ run_one <- function(s) {
   # folder here never affects the suites running beside it.
   setwd(s$dir)
   status <- system2(rscript, c(shQuote(file.path(s$dir, s$script)), s$arg),
-                    stdout = log_file, stderr = log_file, env = child_env)
+                    stdout = log_file, stderr = log_file)
   secs <- round(as.numeric(difftime(Sys.time(), started, units = "secs")))
   n <- counts(readLines(log_file, warn = FALSE))
   ok <- identical(as.integer(status), 0L)
