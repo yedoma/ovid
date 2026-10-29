@@ -15,6 +15,6 @@
     ovid_dt(data.table(Table = p$table, Level = unname(lab[p$level]), Row = p$row, Problem = p$problem, `How to fix it` = p$fix), selection = "none", page = 25, escape = FALSE) })
   output$pf_dl <- downloadHandler(filename = function() paste0("setup_check_", Sys.Date(), ".csv"), content = function(f) fwrite(pf(), f))
   output$ver <- renderUI({ o <- outs(); m <- if (is.null(o)) data.table() else o$manifest_run; g <- function(k) if (nrow(m) && k %in% m$key) m[key == k, value][1] else ""
-    p(class = "dim", style = "margin-top:18px", "Ovid Core // CS, pipeline version ", PIPELINE_VERSION, if (nzchar(g("run_id"))) tagList(". Last run ", tags$b(g("run_id")), " with version ", g("pipeline_version"), ", set-up fingerprint ", code(g("config_hash")), "."),
+    p(class = "dim", style = "margin-top:18px", "ovid // CS, pipeline version ", PIPELINE_VERSION, if (nzchar(g("run_id"))) tagList(". Last run ", tags$b(g("run_id")), " with version ", g("pipeline_version"), ", set-up fingerprint ", code(g("config_hash")), "."),
       if (nzchar(g("pipeline_version")) && g("pipeline_version") != PIPELINE_VERSION) span(class = "warnline", " The output was made with a different version; run the pipeline to refresh it.")) })
 

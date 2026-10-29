@@ -45,7 +45,7 @@ std_pages <- function(sources = TRUE) list(
 
     "View",
     ovid_tool("Plot and explore", value = "Explore", icon = "chart-area",
-      page_head("Plot and explore", "One site at a time. Every view reads the same cleaned record. On Over time (every depth together, or one panel per depth with the flagged and removed points), drag across the plot to select a stretch (drag up a panel's value axis to narrow it to a band of temperatures); the bar above it zooms in, removes or flags the points, removes a depth or every depth in the period, or trims the start or end of the record."),
+      page_head("Plot and explore", "One site at a time. Every view reads the same cleaned record. On Over time (every depth together, or one panel per depth with the flagged and removed points), Shift + drag across the plot to select a stretch (drag up a panel's value axis to narrow it to a band of temperatures); the bar above it zooms in or opens the stretch in the Workbench, where the points are removed or flagged, a depth or every depth in the period removed, or the start or end of the record trimmed."),
       ovid_controls(
         selectInput("ex_site", "Site", choices = NULL, width = "100%"),
         suppressWarnings(dateRangeInput("ex_dates", "Period", start = NA, end = NA, width = "100%")),
@@ -220,7 +220,7 @@ std_pages <- function(sources = TRUE) list(
                                      code("max_spike"), ": the smallest jump that counts as a spike. ", code("max_flat_hours"), " with ", code("flat_exempt_band"), ": stuck readings, except near 0 \u00b0C. ", code("action"), ": remove or flag."), editUI("qc")),
         tabPanel("Corrections over a period", period_help(), p(class = "dim", "Rows that remove or flag are applied with the quality rules; ", code("parameter"), " may also be a variable (temp, vwc, ec). ",
           code("serial"), ": with a site as target, only that logger there; ", code("sensor"), " and ", code("depth_m"), ": blank means all (several with |); ", code("min_value"), " and ", code("max_value"),
-          " limit a removal to values inside that band. Easiest way to add one: drag across a plot on Plot and explore."), editUI("period")),
+          " limit a removal to values inside that band. Easiest way to add one: select the stretch on a plot in the Workbench and remove it there."), editUI("period")),
         tabPanel("Campbell columns", p(class = "dim", "Which columns of a Campbell TOA5 table are taken, as regular expressions. ", code("variable"), ": temp, vwc, ec or skip."), editUI("campbell")),
         tabPanel("Air temperature", p(class = "dim", "Optional: air temperature for the n-factors (Summaries, D), when a site has no sensor above the ground. Any CSV with a time and a temperature column, a Campbell station's export for instance. ", code("site"), ": a site, or * for every site; ", code("time_column"), " blank: found by name (TIMESTAMP, datetime, date); ", code("value_column"), ": the air temperature column."), editUI("air")),
         tabPanel("Ground-surface changes", p(class = "dim", "Optional: how far the ground surface has gone down since the sensors were installed (subsidence; negative for heave), from re-surveys or DEM differencing. ", code("date"), " of the survey, ", code("surface_change_m"), " in metres. Interpolated between surveys and held after the last; give a row of 0 at the installation date for a change that builds up from there. Sensor depths stay as installed; the active layer is also given from the surface of the day (Summaries, B)."), editUI("surface")))),

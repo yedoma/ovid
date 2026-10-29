@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (hints, 2026-10-29)**
+- Plot and explore says Shift + drag selects a stretch and the Workbench removes it (it said the bar removes it). **Output changes:** none.
+
 **Docs fixes (2026-10-29)**
 - Guides checked against the app: reference guide: three views (Simple first). **Output changes:** none.
 

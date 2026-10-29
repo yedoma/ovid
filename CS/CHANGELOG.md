@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (hints and names, 2026-10-29)**
+- Flags help says removals are made in the Workbench; ovid lowercase in the Set-up check and the viewer bundle README; Next time names Run. **Output changes:** none.
+
 **Docs fixes (2026-10-29)**
 - Guides checked against the app: reference guide: three views (Simple first); clock corrections and manual removals in the Workbench; how-to task 9 removes a stretch through Open in Workbench. **Output changes:** none.
 

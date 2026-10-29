@@ -47,7 +47,7 @@ std_pages <- function(sources = TRUE) list(
       h4("What each logger covers"),
       div(class = "scrollbox", plotOutput("timeline", height = "auto")),
       if (!VIEWER) fluidRow(
-        column(6, div(class = "d-cardx", h3("Next time"), p("Put the new files from the field into one of the raw folders and press ", tags$b("Run pipeline"), ". Only new and changed files are read; everything set up here is used again."),
+        column(6, div(class = "d-cardx", h3("Next time"), p("Put the new files from the field into one of the raw folders and press ", tags$b("Run"), ". Only new and changed files are read; everything set up here is used again."),
           tags$a(href = "#", `data-ovid-go` = "Raw files", "Bring in new files \u203a"))),
         column(6, div(class = "d-cardx", h3("Recent changes"), uiOutput("saved_hist")))),
       if (!VIEWER && sources) p(class = "dim", "The data folders are on ", tags$a(href = "#", `data-ovid-go` = "Project", "1 Project"), "."),

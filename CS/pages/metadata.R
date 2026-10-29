@@ -40,7 +40,7 @@
       tables = "One row per logger table after stitching. Complete % compares the records present with the number expected from the interval over the whole period.",
       gaps = "Periods with no records, longest first.",
       runs = "Every pipeline run on this project, newest first: when, by whom, with which version, and a fingerprint of the set-up tables (config hash). Two runs with the same version, files and config hash give the same output. The full record of the last run, including a fingerprint of each table, is in output/audit/run_manifest.csv.",
-      flags = "Values that failed a check but were kept: stuck sensors, sensors that disagree with each other, sunlight at night, days unlike the other stations. They are marked on the Explore plots and get a flag column in exports. To remove them instead, set the rule's action to remove under Quality rules, or drag across the plot.",
+      flags = "Values that failed a check but were kept: stuck sensors, sensors that disagree with each other, sunlight at night, days unlike the other stations. They are marked on the Explore plots and get a flag column in exports. To remove them instead, use the Workbench: set the rule's action to remove under Quality rules, or select the stretch and remove it.",
       dups = "Two station tables whose values match on the same dates: usually the same logger downloaded under two names, or a converted copy kept beside the original. If they are downloads of one logger, give both the same station name on the Stations page so they are stitched into one record; if one is only a copy, leave it out here.",
       problems = "Things that went wrong in the last run without stopping it. A logger table or station listed here was left out."))
   })

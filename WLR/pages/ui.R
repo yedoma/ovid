@@ -43,7 +43,7 @@ std_pages <- function(sources = TRUE) list(
 
     "View",
     ovid_tool("Plot and explore", value = "Explore", icon = "chart-line",
-      page_head("Plot and explore", "One site at a time, for one deployment or every year together; or several sites, or several years of one site, on one axis. On a single site, drag across the plot to select a stretch (drag up a panel's value axis to narrow it to a band of values); the bar above it zooms in, removes the values or the points in the band, moves the deployment start or end, or marks the stretch out of the water."),
+      page_head("Plot and explore", "One site at a time, for one deployment or every year together; or several sites, or several years of one site, on one axis. On a single site, Shift + drag across the plot to select a stretch (drag up a panel's value axis to narrow it to a band of values); the bar above it zooms in or opens the stretch in the Workbench, where its values or the points in the band are removed, the deployment start or end is moved, or the stretch is marked out of the water."),
       tabsetPanel(id = "ex_tab",
         tabPanel("One site",
           ovid_controls(

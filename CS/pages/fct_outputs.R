@@ -28,7 +28,7 @@ make_viewer_bundle <- function(project_dir, dest = file.path(project_dir, "viewe
   if (length(dr)) { dir.create(file.path(dest, "data/output/derived"), showWarnings = FALSE); file.copy(dr, file.path(dest, "data/output/derived")) }
   for (g in file.path(project_dir, "config", c("groups.csv", "parameter_info.csv", "precip_gauges.csv", "station_info.csv", "field_log.csv"))) if (file.exists(g)) file.copy(g, file.path(dest, "data/config"))
   settings_save(file.path(dest, "app_settings.json"), list(viewer = TRUE, project_dir = "data"))
-  writeLines(c("Ovid Core // CS - viewer bundle", paste("Built", format(Sys.time(), "%Y-%m-%d %H:%M")), "",
+  writeLines(c("ovid // CS - viewer bundle", paste("Built", format(Sys.time(), "%Y-%m-%d %H:%M")), "",
     "This folder holds the app and a snapshot of the cleaned data. It opens in viewer mode:",
     "colleagues can browse Metadata, Explore and Audit but cannot change the set-up or run the pipeline.", "",
     "Publish to Posit Connect or shinyapps.io from R:", "    rsconnect::deployApp(\"<this folder>\")", "",
