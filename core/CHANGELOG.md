@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (one lockfile, 2026-10-29)**
+- build/renv.lock is the one lockfile: the launcher (first start, portable copy) and the GitHub tests read it; the old renv.lock at the top is removed (kept in git history). A core test checks it. **Output changes:** none.
+
 **Changed (click-through tests, 2026-10-29)**
 - uitest.R runs the app from a copy of its folder with no saved settings (settings = list() written for it), so a test never reads or changes the folders its user saved; CS and WLR pass their fixture folders. **Output changes:** none.
 

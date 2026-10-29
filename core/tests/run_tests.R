@@ -971,6 +971,10 @@ local({ root <- dirname(CORE_DIR); lock <- file.path(root, "build", "renv.lock")
   used <- setdiff(used, c(rownames(utils::installed.packages(priority = "base")), "writexl", "pkg", "p", "x", "nm"))   # writexl: optional, used when present
   miss <- setdiff(used, pinned)
   if (length(miss)) cat("    not in build/renv.lock:", paste(miss, collapse = ", "), "\n")
-  check("every package the apps and the core use is pinned in build/renv.lock (refresh: Rscript build/make_lockfile.R)", !length(miss)) })
+  check("every package the apps and the core use is pinned in build/renv.lock (refresh: Rscript build/make_lockfile.R)", !length(miss))
+  la <- paste(readLines(file.path(CORE_DIR, "launcher.R"), warn = FALSE), collapse = "\n"); wf <- file.path(root, ".github", "workflows", "tests.yml")
+  check("build/renv.lock is the one lockfile: the launcher and the GitHub tests read it, and there is none at the top",
+        grepl('file.path(dirname(app_dir), "build", "renv.lock")', la, fixed = TRUE) && !file.exists(file.path(root, "renv.lock")) &&
+        (!file.exists(wf) || (grepl('lockfile = "build/renv.lock"', paste(readLines(wf, warn = FALSE), collapse = "\n"), fixed = TRUE)))) })
 
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

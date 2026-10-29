@@ -39,7 +39,7 @@ line as each file is changed, not all at once.
 13. **Errors are handled, not hidden.** In Shiny: `req()` for missing input, `validate(need())` for problems the user
     can fix, `tryCatch` with a notice that says what failed and what to do. A `try()` or `suppressWarnings()` that
     hides a problem needs a comment saying why it is safe.
-14. **Packages come from renv.lock.** Nothing is installed while an app starts.
+14. **Packages come from build/renv.lock.** Nothing is installed while an app starts.
 15. **No data-specific values in code.** They go in the project's set-up tables.
 
 ## Tests and commits

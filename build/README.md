@@ -2,7 +2,8 @@
 
 `renv.lock` pins the R version and the exact version of every package the five ovid apps and the shared core use, with
 everything those packages need, as installed on the Mac the apps are developed on. It is the base for a future bundled R and
-launcher. renv is not activated in the apps: there is no `.Rprofile` or `renv/` library, and the apps load packages as before.
+launcher, and the one lockfile: the launchers (core/launcher.R) install from it on a first start and the tests on GitHub
+(.github/workflows/tests.yml) restore it. renv is not activated in the apps: there is no `.Rprofile` or `renv/` library, and the apps load packages as before.
 
 **Refresh** (after installing or updating a package), from the Ovid_Apps folder:
 

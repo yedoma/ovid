@@ -1,7 +1,7 @@
 # Ovid/launcher.R  --  the shared Windows launcher, sourced by each app's launcher/run_app.R (started by its .bat file).
 # Part of Ovid Core (shared). Keeps every package in the app's own library/ folder, installs what is missing on the
 # first start, before the app starts (from launcher/packages if that folder holds package .zip files, else the versions
-# in renv.lock, else CRAN's current ones), then opens the app in the default browser. Started with "--portable" it instead makes the folder self-contained: R into R-portable/,
+# in build/renv.lock, else CRAN's current ones), then opens the app in the default browser. Started with "--portable" it instead makes the folder self-contained: R into R-portable/,
 # packages into library/, and these shared files into core/.
 #
 # Expects from run_app.R: APP (key, title, bat, pkgs), app_dir, args and CORE_DIR.
@@ -26,7 +26,7 @@ install_missing <- function() {
     install.packages(zips, lib = lib, repos = NULL, type = if (.Platform$OS.type == "windows") "win.binary" else "source", quiet = TRUE)
     need <- missing_pkgs()
   }
-  lock <- c(file.path(app_dir, "renv.lock"), file.path(dirname(app_dir), "renv.lock")); lock <- lock[file.exists(lock)][1]
+  lock <- c(file.path(app_dir, "renv.lock"), file.path(dirname(app_dir), "build", "renv.lock")); lock <- lock[file.exists(lock)][1]   # a portable copy's own, else the bundle's build/renv.lock
   if (length(need) && !is.na(lock)) {        # the versions the apps are tested with (CONTRIBUTING.md 14)
     cat("First start: installing", paste(need, collapse = ", "), "and what they need, as in renv.lock, into library/ (needs the internet, once) ...\n")
     if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", lib = lib)
@@ -59,7 +59,7 @@ if ("--portable" %in% args) {
     unlink(core_dest, recursive = TRUE); dir.create(core_dest)
     if (!all(file.copy(list.files(CORE_DIR, full.names = TRUE), core_dest, recursive = TRUE))) stop("Copying the Ovid Core files failed.")
   }
-  lock <- file.path(dirname(app_dir), "renv.lock")          # the package versions travel with the copy
+  lock <- file.path(dirname(app_dir), "build", "renv.lock")   # the package versions travel with the copy
   if (file.exists(lock)) file.copy(lock, file.path(app_dir, "renv.lock"), overwrite = TRUE)
   # packages that came with R are in R-portable/library; the rest are in library/
   cat("\nDone. This folder now runs on a Windows computer without R installed:\n",
