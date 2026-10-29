@@ -5,6 +5,15 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (launcher, 2026-10-29)**
+- core/launcher_app: the ovid launcher, started by "Open ovid.command" at the top of Ovid_Apps. The selected app on the left
+  (its pixel icon, name, what it does, Open), the five apps as a list on the right; arrows and Enter, Cmd/Ctrl 1-5 (shown on
+  hover); light and dark. Each app runs in its own R process on its own port (processx); opening a running app opens its page
+  again and starts nothing; running apps have Stop; Quit asks whether to stop the apps or leave them running. A failed start
+  says why in one sentence, with Try again, the troubleshooting zip and the log. The first start installs what
+  build/renv.lock lists and this R lacks, with one progress card. Tests: core run_tests (start, already running, stop, failure).
+  The core's code changed, so the next CS run redoes every logger (its code hash covers the core). **Output changes:** none.
+
 **Changed (Run, 2026-10-29)**
 - The empty-page message and the Apply button's tooltip name Run (was Run pipeline). **Output changes:** none.
 

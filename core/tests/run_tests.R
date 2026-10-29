@@ -952,6 +952,33 @@ local({ rd <- function(f) paste(readLines(file.path(CORE_DIR, f), warn = FALSE, 
         grepl("Corrections applied in the last run: %s corrections, %s removed, %s flagged", ap, fixed = TRUE) &&
         grepl("class = \"d-applied-out\"", ap, fixed = TRUE) && grepl("function fitBar()", js, fixed = TRUE) && grepl("classList.add('d-short')", js, fixed = TRUE)) })
 
+cat("the ovid launcher (launcher_app/logic.R)\n")
+local({ source(file.path(CORE_DIR, "launcher_app", "logic.R"), local = TRUE)
+  fake <- function() { alive <- TRUE; spawned <<- spawned + 1L; list(is_alive = function() alive, kill = function() alive <<- FALSE) }
+  spawned <- 0L; spawn <- function(cmd, args, wd, env, log) fake()
+  st <- lr_new(tempdir())
+  check("the five apps are listed in order, each with a name and a line on what it does",
+        identical(st$apps$key, c("CS", "WLR", "GT", "GS", "RS")) && all(nzchar(st$apps$name)) && all(nzchar(st$apps$what)))
+  r1 <- lr_start(st, "GT", 8123L, spawn); r2 <- lr_start(st, "GT", 8124L, spawn)
+  check("starting an app that is already starting or running opens it again and starts nothing", r1 == "started" && r2 == "already" && spawned == 1L &&
+        st$rec$GT$port == 8123L && st$rec$GT$url == "http://127.0.0.1:8123/")
+  lr_poll(st, answers = function(u) TRUE)
+  check("an app whose page answers is running, and is counted as running", st$rec$GT$state == "running" && identical(lr_running(st), "GT"))
+  lr_stop(st, "GT")
+  check("Stop ends its process and marks it stopped; starting it again starts a new process",
+        st$rec$GT$state == "stopped" && !length(lr_running(st)) && lr_start(st, "GT", 8125L, spawn) == "started" && spawned == 2L)
+  log <- tempfile(fileext = ".log"); writeLines(c("Loading required package: shiny", "Error in library(ncdf4) : there is no package called \u2018ncdf4\u2019"), log)
+  st$rec$WLR <- list(state = "starting", proc = list(is_alive = function() FALSE, kill = function() NULL), port = 1L, url = "", log = log, error = "")
+  lr_poll(st, answers = function(u) FALSE)
+  check("an app whose process ends before its page answers has failed, with one plain sentence from its log",
+        st$rec$WLR$state == "failed" && identical(st$rec$WLR$error, "It needs the package ncdf4, which is not installed."))
+  writeLines("Error: cannot open the project folder (not found)", log)
+  check("any other error is shown as its own sentence", identical(lr_reason(log), "Cannot open the project folder (not found)."))
+  cmd <- lr_command(st, "RS", 8200L)
+  check("an app is started from its own folder with the core and <APP>_LOCAL set, on 127.0.0.1 and the port given",
+        endsWith(cmd$wd, "/RS") && grepl("port = 8200L", cmd$args[2], fixed = TRUE) && grepl("127.0.0.1", cmd$args[2], fixed = TRUE) &&
+        identical(unname(cmd$env[["RS_LOCAL"]]), "1") && endsWith(cmd$env[["OVID_CORE"]], "/core")) })
+
 cat("click-through tests read only the test project (uitest.R)\n")
 local({ u <- paste(readLines(file.path(CORE_DIR, "uitest.R"), warn = FALSE), collapse = "\n")
   check("the app runs from a copy of its folder with no saved settings of its own, so the folders its user saved are never read or changed",

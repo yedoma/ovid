@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Added (launcher, 2026-10-29).** "Open ovid.command" opens one launcher window for all five apps (core/launcher_app); the per-app .command files stay for now.
+
 **Changed (launchers, 2026-10-29).** The launcher window and console of every app read "ovid // <APP>" (they read "Ovid Core // <APP>").
 
 **Fixed (top bar, 2026-10-29).** The top bar of every app fits its window down to 1024 px: the corrections chip is cut short, then shown as numbers only, before anything else; the view switch and Settings stay whole.
