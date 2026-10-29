@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid GS how-to guide</title>
+<style>
+
+:root{color-scheme:dark}body{background:#1F1F28;color:#DCD7BA;font:14.5px/1.55 Inter,'Avenir Next','Segoe UI',-apple-system,Helvetica,Arial,sans-serif;max-width:1040px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:26px;font-weight:600;color:#DCD7BA}h1:after{content:'';display:block;width:64px;height:3px;background:#7fb4ca;margin-top:10px}
+h2{font-size:19px;font-weight:600;margin-top:40px;border-bottom:1px solid #363646;padding-bottom:6px}a{color:#7fb4ca}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0}th,td{border-bottom:1px solid #363646;padding:6px 10px;text-align:left;vertical-align:top}th{color:#C8C093}
+code,pre{background:#2A2A37;border-radius:6px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:12.5px}code{padding:1px 5px}pre{padding:12px;overflow:auto}
+img{max-width:100%;border:1px solid #363646;border-radius:8px;margin:6px 0 18px}em{color:#C8C093}
+
+
+:root{--bg:#1F1F28;--fg:#DCD7BA;--muted:#C8C093;--rule:#363646;--panel:#2A2A37;--accent:#957FB8;--green:#98BB6C;--blue:#7E9CD8;--yellow:#E6C384}   /* the reference guide's dark page; GS's accent, oni violet (R/config.R) */
+html{background:var(--bg)} h1:after{background:var(--accent)} a{color:var(--accent)} @page{size:A4;margin:0} @media print{body{padding:14mm 14mm}}
+section.task{border:1px solid var(--rule);border-radius:10px;padding:4px 22px 14px;margin:26px 0;background:var(--panel)}
+section.task h2{border-top:0;margin:14px 0 10px;padding:0 0 8px;border-bottom:1px solid var(--rule)}
+figure{margin:14px 0;padding:8px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;break-inside:avoid;page-break-inside:avoid}
+figure img{display:block;max-width:100%;height:auto;border-radius:4px}
+figcaption{font-size:13px;color:var(--muted);margin:6px 2px 0}
+p.co{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0;background:rgba(255,255,255,.03)}
+p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--blue)} p.co.note{border-left-color:var(--yellow,var(--amber))}
+.foot{margin-top:32px;font-size:12.5px;color:var(--muted)}
+@media print{section.task{break-inside:auto;border:0;background:none;padding:0;margin:0 0 8mm}section.task h2{break-after:avoid}figure,p.co,li{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid GS how-to guide</h1>
+<p>One task per section: when to use it, the steps, what changes and how to check it. Page names are those on the left of the Standard view (<strong>Home</strong>, <strong>Archive</strong>, <strong>Stack</strong>, <strong>Map</strong>, <strong>Survey</strong>, <strong>QC</strong>, <strong>Set-up tables</strong>; on the GPR side, <strong>Map</strong> and <strong>Processing</strong>). For a first project, start with the GS quick start; for what GS does to the data and why, see the GS reference guide.</p>
+
+<section class="task">
+<h2>Contents</h2>
+<p><strong>Simple:</strong> 1. Check the archive after a field season; 2. Name, date and place surveys</p>
+<p><strong>Catalogue:</strong> 3. Add new surveys; 4. Group surveys into a project or a transect; 5. Place a transect on the map</p>
+<p><strong>Survey and QC:</strong> 6. Look at a survey; 7. Try other QC limits; 8. Save a QC profile; 9. Turn an electrode off or flag measurements by hand; 10. Add electrode elevations</p>
+<p><strong>GPR and report:</strong> 11. Look at a GPR line; 12. Export and share the catalogue; 13. Report a problem</p>
+</section>
+<section class="task">
+<h2>The three views</h2>
+<p>The same project, data and edits in three views, switched at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) or with ?ui=simple, ?ui=standard or ?ui=workbench in the address. A new install opens in Simple.</p>
+<figure><img src="img/guide/gs_simple_import.png" alt="Simple view, step 1 Import" style="width:100%"><figcaption>Simple view, step 1 Import</figcaption></figure>
+<ul>
+<li><strong>Simple</strong>: a field check in four steps (Import, View, Edit, Export). Edit names, dates and places surveys and groups them into sites; it changes no data value.</li>
+<li><strong>Standard</strong>: the catalogue, survey, QC and map pages these tasks use.</li>
+<li><strong>Workbench</strong>: every change to what the data say or how they are read. QC profiles, manual flags, electrodes turned off and electrode elevations are edited here; Standard shows those tables and points to the Workbench.</li>
+</ul>
+</section>
+<section class="task">
+<h2>1. Check the archive after a field season</h2>
+<p class="co when"><strong>when:</strong> New survey folders are in the archive.</p>
+<ol>
+<li><strong>Simple</strong>, <strong>Import</strong>: press <strong>Scan</strong>. <strong>What was read</strong> gives the counts and the checklist.</li>
+<li><strong>View</strong>: a tile per folder or site. Amber tiles have surveys with more than 10 % of their measurements flagged; <strong>Need a look</strong> shows only those, and each tile's link opens <strong>QC</strong> in Standard.</li>
+<li><strong>Export</strong>: <strong>Download the report (HTML)</strong>, with your initials.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Nothing changes in the catalogue; the report records the surveys, what needs a look and the methods with their sources.</p>
+</section>
+<section class="task">
+<h2>2. Name, date and place surveys</h2>
+<p class="co when"><strong>when:</strong> Surveys have no site, or no date (files that give none).</p>
+<ol>
+<li><strong>Simple</strong>, <strong>Edit</strong>: <strong>Sites from folders</strong> proposes a site and a date from each folder's name; drop any that are wrong.</li>
+<li>Under <strong>Survey details</strong>, pick a survey and set its name, date, transect and quality; <strong>Add to changes</strong>.</li>
+<li>Drag a survey onto a site, or click a site to rename it or give its place. Then <strong>Save</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The changes go to <code>surveys.csv</code> and <code>sites.csv</code>, the version before kept in the project's history; the data files are never changed.</p>
+</section>
+<section class="task">
+<h2>3. Add new surveys</h2>
+<ol>
+<li>Copy the survey folders into the raw archive.</li>
+<li><strong>Home</strong>: <strong>Scan the archive</strong> (or <strong>Scan</strong> in Simple).</li>
+</ol>
+<p class="co result"><strong>result:</strong> New and changed files are read; everything people entered is kept. Trims, merges, subsets and copies are linked to their original and folded into it.</p>
+<p class="co check"><strong>check:</strong> <strong>Archive</strong> lists the new surveys; unreadable or partial surveys stay in the catalogue with their status.</p>
+</section>
+<section class="task">
+<h2>4. Group surveys into a project or a transect</h2>
+<ol>
+<li><strong>Archive</strong>: filter by year, folder, instrument or quality, or search.</li>
+<li>Select the rows and add them to a project or a transect in one step.</li>
+</ol>
+<p class="co check"><strong>check:</strong> <strong>Stack</strong> shows a project's surveys side by side.</p>
+</section>
+<section class="task">
+<h2>5. Place a transect on the map</h2>
+<ol>
+<li><strong>Map</strong>: on the right, enter the transect's start and end points (decimal degrees, WGS84) and its surveys.</li>
+<li>Coordinates for many transects at once: <strong>Import coordinates (CSV or Excel)…</strong> on <strong>Home</strong>.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The transect is drawn on the map, one layer per survey year. <strong>Export view with legend (PNG)</strong> saves the map as shown.</p>
+</section>
+<section class="task">
+<h2>6. Look at a survey</h2>
+<ol>
+<li>Double-click a survey in <strong>Archive</strong>, or pick it on <strong>Survey</strong>.</li>
+<li>The pseudosection shows apparent resistivity on a log scale; flagged measurements are crosses, one colour per reason, with their counts in the legend. Other tabs: what was read from the files, distributions, contact resistance by electrode, error against current, geometry, and every measurement.</li>
+<li>Set the survey's quality (Good, Usable, Usable with caution, Poor, Unusable, Incomplete) and its reasons on the right.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The quality is set by people and is separate from the measurement flags.</p>
+</section>
+<section class="task">
+<h2>7. Try other QC limits</h2>
+<ol>
+<li><strong>QC</strong>: start from a profile and move any limit; the survey is flagged again at once. Each limit's (i) note says what it measures and where its value comes from.</li>
+<li><strong>Export survey with these limits</strong> writes the data with the flags of the limits shown.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Nothing is saved; the catalogue keeps the project's profile.</p>
+</section>
+<section class="task">
+<h2>8. Save a QC profile</h2>
+<p class="co when"><strong>when:</strong> A set of limits should apply to the project.</p>
+<ol>
+<li>QC profiles change what the data say, so they are saved in the <strong>Workbench</strong> (the switch at the top right).</li>
+<li>In the Workbench, open the QC profiles table, change the limits and save; then scan again.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Each flag carries its rule's ID (Q-01, Q-02 …). The default profile is frozen ground (reference guide, section 5).</p>
+</section>
+<section class="task">
+<h2>9. Turn an electrode off or flag measurements by hand</h2>
+<ol>
+<li>In the <strong>Workbench</strong>, open <strong>Electrodes turned off</strong> or <strong>Manual flags</strong>.</li>
+<li>Add a row with the survey, the electrode or measurement, and the reason; save.</li>
+</ol>
+<p class="co result"><strong>result:</strong> The measurements are flagged, never deleted; a manual flag can be switched off with <code>active</code> = FALSE.</p>
+</section>
+<section class="task">
+<h2>10. Add electrode elevations</h2>
+<ol>
+<li>In the <strong>Workbench</strong>, open <strong>Electrode elevations</strong>, or add a CSV of electrode and elevation (or distance and elevation, interpolated).</li>
+<li>Save, and look at the survey's geometry tab.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Only the z of the electrodes changes; the instrument's apparent resistivity is kept as read.</p>
+</section>
+<section class="task">
+<h2>11. Look at a GPR line</h2>
+<ol>
+<li>Switch to <strong>GPR</strong> (top left in Standard, or beside the view switch in Simple). In Standard, set the GPR folders on <strong>Map</strong> and press <strong>Search again</strong>.</li>
+<li>Pick the day or folder and the line: the map shows its GPS track and the radargram its traces.</li>
+<li><strong>Processing</strong>: the processing flow on the left (ordered steps, each with a switch and its settings, presets, <strong>Undo</strong>, before and after), the velocities and display in the middle, the radargram with picks and field markers.</li>
+</ol>
+<p class="co result"><strong>result:</strong> Flows, picks and markers are saved with the line in the project's set-up; raw files are never written. In Simple, GPR lines are view only.</p>
+</section>
+<section class="task">
+<h2>12. Export and share the catalogue</h2>
+<ol>
+<li><strong>Archive</strong>: <strong>Export catalogue</strong> writes a zip that others can open and browse in GS.</li>
+<li>In Simple, <strong>Export</strong> gives the catalogue report and the tables, data and previews as .zip files.</li>
+</ol>
+</section>
+<section class="task">
+<h2>13. Report a problem</h2>
+<ol>
+<li>Press the life-ring button on the top bar: it downloads the troubleshooting zip (versions, logs, problems and the set-up; no raw data).</li>
+<li>Send it with the reference shown in the notice (E- and six characters).</li>
+</ol>
+<p>The GS reference guide's Troubleshooting section lists the common messages and what to do.</p>
+</section>
+<p class="foot">ovid GS. For what GS does to the data and why, see the <a href="GS_reference_guide.html">GS reference guide</a>.</p>
+</main></body>
+</html>

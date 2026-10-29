@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ovid GS quick start</title>
+<style>
+
+:root{color-scheme:dark}body{background:#1F1F28;color:#DCD7BA;font:14.5px/1.55 Inter,'Avenir Next','Segoe UI',-apple-system,Helvetica,Arial,sans-serif;max-width:1040px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:26px;font-weight:600;color:#DCD7BA}h1:after{content:'';display:block;width:64px;height:3px;background:#7fb4ca;margin-top:10px}
+h2{font-size:19px;font-weight:600;margin-top:40px;border-bottom:1px solid #363646;padding-bottom:6px}a{color:#7fb4ca}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0}th,td{border-bottom:1px solid #363646;padding:6px 10px;text-align:left;vertical-align:top}th{color:#C8C093}
+code,pre{background:#2A2A37;border-radius:6px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:12.5px}code{padding:1px 5px}pre{padding:12px;overflow:auto}
+img{max-width:100%;border:1px solid #363646;border-radius:8px;margin:6px 0 18px}em{color:#C8C093}
+
+
+:root{--bg:#1F1F28;--fg:#DCD7BA;--muted:#C8C093;--rule:#363646;--panel:#2A2A37;--accent:#957FB8;--green:#98BB6C;--blue:#7E9CD8;--yellow:#E6C384}   /* the reference guide's dark page; GS's accent, oni violet (R/config.R) */
+html{background:var(--bg)} h1:after{background:var(--accent)} a{color:var(--accent)} @page{size:A4;margin:0} @media print{body{padding:14mm 14mm}}
+section.task{border:1px solid var(--rule);border-radius:10px;padding:4px 22px 14px;margin:26px 0;background:var(--panel)}
+section.task h2{border-top:0;margin:14px 0 10px;padding:0 0 8px;border-bottom:1px solid var(--rule)}
+figure{margin:14px 0;padding:8px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;break-inside:avoid;page-break-inside:avoid}
+figure img{display:block;max-width:100%;height:auto;border-radius:4px}
+figcaption{font-size:13px;color:var(--muted);margin:6px 2px 0}
+p.co{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0;background:rgba(255,255,255,.03)}
+p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--blue)} p.co.note{border-left-color:var(--yellow,var(--amber))}
+.foot{margin-top:32px;font-size:12.5px;color:var(--muted)}
+@media print{section.task{break-inside:auto;border:0;background:none;padding:0;margin:0 0 8mm}section.task h2{break-after:avoid}figure,p.co,li{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>ovid GS quick start</h1>
+<p>Geophysics surveys: ERT resistivity (AGI SuperSting, IRIS Syscal, EarthImager and Res2DInv sets) and GPR lines (MALA), from a raw archive to a catalogue of every survey with its quality control, pseudosection, map and radargram.</p>
+
+<section class="task">
+<h2>Before you start</h2>
+<ul>
+<li><strong>Raw archive.</strong> One or more folders of survey files, in any layout: an AGI <code>.stg</code> with its <code>.cmd</code> and <code>.crs</code>, IRIS exports, EarthImager trimmed sets, Res2DInv <code>.dat</code>. The archive is read only: raw files are never changed, and quality control only adds flags.</li>
+<li><strong>GPR lines.</strong> MALA <code>.rd3</code> or <code>.rad</code> with their <code>.cor</code> (GPS) and <code>.mrk</code> files, in folders of their own.</li>
+<li><strong>Project folder.</strong> Where the catalogue, metadata and settings are kept; never inside the raw archive.</li>
+</ul>
+<p>Open the app with <strong>Open GS (Mac).command</strong> (Windows: <strong>Ovid_GS.bat</strong>). The figures use the app's test archive (two folders of ERT surveys and one GPR line), not a field campaign.</p>
+</section>
+<section class="task">
+<h2>The Simple view</h2>
+<p>For someone new to the data, or a field check: four steps in one column, and nothing that changes a data value. A new install opens in Simple; the switch at the top (<strong>Simple</strong>, <strong>Standard</strong>, <strong>Workbench</strong>) moves between the three views of the same project, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address. <strong>ERT</strong> and <strong>GPR</strong> beside it switch the side shown.</p>
+<figure><img src="img/guide/gs_simple_view.png" alt="Simple view, step 2 View: ERT surveys by folder, with a preview of each" style="width:100%"><figcaption>Simple view, step 2 View: ERT surveys by folder, with a preview of each</figcaption></figure>
+<ul>
+<li><strong>Import</strong>: the raw ERT archive and the project folder, then <strong>Scan</strong>. <strong>What was read</strong> counts the files, the original surveys and the derived sets (trims, merges, subsets, copies) folded into them, the measurements and the GPR lines, with a checklist: files sorted, ERT data read, originals found, GPR lines complete, surveys with a site and with a date. GPR folders are set on the GPR side of the Standard view.</li>
+<li><strong>View</strong> (ERT): one tile per folder or site, with a preview, the arrays, the date and the median share of flagged measurements; amber when more than 10 % are flagged under the QC profile. <strong>By folder</strong>, <strong>By site</strong>, <strong>Need a look</strong> and <strong>No date</strong> pick the tiles; the table under them lists the surveys, and the plot shows a survey's pseudosection. <strong>View</strong> (GPR): each line's track and radargram, view only.</li>
+<li><strong>Edit</strong> (ERT): a survey's name, date, transect and quality; sites from the folder names to look over; drag a survey onto a site, rename a site or give it a place. GPR lines are view only.</li>
+<li><strong>Export</strong>: the catalogue report (one page, HTML), and the catalogue tables, the survey data and the previews, each as a .zip.</li>
+</ul>
+<figure><img src="img/guide/gs_simple_edit.png" alt="Simple view, step 3 Edit: survey details, suggestions and sites" style="width:100%"><figcaption>Simple view, step 3 Edit: survey details, suggestions and sites</figcaption></figure>
+<p>Changes wait in a list until <strong>Save</strong>, with <strong>Undo</strong> and a change log; they go to <code>surveys.csv</code> and <code>sites.csv</code>. The data files are never changed.</p>
+</section>
+<section class="task">
+<h2>The Standard view</h2>
+<figure><img src="img/guide/gs_standard.png" alt="Standard view: the pages on the left and Home" style="width:100%"><figcaption>Standard view: the pages on the left and Home</figcaption></figure>
+<p>The pages on the left: <strong>Catalogue</strong> (Home, Archive, Stack, Map), <strong>Survey</strong> (Survey, QC), <strong>Set-up</strong> (Set-up tables) and <strong>Help</strong> (Convert, Reference); <strong>Settings</strong> is the gear. <strong>ERT</strong> and <strong>GPR</strong> at the top left switch to the GPR pages (Map and Processing), with the count of each.</p>
+<ol>
+<li><strong>Home:</strong> the raw ERT archive and the project folder, then <strong>Scan the archive</strong>. Scanning reads new and changed files and keeps everything people entered.</li>
+<li><strong>Archive:</strong> every survey with its date, project, transect, instrument, array, number of measurements, share passing QC and quality. Filter, search, or select rows and add them to a project or a transect; double-click a row to open it.</li>
+<li><strong>Survey:</strong> the pseudosection, with flagged measurements drawn as crosses (one colour per reason), and everything read from the files.</li>
+<li><strong>QC:</strong> the limits of the profile and what each flags.</li>
+<li><strong>Map:</strong> the transects on satellite imagery or streets, one layer per survey year.</li>
+</ol>
+</section>
+<section class="task">
+<h2>What the values mean</h2>
+<ul>
+<li><strong>Geometric factor</strong> k = 2π / (1/AM − 1/BM − 1/AN + 1/BN), from the 3-D electrode distances; <strong>apparent resistivity</strong> ρa = k × V/I (Telford et al. 1990; Loke 2004; Binley and Kemna 2005).</li>
+<li><strong>Pseudo-depth</strong> = 0.19 × the distance between the outermost electrodes, below their centre: a plotting convention close to the median depth of investigation (Edwards 1977; Loke 1999), not an image of the ground.</li>
+<li><strong>Flags</strong> come from the QC profile's limits (repeat error, current, voltage, V/I, apparent resistivity, contact resistance, outliers, reciprocal error), taken from the EarthImager and SuperSting manuals; the frozen-ground profile is the default. A flag never deletes a measurement.</li>
+</ul>
+<p>The GS reference guide gives every rule, statistic and source.</p>
+</section>
+<p class="foot">ovid GS. For what GS does to the data and why, see the <a href="GS_reference_guide.html">GS reference guide</a>.</p>
+</main></body>
+</html>

@@ -7,6 +7,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (2026-10-29)**
+- New quick start and how-to guide (docs/GS_quick_start.*, docs/GS_how_to.*: md, html and pdf), built by docs/build_guides.R on
+  the reference guide's dark page in GS's accent, with figures from the test archive. Simple: "1 survey has", "1 GPR line",
+  "no date" in place of "1 have", "1 GPR lines", "0 years". **Output changes:** none.
+
 **Fixed (Simple view, 2026-10-29)**
 - A catalogue with no derived surveys (parent_ids read as logical NA) broke the Simple view's Import, View and Edit with
   "non-character argument". **Output changes:** none.

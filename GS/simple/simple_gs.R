@@ -202,7 +202,7 @@ simple_server <- function(input, output, session, std) {
     if (is.null(x)) return(simple_hero("off", "Nothing scanned yet", "Choose the folders and press Scan.", tags$button(type = "button", class = "btn sp-btn", onclick = go_step("import"), "Import")))
     g <- sp_gs_groups(x); d <- substr(x$date[x$dated], 1, 10); nl <- sum(x$look)
     simple_hero(if (nl) "warn" else "ok", sprintf("%d surveys · %d %s", nrow(x), nrow(g), if (any(nzchar(x$site))) "sites and folders" else "folders"),
-      paste0(if (length(d)) paste0(min(d), " to ", max(d), ". ") else "", if (nl) sprintf("%d have more than %g %% of their measurements flagged (QC profile %s).", nl, sp_gs_look(), x$qc_profile[1] %||% "") else "Nothing over the flagged-share limit."),
+      paste0(if (length(d)) paste0(min(d), " to ", max(d), ". ") else "", if (nl) sprintf("%d %s more than %g %% of %s measurements flagged (QC profile %s).", nl, if (nl == 1) "has" else "have", sp_gs_look(), if (nl == 1) "its" else "their", x$qc_profile[1] %||% "") else "Nothing over the flagged-share limit."),
       tags$button(type = "button", class = "btn sp-btn2", onclick = "document.getElementById('rebuild').click()", "Scan again")) })
   output$sp_tiles <- renderUI({ g <- groups(); if (is.null(g) || !nrow(g)) return(p(class = "sp-dim", "No survey matches.")); k <- cur_g()
     if (!all_tiles()) g <- utils::head(g, SP_GS_TILES)
@@ -244,7 +244,7 @@ simple_server <- function(input, output, session, std) {
   gl <- reactive({ g <- tryCatch(std$gpr_ok(), error = function(e) data.table()); if (!nrow(g)) return(g); g[, day := basename(folder)][] })
   output$sp_gpr_hero <- renderUI({ g <- gl(); if (!nrow(g)) return(simple_hero("off", "No GPR lines scanned", "GPR folders are set on the GPR side of the Standard view (Map)."))
     yrs <- unique(regmatches(g$folder, regexpr("(19|20)\\d{2}", g$folder))); odd <- sum(grepl("(?i)_undated|_incomplete", g$folder, perl = TRUE))
-    simple_hero("ok", sprintf("%d GPR lines · %d years", nrow(g), length(yrs)), sprintf("%d with GPS. %s", sum(!is.na(g$cor) & nzchar(g$cor %|na|% "")),
+    simple_hero("ok", paste0(nrow(g), if (nrow(g) == 1) " GPR line" else " GPR lines", if (length(yrs)) paste0(" · ", length(yrs), if (length(yrs) == 1) " year" else " years") else " · no date"), sprintf("%d with GPS. %s", sum(!is.na(g$cor) & nzchar(g$cor %|na|% "")),
       if (odd) sprintf("%d in undated or incomplete folders.", odd) else "")) })
   # the days or folders, dated ones first and the newest at the top
   observe({ g <- gl(); if (!nrow(g)) return(); d <- unique(g$day); d <- d[order(!grepl("^(19|20)\\d{2}", d), -rank(d))]; k <- isolate(input$sp_gpr_day); updateSelectizeInput(session, "sp_gpr_day", choices = d, selected = if (isTRUE(k %in% d)) k else d[1]) })
@@ -317,7 +317,7 @@ simple_server <- function(input, output, session, std) {
     simple_report_doc(paste("Catalogue:", nm),
       meta = c(if (length(d)) paste(min(d), "to", max(d)), paste(nrow(x), "surveys"), paste(uniqueN(x$site[nzchar(x$site)]), "sites"), if (!is.null(r)) paste("scanned", substr(as.character(r$started), 1, 10)), if (nzchar(who)) paste("checked by", who)),
       summary = paste0(nrow(x), " original surveys (", sum(!s$kind %in% SP_GS_KINDS), " derived sets folded into them), ", num(sum(as.numeric(x$n_read), na.rm = TRUE)), " measurements. ",
-                       if (nl) sprintf("%d surveys have more than %g %% of their measurements flagged under the QC profile %s; flagged values are kept, not removed. ", nl, sp_gs_look(), x$qc_profile[1] %||% "") else "",
+                       if (nl) sprintf("%d %s more than %g %% of %s measurements flagged under the QC profile %s; flagged values are kept, not removed. ", nl, if (nl == 1) "survey has" else "surveys have", sp_gs_look(), if (nl == 1) "its" else "their", x$qc_profile[1] %||% "") else "",
                        if (ns) sprintf("%d surveys have no site yet.", ns) else "Every survey has a site."),
       figures = c(Surveys = as.character(nrow(x)), Sites = as.character(uniqueN(x$site[nzchar(x$site)])), Measurements = num(sum(as.numeric(x$n_read), na.rm = TRUE)),
                   `Flagged, median` = sprintf("%.0f %%", stats::median(x$flagged_pct, na.rm = TRUE))),
