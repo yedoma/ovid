@@ -73,6 +73,9 @@ done
 
 echo "2/6 bin/R finds its home from where it is; R's own files relocated"
 sed -i '' 's|^R_HOME_DIR=.*|R_HOME_DIR="$(cd "$(dirname "$0")/.." \&\& pwd -P)"|' "$R/bin/R"
+# share (time zones), include and doc from there too: left absolute, R would read the installed R's, or no time zones at all
+sed -i '' 's|^\(R_[A-Z]*_DIR\)="/Library/Frameworks/R.framework/Resources/\([a-z]*\)"|\1="${R_HOME_DIR}/\2"|' "$R/bin/R"
+! grep -n '/Library/Frameworks/R.framework' "$R/bin/R" || { echo "  bin/R still names /Library/Frameworks/R.framework" >&2; exit 1; }
 sed -i '' "s|/Library/Frameworks/R.framework/Versions/[0-9.]*/Resources|\${R_HOME}|g; s|/Library/Frameworks/R.framework/Resources|\${R_HOME}|g" "$R/etc/Renviron"
 relocate "$R"
 RS=(env RHOME="$R" R_LIBS_USER="$OUT/none" R_LIBS_SITE="$OUT/none")

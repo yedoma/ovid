@@ -8,7 +8,8 @@
 #     stops when a version differs from the lockfile (with --allow-newer a newer one is listed and allowed); writes
 #     <out folder>/versions.txt.
 #   Rscript build/runtime_packages.R smoke <out folder>
-#     checks the runtime runs on its own: its R is the one in <out folder>, its library the only one, the main packages load.
+#     checks the runtime runs on its own: its R (and R's share folder) is the one in <out folder>, its library the only
+#     one, time zones resolve with no warning, the main packages load.
 args <- commandArgs(TRUE); mode <- args[1]; out <- args[2]; newer_ok <- "--allow-newer" %in% args
 snap <- grep("^#", readLines("build/snapshot.txt"), value = TRUE, invert = TRUE)[1]
 l <- readLines("build/renv.lock")
@@ -21,7 +22,11 @@ if (mode == "install") {
   quit(save = "no")
 }
 if (mode == "smoke") {
-  stopifnot(startsWith(normalizePath(R.home(), "/"), normalizePath(out, "/")), length(.libPaths()) == 1)
+  stopifnot(startsWith(normalizePath(R.home(), "/"), normalizePath(out, "/")), length(.libPaths()) == 1,
+            startsWith(normalizePath(R.home("share"), "/"), normalizePath(out, "/")))
+  # time zones from the runtime's own zoneinfo: a warning here means local times would silently be read as UTC
+  withCallingHandlers({ Sys.timezone(); stopifnot(format(as.POSIXct("2020-07-01 12:00", tz = "America/Edmonton"), "%Z") == "MDT") },
+    warning = function(w) stop("time zones: ", conditionMessage(w)))
   for (p in c("shiny", "data.table", "ggplot2", "DT", "plotly", "processx", "callr", "ncdf4", "readxl")) suppressPackageStartupMessages(library(p, character.only = TRUE))
   cat("  R", as.character(getRversion()), R.version$arch, "with", nrow(installed.packages()), "packages\n")
   quit(save = "no")

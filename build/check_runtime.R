@@ -14,6 +14,10 @@ status_of <- function(url) tryCatch({ h <- curl::curl_fetch_memory(url); h$statu
 st <- lr_new(root)
 for (k in st$apps$key) { e <- env_for(k)
   lr_start(st, k, lr_port(), spawn = function(cmd, args, wd, env, log) lr_spawn(cmd, args, wd, c(env, e), log)) }
+# time zones as the apps use them: from the runtime's own zoneinfo, with no warning
+withCallingHandlers({ Sys.timezone(); stopifnot(format(as.POSIXct("2020-07-01 12:00", tz = "America/Edmonton"), "%Z") == "MDT") },
+  warning = function(w) { cat("time zones:", conditionMessage(w), "\n"); quit(status = 1) })
+cat("time zones ok:", R.home("share"), "\n")
 t0 <- Sys.time()
 repeat { lr_poll(st); s <- vapply(st$rec, `[[`, "", "state")
   if (all(s %in% c("running", "failed")) || difftime(Sys.time(), t0, units = "secs") > 180) break; Sys.sleep(2) }

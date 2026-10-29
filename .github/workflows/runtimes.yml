@@ -43,10 +43,12 @@ jobs:
       # a clean copy: the committed files only, with the runtime beside them as runtime/
       - name: Make a clean copy
         shell: bash
+        # tar is given no path (on Windows it reads "D:\..." as a remote host); bash's cd takes either form
         run: |
           mkdir -p "$RUNNER_TEMP/clean"
-          git archive HEAD | tar -x -C "$RUNNER_TEMP/clean"
+          git archive HEAD | (cd "$RUNNER_TEMP/clean" && tar -x)
           cp -R "build/out/${{ matrix.name }}" "$RUNNER_TEMP/clean/runtime"
+          ls "$RUNNER_TEMP/clean"
 
       - name: Start the five apps and check each page
         if: runner.os == 'macOS'
