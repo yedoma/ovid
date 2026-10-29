@@ -977,7 +977,20 @@ local({ source(file.path(CORE_DIR, "launcher_app", "logic.R"), local = TRUE)
   cmd <- lr_command(st, "RS", 8200L)
   check("an app is started from its own folder with the core and <APP>_LOCAL set, on 127.0.0.1 and the port given",
         endsWith(cmd$wd, "/RS") && grepl("port = 8200L", cmd$args[2], fixed = TRUE) && grepl("127.0.0.1", cmd$args[2], fixed = TRUE) &&
-        identical(unname(cmd$env[["RS_LOCAL"]]), "1") && endsWith(cmd$env[["OVID_CORE"]], "/core")) })
+        identical(unname(cmd$env[["RS_LOCAL"]]), "1") && endsWith(cmd$env[["OVID_CORE"]], "/core"))
+  check("on Windows the app is started with Rscript.exe, elsewhere with Rscript, both from this R",
+        basename(lr_command(st, "CS", 8201L, windows = TRUE)$cmd) == "Rscript.exe" && basename(lr_command(st, "CS", 8201L, windows = FALSE)$cmd) == "Rscript" &&
+        dirname(lr_command(st, "CS", 8201L, windows = TRUE)$cmd) == R.home("bin"))
+  how <- ""; st$rec$CS <- list(state = "running", proc = list(is_alive = function() TRUE, kill = function() how <<- "kill", kill_tree = function() how <<- "tree"), port = 1L, url = "", log = "", error = "")
+  lr_stop(st, "CS"); t1 <- how
+  how <- ""; st$rec$CS <- list(state = "running", proc = list(is_alive = function() TRUE, kill = function() how <<- "kill"), port = 1L, url = "", log = "", error = "")
+  lr_stop(st, "CS")
+  check("Stop ends the whole process tree where it can (Windows: Rscript.exe and its Rterm.exe), else the process", t1 == "tree" && how == "kill")
+  bat <- file.path(dirname(CORE_DIR), "Open ovid.bat"); cmdf <- file.path(dirname(CORE_DIR), "Open ovid.command")
+  b <- if (file.exists(bat)) readLines(bat, warn = FALSE) else ""; m <- if (file.exists(cmdf)) readLines(cmdf, warn = FALSE) else ""
+  check("both entry scripts prefer runtime/ beside them, keep its library apart, and start core/launcher_app/start.R; Windows then looks in the registry and Program Files",
+        any(grepl("runtime\\R\\bin\\x64\\Rscript.exe", b, fixed = TRUE)) && any(grepl("R_LIBS_USER", b)) && any(grepl("HKLM\\SOFTWARE\\R-core", b, fixed = TRUE)) &&
+        any(grepl("start.R", b, fixed = TRUE)) && any(grepl("runtime/R/bin/Rscript", m, fixed = TRUE)) && any(grepl("R_LIBS_USER", m)) && any(grepl("start.R", m, fixed = TRUE))) })
 
 cat("click-through tests read only the test project (uitest.R)\n")
 local({ u <- paste(readLines(file.path(CORE_DIR, "uitest.R"), warn = FALSE), collapse = "\n")

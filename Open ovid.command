@@ -10,10 +10,4 @@ if [ -x "$ROOT/runtime/R/bin/Rscript" ]; then
 else
   R=$(command -v Rscript || echo /Library/Frameworks/R.framework/Resources/bin/Rscript)
 fi
-OVID_ROOT="$ROOT" "$R" -e '
-need <- c("shiny", "processx", "callr", "jsonlite", "httpuv")
-miss <- need[!vapply(need, requireNamespace, logical(1), quietly = TRUE)]
-if (length(miss)) { cat("Installing what the launcher needs:", paste(miss, collapse = ", "), "\n"); install.packages(miss, repos = "https://cloud.r-project.org") }
-port <- tryCatch(httpuv::randomPort(min = 8050L, max = 8099L), error = function(e) 8077L)
-cat("ovid launcher at http://127.0.0.1:", port, "  (close this window to stop the launcher)\n", sep = "")
-shiny::runApp(file.path(Sys.getenv("OVID_ROOT"), "core", "launcher_app"), port = port, host = "127.0.0.1", launch.browser = TRUE, quiet = TRUE)'
+OVID_ROOT="$ROOT" "$R" --vanilla "$ROOT/core/launcher_app/start.R"

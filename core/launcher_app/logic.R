@@ -24,9 +24,9 @@ lr_new <- function(root, apps = LAUNCHER_APPS) {
 
 # The command that starts one app: Rscript running shiny::runApp on 127.0.0.1 and the given port, from the app's folder,
 # with the core found through OVID_CORE and <APP>_LOCAL=1 (the app shows its Browse... buttons, as from its own launcher).
-lr_command <- function(st, key, port) {
+lr_command <- function(st, key, port, windows = .Platform$OS.type == "windows") {
   dir <- file.path(st$root, key)
-  list(cmd = file.path(R.home("bin"), "Rscript"),
+  list(cmd = file.path(R.home("bin"), if (windows) "Rscript.exe" else "Rscript"),
        args = c("-e", sprintf("shiny::runApp(%s, port = %dL, host = '127.0.0.1', launch.browser = FALSE, quiet = TRUE)", deparse(dir), as.integer(port))),
        wd = dir, env = c(OVID_CORE = file.path(st$root, "core"), stats::setNames("1", paste0(key, "_LOCAL"))))
 }
@@ -59,7 +59,8 @@ lr_poll <- function(st, answers = lr_answers) {
 
 lr_stop <- function(st, key) {
   r <- st$rec[[key]]
-  if (!is.null(r$proc) && isTRUE(r$proc$is_alive())) try(r$proc$kill(), silent = TRUE)   # safe: a process already ended
+  # the whole process tree: on Windows Rscript.exe starts Rterm.exe, which would outlive a kill of Rscript alone
+  if (!is.null(r$proc) && isTRUE(r$proc$is_alive())) try(if (is.function(r$proc$kill_tree)) r$proc$kill_tree() else r$proc$kill(), silent = TRUE)   # safe: a process already ended
   r$state <- "stopped"; r$proc <- NULL; r$error <- ""; st$rec[[key]] <- r
   invisible(st)
 }

@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (launcher on Windows, 2026-10-29)**
+- "Open ovid.bat" starts the launcher on Windows (runtime\\ beside it, else the installed R from the registry, Program Files or PATH); both entry scripts run core/launcher_app/start.R. Stop ends the whole process tree (Rscript.exe and its Rterm.exe); apps are started with Rscript.exe on Windows; the shortcut label is Ctrl+ off the Mac. Tests for each branch. **Output changes:** none.
+
 **Added (launcher, 2026-10-29)**
 - core/launcher_app: the ovid launcher, started by "Open ovid.command" at the top of Ovid_Apps. The selected app on the left
   (its pixel icon, name, what it does, Open), the five apps as a list on the right; arrows and Enter, Cmd/Ctrl 1-5 (shown on

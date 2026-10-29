@@ -18,6 +18,7 @@ ICONS <- local({ s <- readLines(file.path(CORE, "shell.R"), warn = FALSE); i <- 
 icon_src <- function(k) paste0("data:image/png;base64,", ICONS[[k]])
 
 ST <- lr_new(ROOT)
+KEY <- if (Sys.info()[["sysname"]] == "Darwin") "\u2318" else "Ctrl+"     # the shortcut key shown on hover
 
 CSS <- "
 :root{--bg:#22252a;--main:#262a2e;--side:#1b1d21;--card:#2b2e34;--line:#3a3e45;--line2:#4a4e56;--fg:#e6e8eb;--text2:#c9ced5;--mut:#9aa0a8;
@@ -141,7 +142,7 @@ server <- function(input, output, session) {
         tags$img(src = icon_src(k), alt = "", width = 32, height = 32),
         span(class = "nm", span(ST$apps$name[i]), if (run) span(class = "rn", if (r$state == "running") "Running" else "Starting…")),
         if (run) tags$span(class = "stop", role = "button", tabindex = "0", onclick = sprintf("event.stopPropagation(); Shiny.setInputValue('stop', {k: '%s', t: Date.now()})", k), "Stop")
-        else span(class = "k", paste0("⌘", i))) })
+        else span(class = "k", paste0(KEY, i))) })
     n <- length(lr_running(ST))
     tagList(rows, div(class = "grow"),
       div(class = "foot", span(if (dis) sprintf("R %s · %d of %d packages", getRversion(), rv$total - length(rv$missing), rv$total)
