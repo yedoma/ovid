@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs fixes (2026-10-29)**
+- Guides checked against the app: reference guide and how-to: QC profiles saved in the Workbench; button names Export survey (ZIP) and Export view (PNG). **Output changes:** none.
+
 **Docs (2026-10-29)**
 - New quick start and how-to guide (docs/GS_quick_start.*, docs/GS_how_to.*: md, html and pdf), built by docs/build_guides.R on
   the reference guide's dark page in GS's accent, with figures from the test archive. Simple: "1 survey has", "1 GPR line",

@@ -63,7 +63,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 1. **Map**: on the right, enter the transect's start and end points (decimal degrees, WGS84) and its surveys.
 2. Coordinates for many transects at once: **Import coordinates (CSV or Excel)…** on **Home**.
 
-**Result:** The transect is drawn on the map, one layer per survey year. **Export view with legend (PNG)** saves the map as shown.
+**Result:** The transect is drawn on the map, one layer per survey year. **Export view (PNG)** saves the map as shown, with the legend when **Legend** is on.
 
 ## 6. Look at a survey
 
@@ -76,7 +76,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 ## 7. Try other QC limits
 
 1. **QC**: start from a profile and move any limit; the survey is flagged again at once. Each limit's (i) note says what it measures and where its value comes from.
-2. **Export survey with these limits** writes the data with the flags of the limits shown.
+2. **Export survey (ZIP)** on **Survey** writes the data with the flags of the QC profile picked beside it.
 
 **Result:** Nothing is saved; the catalogue keeps the project's profile.
 

@@ -54,13 +54,13 @@ Other tabs: distributions, contact resistance by electrode, error against curren
 filterable table of every measurement.
 
 **4. QC.** Start from a profile and move any limit; the survey is re-flagged at once. Each limit has an (i) note saying what
-it measures and where the value comes from. **Save profile** keeps the settings; **Export survey with these limits** writes them
+it measures and where the value comes from. **Save profile** (in the Workbench) keeps the settings; **Export survey (ZIP)** on Survey writes them
 with the data.
 
 **5. Map.** Transects on satellite imagery (or streets), one layer per survey year; click a year in the legend to hide it, or
 filter by year and project above the map. Enter each transect's start and end points and its surveys on the right; the table
-below lists all transects, by year or by project. The **Legend** box shows or hides the legend, and **Export view with
-legend (PNG)** or **without legend (PNG)** saves the map as it is on screen at 250 ppi (`ovid_gs_map_<date>.png`). *The three lines in this screenshot are illustrative examples, not surveyed
+below lists all transects, by year or by project. The **Legend** switch shows or hides the legend, and **Export view
+(PNG)**, with or without it, saves the map as it is on screen at 250 ppi (`ovid_gs_map_<date>.png`). *The three lines in this screenshot are illustrative examples, not surveyed
 positions.*
 
 **6. Reference.** How the app works, the QC profiles and rules, every statistic, the electrode arrays with diagrams, and the
@@ -163,11 +163,11 @@ deletes anything. The catalogue and previews use the first profile in `CFG$qc_pr
 
 **Frozen ground** keeps the manual limits but drops the 20 mA current rule and allows 50,000 ohm contact, because winter and
 permafrost surveys routinely read 20-35 kohm A-B contact and drive less current. **Exploratory** flags only
-clearly impossible values. Profiles `supersting_r8` and `iris_syscal` apply to AGI or IRIS data only. Edit any profile on the QC
-page and save it; profiles live in `config/qc_profiles.csv`. Manual flags (by measurement or electrode) go in
+clearly impossible values. Profiles `supersting_r8` and `iris_syscal` apply to AGI or IRIS data only. Try any profile on the QC
+page and save it in the Workbench; profiles live in `config/qc_profiles.csv`. Manual flags (by measurement or electrode) go in
 `config/manual_flags.csv` and can be switched off with `active = FALSE`. The `moving_median` and `bad_electrode`
 rules are in the defaults of new projects; in any project they can be switched on or off and tuned on the QC page, then saved as
-a profile. Every row of `qc_profiles.csv` has a `rule_id` (Q-01, Q-02 ...), and each survey's `flags.csv` (measurement, rule, flag,
+a profile in the Workbench. Every row of `qc_profiles.csv` has a `rule_id` (Q-01, Q-02 ...), and each survey's `flags.csv` (measurement, rule, flag,
 value) ends with `rule_id` (the row behind the flag, or the rule's name for electrodes turned off and manual flags), `app` and
 `run_id`, as in the other ovid apps (GS has no WMO code).
 

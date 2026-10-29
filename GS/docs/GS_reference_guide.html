@@ -56,11 +56,11 @@ Hover a point for its values. On the right, the details people enter.</p>
 Other tabs: distributions, contact resistance by electrode, error against current, geometry (with elevations), and a
 filterable table of every measurement.</p>
 <p><strong>4. QC.</strong> Start from a profile and move any limit; the survey is re-flagged at once. Each limit has an (i) note saying what
-it measures and where the value comes from. <strong>Save profile</strong> keeps the settings; <strong>Export survey with these limits</strong> writes them
+it measures and where the value comes from. <strong>Save profile</strong> (in the Workbench) keeps the settings; <strong>Export survey (ZIP)</strong> on Survey writes them
 with the data.</p>
 <p><strong>5. Map.</strong> Transects on satellite imagery (or streets), one layer per survey year; click a year in the legend to hide it, or
 filter by year and project above the map. Enter each transect's start and end points and its surveys on the right; the table
-below lists all transects, by year or by project. The <b>Legend</b> box shows or hides the legend, and <b>Export view with legend (PNG)</b> or <b>without legend (PNG)</b> saves the map as it is on screen at 250 ppi (<code>ovid_gs_map_&lt;date&gt;.png</code>). <em>The three lines in this screenshot are illustrative examples, not surveyed
+below lists all transects, by year or by project. The <b>Legend</b> switch shows or hides the legend, and <b>Export view (PNG)</b>, with or without it, saves the map as it is on screen at 250 ppi (<code>ovid_gs_map_&lt;date&gt;.png</code>). <em>The three lines in this screenshot are illustrative examples, not surveyed
 positions.</em></p>
 <p><strong>6. Reference.</strong> How the app works, the QC profiles and rules, every statistic, the electrode arrays with diagrams, and the
 sources.</p>
@@ -271,11 +271,11 @@ deletes anything. The catalogue and previews use the first profile in <code>CFG$
 </table>
 <p><strong>Frozen ground</strong> keeps the manual limits but drops the 20 mA current rule and allows 50,000 ohm contact, because winter and
 permafrost surveys routinely read 20-35 kohm A-B contact and drive less current. <strong>Exploratory</strong> flags only
-clearly impossible values. Profiles <code>supersting_r8</code> and <code>iris_syscal</code> apply to AGI or IRIS data only. Edit any profile on the QC
-page and save it; profiles live in <code>config/qc_profiles.csv</code>. Manual flags (by measurement or electrode) go in
+clearly impossible values. Profiles <code>supersting_r8</code> and <code>iris_syscal</code> apply to AGI or IRIS data only. Try any profile on the QC
+page and save it in the Workbench; profiles live in <code>config/qc_profiles.csv</code>. Manual flags (by measurement or electrode) go in
 <code>config/manual_flags.csv</code> and can be switched off with <code>active = FALSE</code>. The <code>moving_median</code> and <code>bad_electrode</code>
 rules are in the defaults of new projects; in any project they can be switched on or off and tuned on the QC page, then saved as
-a profile. Every row of <code>qc_profiles.csv</code> has a <code>rule_id</code> (Q-01, Q-02 ...), and each survey's <code>flags.csv</code> (measurement, rule, flag,
+a profile in the Workbench. Every row of <code>qc_profiles.csv</code> has a <code>rule_id</code> (Q-01, Q-02 ...), and each survey's <code>flags.csv</code> (measurement, rule, flag,
 value) ends with <code>rule_id</code> (the row behind the flag, or the rule's name for electrodes turned off and manual flags), <code>app</code> and
 <code>run_id</code>, as in the other ovid apps (GS has no WMO code).</p>
 <p>The <strong>survey quality</strong> (Good, Usable, Usable with caution, Poor, Unusable, Incomplete, Unknown) and its reasons are set by people
