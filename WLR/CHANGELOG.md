@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Run, 2026-10-29)**
+- The top bar's Run pipeline button reads Run, as in CS; guides and figures retaken. Reference guide: hydroperiod, gradient and recharge (12b), as in the hub. **Output changes:** none.
+
 **Changed (hints, 2026-10-29)**
 - Plot and explore says Shift + drag selects a stretch and the Workbench removes it (it said the bar removes it). **Output changes:** none.
 

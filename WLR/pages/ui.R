@@ -33,7 +33,7 @@ std_pages <- function(sources = TRUE) list(
       h4("What each logger covers"),
       div(class = "scrollbox", plotOutput("timeline", height = "auto")),
       if (!VIEWER) fluidRow(
-        column(6, div(class = "d-cardx", h3("Next time"), p("Put the new downloads from the field into the year's folder (and baro/<year> for barologgers) and press ", tags$b("Run pipeline"),
+        column(6, div(class = "d-cardx", h3("Next time"), p("Put the new downloads from the field into the year's folder (and baro/<year> for barologgers) and press ", tags$b("Run"),
             ". Loggers whose files and set-up have not changed are reused; everything set up here is used again."),
           tags$a(href = "#", `data-ovid-go` = "Files", "Bring in new files \u203a"))),
         column(6, div(class = "d-cardx", h3("Recent changes"), uiOutput("saved_hist")))),
@@ -402,6 +402,6 @@ ui <- do.call(ovid_page, c(list("WLR", NORD, tokens = WLR_TOKENS, css = std_css(
   status = uiOutput("runstate", inline = TRUE),
   layout = "icons", project = if (!VIEWER) projects_switch_ui("proj"), context = uiOutput("flow_ctx", inline = TRUE), aside = uiOutput("flow_info"),
   actions = tagList(applied_ui("applied"), if (!VIEWER) unsaved_ui("uns"),
-                    if (VIEWER) span(class = "modebadge", "Viewer") else actionButton("run", "Run pipeline", class = "btn-primary", icon = icon("play"))),
+                    if (VIEWER) span(class = "modebadge", "Viewer") else actionButton("run", "Run", class = "btn-primary", icon = icon("play"))),
   help = if (file.exists(file.path(APP_DIR, "docs", "WLR_reference_guide.html"))) "docs/WLR_reference_guide.html",
   settings = "Settings"), c(wlr_flow_pages(), list(convert_tool(), reference_tool("WLR")))))

@@ -52,6 +52,7 @@ code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
 <li><a href="#annual">10. Annual statistics and trumpet curves</a></li>
 <li><a href="#thaw">11. Thaw depth and active-layer thickness</a></li>
 <li><a href="#ft">12. Freeze/thaw dates and zero curtain</a></li>
+<li><a href="#ndays">12b. Degree days and n-factors</a></li>
 <li><a href="#between">13. Between-site check</a></li>
 <li><a href="#soil">14. Soil moisture, EC and battery</a></li>
 <li><a href="#audit">15. Audit trail and reconciliation</a></li>
@@ -72,7 +73,7 @@ code{background:var(--code);padding:0 4px;border-radius:3px;font-size:13px}
 <li>Put the registry workbook (a sheet with Name, Type and SN columns), any borehole metadata workbooks and field notes (<code>.docx</code>) in the metadata folder.</li>
 <li>Start the app (<code>Open GT (Mac).command</code>, or <code>Ovid_GT.bat</code> on Windows) and set the data, metadata and project folders on <b>Home › Data source</b> (each has a <b>Browse…</b> button).</li>
 <li>Run the <b>Set-up check</b>. Fix anything in red first.</li>
-<li>Press <b>Run pipeline</b>. The first run seeds <code>sites.csv</code> and <code>sensors.csv</code> from the registry.</li>
+<li>Press <b>Run</b>. The first run seeds <code>sites.csv</code> and <code>sensors.csv</code> from the registry.</li>
 <li>Open <b>Sensors and depths</b>: every sensor needs a site and a depth. Depths marked <i>default</i> or <i>template</i> are assumptions; replace them with measured depths.</li>
 <li>Read <b>Raw files</b> for bundles that <i>need export</i> (a <code>.f2b</code> or <code>.hobo</code> with no readable export) and <b>Clock checks</b> for resets and drift. The <code>.f2b</code> and <code>.hobo</code> files themselves cannot be read: export them with FG2_Shell (GeoPrecision) and HOBOware Pro's <b>Bulk Export</b> (Onset), which write a CSV beside each file, then run again.</li>
 <li>Run again. Read <b>Sensor health</b>, the flags on <b>Plot and explore</b> (QC view) and the between-site check on <b>Compare sites</b>.</li>
@@ -348,6 +349,12 @@ days_frozen = days T &lt; −0.2;  days_thawed = days T &gt; 0.2;  days_zero_cur
 zero-curtain period: ≥ zero_curtain_days (3) consecutive days with |T| ≤ 0.2</div>
 <div class="ex"><b>Example (real, 0.85 m, water year 2023).</b> First ≤ 0 on 2022-11-05, last on 2023-05-23, thaw on 2023-05-24; 146 frozen, 156 thawed and 63 zero-curtain days. The periods 1–3 Apr (3 days, mean −0.18), 7–23 Apr (17 days) and 25 Apr–3 Jun (40 days, mean −0.005 °C) are listed in <code>zero_curtain.csv</code>. A missing day breaks a period.</div>
 
+<h2 id="ndays">12b. Degree days and n-factors</h2>
+<p>Per site and water year, from complete daily means: the ground-surface series is the shallowest sensor at or below <code>surface_max_depth</code> (0.1 m); air temperature comes from a sensor above the ground or the air temperature file (Quality rules, Air temperature).</p>
+<div class="f">FDD = sum of daily means &lt; 0 °C,  TDD = sum of daily means &gt; 0 °C
+n_f = FDD_surface / FDD_air,  n_t = TDD_surface / TDD_air
+surface offset = MAGST − MAAT</div>
+<p>An n-factor is given only when both years are complete. Sources: Smith and Riseborough (2002, 1996); Klene et al. (2001); Lunardini (1978); Romanovsky and Osterkamp (1995).</p>
 <h2 id="between">13. Between-site check</h2>
 <p>For each depth that three or more sites share, each site's complete daily mean is compared with the median of the other sites that day. Sites differ by a steady, seasonal amount (snow, shade, landcover), so only a sudden departure from the usual offset counts:</p>
 <div class="f">offset    = T_site − median(T_others)
@@ -589,6 +596,11 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 
 <h2 id="refs">References</h2>
 <ul>
+<li>Smith, M. W., Riseborough, D. W. (2002). Climate and the limits of permafrost: a zonal analysis. <i>Permafrost Periglac. Process.</i> 13, 1-15.</li>
+<li>Smith, M. W., Riseborough, D. W. (1996). Permafrost monitoring and detection of climate change. <i>Permafrost Periglac. Process.</i> 7, 301-309.</li>
+<li>Klene, A. E., Nelson, F. E., Shiklomanov, N. I., Hinkel, K. M. (2001). The n-factor in natural landscapes: variability of air and soil-surface temperatures, Kuparuk River Basin, Alaska. <i>Arct. Antarct. Alp. Res.</i> 33, 140-148.</li>
+<li>Lunardini, V. J. (1978). Theory of n-factors and correlation of data. <i>Proc. 3rd Int. Conf. Permafrost</i>, Edmonton, 1, 40-46.</li>
+<li>Romanovsky, V. E., Osterkamp, T. E. (1995). Interannual variations of the thermal regime of the active layer and near-surface permafrost in northern Alaska. <i>Permafrost Periglac. Process.</i> 6, 313-335.</li>
 <li>RBR, <i>RBRconcerto³ / duo³</i> specifications and <i>Ruskin User Guide</i>; XR-420/620 Series brochure and thermistor string data sheet: <a href="https://rbr-global.com">rbr-global.com</a>, <a href="https://www.lwandle.co.za/wp-content/uploads/2018/05/RBR-Thermistor-Strings.pdf">RBR Thermistor Strings</a>, <a href="https://www.esonetyellowpages.com/datasheets/datasheet-xr420tx_1275395583.pdf">XR-420 Tx data sheet</a>.</li>
 <li>GeoPrecision, <i>cryoDongle / FlexGate</i> and <i>FG2-Shell</i> manuals; temperature string pages: <a href="http://www.geoprecision.com/en/produkte-en/temperaturmesskette-en">geoprecision.com</a>, <a href="https://www.thermistor-string.com/string-features">thermistor-string.com</a>.</li>
 <li>Onset, <i>HOBO U12-008 4-Channel External Data Logger</i> manual; <i>TMCx-HD Air/Water/Soil Temperature Sensor</i>: <a href="https://www.onsetcomp.com/products/sensors/tmcx-hd">onsetcomp.com</a>.</li>

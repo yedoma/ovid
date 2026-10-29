@@ -26,7 +26,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 **When:** after a field visit, with new .dat files.
 
-<figure><img src="img/guide/cs_ht_01.png" alt="Run pipeline and Bring in files" style="width:100%"></figure>
+<figure><img src="img/guide/cs_ht_01.png" alt="Run and Bring in files" style="width:100%"></figure>
 
 1. Copy the files into a raw folder of the project. Keep the overlapping old ones.
 2. Press **Run** (1).

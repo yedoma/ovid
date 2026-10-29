@@ -138,6 +138,7 @@ main td,main th{overflow-wrap:normal;word-break:normal;hyphens:none}main table.w
 <li><a href="#drift">11b. Drift and offset correction (off by default)</a></li>
 <li><a href="#11c-missing-values-typed-by-hand-or-interpolated">11c. Missing values typed by hand or interpolated</a></li>
 <li><a href="#summ">12. Daily, monthly and water-year summaries</a></li>
+<li><a href="#hydro">12b. Hydroperiod, hydraulic gradient and recharge</a></li>
 <li><a href="#defaults">13. ovid defaults with no published source</a></li>
 <li><a href="#outputs">Reading the outputs</a></li>
 <li><a href="#processing-levels-and-the-dataset-card">Processing levels and the Dataset card</a></li>
@@ -156,7 +157,7 @@ main td,main th{overflow-wrap:normal;word-break:normal;hyphens:none}main table.w
 <li>Put raw files in year folders: <code>raw/2025/…</code> for water loggers, <code>raw/baro/2025/…</code> for barologgers. U20 and U20L <code>.hobo</code> and Solinst <code>.xle</code> files are read as they are; for other HOBO models keep the HOBOware CSV export beside the <code>.hobo</code>.</li>
 <li>Optionally put the newest WL_Metadata workbook in the project's <code>metadata/</code> folder and dGPS exports in <code>dgps/</code>. Without a workbook the run still completes; each logger then gets its site on <strong>3 Loggers and deployments</strong>.</li>
 <li>Open the app (<code>Open WLR (Mac).command</code>, <code>Ovid_WLR.bat</code> on Windows, or <code>shiny::runApp()</code>) and set the folders on <strong>1 Project</strong> with <strong class="ui">Browse…</strong> (the project folder is where <code>config/</code> and <code>output/</code> will live).</li>
-<li>Press <strong class="ui">Run pipeline</strong>. If the files do not state their time zone, the first run asks which zone the loggers were set to.</li>
+<li>Press <strong class="ui">Run</strong>. If the files do not state their time zone, the first run asks which zone the loggers were set to.</li>
 <li>On <strong>3 Loggers and deployments</strong>, press <strong class="ui">Add what was found</strong> and give each logger a site; <strong class="ui">Save changes</strong> and run again.</li>
 <li>On <strong>4 Needs you</strong>, accept the suggested matches and decide what the run found.</li>
 <li>Check <strong class="ui">Barometric compensation</strong>: one primary barologger per group and year, a secondary if you have one.</li>
@@ -622,6 +623,13 @@ a water year is complete if its days ≥ 0.9 × 365</div>
 
 </section>
 <section class="plain">
+<h2 id="hydro"><span class="no">12b</span>Hydroperiod, hydraulic gradient and recharge</h2>
+<div class="f">hydroperiod = days with the water table at or above the ground
+gradient = Δh / L  (head difference over the distance between a pair of wells)
+recharge = Sy × Σ daily rises of the water table  (water-table fluctuation)</div>
+<p>Sy is the specific yield of each site (set-up table Specific yield); the pairs of wells are in Pairs of wells. The recharge is the water-table fluctuation method in its simplest form: rises from other causes (barometric or pumping effects, entrapped air) count too. Sources: Healy and Cook (2002); Healy (2010); Scanlon et al. (2002); Freeze and Cherry (1979); Mitsch and Gosselink (2015).</p>
+</section>
+<section class="plain">
 <h2 id="defaults"><span class="no">13</span>ovid defaults with no published source</h2>
 <p>The methods above have published sources; these limits and defaults do
 not. They are ovid's own choices, kept as settings where they can be
@@ -922,6 +930,11 @@ changed, and should be reported as such.</p>
 <section class="plain">
 <h2 id="refs">References</h2>
 <ul>
+<li>Healy, R. W., Cook, P. G. (2002). Using groundwater levels to estimate recharge. <i>Hydrogeol. J.</i> 10, 91-109.</li>
+<li>Healy, R. W. (2010). <i>Estimating Groundwater Recharge</i>. Cambridge Univ. Press.</li>
+<li>Scanlon, B. R., Healy, R. W., Cook, P. G. (2002). Choosing appropriate techniques for quantifying groundwater recharge. <i>Hydrogeol. J.</i> 10, 18-39.</li>
+<li>Freeze, R. A., Cherry, J. A. (1979). <i>Groundwater</i>. Prentice-Hall (hydraulic gradient).</li>
+<li>Mitsch, W. J., Gosselink, J. G. (2015). <i>Wetlands</i>, 5th ed. Wiley (hydroperiod).</li>
 <li>Onset, <i>HOBO U20 Water Level Logger</i> (U20-001-0x) and <i>HOBO U20L Water Level Logger</i> manuals: <code>WLR/reference_manuals/U20.pdf</code>, <code>U20L.pdf</code>; <a href="https://www.onsetcomp.com">onsetcomp.com</a>.</li>
 <li>Onset, <i>HOBOware User's Guide</i>, barometric compensation assistant: <code>WLR/reference_manuals/Hoboware.pdf</code>.</li>
 <li>Solinst, <i>Levelogger Series User Guide</i> (Levelogger, Barologger, LTC; specific conductance and data compensation): <code>WLR/reference_manuals/Levellogger.pdf</code>; <a href="https://www.solinst.com">solinst.com</a>.</li>

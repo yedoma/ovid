@@ -119,7 +119,7 @@ flow_saved <- function(pd, n = 8, more = NULL) {
 
 # A second Run button where a step ends in a run (it presses the one in the top bar)
 flow_run_once <- function(label = "Run once")
-  tags$button(type = "button", class = "btn btn-primary", title = "Save the set-up tables and run the pipeline (the same as Run pipeline in the top bar)",
+  tags$button(type = "button", class = "btn btn-primary", title = "Save the set-up tables and run the pipeline (the same as Run in the top bar)",
               onclick = "var b = document.getElementById('run'); if (b) b.click();", icon("play"), label)
 
 # ---- Needs you: the one review list --------------------------------------------------------------------------------------------

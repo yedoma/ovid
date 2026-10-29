@@ -290,6 +290,8 @@ on the Survey page and are separate from the measurement flags.</p>
 <li><strong>Limits by site and season.</strong> In <code>qc_profiles.csv</code>, <code>applies_to</code> can also be <code>site:&lt;site&gt;</code>, <code>transect:&lt;transect_id&gt;</code> or <code>months:&lt;list&gt;</code> (for example <code>months:11-4</code> for November to April). When a rule has rows at several levels the most specific wins: survey, then transect, then site, then months, then instrument, then all. This is how a contact-resistance limit can be set per substrate and season: Herring et al. (2023) give below 5 kΩ for unfrozen fine-grained or wet deposits and 50 to 200 kΩ for coarse or frozen ground.</li>
 </ul>
 <p><strong>Not switched on in an existing project.</strong> New projects get <code>moving_median</code> and <code>bad_electrode</code> rows in the <code>standard</code>, <code>strict</code> and <code>frozen_ground</code> profiles; an existing <code>qc_profiles.csv</code> is left as it is. Run on a test archive (413 surveys, 297,725 measurements) with both added to <code>frozen_ground</code>, the existing rules flagged 15.7 % of measurements, the moving median added 6.6 % and the bad-electrode rule 11.8 %, and the median survey kept 90 % instead of 99.5 %. Look at the flagged measurements on the QC page before turning them on.</p>
+<h3>Reciprocal error model</h3>
+<p>Where a survey has reciprocal measurements (current and potential electrodes swapped), the mean reciprocal error is binned against |R| and fitted with a linear or power law, the error model an inversion uses; with too few reciprocals it falls back to 4 %, and an electrode is called bad when 25 % or more of its measurements fail (CPERS workflow, Herring et al. 2023). Sources: Slater et al. (2000); Koestel et al. (2008); Tso et al. (2017); Blanchy et al. (2020); LaBrecque et al. (1996).</p>
 <h2 id='6-statistics'>6. Statistics</h2>
 <p><code>catalogue/survey_stats.csv</code> holds, for each survey and profile, the distribution of apparent resistivity, V/I, current, voltage,
 repeat error, contact resistance and IP: n, minimum, 5th, 25th, 50th, 75th and 95th percentiles, maximum, mean and standard
@@ -510,6 +512,11 @@ the stacked readings. <strong>Reciprocal</strong> the same measurement with curr
 physical line; <strong>survey</strong> one acquisition on it. <strong>Flag</strong> a QC mark on a measurement; nothing is removed.</p>
 <h2 id='references'>References</h2>
 <ul>
+<li>Slater, L., Binley, A., Daily, W., Johnson, R. (2000). Cross-hole electrical imaging of a controlled saline tracer injection. <em>J. Appl. Geophys.</em> 44, 85-102.</li>
+<li>Koestel, J., Kemna, A., Javaux, M., Binley, A., Vereecken, H. (2008). Quantitative imaging of solute transport in an unsaturated and undisturbed soil monolith with 3-D ERT and TDR. <em>Water Resour. Res.</em> 44, W12411.</li>
+<li>Tso, C.-H. M., et al. (2017). Improved characterisation and modelling of measurement errors in electrical resistivity tomography (ERT) surveys. <em>J. Appl. Geophys.</em> 146, 103-119.</li>
+<li>Blanchy, G., Saneiyan, S., Boyd, J., McLachlan, P., Binley, A. (2020). ResIPy, an intuitive open source software for complex geoelectrical inversion/modeling. <em>Comput. Geosci.</em> 137, 104423.</li>
+<li>LaBrecque, D. J., Miletto, M., Daily, W., Ramirez, A., Owen, E. (1996). The effects of noise on Occam's inversion of resistivity tomography data. <em>Geophysics</em> 61, 538-548.</li>
 <li>Loke, M.H. (1999). <em>Electrical imaging surveys for environmental and engineering studies.</em> (ref_manuals/Lokenote.pdf)</li>
 <li>Advanced Geosciences Inc. (2014). <em>Instruction manual for EarthImager 2D.</em> (ref_manuals/EarthImager2DManual.pdf)</li>
 <li>Advanced Geosciences Inc. <em>SuperSting instruction manual.</em> (ref_manuals/SuperSting Manual.pdf)</li>

@@ -51,7 +51,7 @@ in `CFG` at the top of `gt_pipeline.R`.
     Windows) and set the data, metadata and project folders on
     **Home › Data source** (each has a **Browse…** button).
 4.  Run the **Set-up check**. Fix anything in red first.
-5.  Press **Run pipeline**. The first run seeds `sites.csv` and
+5.  Press **Run**. The first run seeds `sites.csv` and
     `sensors.csv` from the registry.
 6.  Open **Sensors and depths**: every sensor needs a site and a depth.
     Depths marked *default* or *template* are assumptions; replace them
@@ -755,6 +755,23 @@ zero-curtain days. The periods 1–3 Apr (3 days, mean −0.18), 7–23 Apr
 
 </div>
 
+## 12b. Degree days and n-factors
+
+Per site and water year, from complete daily means: the ground-surface series is the shallowest sensor at or below
+`surface_max_depth` (0.1 m); air temperature comes from a sensor above the ground or the air temperature file (Quality rules,
+Air temperature).
+
+<div class="f">
+
+FDD = sum of daily means < 0 °C, TDD = sum of daily means > 0 °C
+n_f = FDD_surface / FDD_air, n_t = TDD_surface / TDD_air
+surface offset = MAGST − MAAT
+
+</div>
+
+An n-factor is given only when both years are complete. Sources: Smith and Riseborough (2002, 1996); Klene et al. (2001);
+Lunardini (1978); Romanovsky and Osterkamp (1995).
+
 ## 13. Between-site check
 
 For each depth that three or more sites share, each site's complete
@@ -1082,6 +1099,11 @@ The pop-up can also be grouped by what to do.
 
 ## References
 
+- Smith, M. W., Riseborough, D. W. (2002). Climate and the limits of permafrost: a zonal analysis. *Permafrost Periglac. Process.* 13, 1-15.
+- Smith, M. W., Riseborough, D. W. (1996). Permafrost monitoring and detection of climate change. *Permafrost Periglac. Process.* 7, 301-309.
+- Klene, A. E., Nelson, F. E., Shiklomanov, N. I., Hinkel, K. M. (2001). The n-factor in natural landscapes: variability of air and soil-surface temperatures, Kuparuk River Basin, Alaska. *Arct. Antarct. Alp. Res.* 33, 140-148.
+- Lunardini, V. J. (1978). Theory of n-factors and correlation of data. *Proc. 3rd Int. Conf. Permafrost*, Edmonton, 1, 40-46.
+- Romanovsky, V. E., Osterkamp, T. E. (1995). Interannual variations of the thermal regime of the active layer and near-surface permafrost in northern Alaska. *Permafrost Periglac. Process.* 6, 313-335.
 - RBR, *RBRconcerto³ / duo³* specifications and *Ruskin User Guide*;
   XR-420/620 Series brochure and thermistor string data sheet:
   [rbr-global.com](https://rbr-global.com), [RBR Thermistor

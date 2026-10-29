@@ -350,7 +350,7 @@ update_selectize <- function(session, inputId, ..., choices = NULL, selected = N
 # ---- small page helpers (each app had its own copy) ------------------------------------------------------------------
 step <- function(n, title, ...) div(class = "step", div(class = "n", n), div(class = "body", h3(title), ...))
 page_head <- function(title, lede) ovid_head(title, about = p(lede))
-empty_msg <- function(txt = "Nothing to show yet. Press Run pipeline at the top right.") div(class = "empty", txt)
+empty_msg <- function(txt = "Nothing to show yet. Press Run at the top right.") div(class = "empty", txt)
 editUI <- function(id) ovid_edit_ui(id)
 # When the set-up last changed, for "Set-up changed since the last rebuild": every config/*.csv except those the app says a
 # rebuild does not read (cfg_mtime_ignore() in its app.R; a name with or without .csv).

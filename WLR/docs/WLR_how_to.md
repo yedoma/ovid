@@ -26,10 +26,10 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 **When:** After a field visit, with new .hobo or .xle files.
 
-<figure><img src="img/guide/wlr_ht_01.png" alt="Run pipeline and Bring in files" style="width:100%"></figure>
+<figure><img src="img/guide/wlr_ht_01.png" alt="Run and Bring in files" style="width:100%"></figure>
 
 1. Copy the files into the year folder of a data folder (`2025/`, or `baro/2025/` for barologgers). U20 and U20L .hobo files are read as they are; for other HOBO models, export the CSV from HOBOware beside the .hobo.
-2. Press **Run pipeline** (1).
+2. Press **Run** (1).
 
 **Result:** Only loggers whose files or set-up changed are read and drawn again; the rest are reused from the last run. A logger's downloads from several years are joined into one record, then split into deployments.
 
@@ -44,7 +44,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 1. **2 Bring in files:** select the file (1).
 2. Give a **Reason** and your initials (2).
 3. Press **Leave out** (3), **Set serial** (with the serial typed beside it), or **It is a barologger** / **It is a water logger** (4).
-4. Press **Run pipeline**.
+4. Press **Run**.
 
 **Result:** A sorting rule is added to the set-up tables and applied on every run. The raw file is not changed.
 
@@ -59,7 +59,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 1. **3 Loggers and deployments:** double-click a cell of the logger's row to edit it. **Site** (1) is the one column most rows need.
 2. **From** (2) and **To** (3) limit the row to a period; blank covers the logger's whole record, and a year or a month alone is fine. A logger moved to another site gets a second row.
 3. **Hang length (cm)**, the T-coupler and casing columns and the others (scroll right) are used when given.
-4. **Save changes** (4), then **Run pipeline**.
+4. **Save changes** (4), then **Run**.
 
 **Result:** The logger's records go to that site for that period. What you type here wins over the workbook, which wins over what the files say.
 
@@ -98,7 +98,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 1. **Deployment history:** check the deployment's **T_ST** (1), its start and end, and where each value came from.
 2. Under **Corrections to the workbook** (2), **Add row** (3): serial and year pick the deployment; fill in only what is wrong (site, deployed, removed, the hang length `T_ST_m` in metres, or `T_ST_from_year` to take another year's value), with a reason and your initials.
-3. **Save changes**, then **Run pipeline**.
+3. **Save changes**, then **Run**.
 
 **Result:** The correction wins over the workbook for that deployment; the workbook is not changed.
 
@@ -112,7 +112,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 1. **Clocks:** **read as** (1) shows the zone each file was read in, and why.
 2. In the **Time-zone table** (2), **Add row** (3) and fill in any of serial, model, file pattern (a folder such as `2019/`), and start and end; `offset_hours` is the clock's offset from UTC, e.g. −6.
-3. **Save changes**, then **Run pipeline**. The first matching row wins, so put one-logger rows above whole-year rows.
+3. **Save changes**, then **Run**. The first matching row wins, so put one-logger rows above whole-year rows.
 
 **Result:** Those files are read in their own zone, then moved to the project's time zone (Settings) like every other record.
 
@@ -139,7 +139,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 <figure><img src="img/guide/wlr_ht_09.png" alt="Barometric compensation" style="width:100%"></figure>
 
 1. **Barometric compensation:** pick the **Processing year**, then for each group the **Primary barologger** (1) and a **Secondary** (2) that fills its gaps.
-2. **Save choices** (3), then **Run pipeline**.
+2. **Save choices** (3), then **Run**.
 
 **Result:** Every water reading is compensated with the primary's air pressure at its time, or the secondary's where the primary has none; a fill-in from another barologger is shifted onto the primary's level and flagged.
 
@@ -154,7 +154,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 1. **Datum and offsets:** the formulas at the top show how each value is made from the hang length (T_ST), the offset and the reference elevation.
 2. **Logger offsets** (1): **Set the offset for** a logger model or one logger (2), pick a known offset or **Manual measurement** and type the tip-to-sensor distance in cm (3), then **Set offset** (4).
 3. For elevations: **Survey points for each site** links a site to a dGPS point (code T, TOC or GS); **Elevations typed by hand** takes a reference elevation surveyed another way. Record the vertical datum and geoid model with every elevation (the table has columns for them): elevations on different datums cannot be compared.
-4. Press **Run pipeline**.
+4. Press **Run**.
 
 **Result:** Every deployment with a hang length gets depth to water below its reference point; those with a surveyed reference also get sensor and water elevations.
 
@@ -168,7 +168,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 1. The tape reading at each download goes with the deployment: **T-coupler to water (cm)** (or casing to water) in the WL_Metadata workbook or on the deployment sheet (task 3).
 2. Other readings by hand go on **Manual levels and drift**: under **Manual measurements** (1), **Add row** (2) with the site, time (YYYY-MM-DD HH:MM in the project's zone), parameter (`depth_m` water above the sensor, `dtw_m` depth to water, `elev_m` water elevation, `temp_c` or `spc_uscm`) and value, then **Save changes**. They show on the plots and on the site's **Manual vs logger** card, with the difference, and never change the data.
-3. Press **Run pipeline**. **Tape against logger** (3) compares each visit's tape with the logger just before the visit.
+3. Press **Run**. **Tape against logger** (3) compares each visit's tape with the logger just before the visit.
 4. A deployment with one check shows its median only. A difference beyond the limit (5 cm unless set in Settings) is more likely a metadata error than sensor drift: fix the hang length (task 6) or the offset (task 10). To keep the values as they are, select the rows and press **Keep selected as they are** (4).
 
 **Result:** The readings by hand show beside the logger with their difference; the data are not changed. Drift correction from the tapes is off by default: switch it on in Settings to export corrected values beside the logger's own.
@@ -213,7 +213,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 <figure><img src="img/guide/wlr_ht_14.png" alt="Automatic corrections" style="width:100%"></figure>
 
 1. **6 Automatic corrections** lists everything a run changes on its own, with its **State** (1) and **Where to change it** (2).
-2. Turn its switch off, or change the setting named in the last column, then **Run pipeline**.
+2. Turn its switch off, or change the setting named in the last column, then **Run**.
 
 **Result:** From the next run the correction is not made; flags never change a value either way.
 

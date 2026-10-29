@@ -52,7 +52,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 **When:** After a field visit, with new logger files.
 
 1. Copy the files into a data folder, each logger's file with its export.
-2. Press **Run pipeline** (Standard) or **Read the data** (Simple).
+2. Press **Run** (Standard) or **Read the data** (Simple).
 
 **Result:** Only loggers whose files or set-up changed are read again; a logger's downloads are joined into one record.
 
@@ -63,7 +63,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 **When:** **Bring in files** shows a bundle as *needs export*: a `.f2b` or `.hobo` with no readable export beside it.
 
 1. Open the file in FG2-Shell (GeoPrecision) or HOBOware Pro's **Bulk Export** (Onset) and write the CSV into the same folder.
-2. Press **Run pipeline**.
+2. Press **Run**.
 
 **Result:** The bundle is read from its export. A Campbell table that is not TOA5 must be converted with CardConvert first.
 
@@ -72,7 +72,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 **When:** A string has no site, is at the wrong site, or moved during the record.
 
 1. **Loggers, sensors and depths** (2 Organize): each sensor's site, depth, start and end.
-2. Double-click a cell to change it, then **Save changes** and **Run pipeline**.
+2. Double-click a cell to change it, then **Save changes** and **Run**.
 
 **Result:** The string's records are given to the site for those dates. A match by dates is assigned on its own; anything else is a suggestion on **Needs you**.
 
@@ -97,7 +97,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 **When:** Some files that state no time zone were logged in a different zone from the one given at the first run.
 
 1. **Clocks** (3 Correct): the files and the zone each was read in.
-2. In the **Time zones** table, **Add row** with the serial, model, file pattern or dates, and the offset from UTC; **Save changes**, then **Run pipeline**.
+2. In the **Time zones** table, **Add row** with the serial, model, file pattern or dates, and the offset from UTC; **Save changes**, then **Run**.
 
 **Check:** The site plot has no whole-hour step at the download.
 
@@ -132,7 +132,7 @@ The same project, data and edits in three views, switched at the top (**Simple**
 ## 12. Switch an automatic correction off
 
 1. **Automatic corrections** (3 Correct) lists everything a run changes on its own, each with a switch.
-2. Turn it off, then **Run pipeline**.
+2. Turn it off, then **Run**.
 
 **Check:** The **Audit trail** (More) no longer lists that correction.
 

@@ -91,7 +91,7 @@ p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--b
 <p class="co when"><strong>when:</strong> After a field visit, with new logger files.</p>
 <ol>
 <li>Copy the files into a data folder, each logger's file with its export.</li>
-<li>Press <strong>Run pipeline</strong> (Standard) or <strong>Read the data</strong> (Simple).</li>
+<li>Press <strong>Run</strong> (Standard) or <strong>Read the data</strong> (Simple).</li>
 </ol>
 <p class="co result"><strong>result:</strong> Only loggers whose files or set-up changed are read again; a logger's downloads are joined into one record.</p>
 <p class="co check"><strong>check:</strong> <strong>Bring in files</strong> lists each file with its status.</p>
@@ -101,7 +101,7 @@ p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--b
 <p class="co when"><strong>when:</strong> <strong>Bring in files</strong> shows a bundle as <em>needs export</em>: a <code>.f2b</code> or <code>.hobo</code> with no readable export beside it.</p>
 <ol>
 <li>Open the file in FG2-Shell (GeoPrecision) or HOBOware Pro's <strong>Bulk Export</strong> (Onset) and write the CSV into the same folder.</li>
-<li>Press <strong>Run pipeline</strong>.</li>
+<li>Press <strong>Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result:</strong> The bundle is read from its export. A Campbell table that is not TOA5 must be converted with CardConvert first.</p>
 </section>
@@ -110,7 +110,7 @@ p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--b
 <p class="co when"><strong>when:</strong> A string has no site, is at the wrong site, or moved during the record.</p>
 <ol>
 <li><strong>Loggers, sensors and depths</strong> (2 Organize): each sensor's site, depth, start and end.</li>
-<li>Double-click a cell to change it, then <strong>Save changes</strong> and <strong>Run pipeline</strong>.</li>
+<li>Double-click a cell to change it, then <strong>Save changes</strong> and <strong>Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result:</strong> The string's records are given to the site for those dates. A match by dates is assigned on its own; anything else is a suggestion on <strong>Needs you</strong>.</p>
 <p class="co check"><strong>check:</strong> <strong>Sites: rename, what shows, landcover</strong> lists each site with its strings.</p>
@@ -136,7 +136,7 @@ p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--b
 <p class="co when"><strong>when:</strong> Some files that state no time zone were logged in a different zone from the one given at the first run.</p>
 <ol>
 <li><strong>Clocks</strong> (3 Correct): the files and the zone each was read in.</li>
-<li>In the <strong>Time zones</strong> table, <strong>Add row</strong> with the serial, model, file pattern or dates, and the offset from UTC; <strong>Save changes</strong>, then <strong>Run pipeline</strong>.</li>
+<li>In the <strong>Time zones</strong> table, <strong>Add row</strong> with the serial, model, file pattern or dates, and the offset from UTC; <strong>Save changes</strong>, then <strong>Run</strong>.</li>
 </ol>
 <p class="co check"><strong>check:</strong> The site plot has no whole-hour step at the download.</p>
 </section>
@@ -172,7 +172,7 @@ p.co.result{border-left-color:var(--green)} p.co.check{border-left-color:var(--b
 <h2>12. Switch an automatic correction off</h2>
 <ol>
 <li><strong>Automatic corrections</strong> (3 Correct) lists everything a run changes on its own, each with a switch.</li>
-<li>Turn it off, then <strong>Run pipeline</strong>.</li>
+<li>Turn it off, then <strong>Run</strong>.</li>
 </ol>
 <p class="co check"><strong>check:</strong> The <strong>Audit trail</strong> (More) no longer lists that correction.</p>
 </section>

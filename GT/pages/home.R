@@ -19,7 +19,7 @@
   output$stats <- renderUI({ o <- outs()
     if (is.null(o)) return(div(class = "panel-x", h3("Get started"),
       step(1, "Point the app at your data", p(class = "dim", "On 1 Project: the data folder, the metadata folder (registry workbook and field notes) and a working folder for the results.")),
-      step(2, "Press Run pipeline", p(class = "dim", "Top right. Files are read and grouped by download, stitched by serial, given sites and depths (from the registry, else the default steps), checked and summarised.")),
+      step(2, "Press Run", p(class = "dim", "Top right. Files are read and grouped by download, stitched by serial, given sites and depths (from the registry, else the default steps), checked and summarised.")),
       step(3, "Confirm sites, landcover and depths", p(class = "dim", "On the Sites and Sensors and depths pages. Assumed depths are marked everywhere until you confirm them. Then run again."))))
     st <- function(n, lab) div(class = "stat", tags$b(num(n)), span(lab))
     div(class = "stats", st(nrow(o$ss), "sites"), st(nrow(o$loggers), "loggers"), st(sum(o$files$use %in% TRUE), "files read"), st(sum(o$ss$values), "values kept"),

@@ -15,7 +15,7 @@
   output$stats <- renderUI({ o <- outs()
     if (is.null(o)) return(div(class = "panel-x", h3("Get started"),
       step(1, "Point the app at your data", p(class = "dim", if (embedded) "Under Import data: " else "On 1 Project: ", "the data folder (with year folders and baro/<year>), the metadata folder, the dGPS folder, and a project folder for the results.")),
-      step(2, "Press Run pipeline", p(class = "dim", "Top right. Files are read, paired, stitched by serial, split into deployments and compensated. Baro groups are suggested on the first run.")),
+      step(2, "Press Run", p(class = "dim", "Top right. Files are read, paired, stitched by serial, split into deployments and compensated. Baro groups are suggested on the first run.")),
       step(3, "Check the barologgers and hang lengths", p(class = "dim", "Confirm a primary and secondary barologger for each group on the Barometric page, fill in missing T_ST on the Set-up check, and run again."))))
     st <- function(n, lab) div(class = "stat", tags$b(num(n)), span(lab)); ix <- o$index
     div(class = "stats", st(sum(o$files$use %in% TRUE), "files used"), st(nrow(o$loggers[kind != "baro"]), "water and EC loggers"), st(nrow(o$loggers[kind == "baro"]), "barologgers"),

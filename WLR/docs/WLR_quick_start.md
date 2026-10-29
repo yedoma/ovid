@@ -29,7 +29,7 @@ For someone new to the data, or a field check: four steps in one column, and not
 
 1. The pages, in working order: **1 Bring in**, **2 Organize**, **3 Correct**, **4 Report**. Each opens a numbered list of steps.
 2. **More**: Overview, Plot and explore, Hydrology and uncertainty, Audit trail, Set-up check, Configuration, Convert and Reference.
-3. **Run pipeline**: reads the raw files and rebuilds every output.
+3. **Run**: reads the raw files and rebuilds every output.
 4. The run state: up to date, or set-up changed and waiting for a run; the counts of corrections, removed and flagged values; unsaved changes.
 5. **Standard** is the step-by-step view used here; **Simple** is the field check above; **Workbench** shows the same project as a chart over a grid of every value, and is where values are changed by hand.
 
@@ -47,7 +47,7 @@ For someone new to the data, or a field check: four steps in one column, and not
 
 <figure><img src="img/guide/wlr_qs_02.png" alt="Time zone question" style="width:65%"></figure>
 
-Press **Run pipeline**. Solinst files and CSVs exported without a zone do not say which time zone their clock was in, so the first run asks:
+Press **Run**. Solinst files and CSVs exported without a zone do not say which time zone their clock was in, so the first run asks:
 
 1. Pick the zone the loggers were set to (the project's time zone is offered first).
 2. **Use this zone and run**.
@@ -68,7 +68,7 @@ The answer is kept for every later run. Files of another zone get a row in the t
 
 1. **Add what was found** puts a row in the deployment sheet for each logger in the files.
 2. **Site**: type the site of each logger. From and To left blank cover the logger's whole record; Hang length, Type and the other columns are used when given.
-3. **Save changes**, then **Run pipeline**.
+3. **Save changes**, then **Run**.
 
 With a WL_Metadata workbook the sheet only needs the rows the workbook gets wrong or leaves out.
 

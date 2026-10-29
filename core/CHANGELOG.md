@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Run, 2026-10-29)**
+- The empty-page message and the Apply button's tooltip name Run (was Run pipeline). **Output changes:** none.
+
 **Changed (one lockfile, 2026-10-29)**
 - build/renv.lock is the one lockfile: the launcher (first start, portable copy) and the GitHub tests read it; the old renv.lock at the top is removed (kept in git history). A core test checks it. **Output changes:** none.
 

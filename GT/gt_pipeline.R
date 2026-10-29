@@ -22,7 +22,7 @@
 #    Nothing is ever dropped except through remove_rows(), which writes to output/audit. Raw files are never modified.
 #
 #  Use
-#    Rscript gt_pipeline.R            (or Source it in RStudio, or press Run pipeline in the app)
+#    Rscript gt_pipeline.R            (or Source it in RStudio, or press Run in the app)
 #    Folders: CFG below, or GT_RAW_DIRS (separated by ;), GT_METADATA_DIR, GT_PROJECT_DIR.
 #
 #  Needs: data.table, ggplot2, readxl, zip

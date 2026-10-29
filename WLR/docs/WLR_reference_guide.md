@@ -9,7 +9,7 @@ The WLR quick start walks through a first project page by page, with figures; th
 1.  Put raw files in year folders: `raw/2025/…` for water loggers, `raw/baro/2025/…` for barologgers. U20 and U20L `.hobo` and Solinst `.xle` files are read as they are; for other HOBO models keep the HOBOware CSV export beside the `.hobo`.
 2.  Optionally put the newest WL_Metadata workbook in the project's `metadata/` folder and dGPS exports in `dgps/`. Without a workbook the run still completes; each logger then gets its site on **3 Loggers and deployments**.
 3.  Open the app (`Open WLR (Mac).command`, `Ovid_WLR.bat` on Windows, or `shiny::runApp()`) and set the folders on **1 Project** with **Browse…** (the project folder is where `config/` and `output/` will live).
-4.  Press **Run pipeline**. If the files do not state their time zone, the first run asks which zone the loggers were set to.
+4.  Press **Run**. If the files do not state their time zone, the first run asks which zone the loggers were set to.
 5.  On **3 Loggers and deployments**, press **Add what was found** and give each logger a site; **Save changes** and run again.
 6.  On **4 Needs you**, accept the suggested matches and decide what the run found.
 7.  Check **Barometric compensation**: one primary barologger per group and year, a secondary if you have one.
@@ -550,6 +550,20 @@ a day counts if records that day ≥ 0.8 × usual records per day (min_complete)
 
 Monthly: mean, min, max and days per site and parameter. Water year (1 October to 30 September by default; the project may set another start): mean, min and its date, max and its date, range and days. Two loggers at one site on the same day are pooled. Files: `output/summaries/monthly.csv`, `water_year.csv`.
 
+## 12b. Hydroperiod, hydraulic gradient and recharge
+
+<div class="f">
+
+hydroperiod = days with the water table at or above the ground
+gradient = Δh / L (head difference over the distance between a pair of wells)
+recharge = Sy × Σ daily rises of the water table (water-table fluctuation)
+
+</div>
+
+Sy is the specific yield of each site (set-up table Specific yield); the pairs of wells are in Pairs of wells. The recharge is the
+water-table fluctuation method in its simplest form: rises from other causes (barometric or pumping effects, entrapped air) count
+too. Sources: Healy and Cook (2002); Healy (2010); Scanlon et al. (2002); Freeze and Cherry (1979); Mitsch and Gosselink (2015).
+
 ## 13. ovid defaults with no published source
 
 The methods above have published sources; these limits and defaults do
@@ -755,6 +769,11 @@ The pop-up can also be grouped by what to do.
 
 ## References
 
+- Healy, R. W., Cook, P. G. (2002). Using groundwater levels to estimate recharge. *Hydrogeol. J.* 10, 91-109.
+- Healy, R. W. (2010). *Estimating Groundwater Recharge*. Cambridge Univ. Press.
+- Scanlon, B. R., Healy, R. W., Cook, P. G. (2002). Choosing appropriate techniques for quantifying groundwater recharge. *Hydrogeol. J.* 10, 18-39.
+- Freeze, R. A., Cherry, J. A. (1979). *Groundwater*. Prentice-Hall (hydraulic gradient).
+- Mitsch, W. J., Gosselink, J. G. (2015). *Wetlands*, 5th ed. Wiley (hydroperiod).
 - Onset, *HOBO U20 Water Level Logger* (U20-001-0x) and *HOBO U20L Water Level Logger* manuals: `WLR/reference_manuals/U20.pdf`, `U20L.pdf`; [onsetcomp.com](https://www.onsetcomp.com).
 - Onset, *HOBOware User's Guide*, barometric compensation assistant: `WLR/reference_manuals/Hoboware.pdf`.
 - Solinst, *Levelogger Series User Guide* (Levelogger, Barologger, LTC; specific conductance and data compensation): `WLR/reference_manuals/Levellogger.pdf`; [solinst.com](https://www.solinst.com).

@@ -36,13 +36,13 @@ Depths change MAGT and ALT. The plot beside the list shows the sensors as typed 
 
 The contents on the right list the steps in working order: **1 Bring in** (Project, Bring in files), **2 Organize** (Loggers, sensors and depths; Needs you; Sites: rename, what shows, landcover), **3 Correct** (Clocks, Quality rules, Automatic corrections) and **4 Report** (Site results, Thaw depth and summaries, Report). **More** holds Overview, Plot and explore, Compare sites, Soil moisture and EC, Site details, Sensor health, Audit trail, Configuration, Set-up check and Settings. Each step shows its state under its name.
 
-The top bar has the project, the run state, the corrections the last run applied, **Run pipeline**, the Explanations switch and the view switch. **This project** at the top of a page counts the files, loggers, sites and records, and lists the data gaps.
+The top bar has the project, the run state, the corrections the last run applied, **Run**, the Explanations switch and the view switch. **This project** at the top of a page counts the files, loggers, sites and records, and lists the data gaps.
 
 ## The first run
 
 1. **1 Project:** set the data folders, the metadata folder (optional) and the project folder; **Browse…** picks a folder. The line under each says what was found.
 2. Run the **Set-up check** (More) and fix anything in red.
-3. Press **Run pipeline**. Files that state no time zone ask for one; the answer is kept for later runs. The first run fills `sites.csv` and `sensors.csv` from the registry or the deployment sheet.
+3. Press **Run**. Files that state no time zone ask for one; the answer is kept for later runs. The first run fills `sites.csv` and `sensors.csv` from the registry or the deployment sheet.
 4. **Loggers, sensors and depths:** every sensor needs a site and a depth. Depths marked *default* or *template* are assumptions: replace them with measured depths.
 5. **Bring in files** lists bundles that *need export* (a `.f2b` or `.hobo` with no readable export): export them with FG2-Shell or HOBOware Pro's Bulk Export, which write a CSV beside each file, then run again.
 6. **Needs you:** decide each finding (keep, remove or note), or follow its link to the page that fixes it.

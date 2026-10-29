@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (2026-10-29)**
+- Reference guide: the reciprocal error model, as in the hub. **Output changes:** none.
+
 **Docs (citations, 2026-10-29)**
 - Reference guide: the geometric factor cites Telford et al. 1990, Loke 2004 and Binley and Kemna 2005, as the hub does. **Output changes:** none.
 

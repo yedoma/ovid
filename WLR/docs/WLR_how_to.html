@@ -109,10 +109,10 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <section class="task">
 <h2 id="task-1"><span class="no">1</span>Add a new download</h2>
 <p class="co when"><strong>when</strong> After a field visit, with new .hobo or .xle files.</p>
-<figure><img src="img/guide/wlr_ht_01.png" alt="Run pipeline and Bring in files" style="width:100%"><figcaption><b>Figure 2.</b> Run pipeline and Bring in files</figcaption></figure>
+<figure><img src="img/guide/wlr_ht_01.png" alt="Run and Bring in files" style="width:100%"><figcaption><b>Figure 2.</b> Run and Bring in files</figcaption></figure>
 <ol>
 <li>Copy the files into the year folder of a data folder (<code>2025/</code>, or <code>baro/2025/</code> for barologgers). U20 and U20L .hobo files are read as they are; for other HOBO models, export the CSV from HOBOware beside the .hobo.</li>
-<li>Press <strong class="ui">Run pipeline</strong> <span class="mk">1</span>.</li>
+<li>Press <strong class="ui">Run</strong> <span class="mk">1</span>.</li>
 </ol>
 <p class="co result"><strong>result</strong> Only loggers whose files or set-up changed are read and drawn again; the rest are reused from the last run. A logger's downloads from several years are joined into one record, then split into deployments.</p>
 <p class="co check"><strong>check</strong> <strong class="ui">2 Bring in files</strong> lists each file with its status. To read some files again without a full run, select them <span class="mk">2</span> and press <strong class="ui">Rescan selected files</strong> <span class="mk">3</span>.</p>
@@ -125,7 +125,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <li><strong class="lead">2 Bring in files:</strong> select the file <span class="mk">1</span>.</li>
 <li>Give a <strong class="ui">Reason</strong> and your initials <span class="mk">2</span>.</li>
 <li>Press <strong class="ui">Leave out</strong> <span class="mk">3</span>, <strong class="ui">Set serial</strong> (with the serial typed beside it), or <strong class="ui">It is a barologger</strong> / <strong class="ui">It is a water logger</strong> <span class="mk">4</span>.</li>
-<li>Press <strong class="ui">Run pipeline</strong>.</li>
+<li>Press <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> A sorting rule is added to the set-up tables and applied on every run. The raw file is not changed.</p>
 <p class="co check"><strong>check</strong> The file's <strong class="ui">Use</strong> and <strong class="ui">Kind</strong> columns show the change, and the <strong class="ui">Audit trail</strong> gives the reason.</p>
@@ -138,7 +138,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <li><strong class="lead">3 Loggers and deployments:</strong> double-click a cell of the logger's row to edit it. <strong class="ui">Site</strong> <span class="mk">1</span> is the one column most rows need.</li>
 <li><strong class="ui">From</strong> <span class="mk">2</span> and <strong class="ui">To</strong> <span class="mk">3</span> limit the row to a period; blank covers the logger's whole record, and a year or a month alone is fine. A logger moved to another site gets a second row.</li>
 <li><strong class="ui">Hang length (cm)</strong>, the T-coupler and casing columns and the others (scroll right) are used when given.</li>
-<li><strong class="ui">Save changes</strong> <span class="mk">4</span>, then <strong class="ui">Run pipeline</strong>.</li>
+<li><strong class="ui">Save changes</strong> <span class="mk">4</span>, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> The logger's records go to that site for that period. What you type here wins over the workbook, which wins over what the files say.</p>
 <p class="co check"><strong>check</strong> <strong class="ui">Deployment history</strong> lists every deployment with its start, end and where each came from.</p>
@@ -172,7 +172,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <ol>
 <li><strong class="lead">Deployment history:</strong> check the deployment's <strong class="ui">T_ST</strong> <span class="mk">1</span>, its start and end, and where each value came from.</li>
 <li>Under <strong class="ui">Corrections to the workbook</strong> <span class="mk">2</span>, <strong class="ui">Add row</strong> <span class="mk">3</span>: serial and year pick the deployment; fill in only what is wrong (site, deployed, removed, the hang length <code>T_ST_m</code> in metres, or <code>T_ST_from_year</code> to take another year's value), with a reason and your initials.</li>
-<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run pipeline</strong>.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> The correction wins over the workbook for that deployment; the workbook is not changed.</p>
 <p class="co check"><strong>check</strong> <strong class="ui">Set-up check</strong> (More) lists every deployment's hang length and its source.</p>
@@ -184,7 +184,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <ol>
 <li><strong class="lead">Clocks:</strong> <strong class="ui">read as</strong> <span class="mk">1</span> shows the zone each file was read in, and why.</li>
 <li>In the <strong class="ui">Time-zone table</strong> <span class="mk">2</span>, <strong class="ui">Add row</strong> <span class="mk">3</span> and fill in any of serial, model, file pattern (a folder such as <code>2019/</code>), and start and end; <code>offset_hours</code> is the clock's offset from UTC, e.g. <span class="num">−6</span>.</li>
-<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run pipeline</strong>. The first matching row wins, so put one-logger rows above whole-year rows.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run</strong>. The first matching row wins, so put one-logger rows above whole-year rows.</li>
 </ol>
 <p class="co result"><strong>result</strong> Those files are read in their own zone, then moved to the project's time zone (Settings) like every other record.</p>
 <p class="co check"><strong>check</strong> The <strong class="ui">read as</strong> column shows the new zone, and the site plot has no whole-hour step at the download.</p>
@@ -207,7 +207,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <figure><img src="img/guide/wlr_ht_09.png" alt="Barometric compensation" style="width:100%"><figcaption><b>Figure 10.</b> Barometric compensation</figcaption></figure>
 <ol>
 <li><strong class="lead">Barometric compensation:</strong> pick the <strong class="ui">Processing year</strong>, then for each group the <strong class="ui">Primary barologger</strong> <span class="mk">1</span> and a <strong class="ui">Secondary</strong> <span class="mk">2</span> that fills its gaps.</li>
-<li><strong class="ui">Save choices</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+<li><strong class="ui">Save choices</strong> <span class="mk">3</span>, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> Every water reading is compensated with the primary's air pressure at its time, or the secondary's where the primary has none; a fill-in from another barologger is shifted onto the primary's level and flagged.</p>
 <p class="co check"><strong>check</strong> <strong class="ui">Barologgers over the year</strong> plots each candidate; <strong class="ui">Offset and drift</strong> shows how far they differ.</p>
@@ -220,7 +220,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <li><strong class="lead">Datum and offsets:</strong> the formulas at the top show how each value is made from the hang length (T_ST), the offset and the reference elevation.</li>
 <li><strong class="ui">Logger offsets</strong> <span class="mk">1</span>: <strong class="ui">Set the offset for</strong> a logger model or one logger <span class="mk">2</span>, pick a known offset or <strong class="ui">Manual measurement</strong> and type the tip-to-sensor distance in cm <span class="mk">3</span>, then <strong class="ui">Set offset</strong> <span class="mk">4</span>.</li>
 <li>For elevations: <strong class="ui">Survey points for each site</strong> links a site to a dGPS point (code T, TOC or GS); <strong class="ui">Elevations typed by hand</strong> takes a reference elevation surveyed another way. Record the vertical datum and geoid model with every elevation (the table has columns for them): elevations on different datums cannot be compared.</li>
-<li>Press <strong class="ui">Run pipeline</strong>.</li>
+<li>Press <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> Every deployment with a hang length gets depth to water below its reference point; those with a surveyed reference also get sensor and water elevations.</p>
 <p class="co check"><strong>check</strong> <strong class="ui">Deployment history</strong> shows the offset used for each deployment and where it came from.</p>
@@ -232,7 +232,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <ol>
 <li>The tape reading at each download goes with the deployment: <strong class="ui">T-coupler to water (cm)</strong> (or casing to water) in the WL_Metadata workbook or on the deployment sheet (task 3).</li>
 <li>Other readings by hand go on <strong class="ui">Manual levels and drift</strong>: under <strong class="ui">Manual measurements</strong> <span class="mk">1</span>, <strong class="ui">Add row</strong> <span class="mk">2</span> with the site, time (YYYY-MM-DD HH:MM in the project's zone), parameter (<code>depth_m</code> water above the sensor, <code>dtw_m</code> depth to water, <code>elev_m</code> water elevation, <code>temp_c</code> or <code>spc_uscm</code>) and value, then <strong class="ui">Save changes</strong>. They show on the plots and on the site's <strong class="ui">Manual vs logger</strong> card, with the difference, and never change the data.</li>
-<li>Press <strong class="ui">Run pipeline</strong>. <strong class="ui">Tape against logger</strong> <span class="mk">3</span> compares each visit's tape with the logger just before the visit.</li>
+<li>Press <strong class="ui">Run</strong>. <strong class="ui">Tape against logger</strong> <span class="mk">3</span> compares each visit's tape with the logger just before the visit.</li>
 <li>A deployment with one check shows its median only. A difference beyond the limit (<span class="num">5 cm</span> unless set in Settings) is more likely a metadata error than sensor drift: fix the hang length (task 6) or the offset (task 10). To keep the values as they are, select the rows and press <strong class="ui">Keep selected as they are</strong> <span class="mk">4</span>.</li>
 </ol>
 <p class="co result"><strong>result</strong> The readings by hand show beside the logger with their difference; the data are not changed. Drift correction from the tapes is off by default: switch it on in Settings to export corrected values beside the logger's own.</p>
@@ -270,7 +270,7 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <figure><img src="img/guide/wlr_ht_14.png" alt="Automatic corrections" style="width:100%"><figcaption><b>Figure 15.</b> Automatic corrections</figcaption></figure>
 <ol>
 <li><strong class="ui">6 Automatic corrections</strong> lists everything a run changes on its own, with its <strong class="ui">State</strong> <span class="mk">1</span> and <strong class="ui">Where to change it</strong> <span class="mk">2</span>.</li>
-<li>Turn its switch off, or change the setting named in the last column, then <strong class="ui">Run pipeline</strong>.</li>
+<li>Turn its switch off, or change the setting named in the last column, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> From the next run the correction is not made; flags never change a value either way.</p>
 <p class="co check"><strong>check</strong> The <strong class="ui">State</strong> column shows the change; after the run, the <strong class="ui">Audit trail</strong> no longer lists that correction.</p>

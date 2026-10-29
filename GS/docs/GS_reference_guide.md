@@ -187,6 +187,13 @@ All of these flag and never remove, like the rest of GS's quality control.
 
 **Not switched on in an existing project.** New projects get `moving_median` and `bad_electrode` rows in the `standard`, `strict` and `frozen_ground` profiles; an existing `qc_profiles.csv` is left as it is. Run on a test archive (413 surveys, 297,725 measurements) with both added to `frozen_ground`, the existing rules flagged 15.7 % of measurements, the moving median added 6.6 % and the bad-electrode rule 11.8 %, and the median survey kept 90 % instead of 99.5 %. Look at the flagged measurements on the QC page before turning them on.
 
+### Reciprocal error model
+
+Where a survey has reciprocal measurements (current and potential electrodes swapped), the mean reciprocal error is binned
+against |R| and fitted with a linear or power law, the error model an inversion uses; with too few reciprocals it falls back to
+4 %, and an electrode is called bad when 25 % or more of its measurements fail (CPERS workflow, Herring et al. 2023). Sources:
+Slater et al. (2000); Koestel et al. (2008); Tso et al. (2017); Blanchy et al. (2020); LaBrecque et al. (1996).
+
 ## 6. Statistics
 
 `catalogue/survey_stats.csv` holds, for each survey and profile, the distribution of apparent resistivity, V/I, current, voltage,
@@ -330,6 +337,11 @@ physical line; **survey** one acquisition on it. **Flag** a QC mark on a measure
 
 ## References
 
+- Slater, L., Binley, A., Daily, W., Johnson, R. (2000). Cross-hole electrical imaging of a controlled saline tracer injection. *J. Appl. Geophys.* 44, 85-102.
+- Koestel, J., Kemna, A., Javaux, M., Binley, A., Vereecken, H. (2008). Quantitative imaging of solute transport in an unsaturated and undisturbed soil monolith with 3-D ERT and TDR. *Water Resour. Res.* 44, W12411.
+- Tso, C.-H. M., et al. (2017). Improved characterisation and modelling of measurement errors in electrical resistivity tomography (ERT) surveys. *J. Appl. Geophys.* 146, 103-119.
+- Blanchy, G., Saneiyan, S., Boyd, J., McLachlan, P., Binley, A. (2020). ResIPy, an intuitive open source software for complex geoelectrical inversion/modeling. *Comput. Geosci.* 137, 104423.
+- LaBrecque, D. J., Miletto, M., Daily, W., Ramirez, A., Owen, E. (1996). The effects of noise on Occam's inversion of resistivity tomography data. *Geophysics* 61, 538-548.
 - Loke, M.H. (1999). *Electrical imaging surveys for environmental and engineering studies.* (ref_manuals/Lokenote.pdf)
 - Advanced Geosciences Inc. (2014). *Instruction manual for EarthImager 2D.* (ref_manuals/EarthImager2DManual.pdf)
 - Advanced Geosciences Inc. *SuperSting instruction manual.* (ref_manuals/SuperSting Manual.pdf)

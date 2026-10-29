@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (Run, 2026-10-29)**
+- The top bar's Run pipeline button reads Run, as in CS; guides and the Standard figure updated. Reference guide: degree days and n-factors (12b), as in the hub. **Output changes:** none.
+
 **Docs (citations, 2026-10-29)**
 - Reference guide: ALT's permafrost test is two consecutive frozen years (van Everdingen 1998), as the code and the hub say. **Output changes:** none.
 
