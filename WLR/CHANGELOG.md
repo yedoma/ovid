@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs fixes (2026-10-29)**
+- Guides checked against the app: reference guide: three views (Simple first). **Output changes:** none.
+
 **Docs (2026-10-28)**
 - Quick start and how-to guides cover the Simple view and the three views; clock corrections, quality rules and removals are
   edited by hand in the Workbench. New figures from the guide project. **Output changes:** none.

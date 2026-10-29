@@ -658,7 +658,7 @@ Print just this page and keep it in the field book.
 
 ## Using the app: the set-up flow and the Workbench
 
-The app has two views of the same project, data and edits: the **Standard** view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More), and the **Workbench**, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.
+The app has three views of the same project, data and edits: **Simple**, a field check in four steps (Import, View, Edit, Export) that changes no data value; the **Standard** view, a numbered set-up flow in the rail on the left (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More); and the **Workbench**, a chart over a grid of every value, where every change to the data by hand is made (tables that change data values are shown in Standard and edited here). The switch at the top right moves between them, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address; a new install opens in Simple, and an edit made in one shows in the others at once.
 
 ### Check the data
 
