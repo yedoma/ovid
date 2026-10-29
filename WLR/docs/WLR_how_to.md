@@ -124,9 +124,9 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 <figure><img src="img/guide/wlr_ht_08.png" alt="Clocks: clock corrections" style="width:100%"></figure>
 
-1. Clock corrections change data values, so they are edited by hand in the **Workbench** (top right): open the **Clock corrections** table (1; shown read-only on **Clocks** in Standard) and **Add row** (2).
+1. On **Clocks**, **Clock corrections** (1) is shown, not edited: clock corrections change data values, so they are edited by hand in the **Workbench** (2, or the switch at the top right). There, open the **Clock corrections** table and press **Add row**.
 2. Fill in the serial, the start and end (blank = all of its record) and `shift_minutes`. With `mode` set to drift, the shift grows from none at the start to `shift_minutes` at the end.
-3. **Save changes** (3), then **Run pipeline**.
+3. **Save changes**, then **Run**.
 
 **Result:** The readings are moved in time; each shifted record is in the audit trail.
 
@@ -196,9 +196,9 @@ The same project, data and edits in three views, switched at the top (**Simple**
 
 <figure><img src="img/guide/wlr_ht_13.png" alt="Quality rules" style="width:100%"></figure>
 
-1. Quality rules are edited by hand in the **Workbench** (top right; Standard shows them read-only): open the **Quality rules** table and double-click a cell to change it: **Min** and **Max** (1), the largest single jump (max spike) or the longest flat stretch (max flat h).
+1. **Quality rules** shows the limits; they are edited by hand in the **Workbench** (3, or the switch at the top right). There, open the **Quality rules** table and double-click a cell to change it: **Min** and **Max** (1), the largest single jump (max spike) or the longest flat stretch (max flat h).
 2. **Action** (2): remove or flag. **Applies to** takes water, baro, ec, all, or site names or serials separated by |.
-3. **Save changes** (3), then **Run pipeline**.
+3. **Save changes**, then **Run**.
 
 **Result:** The rule is applied to every reading it covers; each removal or flag carries the rule's ID.
 

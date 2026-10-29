@@ -190,7 +190,7 @@ HOWTO <- list(   # the set-up project (port 8790), after one run
        marks = "G.mark(G.find('read as','th'),1,'above'), G.mark(G.tx('Time-zone table'),2), G.mark(G.find('Add row','button',0),3,'below')",
        clip = "G.union(G.tx('Files and the zone'), G.find('Add row','button',0), G.q('.tab-pane.active table'))"),
   list(name = "wlr_ht_08", prep = "await G.go('Clock', 3000); G.tx('Clock corrections').startContainer.parentElement.scrollIntoView();",
-       marks = "G.mark(G.find('Clock corrections','h3, h4, h5, b, strong, div'),1), G.mark(G.find('Add row','button',1),2,'below'), G.mark(G.find('Save changes','button',1),3,'below')",
+       marks = "G.mark(G.find('Clock corrections','h3, h4, h5, b, strong, div'),1), G.mark(G.card('Clock corrections').querySelector('.d-wb-only-note a'),2,'below')",   # shown, edited in the Workbench
        clip = "G.rect(G.card('Clock corrections'))"),
   list(name = "wlr_ht_03", prep = "await G.go('Metadata', 3000); await G.row('2000002');",
        marks = "G.mark(G.find('Site','th'),1,'above'), G.mark(G.find('From','th'),2,'above'), G.mark(G.find('To','th'),3,'above'), G.mark(G.find('Save changes','button'),4,'below')",
@@ -214,7 +214,7 @@ HOWTO <- list(   # the set-up project (port 8790), after one run
        marks = "G.mark(G.tx('Manual measurements'),1), G.mark(G.find('Add row','button'),2,'below'), G.mark(G.tx('Tape against logger'),3), G.mark(G.find('Keep selected as they are','button'),4)",
        clip = "G.rect(G.pane())"),
   list(name = "wlr_ht_13", prep = "await G.go('QC', 3000);",
-       marks = "G.mark(G.find('Min','th'),1,'above'), G.mark(G.find('Action','th'),2,'above'), G.mark(G.find('Save changes','button'),3,'below')",
+       marks = "G.mark(G.find('Min','th'),1,'above'), G.mark(G.find('Action','th'),2,'above'), G.mark(G.pane().querySelector('.d-wb-only-note a'),3,'below')",
        clip = "G.rect(G.pane())"),
   list(name = "wlr_ht_14", prep = "await G.go('Corrections', 3000);",
        marks = "G.mark(G.find('State','th'),1,'above'), G.mark(G.find('Where to change it','th'),2,'above')",
@@ -248,10 +248,10 @@ WORKBENCH <- list(   # the set-up project in the Workbench (?ui=workbench)
 if (sys.nframe() == 0) {
   want <- commandArgs(TRUE); dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
   pick <- function(l) Filter(function(s) !length(want) || s$name %in% want, l)
-  b <- open_app("http://127.0.0.1:8791", height = 2400); for (s in pick(QUICK)) do.call(shot, c(list(b), s)); b$close()
-  b <- open_app("http://127.0.0.1:8790", height = 2400); if (!grepl("Up to date", js(b, "return document.body.innerText;"))) js(b, JS_RUN)
+  b <- open_app("http://127.0.0.1:8791/?ui=standard", height = 2400); for (s in pick(QUICK)) do.call(shot, c(list(b), s)); b$close()
+  b <- open_app("http://127.0.0.1:8790/?ui=standard", height = 2400); if (!grepl("Up to date", js(b, "return document.body.innerText;"))) js(b, JS_RUN)
   narrow <- Filter(function(s) is.null(s$width), pick(HOWTO)); wide <- Filter(function(s) !is.null(s$width), pick(HOWTO))
   for (s in narrow) do.call(shot, c(list(b), s)); b$close()
-  if (length(wide)) { b <- open_app("http://127.0.0.1:8790", width = 1440); for (s in wide) do.call(shot, c(list(b), s[names(s) != "width"])); b$close() }
+  if (length(wide)) { b <- open_app("http://127.0.0.1:8790/?ui=standard", width = 1440); for (s in wide) do.call(shot, c(list(b), s[names(s) != "width"])); b$close() }
   if (length(pick(WORKBENCH))) { b <- open_app("http://127.0.0.1:8790/?ui=workbench&site=Well+A", width = 1440); for (s in pick(WORKBENCH)) do.call(shot, c(list(b), s)); b$close() }
 }

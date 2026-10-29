@@ -194,9 +194,9 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <p class="co when"><strong>when</strong> A logger's clock was wrong by a known amount, or drifted and was found out at download.</p>
 <figure><img src="img/guide/wlr_ht_08.png" alt="Clocks: clock corrections" style="width:100%"><figcaption><b>Figure 9.</b> Clocks: clock corrections</figcaption></figure>
 <ol>
-<li>Clock corrections change data values, so they are edited by hand in the <strong class="ui">Workbench</strong> (top right): open the <strong class="ui">Clock corrections</strong> table (1; shown read-only on <strong class="ui">Clocks</strong> in Standard) and <strong class="ui">Add row</strong> <span class="mk">2</span>.</li>
+<li>On <strong class="ui">Clocks</strong>, <strong class="ui">Clock corrections</strong> <span class="mk">1</span> is shown, not edited: clock corrections change data values, so they are edited by hand in the <strong class="ui">Workbench</strong> (2, or the switch at the top right). There, open the <strong class="ui">Clock corrections</strong> table and press <strong class="ui">Add row</strong>.</li>
 <li>Fill in the serial, the start and end (blank = all of its record) and <code>shift_minutes</code>. With <code>mode</code> set to drift, the shift grows from none at the start to <code>shift_minutes</code> at the end.</li>
-<li><strong class="ui">Save changes</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> The readings are moved in time; each shifted record is in the audit trail.</p>
 <p class="co check"><strong>check</strong> On the site plot, events and field visits line up with the logger's record again.</p>
@@ -256,9 +256,9 @@ main figcaption b{color:#fff;font-weight:650;margin-right:4px}
 <p class="co when"><strong>when</strong> A limit removes good readings, or lets bad ones through, for your loggers or sites.</p>
 <figure><img src="img/guide/wlr_ht_13.png" alt="Quality rules" style="width:100%"><figcaption><b>Figure 14.</b> Quality rules</figcaption></figure>
 <ol>
-<li>Quality rules are edited by hand in the <strong class="ui">Workbench</strong> (top right; Standard shows them read-only): open the <strong class="ui">Quality rules</strong> table and double-click a cell to change it: <strong class="ui">Min</strong> and <strong class="ui">Max</strong> <span class="mk">1</span>, the largest single jump (max spike) or the longest flat stretch (max flat h).</li>
+<li><strong class="ui">Quality rules</strong> shows the limits; they are edited by hand in the <strong class="ui">Workbench</strong> (3, or the switch at the top right). There, open the <strong class="ui">Quality rules</strong> table and double-click a cell to change it: <strong class="ui">Min</strong> and <strong class="ui">Max</strong> <span class="mk">1</span>, the largest single jump (max spike) or the longest flat stretch (max flat h).</li>
 <li><strong class="ui">Action</strong> <span class="mk">2</span>: remove or flag. <strong class="ui">Applies to</strong> takes water, baro, ec, all, or site names or serials separated by |.</li>
-<li><strong class="ui">Save changes</strong> <span class="mk">3</span>, then <strong class="ui">Run pipeline</strong>.</li>
+<li><strong class="ui">Save changes</strong>, then <strong class="ui">Run</strong>.</li>
 </ol>
 <p class="co result"><strong>result</strong> The rule is applied to every reading it covers; each removal or flag carries the rule's ID.</p>
 <p class="co check"><strong>check</strong> The <strong class="ui">Audit trail</strong> lists the rule's ID and how many values it removed or flagged.</p>
