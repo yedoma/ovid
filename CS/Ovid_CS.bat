@@ -1,6 +1,6 @@
 @echo off
 rem ============================================================================
-rem  Ovid_CS.bat  --  starts Ovid Core // CS in your browser.
+rem  Ovid_CS.bat  --  starts ovid // CS in your browser.
 rem  Double-click it. R is found in this order:
 rem    1. R-portable\ inside this folder (made by Make_Portable.bat, so nothing needs installing)
 rem    2. the R installed on this computer (registry, then Program Files, then PATH)
@@ -8,7 +8,7 @@ rem  Packages live in library\ inside this folder; the first start installs them
 rem ============================================================================
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Ovid Core // CS
+title ovid // CS
 set "APPDIR=%~dp0"
 set "RSCRIPT="
 

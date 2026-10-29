@@ -1,7 +1,7 @@
 # launcher/run_app.R  --  started by Ovid_GS.bat. Finds the shared Ovid Core files and hands over to their launcher
 # (Ovid/launcher.R), which installs packages into library/ and opens the app; "--portable" makes the folder self-contained.
 
-APP <- list(key = "GS", title = "Ovid Core // GS", bat = "Ovid_GS.bat",
+APP <- list(key = "GS", title = "ovid // GS", bat = "Ovid_GS.bat",
             pkgs = c("shiny", "bslib", "DT", "data.table", "ggplot2", "jsonlite", "zip", "plotly"))
 args <- commandArgs(trailingOnly = TRUE)
 me <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])

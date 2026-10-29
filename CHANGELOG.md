@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Changed (launchers, 2026-10-29).** The launcher window and console of every app read "ovid // <APP>" (they read "Ovid Core // <APP>").
+
 **Fixed (top bar, 2026-10-29).** The top bar of every app fits its window down to 1024 px: the corrections chip is cut short, then shown as numbers only, before anything else; the view switch and Settings stay whole.
 
 **Changed (folders under ~/Projects/Ovid, 2026-10-21).** Projects, raw archives and demos moved from the Desktop into ~/Projects/Ovid/Projects/<app> (CS, GS, GT, RS, WLR, demo, test_samples). The default projects folder, the GS and GT raw defaults and RS's project folder follow; the ~/Desktop/UAV_project fallback is gone. **Output changes:** none.

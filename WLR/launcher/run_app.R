@@ -1,7 +1,7 @@
 # launcher/run_app.R  --  started by Ovid_WLR.bat. Finds the shared Ovid Core files and hands over to their launcher
 # (Ovid/launcher.R), which installs packages into library/ and opens the app; "--portable" makes the folder self-contained.
 
-APP <- list(key = "WLR", title = "Ovid Core // WLR", bat = "Ovid_WLR.bat",
+APP <- list(key = "WLR", title = "ovid // WLR", bat = "Ovid_WLR.bat",
             pkgs = c("shiny", "DT", "data.table", "ggplot2", "xml2", "readxl", "zip"))
 args <- commandArgs(trailingOnly = TRUE)
 me <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])
