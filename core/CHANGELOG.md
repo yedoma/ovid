@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (package lockfile, 2026-10-29)**
+- build/renv.lock refreshed from this Mac (R 4.6.1, 90 packages, all CRAN): build/make_lockfile.R now also takes what
+  renv::dependencies() finds in core/ and the apps; build/README.md says how to refresh and restore it. A core test fails when a
+  package the code uses is not pinned. renv is not activated. **Output changes:** none.
+
 **Fixed (top bar, 2026-10-29)**
 - The top bar never overflows (it cut off the view switch and Settings when the corrections chip was long, e.g. CS at 1280 px).
   The corrections chip gives way first: cut with an ellipsis, then its short form (9 · 250 · 5, measured in shell.js), with the

@@ -952,4 +952,20 @@ local({ rd <- function(f) paste(readLines(file.path(CORE_DIR, f), warn = FALSE, 
         grepl("Corrections applied in the last run: %s corrections, %s removed, %s flagged", ap, fixed = TRUE) &&
         grepl("class = \"d-applied-out\"", ap, fixed = TRUE) && grepl("function fitBar()", js, fixed = TRUE) && grepl("classList.add('d-short')", js, fixed = TRUE)) })
 
+cat("the package lockfile (build/renv.lock)\n")
+local({ root <- dirname(CORE_DIR); lock <- file.path(root, "build", "renv.lock")
+  if (!file.exists(lock)) { check("build/renv.lock exists", FALSE); return() }
+  pinned <- names(jsonlite::read_json(lock)$Packages)
+  fs <- list.files(file.path(root, c("core", "CS", "WLR", "GT", "GS", "RS")), "\\.R$", recursive = TRUE, full.names = TRUE)
+  fs <- fs[!grepl("/(docs|build|library)/", fs)]
+  txt <- vapply(fs, function(f) paste(sub("#[^\"']*$", "", sub("^\\s*#.*$", "", readLines(f, warn = FALSE))), collapse = "\n"), "")   # comments left out
+  nq <- gsub("(?s)\"(\\\\.|[^\"\\\\])*\"|'(\\\\.|[^'\\\\])*'", "\"\"", txt, perl = TRUE)     # x:: inside a string (CSS ::after, help text) is not a call
+  used <- unique(c(unlist(regmatches(txt, gregexpr("(?<=library\\(|require\\(|requireNamespace\\()[\"']?[A-Za-z][A-Za-z0-9.]*", txt, perl = TRUE))),
+                   unlist(regmatches(nq, gregexpr("\\b[A-Za-z][A-Za-z0-9.]*(?=::)", nq, perl = TRUE)))))
+  used <- gsub("[\"']", "", used)
+  used <- setdiff(used, c(rownames(utils::installed.packages(priority = "base")), "writexl", "pkg", "p", "x", "nm"))   # writexl: optional, used when present
+  miss <- setdiff(used, pinned)
+  if (length(miss)) cat("    not in build/renv.lock:", paste(miss, collapse = ", "), "\n")
+  check("every package the apps and the core use is pinned in build/renv.lock (refresh: Rscript build/make_lockfile.R)", !length(miss)) })
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)
