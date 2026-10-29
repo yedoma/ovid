@@ -49,3 +49,6 @@ line as each file is changed, not all at once.
 17. **`Rscript run_all_tests.R`** runs every suite; all must pass before a push.
 18. **Each change gets a CHANGELOG line** in the app it touches.
 19. **Commits are small and about one thing.**
+20. **The launcher** (`core/launcher_app`, opened by `Open ovid.command`) only starts, shows and stops the apps; its logic is
+    in `logic.R` and tested by `core/tests/run_tests.R`. A new package an app uses goes in `build/renv.lock`
+    (`Rscript build/make_lockfile.R`) and then into the runtime (`bash build/make_runtime_mac.sh`).

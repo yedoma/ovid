@@ -18,9 +18,17 @@ Raw files are never changed, and every removed or changed value is explained in 
 
 Needs R 4.x (<https://cran.r-project.org>). The first run installs the R packages it needs, which takes a few minutes.
 
-- **Mac:** double-click `Open CS (Mac).command` (or WLR, GT, GS, RS). The first time, right-click > Open if macOS warns.
+- **Mac:** double-click `Open ovid.command`. A small window lists the five apps: pick one and press Open (or Enter, or Cmd 1–5).
+  Each app opens in your browser and keeps running until you press Stop or quit the launcher. The first time, right-click >
+  Open if macOS warns. `Open CS (Mac).command` (or WLR, GT, GS, RS) still opens one app on its own.
+- **Mac without R:** put the portable runtime (`ovid-runtime-mac-arm64`, Apple silicon) beside `Open ovid.command` as a
+  folder named `runtime`; the launcher then uses it and needs nothing installed.
 - **Windows:** open the app's folder and double-click `Ovid_CS.bat` (or `Ovid_WLR.bat`, `Ovid_GT.bat`, `Ovid_GS.bat`, `Ovid_RS.bat`).
 - **Computers without R:** run `Make_Portable.bat` in an app folder once on a Windows computer that has R; the folder can then be zipped and used anywhere.
+
+**Building the Mac runtime** (on an Apple silicon Mac with the CRAN R the lockfile names): `bash build/make_runtime_mac.sh`
+writes `build/out/ovid-runtime-mac-arm64` and a `.tar.gz` for a release; `--install` also copies it to `runtime/`. Neither is
+committed. See `build/README.md`.
 
 Your data stays outside this folder. Each app asks for your project folder (raw files, metadata, set-up tables, outputs), so this folder can be copied, backed up or shared without any data in it.
 
