@@ -34,7 +34,7 @@ The pages on the left: **Archive** (Map, Timeline, Flight, Imagery), **Tools** (
 2. **Map:** every flight on satellite imagery, coloured by positioning status. Click a flight on the map or in the table to see it beside the map. The figures across the top count the flights, images, the share placed and the share RTK or PPK corrected.
 3. **Flight:** a flight's display name, project and site, its files and its checks.
 4. **QA:** the flights with flags and the files tied to no flight.
-5. **Sources:** **Create viewer**, then **Export viewer (ZIP)**, to send the catalogue to someone without R.
+5. **Sources:** **Export viewer (ZIP)** writes the viewer and downloads it, to send the catalogue to someone without R.
 
 ## What the values mean
 

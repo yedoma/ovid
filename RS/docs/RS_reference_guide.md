@@ -38,9 +38,9 @@ change them in `CFG` at the top of `rs_pipeline.R` or in the files under `<proje
 2. On **Sources**, press **Browse…** to pick a drive or folder (for example an external disk with the flight archive), give it a short name and press **Scan folder**.
    The first scan opens every image once; later scans only read folders whose files changed.
 3. On **Map**, every flight appears on satellite imagery, coloured by positioning status. Click a flight on the map or in the table to see it beside the map.
-4. On **Flight**, give it a display name, project and site, and confirm or reject the files linked to it. Everything you type is saved to `config/` and backed up.
+4. On **Flight**, give it a display name, project and site, and, in the **Workbench**, confirm or reject the files linked to it. Everything you type is saved to `config/` and backed up.
 5. On **QA**, work through the flights with flags and the files tied to no flight.
-6. On **Sources**, press **Create viewer**, then **Export viewer (ZIP)**, to send the catalogue to someone without R.
+6. On **Sources**, press **Export viewer (ZIP)** (it writes the viewer, then downloads it) to send the catalogue to someone without R.
 
 From the command line:
 

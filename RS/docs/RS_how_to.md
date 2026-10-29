@@ -103,7 +103,7 @@ The same project, catalogue and edits in three views, switched at the top (**Sim
 
 ## 12. Send the catalogue to someone without R
 
-1. **Sources**: **Create viewer**, then **Export viewer (ZIP)**.
+1. **Sources**: **Export viewer (ZIP)**: it writes the viewer, then downloads it.
 2. In Simple, **Export** gives the catalogue tables and the footprints as GeoJSON.
 
 **Result:** The viewer is a folder that opens in a browser, with the map and the flights.

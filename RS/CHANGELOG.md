@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs fixes (2026-10-29)**
+- Guides checked against the app: reference guide: links confirmed in the Workbench; Export viewer (ZIP) is one button. **Output changes:** none.
+
 **Docs (2026-10-29)**
 - New quick start and how-to guide (docs/RS_quick_start.*, docs/RS_how_to.*: md, html and pdf), built by docs/build_guides.R in
   the reference guide's colours, with figures from the test archive (map imagery hidden). **Output changes:** none.
