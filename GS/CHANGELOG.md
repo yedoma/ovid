@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Tests (2026-10-29)**
+- The Workbench structure check names the part that fails (it failed once in a full parallel run and could not be repeated). **Output changes:** none.
+
 **Changed (names, 2026-10-29)**
 - read_mrk is now read_gpr_mrk (MALA marker files; RS reads DJI geotag files). **Output changes:** none.
 

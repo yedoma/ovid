@@ -129,9 +129,16 @@ check(all(app$SETUP_TABLES$id %in% names(CONFIG_FILES)) && !anyDuplicated(app$SE
 hs <- as.character(htmltools::renderTags(app$ui)$html); hw <- as.character(suppressWarnings(htmltools::renderTags(app$wb_ui(list(QUERY_STRING = "ui=workbench")))$html))
 ids <- function(h) regmatches(h, gregexpr(' id="[^"]+"', h))[[1]]
 toolw <- vapply(Filter(function(x) inherits(x, "ovid_tool"), app$std_pages(FALSE)), `[[`, "", "value")
-check(!anyDuplicated(ids(hs)) && !anyDuplicated(ids(hw)) && all(vapply(c(toolw, "wb-data", "wb-import"), function(v) grepl(paste0('data-value="', v, '"'), hw, fixed = TRUE), NA)) &&
-      all(vapply(c("rebuild", "wb_export", "wb_xy", "wb_act_flag", "wb_act_unflag", "set_raw", "set_project", paste0(app$SETUP_TABLES[(tab)]$id, "-tbl")), function(i) grepl(paste0('id="', i, '"'), hw, fixed = TRUE), NA)) &&
-      all(vapply(paste0(app$SETUP_TABLES[(tab)]$id, "-tbl"), function(i) grepl(paste0('id="', i, '"'), hs, fixed = TRUE), NA)) && grepl('href="?ui=standard"', hw, fixed = TRUE) && grepl("ui=workbench", hs, fixed = TRUE),
+# each part on its own, so a failure says which (it failed once in a full parallel run and could not be repeated)
+wb_parts <- c(
+  `no input twice (Standard)` = !anyDuplicated(ids(hs)), `no input twice (Workbench)` = !anyDuplicated(ids(hw)),
+  setNames(vapply(c(toolw, "wb-data", "wb-import"), function(v) grepl(paste0('data-value="', v, '"'), hw, fixed = TRUE), NA), paste("Workbench page", c(toolw, "wb-data", "wb-import"))),
+  setNames(vapply(c("rebuild", "wb_export", "wb_xy", "wb_act_flag", "wb_act_unflag", "set_raw", "set_project", paste0(app$SETUP_TABLES[(tab)]$id, "-tbl")), function(i) grepl(paste0('id="', i, '"'), hw, fixed = TRUE), NA),
+           paste("Workbench input", c("rebuild", "wb_export", "wb_xy", "wb_act_flag", "wb_act_unflag", "set_raw", "set_project", paste0(app$SETUP_TABLES[(tab)]$id, "-tbl")))),
+  setNames(vapply(paste0(app$SETUP_TABLES[(tab)]$id, "-tbl"), function(i) grepl(paste0('id="', i, '"'), hs, fixed = TRUE), NA), paste("Standard table", paste0(app$SETUP_TABLES[(tab)]$id, "-tbl"))),
+  `link to Standard` = grepl('href="?ui=standard"', hw, fixed = TRUE), `link to the Workbench` = grepl("ui=workbench", hs, fixed = TRUE))
+if (!all(wb_parts)) cat("    missing:", paste(names(wb_parts)[!wb_parts], collapse = "; "), "\n")
+check(all(wb_parts),
       "the Workbench holds every Standard page, its data view, Import, Rebuild and Export, and no input twice; the Standard has Set-up tables and a way to the Workbench")
 gone <- c("wb_act_el", "electrodes-tbl", "wbs_save", "t_group", "elev_gnss", "v_flag", "v_reset", "v_size", "m_inv_sw", "m_inv_par", "m_inv_rms", "dl_qc",
           "stack-tr", "stack-tr_go", "stack-cmp_on", "stack-cmp_1", "stack-cmp_2", "home-found", "home-open_survey", "home-open_stack", "gpr_line", "gpr_preset", "gpr_dc", "gprwb-line")
