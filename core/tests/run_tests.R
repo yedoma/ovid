@@ -917,7 +917,7 @@ local({
   defaults <- function(app) { f <- file.path(root, app, paste0(tolower(app), "_pipeline.R"))
     grep("(raw_dirs|metadata_dir|project_dir)\\s*(=|<-)", readLines(f, warn = FALSE), value = TRUE) }
   look <- unlist(lapply(c("CS", "WLR", "GT", "GS", "RS"), defaults)); dirs <- unlist(regmatches(look, gregexpr('"~/[^"]*"', look)))
-  check("every app's default folders are under ~/Projects/Ovid/Projects", length(dirs) >= 6 && all(startsWith(dirs, '"~/Projects/Ovid/Projects/')))
+  check("every app's default folders are under ~/Projects/Ovid/Projects", length(dirs) >= 5 && all(startsWith(dirs, '"~/Projects/Ovid/Projects/')))   # 5: GT has no default metadata folder (none unless set)
   check("projects go in ~/Projects/Ovid/Projects/<app> when none is set", identical(ovid_projects_home("RS"), "~/Projects/Ovid/Projects/RS"))
 })
 
@@ -951,6 +951,11 @@ local({ rd <- function(f) paste(readLines(file.path(CORE_DIR, f), warn = FALSE, 
         grepl("text-overflow:ellipsis", ap, fixed = TRUE) && grepl(".d-applied.d-short .w{display:none}", ap, fixed = TRUE) &&
         grepl("Corrections applied in the last run: %s corrections, %s removed, %s flagged", ap, fixed = TRUE) &&
         grepl("class = \"d-applied-out\"", ap, fixed = TRUE) && grepl("function fitBar()", js, fixed = TRUE) && grepl("classList.add('d-short')", js, fixed = TRUE)) })
+
+cat("click-through tests read only the test project (uitest.R)\n")
+local({ u <- paste(readLines(file.path(CORE_DIR, "uitest.R"), warn = FALSE), collapse = "\n")
+  check("the app runs from a copy of its folder with no saved settings of its own, so the folders its user saved are never read or changed",
+        grepl('if (!grepl("^app_settings", f)) file.symlink', u, fixed = TRUE) && grepl('file.path(run_dir, "app_settings.json")', u, fixed = TRUE) && grepl("wd = run_dir", u, fixed = TRUE)) })
 
 cat("the package lockfile (build/renv.lock)\n")
 local({ root <- dirname(CORE_DIR); lock <- file.path(root, "build", "renv.lock")

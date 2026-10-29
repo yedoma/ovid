@@ -5,7 +5,10 @@
 # an output error (a message from validate(need()) is not one: that is the app explaining an empty page), when the browser
 # throws a JavaScript error, or when the app writes "Warning: Error in" (an observer or output that stopped). Returns one row
 # per page, plus a row for the Workbench and one for errors the server wrote, so a test can say which page broke.
-#   app_dir  the app's folder        env  variables for the app (its project folder, so it reads a test project)
+#   app_dir  the app's folder        env  variables for the app (its project and data folders, so it reads a test project)
+#   settings  what the app's settings hold (written to app_settings.json): the app runs from a copy of its folder (links to its
+#             files) with no saved settings of its own, so it never reads the folders the person using it saved, and a save
+#             during the test does not change them
 #   first_load  seconds the first page may take to load (longer than timeout: a busy computer running several suites at once)
 #   ignore_js  JavaScript errors that come from loading map tiles over the network, or from plotly's map fitting itself while
 #              its page is hidden (getNorthWest), not from the app
@@ -17,12 +20,16 @@ own_draw <- function(expr) {
   on.exit(if (had) assign(".Random.seed", seed, g) else if (exists(".Random.seed", g, inherits = FALSE)) rm(".Random.seed", envir = g))
   set.seed(NULL); expr
 }
-ui_click_through <- function(app_dir, env = character(), settle = 0.8, timeout = 30, first_load = 90, workbench = TRUE, simple = TRUE, stack = 4L,
+ui_click_through <- function(app_dir, env = character(), settings = list(), settle = 0.8, timeout = 30, first_load = 90, workbench = TRUE, simple = TRUE, stack = 4L,
                              ignore_js = "Mapbox error|tile|net::ERR|Failed to fetch|getNorthWest") {
   stopifnot(requireNamespace("chromote", quietly = TRUE), requireNamespace("processx", quietly = TRUE))
+  src <- normalizePath(app_dir); run_dir <- tempfile("ovid_uitest_"); dir.create(run_dir)
+  for (f in list.files(src, all.files = TRUE, no.. = TRUE)) if (!grepl("^app_settings", f)) file.symlink(file.path(src, f), file.path(run_dir, f))
+  writeLines(if (length(settings)) jsonlite::toJSON(settings, auto_unbox = TRUE, null = "null") else "{}", file.path(run_dir, "app_settings.json"))
+  core <- file.path(dirname(src), "core"); if (!"OVID_CORE" %in% names(env) && file.exists(file.path(core, "util.R"))) env <- c(env, OVID_CORE = core)   # the copy has no ../core beside it
   port <- own_draw(httpuv::randomPort()); url <- sprintf("http://127.0.0.1:%d/", port)
-  p <- processx::process$new(file.path(R.home("bin"), "Rscript"), c("-e", sprintf("shiny::runApp(%s, port = %d, launch.browser = FALSE)", deparse(normalizePath(app_dir)), port)),
-                             env = c("current", env), stdout = "|", stderr = "2>&1", wd = app_dir)
+  p <- processx::process$new(file.path(R.home("bin"), "Rscript"), c("-e", sprintf("shiny::runApp(%s, port = %d, launch.browser = FALSE)", deparse(run_dir), port)),
+                             env = c("current", env), stdout = "|", stderr = "2>&1", wd = run_dir)
   on.exit(p$kill(), add = TRUE)
   # safe: test tool; output of an app already stopped
   log <- character(); grab <- function() if (p$is_alive() || TRUE) log <<- c(log, tryCatch(p$read_output_lines(), error = function(e) character()))

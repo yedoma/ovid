@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (click-through tests, 2026-10-29)**
+- uitest.R runs the app from a copy of its folder with no saved settings (settings = list() written for it), so a test never reads or changes the folders its user saved; CS and WLR pass their fixture folders. **Output changes:** none.
+
 **Added (package lockfile, 2026-10-29)**
 - build/renv.lock refreshed from this Mac (R 4.6.1, 90 packages, all CRAN): build/make_lockfile.R now also takes what
   renv::dependencies() finds in core/ and the apps; build/README.md says how to refresh and restore it. A core test fails when a

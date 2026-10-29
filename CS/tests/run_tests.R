@@ -883,7 +883,7 @@ local({ nm <- c(dene = "\u0141\u0131\u0301\u0131\u0301ta\u0131\u0328\u0131\u0328
 group("8. Every page in a browser")
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
-  ui <- tryCatch(ui_click_through(normalizePath(.app), c(CS_PROJECT_DIR = p16)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
+  ui <- tryCatch(ui_click_through(normalizePath(.app), c(CS_PROJECT_DIR = p16, CS_RAW_DIRS = raw16)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad)) })
 local({ library(data.table); src <- paste(readLines(file.path(.app, "pages/folders.R"), warn = FALSE), collapse = "\n")

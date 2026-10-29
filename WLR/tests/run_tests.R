@@ -742,7 +742,8 @@ local({                                                               # damaged 
   check(paste0("a damaged or emptied set-up table never stops a run without saying which table: ", nrow(t), " runs"), !nrow(bad)) })
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
-  ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = file.path(wb_root, "p"))), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
+  none <- tempfile("none_"); dir.create(none)                                    # no metadata or dGPS folder: only the test project is read
+  ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = file.path(wb_root, "p"), WLR_RAW_DIRS = wraw, WLR_METADATA_DIR = none, WLR_DGPS_DIR = none)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad))
   # a run with nothing to note (no problems, every deployment within the tape limit): Needs you and the side panel were "Error: ..."
@@ -750,7 +751,7 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
   file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))
   invisible(capture.output(run_pipeline(modifyList(CFG, list(raw_dirs = file.path(here, "tests", "golden", "raw"), metadata_dir = "", dgps_dir = "", project_dir = gp,
                                                              unzoned_offset_h = -7, make_plots = FALSE)))))
-  ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = gp, WLR_RAW_DIRS = file.path(here, "tests", "golden", "raw")), workbench = FALSE),
+  ui <- tryCatch(ui_click_through(normalizePath(here), c(WLR_PROJECT_DIR = gp, WLR_RAW_DIRS = file.path(here, "tests", "golden", "raw"), WLR_METADATA_DIR = none, WLR_DGPS_DIR = none), workbench = FALSE),
                  error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check("every page opens with no error after a run that found nothing to note (the golden project)", nrow(ui) > 5 && !nrow(bad)) })
