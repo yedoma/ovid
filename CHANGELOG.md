@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Fixed (tests on GitHub, 2026-10-29).** The Linux tests run R as build/renv.lock pins it (4.6.1), not the latest release: when "release" moved to R 4.6.2, two RS checks (the ignore-rule rebuild and the golden project) failed there with no change to ovid. RS under R 4.6.2 is checked when the lockfile moves to it.
+
 **Fixed (Mac runtimes, 2026-10-29).** A runtime on a Mac without R installed read no time zones (local times fell back to UTC with a warning): its bin/R still named the installed R's share folder. It now uses its own, and the build and build/check_runtime.R stop when a time zone does not resolve. **Output changes:** none where R is installed.
 
 **Added (runtimes for Intel Mac and Windows, 2026-10-29).** build/make_runtime_mac.sh --arch x86_64 makes ovid-runtime-mac-x86_64 (370 MB, 176 MB packed) from CRAN's notarized installer, also on Apple silicon under Rosetta; build/make_runtime_win.ps1 makes ovid-runtime-win-x64 for "Open ovid.bat". All three take the lockfile's exact package versions from the dated snapshot in build/snapshot.txt. build/check_runtime.R starts the five apps from a clean copy and checks each page; .github/workflows/runtimes.yml builds and checks all three on their own systems and runs every suite with each. make_runtime_mac.sh copies the installed R only when it is the arch and R version wanted, else unpacks CRAN's installer. **Output changes:** none.
