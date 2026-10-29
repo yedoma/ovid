@@ -110,6 +110,7 @@ if (length(bad)) {
     lines <- readLines(file.path(log_dir, l), warn = FALSE)
     hit <- grep("FAIL|Error|differs:|gone:|new: |run stopped", lines)
     cat(sprintf("\n-- %s --\n", l), lines[unique(pmin(length(lines), sort(c(hit, hit + 1, hit + 2))))], sep = "\n")
+    cat("  last lines:", utils::tail(lines, 15), sep = "\n")                       # where a suite stopped without a FAIL line
   }
   quit(status = 1)
 }

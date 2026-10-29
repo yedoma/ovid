@@ -34,7 +34,9 @@ golden_outputs <- function(p, raw, to) {
     dir.create(dirname(file.path(to, x)), recursive = TRUE, showWarnings = FALSE); fwrite(d, file.path(to, x), eol = "\n") }   # "\n" on Windows too, as the expected files
   sort(f)
 }
-golden_md5 <- function(dir) { f <- sort(list.files(dir, recursive = TRUE)); if (!length(f)) return("")
+# Files in ICU's English order, the same on every system and the order the accepted md5s were made in (sort() follows the
+# system's own collation: Windows puts deployments.csv before deployment_sheet.csv; byte order would change the Mac's).
+golden_md5 <- function(dir) { f <- stringi::stri_sort(list.files(dir, recursive = TRUE), locale = "en"); if (!length(f)) return("")
   t <- tempfile(); on.exit(unlink(t)); writeBin(charToRaw(paste0(f, " ", tools::md5sum(file.path(dir, f)), "\n", collapse = "")), t); unname(as.character(tools::md5sum(t))) }   # "\n" on Windows too
 
 # Cells that differ: numbers by more than 1e-9 of their size (the last bits of a mean or a percentile differ between processors,
