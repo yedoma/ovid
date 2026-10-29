@@ -25,15 +25,16 @@ GOLDEN_ACCEPT_COLS <- c("checked_by", "checked_on", "expected_md5", "note")
 # The run's outputs, normalized, written as CSV under `to`; returns their paths relative to `to`.
 golden_outputs <- function(p, raw, to) {
   f <- list.files(p, recursive = TRUE); f <- f[grepl("^(output|config)/.*\\.csv$", f) & !grepl(GOLDEN_SKIP, f)]
-  roots <- c(setNames(rep("<project>", 2), c(p, normalizePath(p))), setNames(rep("<raw>", 2), c(raw, normalizePath(raw)))); roots <- roots[order(-nchar(names(roots)))]
+  roots <- c(setNames(rep("<project>", 3), c(p, normalizePath(p), normalizePath(p, winslash = "/"))),   # Windows: "\\" and "/" spellings
+             setNames(rep("<raw>", 3), c(raw, normalizePath(raw), normalizePath(raw, winslash = "/")))); roots <- roots[order(-nchar(names(roots)))]
   for (x in f) { d <- if (file.size(file.path(p, x)) > 0) fread(file.path(p, x), colClasses = "character", na.strings = NULL) else data.table()
     k <- grep(GOLDEN_STAMP, names(d), value = TRUE); if (length(k)) d[, (k) := NULL]
     for (j in names(d)) { v <- d[[j]]; for (r in names(roots)) v <- gsub(r, roots[[r]], v, fixed = TRUE); set(d, j = j, value = v) }
-    dir.create(dirname(file.path(to, x)), recursive = TRUE, showWarnings = FALSE); fwrite(d, file.path(to, x)) }
+    dir.create(dirname(file.path(to, x)), recursive = TRUE, showWarnings = FALSE); fwrite(d, file.path(to, x), eol = "\n") }   # "\n" on Windows too, as the expected files
   sort(f)
 }
 golden_md5 <- function(dir) { f <- sort(list.files(dir, recursive = TRUE)); if (!length(f)) return("")
-  t <- tempfile(); on.exit(unlink(t)); writeLines(paste(f, tools::md5sum(file.path(dir, f))), t); unname(as.character(tools::md5sum(t))) }
+  t <- tempfile(); on.exit(unlink(t)); writeBin(charToRaw(paste0(f, " ", tools::md5sum(file.path(dir, f)), "\n", collapse = "")), t); unname(as.character(tools::md5sum(t))) }   # "\n" on Windows too
 
 # What differs between two folders of normalized outputs, one line each (as run_check.R reports it).
 golden_diff <- function(want, got) {
