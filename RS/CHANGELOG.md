@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (Workbench edit, 2026-10-29)**
+- The Workbench's Edit flight saves a positioning change again: the save no longer judged "in the Workbench" from the page address (it dropped the change unless the address said ?ui=workbench). **Output changes:** none.
+
 **Changed (names, 2026-10-29)**
 - read_mrk is now read_dji_mrk (DJI geotag files; GS reads MALA GPR markers). **Output changes:** none.
 

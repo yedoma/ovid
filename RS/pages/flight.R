@@ -28,9 +28,10 @@
   # with Confirm this grouping and Split this sortie off (pages/missions.R).
   flight_row <- function(id) { d <- isolate(E$flights$data()); cf <- if (is.null(d)) data.table() else as.data.table(d)[flight_id == id]
     k <- setdiff(FLIGHT_COLS, "flight_id"); stats::setNames(lapply(k, function(x) if (nrow(cf) && x %in% names(cf) && !is.na(cf[[x]][1])) as.character(cf[[x]][1]) else ""), k) }
-  save_flight <- function(id, v) {
+  # wb: the save comes from the Workbench's Edit flight (workbench/wb_edit.R), which may change positioning whatever the address
+  save_flight <- function(id, v, wb = FALSE) {
     # positioning is set in the Workbench (M 28 Oct): elsewhere a change to it is not saved, and says where it is made
-    if (!isTRUE(tryCatch(wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui), error = function(e) FALSE)) &&
+    if (!wb && !isTRUE(tryCatch(wb_wanted(isolate(session$clientData$url_search), SETTINGS$ui), error = function(e) FALSE)) &&
         !identical(trim(v$positioning_status %||% ""), trim(flight_row(id)$positioning_status %||% ""))) {
       v$positioning_status <- flight_row(id)$positioning_status
       showNotification("Positioning is changed in the Workbench (the switch at the top right); the other changes are saved.", type = "warning") }

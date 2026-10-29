@@ -50,7 +50,7 @@ wb_edit_server <- function(input, output, session, ctx) {
     showModal(modalDialog(title = "Edit flight", size = "l", easyClose = TRUE, note(p0$label, " \u00b7 ", p0$fid),
       rs_flight_form("wb_ed_", ctx$std$flight_row(p0$fid)), footer = modalButton("Cancel"))) })
   observeEvent(input$wb_ed_save, { fid <- ctx$key()
-    if (ctx$std$save_flight(fid, rs_flight_form_read(input, "wb_ed_"))) done("Saved to flights.csv.") })   # the Flight page's save (pages/flight.R)
+    if (ctx$std$save_flight(fid, rs_flight_form_read(input, "wb_ed_"), wb = TRUE)) done("Saved to flights.csv.") })   # the Flight page's save (pages/flight.R)
 
   # the flight's links, the map and the file rules, where the Standard edits them
   observeEvent(input$wb_links_open, { ctx$std$sel(ctx$key()); ctx$set_view("Flight") })
