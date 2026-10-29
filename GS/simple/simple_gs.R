@@ -50,7 +50,8 @@ sp_gs_folder_site <- function(x) vapply(as.character(x), function(s) { if (is.na
 # folded into it.
 sp_gs_surveys <- function(s) {
   if (is.null(s) || !nrow(s)) return(NULL); s <- copy(s); s[, folder := sub("/.*", "", primary_file)]
-  par <- if ("parent_ids" %in% names(s)) s[!kind %in% SP_GS_KINDS & nzchar(parent_ids %|na|% ""), .(p = unlist(strsplit(parent_ids, "[;,]\\s*"))), by = survey_id] else data.table(p = character())
+  if ("parent_ids" %in% names(s)) s[, parent_ids := as.character(parent_ids)]   # a catalogue with no parents reads as logical NA
+  par <- if ("parent_ids" %in% names(s)) s[!kind %in% SP_GS_KINDS & nzchar(parent_ids %|na|% ""), .(p = as.character(unlist(strsplit(parent_ids, "[;,]\\s*")))), by = survey_id] else data.table(p = character())
   nder <- if (nrow(par)) par[, .N, by = p] else data.table(p = character(), N = integer())
   x <- s[kind %in% SP_GS_KINDS]
   fd <- sp_gs_folder_date(x$folder); own <- !x$date %in% c("undated", "")

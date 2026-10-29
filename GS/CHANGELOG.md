@@ -7,6 +7,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (Simple view, 2026-10-29)**
+- A catalogue with no derived surveys (parent_ids read as logical NA) broke the Simple view's Import, View and Edit with
+  "non-character argument". **Output changes:** none.
+
 **Added (the Simple view, 2026-10-28)**
 - simple/simple_gs.R: the Simple view (?ui=simple), on the side the ERT | GPR switch shows. Import: the folders, Scan and a checklist
   (files sorted, ERT data read, originals found with their derived sets folded, GPR lines complete, surveys with a site and a date)

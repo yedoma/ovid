@@ -418,6 +418,8 @@ local({
         "a folder's name gives a date as precise as it says (a day, a month, a year), and nothing when it holds none")
   fs <- app$sp_gs_folder_site(c("Angela Site August 2018", "Raw-7", "Suhm_2019_ERT", "Bog_3D_line"))
   check(identical(fs, c("Angela Site", "", "Suhm", "Bog 3D line")), "a site from a folder's name: the name without its date and words like raw or ERT; none from a name like Raw-7")
+  sl <- tryCatch(app$sp_gs_surveys(data.table(survey_id = c("a", "b"), kind = c("original", "derived"), primary_file = c("L/a.stg", "L/b.stg"), parent_ids = NA, date = "2018-03-23", site = "", pct_retained = "90")), error = function(e) e)
+  check(!inherits(sl, "error"), "a catalogue whose surveys have no parents (parent_ids read as logical NA) is listed in Simple (strsplit failed on it)")
   r$undo(); sv2 <- app$sp_gs_cfg(ps, "surveys", SURVEY_COLS); st2 <- app$sp_gs_cfg(ps, "sites", SITE_COLS)
   check(identical(sv2, sv0) && identical(st2, st0), "Undo puts surveys.csv and sites.csv back as they were")
 })
