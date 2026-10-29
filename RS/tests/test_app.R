@@ -5,21 +5,22 @@ here <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (len
 td <- file.path(tempdir(), "app"); proj <- file.path(td, "rs_test", "project")           # the synthetic archive and catalogue
 Sys.setenv(RS_TEST_DIR = td)
 rt_log <- tempfile("rs_run_tests_", fileext = ".log")                                   # to a file, not a pipe: the run starts app processes of its own
-if (system2(file.path(R.home("bin"), "Rscript"), file.path(here, "tests", "run_tests.R"), stdout = rt_log, stderr = rt_log) != 0) {
+if (system2(file.path(R.home("bin"), "Rscript"), file.path(here, "tests", "run_tests.R"), stdout = rt_log) != 0) {   # stderr as before, to this log
   rt <- readLines(rt_log, warn = FALSE); cat(grep("FAIL|Error", rt, value = TRUE), utils::tail(rt, 10), sep = "\n"); stop("tests/run_tests.R failed") }   # its FAIL lines, so the log says which
 setwd(here); Sys.setenv(RS_PROJECT_DIR = proj)
 ae <- new.env(); app <- source(file.path(here, "app.R"), local = ae)$value
 ae$SETTINGS_FILE <- file.path(td, "app_settings.json")                                  # the viewer title saved here, not in the app folder
 ended <- function(session) { j <- ae$RUNNER$job; if (!is.null(j)) j$proc$wait(120000); session$elapse(1000); !ae$run_busy() }   # core runner.R
+slash <- function(x) gsub("\\", "/", x, fixed = TRUE)                                              # a path the same whichever separators (Windows)
 fails <- 0L; check <- function(ok, what) { if (!isTRUE(ok)) fails <<- fails + 1L; cat(if (isTRUE(ok)) "ok   " else "FAIL ", what, "\n", sep = "") }
 
 tg <- htmltools::renderTags(ae$ui)
 check(grepl('id="rsmap"', tg$html) && grepl("leaflet.min.js", paste(tg$head, tg$html)) && grepl("rs_map.js", paste(tg$head, tg$html)), "page builds, with the map and Leaflet")
 testServer(ae$server, {
   # folder browser (Ovid/files.R; first, so an error further down cannot hide it): open, step into a folder, use it
-  src <- dirname(proj); session$setInputs(s_path = src, pick_s_path = 1); check(identical(output$d_fb_sel, paste("Selected:", normalizePath(src))), "browser opens at the typed folder")
+  src <- dirname(proj); session$setInputs(s_path = src, pick_s_path = 1); check(identical(slash(output$d_fb_sel), slash(paste("Selected:", normalizePath(src)))), "browser opens at the typed folder")
   sub <- list.dirs(src, recursive = FALSE)[1]; session$setInputs(d_fb_go = sub); session$setInputs(d_fb_ok = 1)
-  check(identical(output$d_fb_sel, paste("Selected:", normalizePath(sub))), "browser steps into a folder")
+  check(identical(slash(output$d_fb_sel), slash(paste("Selected:", normalizePath(sub)))), "browser steps into a folder")
   f <- fl(); check(nrow(f) == 11, "server loads every flight")
   session$setInputs(f_text = "", f_checks = TRUE); k <- fchk()
   check(nrow(shown()) == sum(ae$checks_open(k)) && all(shown()$flight_id %in% k$flight_id[ae$checks_open(k)]), "the Map's filter keeps the flights with checks to look at")
