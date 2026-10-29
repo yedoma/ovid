@@ -1,0 +1,79 @@
+# Builds the three portable runtimes (build/make_runtime_mac.sh, build/make_runtime_win.ps1), each from the package snapshot
+# in build/snapshot.txt, on the system it is for: Apple silicon (macos-14), Intel Mac (macos-15-intel) and Windows. Each is then
+# proved from a clean copy of the repository (git archive, no installed R used): the five apps start the way the launcher
+# starts them and each page answers (build/check_runtime.R), and every test suite runs with the runtime's R. The runtimes are
+# kept as the run's artifacts (and are what a release attaches). Run by hand, or on a version tag.
+name: runtimes
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14,       name: ovid-runtime-mac-arm64,  file: ovid-runtime-mac-arm64.tar.gz }
+          - { os: macos-15-intel, name: ovid-runtime-mac-x86_64, file: ovid-runtime-mac-x86_64.tar.gz }
+          - { os: windows-latest, name: ovid-runtime-win-x64,    file: ovid-runtime-win-x64.zip }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the runtime
+        if: runner.os == 'macOS'
+        run: bash build/make_runtime_mac.sh --arch "$(uname -m)"
+      - name: Build the runtime
+        if: runner.os == 'Windows'
+        run: powershell -ExecutionPolicy Bypass -File build\make_runtime_win.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: build/out/${{ matrix.file }}
+          if-no-files-found: error
+
+      # a clean copy: the committed files only, with the runtime beside them as runtime/
+      - name: Make a clean copy
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/clean"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/clean"
+          cp -R "build/out/${{ matrix.name }}" "$RUNNER_TEMP/clean/runtime"
+
+      - name: Start the five apps and check each page
+        if: runner.os == 'macOS'
+        working-directory: ${{ runner.temp }}/clean
+        run: |
+          export RHOME="$PWD/runtime/R" R_LIBS_USER="$PWD/runtime/none" R_LIBS_SITE="$PWD/runtime/none"
+          runtime/R/bin/Rscript build/check_runtime.R .
+      - name: Start the five apps and check each page
+        if: runner.os == 'Windows'
+        working-directory: ${{ runner.temp }}\clean
+        shell: pwsh
+        run: |
+          $env:R_LIBS_USER = "$PWD\runtime\none"; $env:R_LIBS_SITE = "$PWD\runtime\none"
+          & runtime\R\bin\x64\Rscript.exe build\check_runtime.R .
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Run all tests with the runtime
+        if: runner.os == 'macOS'
+        working-directory: ${{ runner.temp }}/clean
+        run: |
+          export RHOME="$PWD/runtime/R" R_LIBS_USER="$PWD/runtime/none" R_LIBS_SITE="$PWD/runtime/none"
+          runtime/R/bin/Rscript run_all_tests.R
+      - name: Run all tests with the runtime
+        if: runner.os == 'Windows'
+        working-directory: ${{ runner.temp }}\clean
+        shell: pwsh
+        run: |
+          $env:R_LIBS_USER = "$PWD\runtime\none"; $env:R_LIBS_SITE = "$PWD\runtime\none"
+          & runtime\R\bin\x64\Rscript.exe run_all_tests.R
+          if ($LASTEXITCODE -ne 0) { exit 1 }

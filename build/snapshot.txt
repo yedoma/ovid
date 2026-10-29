@@ -1,0 +1,3 @@
+# The package snapshot the runtimes are built from: Posit Package Manager's CRAN as it was on this date, whose macOS and
+# Windows binaries are the versions build/renv.lock pins (a package it lacks comes from CRAN, and must still match).
+https://packagemanager.posit.co/cran/2026-09-28

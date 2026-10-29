@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Added (runtimes for Intel Mac and Windows, 2026-10-29).** build/make_runtime_mac.sh --arch x86_64 makes ovid-runtime-mac-x86_64 (370 MB, 176 MB packed) from CRAN's notarized installer, also on Apple silicon under Rosetta; build/make_runtime_win.ps1 makes ovid-runtime-win-x64 for "Open ovid.bat". All three take the lockfile's exact package versions from the dated snapshot in build/snapshot.txt. build/check_runtime.R starts the five apps from a clean copy and checks each page; .github/workflows/runtimes.yml builds and checks all three on their own systems and runs every suite with each. make_runtime_mac.sh copies the installed R only when it is the arch and R version wanted, else unpacks CRAN's installer. **Output changes:** none.
+
 **Added (portable R for Mac, 2026-10-29).** build/make_runtime_mac.sh makes ovid-runtime-mac-arm64 (R 4.6.1 and the pinned packages, 437 MB, 192 MB packed) that runs from any folder; "Open ovid.command" uses it as runtime/ when present, else the installed R. The runtime is built, not committed.
 
 **Added (launcher, 2026-10-29).** "Open ovid.command" opens one launcher window for all five apps (core/launcher_app); the per-app .command files stay for now.

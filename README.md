@@ -21,14 +21,17 @@ Needs R 4.x (<https://cran.r-project.org>). The first run installs the R package
 - **Mac:** double-click `Open ovid.command`. A small window lists the five apps: pick one and press Open (or Enter, or Cmd 1–5).
   Each app opens in your browser and keeps running until you press Stop or quit the launcher. The first time, right-click >
   Open if macOS warns. `Open CS (Mac).command` (or WLR, GT, GS, RS) still opens one app on its own.
-- **Mac without R:** put the portable runtime (`ovid-runtime-mac-arm64`, Apple silicon) beside `Open ovid.command` as a
-  folder named `runtime`; the launcher then uses it and needs nothing installed.
-- **Windows:** open the app's folder and double-click `Ovid_CS.bat` (or `Ovid_WLR.bat`, `Ovid_GT.bat`, `Ovid_GS.bat`, `Ovid_RS.bat`).
+- **Windows:** double-click `Open ovid.bat`: the same launcher window (Ctrl+1–5). `Ovid_CS.bat` (or WLR, GT, GS, RS) in an
+  app's folder still opens one app on its own.
+- **Without R:** put the portable runtime for the computer (`ovid-runtime-mac-arm64` Apple silicon, `ovid-runtime-mac-x86_64`
+  Intel Mac, `ovid-runtime-win-x64` Windows) beside `Open ovid.command` / `Open ovid.bat` as a folder named `runtime`; the
+  launcher then uses it and needs nothing installed.
 - **Computers without R:** run `Make_Portable.bat` in an app folder once on a Windows computer that has R; the folder can then be zipped and used anywhere.
 
-**Building the Mac runtime** (on an Apple silicon Mac with the CRAN R the lockfile names): `bash build/make_runtime_mac.sh`
-writes `build/out/ovid-runtime-mac-arm64` and a `.tar.gz` for a release; `--install` also copies it to `runtime/`. Neither is
-committed. See `build/README.md`.
+**Building the runtimes:** `bash build/make_runtime_mac.sh` (this Mac's arch; `--arch x86_64` for Intel, also on Apple
+silicon under Rosetta) and `build\make_runtime_win.ps1` (on Windows) write them to `build/out/` with a packed copy for a
+release; `--install` also copies one to `runtime/`. `.github/workflows/runtimes.yml` builds and checks all three on GitHub.
+None is committed. See `build/README.md`.
 
 Your data stays outside this folder. Each app asks for your project folder (raw files, metadata, set-up tables, outputs), so this folder can be copied, backed up or shared without any data in it.
 

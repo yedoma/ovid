@@ -51,4 +51,5 @@ line as each file is changed, not all at once.
 19. **Commits are small and about one thing.**
 20. **The launcher** (`core/launcher_app`, opened by `Open ovid.command`) only starts, shows and stops the apps; its logic is
     in `logic.R` and tested by `core/tests/run_tests.R`. A new package an app uses goes in `build/renv.lock`
-    (`Rscript build/make_lockfile.R`) and then into the runtime (`bash build/make_runtime_mac.sh`).
+    (`Rscript build/make_lockfile.R`) and then into the runtimes (`bash build/make_runtime_mac.sh`, `build\make_runtime_win.ps1`,
+    with `build/snapshot.txt` moved to a date whose binaries match the new lockfile).
