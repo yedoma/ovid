@@ -48,3 +48,7 @@ Rplots.pdf
 # Downloaded source documents and datasets for research reports (large)
 research_notes/*/pdfs/
 research_notes/*/data_raw/
+
+# the portable R runtime (build/make_runtime_mac.sh): built, uploaded to a release, never committed
+build/out/
+runtime/

@@ -6,6 +6,7 @@ cd "$(dirname "$0")" || exit 1
 ROOT="$(pwd)"
 if [ -x "$ROOT/runtime/R/bin/Rscript" ]; then
   R="$ROOT/runtime/R/bin/Rscript"
+  export RHOME="$ROOT/runtime/R" R_LIBS_USER="$ROOT/runtime/none" R_LIBS_SITE="$ROOT/runtime/none"   # only the runtime's own library
 else
   R=$(command -v Rscript || echo /Library/Frameworks/R.framework/Resources/bin/Rscript)
 fi

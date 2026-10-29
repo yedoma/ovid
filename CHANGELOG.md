@@ -4,6 +4,8 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Added (portable R for Mac, 2026-10-29).** build/make_runtime_mac.sh makes ovid-runtime-mac-arm64 (R 4.6.1 and the pinned packages, 437 MB, 192 MB packed) that runs from any folder; "Open ovid.command" uses it as runtime/ when present, else the installed R. The runtime is built, not committed.
+
 **Added (launcher, 2026-10-29).** "Open ovid.command" opens one launcher window for all five apps (core/launcher_app); the per-app .command files stay for now.
 
 **Changed (launchers, 2026-10-29).** The launcher window and console of every app read "ovid // <APP>" (they read "Ovid Core // <APP>").
