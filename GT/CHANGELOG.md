@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (citations, 2026-10-29)**
+- Reference guide: ALT's permafrost test is two consecutive frozen years (van Everdingen 1998), as the code and the hub say. **Output changes:** none.
+
 **Changed (hints, 2026-10-29)**
 - Plot and explore and Quality rules say that stretches are removed in the Workbench (they said to drag across a plot in Standard). **Output changes:** none.
 

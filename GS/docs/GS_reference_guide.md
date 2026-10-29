@@ -135,7 +135,8 @@ Records read are compared with the count in the header: fewer means **incomplete
 
 - **Electrodes** are numbered from their distance along the line when positions sit on a regular spacing, so unused positions
   keep their numbers (and are counted as *unused positions*).
-- **Geometric factor** k = 2 pi / (1/AM - 1/BM - 1/AN + 1/BN), from the 3-D distances; apparent resistivity = k x V/I.
+- **Geometric factor** k = 2 pi / (1/AM - 1/BM - 1/AN + 1/BN), from the 3-D distances; apparent resistivity = k x V/I
+  (Telford et al. 1990; Loke 2004; Binley and Kemna 2005).
 - **Array** of each measurement from its electrode numbers: Wenner, Schlumberger, dipole-dipole, pole-dipole, pole-pole or
   mixed. A survey is named after the array of at least 80 % of its measurements, else *mixed, mostly ...*.
 - **Pseudo-depth** = 0.19 x the distance between the outermost electrodes, below the centre of the four electrodes: close to the
@@ -332,6 +333,9 @@ physical line; **survey** one acquisition on it. **Flag** a QC mark on a measure
 - Loke, M.H. (1999). *Electrical imaging surveys for environmental and engineering studies.* (ref_manuals/Lokenote.pdf)
 - Advanced Geosciences Inc. (2014). *Instruction manual for EarthImager 2D.* (ref_manuals/EarthImager2DManual.pdf)
 - Advanced Geosciences Inc. *SuperSting instruction manual.* (ref_manuals/SuperSting Manual.pdf)
+- Telford, W. M., Geldart, L. P., Sheriff, R. E. (1990). *Applied Geophysics*, 2nd ed., Ch. 8. Cambridge University Press.
+- Loke, M. H. (2004). *Tutorial: 2-D and 3-D electrical imaging surveys*.
+- Binley, A., Kemna, A. (2005). DC resistivity and induced polarization methods. In *Hydrogeophysics*, Springer.
 - Edwards, L.S. (1977). A modified pseudosection for resistivity and IP. *Geophysics* 42, 1020-1036.
 - ResIPy (gitlab.com/hkex/resipy), `parsers.py`: Prosys header styles, remote electrodes, Syscal binary layout.
 - Herring, T., et al. (2023). Best practices for using electrical resistivity tomography to investigate permafrost. *Permafrost and Periglacial Processes* 34(4), 494–512. [doi:10.1002/ppp.2207](https://doi.org/10.1002/ppp.2207)

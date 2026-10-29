@@ -328,8 +328,9 @@ thaw = z_(k−1) + (z_k − z_(k−1)) × T_(k−1) / (T_(k−1) − T_k)</div>
 <p>Blank, with the reason in <code>state</code>, when the shallowest sensor is at or below 0 (<i>frozen at the shallowest sensor</i>), every sensor is above 0 (<i>thawed below the deepest sensor</i>), or there are fewer than two sensors.</p>
 <p class="note">The search stops at the first frozen sensor. A frozen layer over warmer ground (as in this example, 1.00 m at +0.79 °C) is not seen as a talik; the thaw depth is the top of the frozen layer.</p>
 <p><b>Active-layer thickness (ALT)</b> per site and calendar year is the deepest daily thaw depth of the year, reported only where permafrost is present within the sensors:</p>
-<div class="f">permafrost  if some depth has annual max ≤ 0 °C (complete year)
+<div class="f">permafrost  if some depth has annual max ≤ 0 °C in permafrost_years (2) consecutive complete years
 ALT = max(thaw_m) over the year;  date_alt = its date</div>
+<p>Permafrost is ground at or below 0 °C for at least two consecutive years (van Everdingen 1998). A depth frozen in one year whose neighbouring years are not in the record keeps its ALT, marked <i>permafrost not yet confirmed</i>; one frozen year between thawed ones is not permafrost (pereletok). <code>permafrost_years</code> = 1 (Settings, or per site) gives the one-year test used before October 2026.</p>
 <div class="ex"><b>Example.</b> A plateau borehole with nodes at 0.5, 1.0, 1.5, 2.0 m: annual max at 1.5 m is −0.3 °C → permafrost. On 2 Sept the 1.0 m node is +0.6 °C and 1.5 m −0.3 °C: thaw = 1.0 + 0.5 × 0.6 / 0.9 = 1.333 m, the deepest of the year → <b>ALT = 1.333 m</b>. In the example run no site had a depth frozen all year, so every result reads <i>no permafrost within the sensors</i> or <i>year incomplete</i>.</div>
 <table><tr><th>result</th><th>Meaning</th></tr>
 <tr><td>ALT</td><td>Permafrost present, alt_m given</td></tr>

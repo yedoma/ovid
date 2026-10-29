@@ -164,7 +164,7 @@ moving a file keeps the id. Measurements are matched by time stamp and V/I to ea
 <ul>
 <li><strong>Electrodes</strong> are numbered from their distance along the line when positions sit on a regular spacing, so unused positions
 keep their numbers (and are counted as <em>unused positions</em>).</li>
-<li><strong>Geometric factor</strong> k = 2 pi / (1/AM - 1/BM - 1/AN + 1/BN), from the 3-D distances; apparent resistivity = k x V/I.</li>
+<li><strong>Geometric factor</strong> k = 2 pi / (1/AM - 1/BM - 1/AN + 1/BN), from the 3-D distances; apparent resistivity = k x V/I (Telford et al. 1990; Loke 2004; Binley and Kemna 2005).</li>
 <li><strong>Array</strong> of each measurement from its electrode numbers: Wenner, Schlumberger, dipole-dipole, pole-dipole, pole-pole or
 mixed. A survey is named after the array of at least 80 % of its measurements, else <em>mixed, mostly ...</em>.</li>
 <li><strong>Pseudo-depth</strong> = 0.19 x the distance between the outermost electrodes, below the centre of the four electrodes: close to the
@@ -513,6 +513,9 @@ physical line; <strong>survey</strong> one acquisition on it. <strong>Flag</stro
 <li>Loke, M.H. (1999). <em>Electrical imaging surveys for environmental and engineering studies.</em> (ref_manuals/Lokenote.pdf)</li>
 <li>Advanced Geosciences Inc. (2014). <em>Instruction manual for EarthImager 2D.</em> (ref_manuals/EarthImager2DManual.pdf)</li>
 <li>Advanced Geosciences Inc. <em>SuperSting instruction manual.</em> (ref_manuals/SuperSting Manual.pdf)</li>
+<li>Telford, W. M., Geldart, L. P., Sheriff, R. E. (1990). <em>Applied Geophysics</em>, 2nd ed., Ch. 8. Cambridge University Press.</li>
+<li>Loke, M. H. (2004). <em>Tutorial: 2-D and 3-D electrical imaging surveys</em>.</li>
+<li>Binley, A., Kemna, A. (2005). DC resistivity and induced polarization methods. In <em>Hydrogeophysics</em>, Springer.</li>
 <li>Edwards, L.S. (1977). A modified pseudosection for resistivity and IP. <em>Geophysics</em> 42, 1020-1036.</li>
 <li>ResIPy (gitlab.com/hkex/resipy), <code>parsers.py</code>: Prosys header styles, remote electrodes, Syscal binary layout.</li>
 <li>Herring, T., et al. (2023). Best practices for using electrical resistivity tomography to investigate permafrost. <em>Permafrost and Periglacial Processes</em> 34(4), 494–512. <a href="https://doi.org/10.1002/ppp.2207">doi:10.1002/ppp.2207</a></li>

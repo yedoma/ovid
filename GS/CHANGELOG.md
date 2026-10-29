@@ -7,6 +7,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (citations, 2026-10-29)**
+- Reference guide: the geometric factor cites Telford et al. 1990, Loke 2004 and Binley and Kemna 2005, as the hub does. **Output changes:** none.
+
 **Docs fixes (2026-10-29)**
 - Guides checked against the app: reference guide and how-to: QC profiles saved in the Workbench; button names Export survey (ZIP) and Export view (PNG). **Output changes:** none.
 

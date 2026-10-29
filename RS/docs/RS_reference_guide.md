@@ -157,7 +157,7 @@ Each image gets, where its headers allow, and each flight gets the median (on th
 | Motion blur (`blur_px`) | speed × exposure time ÷ GSD, in pixels. Under about 0.5 to 1 pixel is the usual aim for mapping; `blur_over_1px_pct` is the share of a flight's images above 1 pixel. |
 | Forward overlap (`fwd_overlap_pct`) | 1 − distance to the previous image on the same line ÷ footprint along the track, taking the short side of the image as along the track (the usual layout for mapping flights). In a big folder only a sample of headers is read (30 images), so neighbouring images rarely both have a position; the flight's value is then estimated from its median speed × the median time between exposures, and `fwd_overlap_source` says "speed x interval" instead of "image pairs". |
 | Side overlap (`side_overlap_pct_median`) | 1 − spacing between neighbouring parallel lines ÷ footprint across the track. A line starts where the heading turns by more than 45° or images are more than 30 s apart. It needs the lines, so it is empty for big folders read from a sample of headers. |
-| Sun elevation (`sun_elev_deg`) | from the image's position and UTC time, to about a degree. |
+| Sun elevation (`sun_elev_deg`) | from the image's position and UTC time, with a simple declination (Cooper 1969) and no equation of time: within about 4°. |
 
 Nothing here is written into the images or used to change a status; it describes the flight for anyone re-using it. On the Samsung USB drive (scanned 6 October 2026) the three Zenmuse L2 flights of 22 September 2024 came out at a GSD of 1.6 cm (60 m above take-off), forward overlap 77 to 84 % (speed x interval), motion blur 0.6 to 0.8 pixels and sun elevation 23 to 27°. The eBee Plus flights with the Canon S110 have no height above take-off and no position in their EXIF, so none of these values can be worked out for them.
 
@@ -416,6 +416,7 @@ The pop-up can also be grouped by what to do.
 
 ## References
 
+- Cooper, P. I. (1969). The absorption of radiation in solar stills. *Solar Energy* 12, 333-346 (the declination used for sun elevation).
 - DJI, *Zenmuse P1 / L2 user manuals* and the DJI XMP tags (`drone-dji:*`).
 - senseFly, *eMotion user manual*, geotag and log formats.
 - Parrot, *Sequoia user guide*.

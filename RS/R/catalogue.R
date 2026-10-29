@@ -534,7 +534,7 @@ group_missions <- function(fl, links = NULL) {
 #                  exposures instead; fwd_overlap_source says which.
 #   side_overlap_pct (per flight) between neighbouring parallel lines: 1 - line spacing / footprint across the track. Lines
 #                  start where the heading turns by more than 45 degrees or the images are more than 30 s apart.
-#   sun_elev_deg   the sun's elevation at the exposure (accurate to about a degree), from the position and the UTC time.
+#   sun_elev_deg   the sun's elevation at the exposure (within about 4°: Cooper 1969 declination, no equation of time), from the position and the UTC time.
 sun_elevation_deg <- function(t, lat, lon) {
   u <- as.numeric(t); doy <- as.POSIXlt(u, origin = "1970-01-01", tz = "UTC")$yday + 1
   dec <- 23.44 * pi / 180 * sin(2 * pi * (284 + doy) / 365); h <- ((u %% 86400) / 3600 + lon / 15 - 12) * 15 * pi / 180; la <- lat * pi / 180

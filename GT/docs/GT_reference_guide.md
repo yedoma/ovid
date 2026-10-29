@@ -700,10 +700,16 @@ present within the sensors:
 
 <div class="f">
 
-permafrost if some depth has annual max ≤ 0 °C (complete year) ALT =
-max(thaw_m) over the year; date_alt = its date
+permafrost if some depth has annual max ≤ 0 °C in permafrost_years (2)
+consecutive complete years ALT = max(thaw_m) over the year; date_alt =
+its date
 
 </div>
+
+Permafrost is ground at or below 0 °C for at least two consecutive years (van Everdingen 1998). A depth frozen in one year
+whose neighbouring years are not in the record keeps its ALT, marked *permafrost not yet confirmed*; one frozen year between
+thawed ones is not permafrost (pereletok). `permafrost_years` = 1 (Settings, or per site) gives the one-year test used before
+October 2026.
 
 <div class="ex">
 
