@@ -982,7 +982,7 @@ with discontinuous permafrost. Use them to spot problems, not as limits.
 
 ## Using the app: the set-up flow and the Workbench
 
-The app has two views of the same project, data and edits: the **Standard** view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the **Workbench**, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.
+The app has three views of the same project, data and edits: **Simple**, a field check in four steps (Import, View, Edit, Export) that changes no data value; the **Standard** view, a numbered set-up flow in the contents on the right (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More); and the **Workbench**, a chart over a grid of every value, where every change to the data by hand is made (tables that change data values are shown in Standard and edited here). The switch at the top right moves between them, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address; a new install opens in Simple, and an edit made in one shows in the others at once.
 
 ### Check the data
 
@@ -1045,7 +1045,7 @@ The pop-up can also be grouped by what to do.
 | clock_reset with hundreds of rows            | The logger lost its clock                                         | If the true offset is known, add a clock correction; otherwise those rows stay out |
 | A whole-hour step at a download              | A file in a different zone                                        | Add a row to the time-zone table                                                   |
 | export_checks: disagree or no matching times | .hex and Ruskin export differ, or the export is in another zone   | Re-export; check the zone                                                          |
-| pre_install flag at the start                | String logging before it was in the ground                        | Trim on Plot and explore, or move the deployment start                             |
+| pre_install flag at the start                | String logging before it was in the ground                        | Remove it in the Workbench, or move the deployment start                           |
 | air_like at depth                            | Sensor exposed, frost-heaved or at the wrong depth                | Check field notes; remove the period by hand if exposed                            |
 | flat_line flag                               | Stuck sensor or logger repeating its last value                   | Check in the QC view; remove by hand if confirmed                                  |
 | ALT blank: no permafrost within the sensors  | No depth stays ≤ 0 °C all year                                    | Correct for seasonal frost; deeper sensors needed for ALT                          |

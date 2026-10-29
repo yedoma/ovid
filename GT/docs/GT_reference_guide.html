@@ -498,7 +498,7 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 </table>
 
 <h2 id="using">Using the app: the set-up flow and the Workbench</h2>
-<p>The app has two views of the same project, data and edits: the <strong>Standard</strong> view, a numbered set-up flow (1 Bring in, 2 Organize, 3 Correct, 4 Report, 5 Save), and the <strong>Workbench</strong>, a chart over a grid of every value. The switch at the top right moves between them; an edit made in either shows in the other at once.</p>
+<p>The app has three views of the same project, data and edits: <strong>Simple</strong>, a field check in four steps (Import, View, Edit, Export) that changes no data value; the <strong>Standard</strong> view, a numbered set-up flow in the contents on the right (1 Bring in, 2 Organize, 3 Correct, 4 Report, and More); and the <strong>Workbench</strong>, a chart over a grid of every value, where every change to the data by hand is made (tables that change data values are shown in Standard and edited here). The switch at the top right moves between them, as does ?ui=simple, ?ui=standard or ?ui=workbench in the address; a new install opens in Simple, and an edit made in one shows in the others at once.</p>
 <h3>Check the data</h3>
 <ul><li>Each site or station gets a plot of its main series with what the automatic checks found listed under it. Decide each one (Keep, Remove, or Flag where offered); the decisions wait in the "unsaved changes" chip at the top until <strong>Apply</strong>, then one run applies them.</li><li>A drag zooms (see Plot gestures). Shift + drag (or right-drag) across a plot selects a stretch: its records, missing values, mean, minimum, maximum and change are listed under the plot. <strong>Look closer</strong> zooms to it and opens the Workbench there.</li><li>The view bar sets every plot to half-hourly, as recorded, hourly, daily, monthly or annual values; the smoothing and the ghost of the raw data are display only.</li></ul>
 <h3>The Workbench</h3>
@@ -557,7 +557,7 @@ code of the values in it. <em>Checks only</em> on the export page leaves the
 <tr><td>clock_reset with hundreds of rows</td><td>The logger lost its clock</td><td>If the true offset is known, add a clock correction; otherwise those rows stay out</td></tr>
 <tr><td>A whole-hour step at a download</td><td>A file in a different zone</td><td>Add a row to the time-zone table</td></tr>
 <tr><td>export_checks: disagree or no matching times</td><td>.hex and Ruskin export differ, or the export is in another zone</td><td>Re-export; check the zone</td></tr>
-<tr><td>pre_install flag at the start</td><td>String logging before it was in the ground</td><td>Trim on Plot and explore, or move the deployment start</td></tr>
+<tr><td>pre_install flag at the start</td><td>String logging before it was in the ground</td><td>Remove it in the Workbench, or move the deployment start</td></tr>
 <tr><td>air_like at depth</td><td>Sensor exposed, frost-heaved or at the wrong depth</td><td>Check field notes; remove the period by hand if exposed</td></tr>
 <tr><td>flat_line flag</td><td>Stuck sensor or logger repeating its last value</td><td>Check in the QC view; remove by hand if confirmed</td></tr>
 <tr><td>ALT blank: no permafrost within the sensors</td><td>No depth stays ≤ 0 °C all year</td><td>Correct for seasonal frost; deeper sensors needed for ALT</td></tr>
