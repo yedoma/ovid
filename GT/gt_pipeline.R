@@ -36,7 +36,7 @@ GT_VERSION <- "1.8.0"
 OVID_APP <- "GT"                                          # its projects go in ~/Projects/Ovid/Projects/GT/ (core util.R)
 CFG <- list(
   raw_dirs      = c("~/Projects/Ovid/Projects/GT/raw"),  # logger files, in any folder layout (type/year folders are fine)
-  metadata_dir  = "~/Projects/Ovid/Projects/GT/project/metadata",  # registry workbook, NTGS metadata workbooks, field notes (.docx)
+  metadata_dir  = "",                                            # registry workbook, NTGS metadata workbooks, field notes (.docx); none unless set
   project_dir   = "",       # config/ and output/ live here
 
   base_offset_h = -7,                           # every time stamp is moved to UTC-7 (no daylight saving); set -6 to standardise every record to UTC-6

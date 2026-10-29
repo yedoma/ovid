@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (metadata folder, 2026-10-29)**
+- No metadata folder unless one is set (it defaulted to the projects folder's GT/project/metadata, so a test or new project read another project's registry). The click-through test reads only its test project. **Output changes:** none.
+
 **Docs fixes (2026-10-29)**
 - Guides checked against the app: reference guide: three views (Simple first); a pre_install stretch is removed in the Workbench. **Output changes:** none.
 

@@ -609,9 +609,12 @@ local({                                                               # depths, 
   r$undo(); se4 <- app$sp_gt_cfg(ps, "sensors", SENSOR_COLS)
   check("Undo puts the tables back as they were before that save", identical(se4[site == s0]$serial, se0[site == s0]$serial) && !any(se4$site == "Pit A" & se4$depth_source == "set by hand"))
 })
+check("with no metadata folder set, none is read (it pointed into the projects folder, so a test project read another project's registry)",
+      identical(CFG$metadata_dir, "") && is.null(find_registry(CFG$metadata_dir)))
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
-  ui <- tryCatch(ui_click_through(normalizePath(here), c(GT_PROJECT_DIR = proj)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
+  noreg <- tempfile("noreg_"); dir.create(noreg)                                   # the app reads only the test project: its folders, no registry
+  ui <- tryCatch(ui_click_through(normalizePath(here), c(GT_PROJECT_DIR = proj, GT_RAW_DIRS = paste(data, collapse = ";"), GT_METADATA_DIR = meta, GT_REGISTRY_DIR = noreg)), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check("every page opens in a browser with no output, JavaScript or server error (the test project)", nrow(ui) > 5 && !nrow(bad)) })
 local({ library(data.table); src <- paste(readLines(file.path(here, "pages/home.R"), warn = FALSE), collapse = "\n")
