@@ -73,17 +73,17 @@ the app read particular files again.
 
 The three screens you will use most, from a run on example data.
 
-![Home page](img/cs_01_home.png)
+![Overview page](img/cs_01_home.png)
 
-*1. Home: the field data hub with counts, shortcuts, the station list and the to-do list.*
+*1. Overview (More pages): the field data hub, with the stages on the top bar, the pages of the stage on the left and the project figures on the right. Figures 1 to 3 use the app's test project, not field data.*
 
 ![Data viewer with a plot](img/cs_02_viewer_plot.png)
 
-*2. Viewing data: Plot and explore for one station, battery voltage, air temperature and snow depth over the 12-year record, with low-battery shading and field-log marks.*
+*2. Viewing data: Plot and explore for one station and parameter, with the view bar (half-hourly to annual), Export plot (PNG) and Export data (CSV), and the summary of what is shown.*
 
 ![Another plot and exporting](img/cs_03_alt_plot_export.png)
 
-*3. Another plot and exporting: month-by-month box plots of air and soil temperature, with Export plot (PNG), Export station report (PDF) and Export data (CSV).*
+*3. Another chart: month-by-month box plots for the same station (Chart: Month by month), with the same exports.*
 
 
 ## What happens to the data, in order

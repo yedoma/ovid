@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Docs (figures, 2026-10-29)**
+- docs/guide_shots.R retakes the reference guide's three figures and how-to task 9 (removing a stretch, in the Workbench) on a guide project from tests/golden; captions and task 9 updated. **Output changes:** none.
+
 **Changed (hints and names, 2026-10-29)**
 - Flags help says removals are made in the Workbench; ovid lowercase in the Set-up check and the viewer bundle README; Next time names Run. **Output changes:** none.
 
