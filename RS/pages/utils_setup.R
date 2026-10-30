@@ -3,7 +3,7 @@
 # Every table in config/ (CONFIG_FILES), each with the editor shared by all the apps (core/editor.R) on the Set-up tables
 # page. Both interfaces build their editors from this list, and the Workbench writes its corrections through them. A saved
 # change applies on the next rebuild (a rebuild reads no source: it uses each source's last scan).
-SETUP_TABLES <- data.table(id = c("flights", "links", "sites", "site_names", "file_rules", "timezones", "sources", "products", "gnss_bases", "calibration", "drone_cameras"))
+SETUP_TABLES <- data.table(id = c("flights", "links", "sites", "site_names", "file_rules", "timezones", "sources", "products", "gnss_bases", "calibration", "drone_cameras", "footprint_colours"))
 SETUP_TABLES[, `:=`(file = vapply(id, function(k) CONFIG_FILES[[k]]$file, ""), label = vapply(id, function(k) CONFIG_FILES[[k]]$label, ""),
   help = c("What people decide about each flight: its name, project, site, positioning status (with the reason for changing it), notes, whether it is left out of the archive, and its mission. The Flight page writes these.",
            "Links between flights and files confirmed or rejected by hand (file is source_id:rel); they win over what the scan finds. The Flight page writes these.",
@@ -21,7 +21,9 @@ SETUP_TABLES[, `:=`(file = vapply(id, function(k) CONFIG_FILES[[k]]$file, ""), l
                  "or custom (your number; a source is encouraged). applies_to is a base or file name, or * for all; flight limits apply to the whole project."),
            paste("Drone cameras: a photo counts as a drone photo when it carries a drone tag (DJI drone-dji, senseFly or Camera: XMP) or its EXIF make and model match a row here",
                  "(make in any case; model as the start of the EXIF model, blank for any model of that make). drone \"no\" leaves a camera out even with drone tags (DJI handhelds). Other photos (phones, compact cameras, trail cameras, screenshots) are left out",
-                 "of the flights and listed in catalogue/other_photos.csv. A change applies on the next rebuild.")))]
+                 "of the flights and listed in catalogue/other_photos.csv. A change applies on the next rebuild."),
+           paste("Footprint colours on the map, in the year layers, the report, Simple's map and the viewer: one row per drone family (match: a pattern found in the aircraft or camera name; the first row that fits wins, blank fits any),",
+                 "a palette colour name for optical, other and thermal sensors, and year_step_deg, how far apart each year's shade is. Shown at once.")))]
 SETUP_TABLES[, wb_only := id %in% c("links", "file_rules", "timezones", "gnss_bases", "calibration")]   # what flights are made of and how they are read: edited by hand only in the Workbench (M 28 Oct)
 setup_editors <- function(path_of, tick, mark) setNames(lapply(SETUP_TABLES$id, function(k)
   ovid_edit_server(k, reactive(path_of(k)), tick, on_change = mark, wb_only = SETUP_TABLES[id == k]$wb_only)), SETUP_TABLES$id)

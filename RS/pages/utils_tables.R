@@ -40,7 +40,7 @@ THEME <- bs_theme(version = 5, bg = PAL$bg, fg = PAL$fg, primary = PAL$accent, s
     .rs-fp-f { display:grid; grid-template-columns:auto 1fr; column-gap:12px; padding:5px 0; border-bottom:1px solid %1$s; font-size:13.5px; }
     .rs-fp-f .k { color:%3$s; } .rs-fp-f .v { text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; } .rs-fp-f .v.nw { white-space:nowrap; }
     .rs-fp-f .r { grid-column:1 / -1; text-align:right; font-size:12.5px; color:%3$s; font-variant-numeric:tabular-nums; }
-    .rs-fp-bars { display:grid; gap:4px; margin-top:8px; font-size:12.5px; } .rs-fp-bar { display:grid; grid-template-columns:72px 1fr 44px; gap:8px; align-items:center; } .rs-fp-bar > span:first-child { color:%3$s; }
+    .rs-fp-bars { display:grid; gap:4px; margin-top:8px; font-size:12.5px; } .rs-fp-bar { display:grid; grid-template-columns:112px 1fr 44px; gap:8px; align-items:center; } .rs-fp-bar > span:first-child { color:%3$s; }
     .rs-fp-bar .tr { height:8px; background:%1$s; border-radius:2px; overflow:hidden; } .rs-fp-bar .tr div { height:100%%; } .rs-fp-bar span:last-child { text-align:right; font-variant-numeric:tabular-nums; }
     .bslib-value-box > .card-body { margin-top:0 !important; } .bslib-value-box .value-box-area { justify-content:flex-start !important; padding:12px 14px !important; }
     .bslib-value-box .value-box-title { color:%3$s; font-size:12.5px; font-weight:500; margin:0 0 2px; } .bslib-value-box .value-box-value { font-size:26px; font-weight:500; line-height:1.25; font-variant-numeric:tabular-nums; }

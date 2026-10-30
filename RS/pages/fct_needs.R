@@ -3,6 +3,9 @@
 # matters and what to do. Decisions are kept on the core review queue's file (config/review_decisions.csv; core/workbench.R).
 
 NEEDS_SEVERITY <- c(bad = 3L, look = 2L, note = 1L)
+# each kind as people read it (the filter chips in the Workbench, "Accepted as is" notes)
+NEEDS_LABEL <- c(images = "Images", clock = "Clock", positions = "Positions", accuracy = "Accuracy", log = "Flight log", from_log = "Placed from log",
+                 site = "Site", log_key = "Log key", qa = "QA")
 # per kind: why it matters, what to do, and the page (go) and tab on it (tab) that fix it
 NEEDS_KINDS <- data.table(
   kind = c("images", "clock", "positions", "accuracy", "log", "from_log", "site", "log_key", "qa"),
@@ -62,7 +65,7 @@ checks_decided <- function(fl, ck, decisions) {
   x <- x[kind %in% tolower(CHECKS) & id %in% ok]; if (!nrow(x)) return(ck)
   ck <- copy(ck)
   for (i in seq_len(nrow(x))) set(ck, match(x$flight_id[i], ck$flight_id), paste0("chk_", x$kind[i]), "ok")
-  ck[x[, .(w = paste0(" Accepted as is: ", paste(kind, collapse = ", "), ".")), by = flight_id], on = "flight_id", chk_why := paste0(chk_why, i.w)][]
+  ck[x[, .(w = paste0(" Accepted as is: ", paste(NEEDS_LABEL[kind] %|na|% kind, collapse = ", "), ".")), by = flight_id], on = "flight_id", chk_why := paste0(chk_why, i.w)][]
 }
 
 # Flights missing each piece of metadata (the Missing metadata chart on Needs you): what, n. fl: flights.

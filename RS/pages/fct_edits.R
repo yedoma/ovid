@@ -152,9 +152,11 @@ geodata_folders <- function(ds, gl, fl, pad_deg = 0.5) {
   g[order(suggest != "remove", -files), .(source_id, folder, kind, files, where, suggest)]
 }
 GEODATA_REASON <- "not remote sensing (removed from Other geodata)"
-# file_rules.csv rows that ignore everything in these folders (paths within their source).
-geodata_rule <- function(folders) {
-  folders <- unique(folders[!is.na(folders)])
-  data.table(pattern = ifelse(nzchar(folders), paste0("^", rx_escape(folders), "/[^/]+$"), "^[^/]+$"), action = "ignore", reason = GEODATA_REASON)
+# file_rules.csv rows that ignore the set-aside files removed (rel: paths within their source), each with its side files
+# (a shapefile's .dbf and .prj, a raster's .aux.xml). File rules hold no source, so a whole-folder rule would also hide
+# that folder in every other source, and a source's own top folder became ^[^/]+$, every top-level file of every source.
+geodata_rule <- function(rel) {
+  stem <- unique(sub("\\.[^./]+$", "", rel[!is.na(rel) & nzchar(rel)]))
+  data.table(pattern = paste0("^", rx_escape(stem), "\\.[^/]+$"), action = "ignore", reason = rep(GEODATA_REASON, length(stem)))
 }
 # geodata_id(): R/geodata.R

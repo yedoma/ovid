@@ -16,7 +16,7 @@
   observeEvent(input$s_rm_do, { sid <- input$s_rm_do; rm_ask("")
     if (run_busy()) return(showNotification("Wait for the scan or cancel it", type = "warning"))
     r <- tryCatch(remove_source(CFG$project_dir, sid), error = function(e) { showNotification(paste("Not removed:", conditionMessage(e)), type = "error"); NULL })
-    if (!is.null(r)) { reload(); showNotification(sprintf("Source %s removed: %s the catalogue; its files are as they were", sid, if (r$flights == 1) "1 flight left" else paste(r$flights, "flights left")), type = "message") } })
+    if (!is.null(r)) { reload(); showNotification(sprintf("Source %s removed%s; its files are as they were", sid, if (!r$flights) "" else if (r$flights == 1) ": 1 flight left the catalogue" else paste0(": ", r$flights, " flights left the catalogue")), type = "message") } })
   # safe: the sources table's editor reports a read problem
   output$src_list <- renderUI({ live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
     if (!nrow(s)) return(p(class = "muted", "No source yet: add a folder or drive below and scan it."))
@@ -35,7 +35,7 @@
         span(class = "badge-st", style = sprintf("border-color:%s;color:%s", if (scanned) PAL$green else PAL$gold, if (scanned) PAL$green else PAL$gold), if (scanned) "scanned" else "not scanned"),
         tags$button(type = "button", class = "btn btn-sm btn-outline-danger", `aria-expanded` = tolower(identical(rm_ask(), sid)), onclick = js("s_rm_ask", if (identical(rm_ask(), sid)) "" else sid), "Remove"),
         if (identical(rm_ask(), sid)) div(style = sprintf("grid-column:1/-1;border:1px solid %s;padding:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center", PAL$red),
-          span(sprintf("Remove this source? %s the catalogue; the folder and its files stay as they are. You can add it back and scan again.", if (n_fl == 1) "Its 1 catalogued flight leaves" else paste("Its", num(n_fl), "catalogued flights leave"))),
+          span(sprintf("Remove this source? %sThe folder and its files stay as they are. You can add it back and scan again.", if (!n_fl) "It has no catalogued flights. " else if (n_fl == 1) "Its 1 catalogued flight leaves the catalogue. " else paste0("Its ", num(n_fl), " catalogued flights leave the catalogue. "))),
           tags$button(type = "button", class = "btn btn-sm btn-danger", onclick = js("s_rm_do", sid), "Remove source"),
           tags$button(type = "button", class = "btn btn-sm btn-outline-secondary", onclick = js("s_rm_ask", ""), "Keep it"))) })) })
   # after a scan: drone photos read, other photos left out (and why), flights, and flights placed from photo geotags
@@ -142,8 +142,8 @@
   observeEvent(input$sp_rm, { sid <- input$sp_rm; if (run_busy()) return(showNotification("Wait for the scan or cancel it", type = "warning"))
     if (!src_scanned(sid)) { remove_source(CFG$project_dir, sid); return(src_bump(src_bump() + 1)) }
     sp_rm_id(sid); n_fl <- if (is.null(C())) 0L else sum(C()$flights$source_id == sid, na.rm = TRUE)
-    showModal(modalDialog(title = paste("Remove", sid, "?"), easyClose = TRUE,
-      p(paste(if (n_fl == 1) "Its 1 flight leaves" else paste("Its", n_fl, "flights leave"), "the catalogue. The folder and its files stay as they are; you can add it again and scan it.")),
+    showModal(modalDialog(title = paste0("Remove ", sid, "?"), easyClose = TRUE,
+      p(paste(if (!n_fl) "It has no flights in the catalogue." else if (n_fl == 1) "Its 1 flight leaves the catalogue." else paste("Its", n_fl, "flights leave the catalogue."), "The folder and its files stay as they are; you can add it again and scan it.")),
       footer = tagList(modalButton("Keep it"), actionButton("sp_rm_ok", "Remove", class = "btn-danger")))) })
   observeEvent(input$sp_rm_ok, { removeModal(); sid <- sp_rm_id(); sp_rm_id(""); if (!nzchar(sid)) return()
     r <- tryCatch(remove_source(CFG$project_dir, sid), error = function(e) { showNotification(paste("Not removed:", conditionMessage(e)), type = "error"); NULL })

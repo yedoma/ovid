@@ -79,7 +79,8 @@
   le_geo_proxy <- dataTableProxy("geodata")
   observeEvent(le_geo_tbl(), replaceData(le_geo_proxy, le_geo_tbl(), rownames = FALSE, resetPaging = FALSE, clearSelection = "none"), ignoreInit = TRUE)
   le_geo_stage <- function(rows, what) { if (!nrow(rows)) return(showNotification("Select folders first.", type = "warning"))   # what: not "decision", the rows' own column
-    le_geo_st(rbind(le_geo_st(), rows[, .(source_id, folder, kind, decision = what, step = le_step())])) }
+    le_geo_st(rbind(le_geo_st(), rows[, .(source_id, folder, kind, decision = what, step = le_step())]))
+    selectRows(le_geo_proxy, NULL) }   # a choice is for the rows picked: the next pick starts afresh (Keep then Remove removed both)
   observeEvent(input$gd_keep, le_geo_stage(le_geo()[input$geodata_rows_selected %||% integer()], "keep"))
   observeEvent(input$gd_remove, le_geo_stage(le_geo()[input$geodata_rows_selected %||% integer()], "remove"))
   observeEvent(input$gd_suggested, { g <- le_geo(); s0 <- le_step(); if (nrow(g)) le_geo_st(rbind(le_geo_st(), g[, .(source_id, folder, kind, decision = suggest, step = s0)])) })
@@ -124,7 +125,8 @@
       if (ok) { x <- C(); x$flights <- copy(x$flights); for (i in seq_len(nrow(nm))) x$flights[tolower(site) == tolower(nm$found[i]), site := nm$site[i]]; C(x); le_names(le_names()[0]) }
       else bad <- c(bad, "site_names.csv") }
     if (nrow(gs)) { rm <- gs[decision == "remove"]; kp <- gs[decision == "keep"]
-      ok <- !nrow(rm) || E$file_rules$append(as.data.frame(geodata_rule(rm$folder)))
+      sa <- C()$set_aside; rmf <- if (nrow(rm) && !is.null(sa) && nrow(sa)) sa[rm, on = .(source_id, folder, kind), nomatch = 0L]$rel else character()   # the files set aside in those folders
+      ok <- !length(rmf) || E$file_rules$append(as.data.frame(geodata_rule(rmf)))
       if (ok && nrow(kp)) review_write(review_path(CFG$project_dir), geodata_id(kp$source_id, kp$folder, kp$kind),
                                        data.table(id = geodata_id(kp$source_id, kp$folder, kp$kind), decision = "kept", note = paste0("Other geodata: ", kp$source_id, ":", kp$folder, " (", kp$kind, ")"),
                                                   author = WHO, at = format(Sys.time(), "%Y-%m-%d %H:%M:%S")))

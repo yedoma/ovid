@@ -27,7 +27,7 @@ wb_views_server <- function(input, output, session, ctx) {
   output$wbn_chips <- renderUI({ x <- items()[is.na(decided) & !id %in% skipped()]; if (!nrow(x)) return(p(class = "wb-p", "Nothing waits for you."))
     n <- x[, .N, by = kind][order(-N)]
     div(class = "wb-q-chips", tags$a(href = "#", class = paste("wb-q-chip", if (!nzchar(kind_pick())) "on"), `data-wb-input` = "wbn_kind", `data-wb-key` = "", paste("All", nrow(x))),
-        lapply(seq_len(nrow(n)), function(i) tags$a(href = "#", class = paste("wb-q-chip", if (identical(kind_pick(), n$kind[i])) "on"), `data-wb-input` = "wbn_kind", `data-wb-key` = n$kind[i], paste(gsub("_", " ", n$kind[i]), n$N[i]))),
+        lapply(seq_len(nrow(n)), function(i) tags$a(href = "#", class = paste("wb-q-chip", if (identical(kind_pick(), n$kind[i])) "on"), `data-wb-input` = "wbn_kind", `data-wb-key` = n$kind[i], paste(NEEDS_LABEL[n$kind[i]] %|na|% gsub("_", " ", n$kind[i]), n$N[i]))),
         tags$label(class = "wb-q-done ovid-sw", tags$input(type = "checkbox", role = "switch", id = "wbn_showdone", onchange = "Shiny.setInputValue('wbn_showdone', this.checked)"), paste0(" Show done (", sum(!is.na(items()$decided)), ")"))) })
   observeEvent(input$wbn_kind, kind_pick(input$wbn_kind %||% ""))
   output$wbn_list <- renderUI({ x <- items()[!id %in% skipped()]; if (!nrow(x)) return(NULL)

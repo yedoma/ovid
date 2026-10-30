@@ -27,12 +27,14 @@
   output$links <- renderDT({ l <- lk_cur(); if (!nrow(l)) return(ovid_dt(data.table(` ` = "No linked files"), opts = list(dom = "t")))
     ovid_dt(l[, .(Role = role, File = file, State = state, Score = score, Evidence = evidence)], selection = "single", page = 10,
               opts = list(dom = "tip")) })
-  set_link <- function(state) { l <- lk_cur(); i <- input$links_rows_selected; if (!length(i) || !nrow(l)) return(showNotification("Select a link first", type = "warning"))
+  # st, not state: inside x$links[...] the name state is the column, so the table kept saying "auto"
+  set_link <- function(st) { l <- lk_cur(); i <- input$links_rows_selected; if (!length(i) || !nrow(l)) return(showNotification("Select a link first", type = "warning"))
     lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == l$flight_id[i] & file == l$file[i])]
-    lc <- rbind(lc, data.table(flight_id = l$flight_id[i], file = l$file[i], state = state, reason = trim(input$l_reason), author = WHO, date = format(Sys.Date())), fill = TRUE)
+    lc <- rbind(lc, data.table(flight_id = l$flight_id[i], file = l$file[i], state = st, reason = trim(input$l_reason), author = WHO, date = format(Sys.Date())), fill = TRUE)
     write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO)
-    x <- C(); x$links <- copy(x$links); x$links[flight_id == l$flight_id[i] & file == l$file[i], `:=`(state = state, evidence = paste0(state, " by ", WHO, if (nzchar(trim(input$l_reason))) paste0(": ", trim(input$l_reason)) else ""))]
-    C(x); showNotification(paste("Link", state, "(statuses update on the next rebuild)"), type = "message") }
+    x <- C(); x$links <- copy(x$links); x$links[flight_id == l$flight_id[i] & file == l$file[i], `:=`(state = st, evidence = paste0(st, " by ", WHO, if (nzchar(trim(input$l_reason))) paste0(": ", trim(input$l_reason)) else ""))]
+    C(x); updateTextInput(session, "l_reason", value = "")   # a reason belongs to one decision
+    showNotification(paste("Link", st, "(statuses update on the next rebuild)"), type = "message") }
   observeEvent(input$l_confirm, set_link("confirmed")); observeEvent(input$l_reject, set_link("rejected"))
 
   # logs no flight has that may be this one's (catalogue/logs.csv; pages/fct_edits.R log_candidates): Link writes links.csv as confirmed

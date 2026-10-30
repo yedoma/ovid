@@ -18,6 +18,7 @@ html.sp-root, html.sp-root body { background: var(--sp-bg); }
 .sp-brand .sep { color: var(--sp-fg2); }
 .sp-brand .app { color: var(--sp-acc); }
 .sp-project { color: var(--sp-fg2); font-size: 13.5px; }
+.sp-project .d-pop > summary { background: transparent; border-color: var(--sp-line2); }   /* the project switcher reads as text, not a filled button (3.5:1 on its fill) */
 .sp-views { display: inline-flex; border: 1px solid var(--sp-line2); border-radius: 999px; overflow: hidden; font-size: 13px; }
 .sp-views > * { padding: 4px 12px; color: var(--sp-fg2); text-decoration: none; }
 .sp-views > .on { background: var(--sp-acc); color: var(--sp-onacc); }
