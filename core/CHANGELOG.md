@@ -8,6 +8,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
 **Changed (speed, 2026-10-30)**
 - clock_faults() is about 14 times faster on long files: in_sequence() skips the search when the times are already in order, and no longer has findInterval() re-check the sorted list at every record (which made it quadratic); the reset test is one vectorised pass. A test compares it with the old code on sorted, shuffled, stray, reset, resync and bad times (timestamps.R).
 - step_of() (the most common time step, used by every app) counts the steps without making a factor of each one; about 6 times faster on long records, with the same tie rule (the smaller step) and the same result; a test compares it with the old code (util.R).
+- par_map() on Windows reads in R processes of its own (a PSOCK cluster started once a run, each sourcing the app's pipeline without running it), where it read one file at a time; FUN goes to them with only the values it names. macOS and Linux fork as before. Tried on the Mac with the option ovid.par_psock (identical CS, GT and WLR outputs); on Windows itself it is checked by the GitHub tests (util.R).
 - **Output changes:** none.
 
 **Added (stage times, 2026-10-30)**

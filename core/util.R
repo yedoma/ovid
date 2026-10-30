@@ -266,7 +266,8 @@ run_check_cancel <- function() {
 hash_bytes <- function(x) { b <- serialize(x, NULL, version = 2); b[7:10] <- as.raw(c(0x00, 0x04, 0x06, 0x01)); b }
 # Item i of n in the current stage (a file, a logger, a station), for the progress bar.
 # ---- reading files in parallel ----------------------------------------------------------------------------------------------
-# FUN over X in `workers` R processes at once (forked, so on macOS and Linux; one at a time on Windows or with one worker). FUN
+# FUN over X in `workers` R processes at once: forked on macOS and Linux; on Windows (or with the option ovid.par_psock, to try
+# it elsewhere) R processes of their own (par_cluster), started once a run. With one worker, one at a time. FUN
 # must only read and return: whatever it changes in the app (the audit trail, flags, problems) is lost in a worker, so the
 # caller records the results itself. An error in one item is returned as its condition, not raised. Items go in batches, and
 # between batches the progress bar moves and Cancel is looked for (a worker never stops part way). OVID_WORKERS or the
@@ -274,16 +275,52 @@ hash_bytes <- function(x) { b <- serialize(x, NULL, version = 2); b[7:10] <- as.
 run_workers <- function() {
   n <- suppressWarnings(as.integer(getOption("ovid.workers", Sys.getenv("OVID_WORKERS", NA))))
   if (is.na(n)) n <- max(1L, min(8L, (parallel::detectCores(logical = FALSE) %|% 2L) - 1L))
-  if (.Platform$OS.type == "windows") 1L else n
+  n
 }
 par_map <- function(X, FUN, workers = run_workers(), what = "") {
   one <- function(x) tryCatch(FUN(x), error = function(e) e)
-  if (.Platform$OS.type == "windows") workers <- 1L                                       # no forking on Windows, whatever was asked
   if (workers < 2L || length(X) < 2L * workers) return(lapply(X, one))
   out <- vector("list", length(X)); b <- split(seq_along(X), ceiling(seq_along(X) / (4L * workers)))
+  if (par_psock()) { cl <- par_cluster(workers); if (is.null(cl)) return(lapply(X, one))           # no cluster: one at a time, as before
+    f <- par_fun(FUN); w <- function(x, f) tryCatch(f(x), error = function(e) e); environment(w) <- globalenv()
+    for (k in b) { run_tick(max(k), length(X), what)
+      r <- tryCatch(parallel::clusterApplyLB(cl, X[k], w, f), error = function(e) NULL)
+      if (is.null(r)) { par_stop(); r <- lapply(X[k], one) }                                         # a worker gone: this batch here
+      out[k] <- r }
+    return(out) }
   for (k in b) { run_tick(max(k), length(X), what)
     out[k] <- parallel::mclapply(X[k], function(x) { options(ovid.cancel_file = NULL); one(x) }, mc.cores = workers, mc.preschedule = FALSE) }
   out
+}
+# Workers without forking (Windows): a PSOCK cluster, kept for the run. Each worker sources the app's pipeline without running
+# it (<APP>_NO_RUN), so it has the pipeline's functions; it gets the session's ovid.* options. NULL if it cannot be started.
+par_psock <- function() .Platform$OS.type == "windows" || isTRUE(getOption("ovid.par_psock"))
+PAR <- new.env()
+par_stop <- function() { if (!is.null(PAR$cl)) try(parallel::stopCluster(PAR$cl), silent = TRUE); PAR$cl <- NULL; invisible() }
+par_cluster <- function(workers) {
+  if (!is.null(PAR$cl) && identical(PAR$n, workers)) return(PAR$cl)
+  par_stop()
+  app <- sub("^.*// *", "", get0("APP_NAME", ifnotfound = "")); f <- file.path(get0("PIPELINE_DIR", ifnotfound = ""), paste0(tolower(app), "_pipeline.R"))
+  op <- options()[setdiff(grep("^ovid[.]", names(options()), value = TRUE), "ovid.cancel_file")]
+  cl <- tryCatch(parallel::makePSOCKcluster(workers), error = function(e) NULL); if (is.null(cl)) return(NULL)
+  ok <- tryCatch(all(unlist(parallel::clusterCall(cl, function(f, app, op) { options(op)
+    if (nzchar(app) && file.exists(f)) { do.call(Sys.setenv, stats::setNames(list("1"), paste0(toupper(app), "_NO_RUN")))
+      utils::capture.output(suppressMessages(source(f, chdir = TRUE))) }
+    TRUE }, f, app, op))), error = function(e) FALSE)
+  if (!ok) { try(parallel::stopCluster(cl), silent = TRUE); return(NULL) }
+  PAR$cl <- cl; PAR$n <- workers; reg.finalizer(PAR, function(e) par_stop(), onexit = TRUE); cl
+}
+# FUN as it goes to a worker: with only the values it names, from the frames it was made in (and values, not functions or
+# environments, of the session), so a closure made deep in a run does not take the whole run's data with it.
+par_fun <- function(FUN) {
+  e <- environment(FUN); keep <- new.env(parent = globalenv())
+  for (v in setdiff(unique(all.names(body(FUN))), names(formals(FUN)))) {
+    w <- e; while (!identical(w, globalenv()) && !identical(w, emptyenv()) && !exists(v, envir = w, inherits = FALSE)) w <- parent.env(w)
+    if (identical(w, emptyenv()) || !exists(v, envir = w, inherits = FALSE)) next
+    x <- get(v, envir = w, inherits = FALSE)
+    if (identical(w, globalenv()) && (is.function(x) || is.environment(x))) next                   # every worker has the pipeline's own
+    assign(v, x, envir = keep) }
+  environment(FUN) <- keep; FUN
 }
 
 # Printed at most four times a second (the cancel flag is looked for every time).

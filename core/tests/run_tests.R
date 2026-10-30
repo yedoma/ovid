@@ -1065,4 +1065,11 @@ local({ old <- function(t) { d <- diff(sort(as.numeric(unique(t)))); if (!length
   for (i in 1:500) cases[[length(cases) + 1L]] <- 1.6e9 + cumsum(sample(sample(c(1, 60, 300, 600, 1800, 3600, 0.5, 1/3), sample(1:6, 1)), sample(2:40, 1), TRUE))
   check("step_of() gives the step table() gave, ties and steps that print alike included", all(vapply(cases, function(x) identical(old(x), step_of(x)), NA)) &&
         step_of(c(0, 60, 120, 240, 300)) == 60) })
+cat("par_map without forking (the Windows way, forced here)\n")
+local({ z <- 3; f <- function(x) if (x == 7) stop("bad file") else x * z
+  a <- par_map(as.list(1:40), f, workers = 4)                                      # forked here (macOS, Linux)
+  ow <- options(ovid.par_psock = TRUE); on.exit({ options(ow); par_stop() })
+  b <- par_map(as.list(1:40), f, workers = 4); g <- par_fun(function(x) x + z)
+  check("par_map in R processes of its own gives what forking gives, an error item returned as its condition; FUN takes only the values it names",
+        identical(lapply(a[-7], identity), lapply(b[-7], identity)) && inherits(b[[7]], "error") && identical(sort(ls(environment(g))), "z") && !is.null(PAR$cl)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)
