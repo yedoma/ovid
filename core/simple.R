@@ -213,7 +213,7 @@ simple_edit_server <- function(id, rows, apply, gap = function(item) NA_characte
   observeEvent(input$drop_all, ops(SIMPLE_OPS))
   observeEvent(input$save, { o <- ops()[type != "new"]; if (!nrow(o) || length(busy())) return()
     # safe: a refused save leaves the changes in the list and says why
-    w <- trim(input$who %||% ""); if (!nzchar(w)) w <- who()
+    w <- trim(input$who %||% ""); if (!nzchar(w)) w <- who(); if (!nzchar(w %||% "")) w <- Sys.getenv("USER", Sys.getenv("USERNAME", ""))   # no initials typed: the computer's user, never a blank in the change log
     r <- tryCatch(apply(o, w), error = function(e) list(ok = FALSE, message = conditionMessage(e)))
     if (isTRUE(r$ok)) { ops(SIMPLE_OPS); last(r); showNotification(r$message %||% "Saved.", type = "message", duration = 6) }
     else showNotification(paste("Not saved:", r$message %||% "the tables could not be written."), type = "error", duration = NULL) })

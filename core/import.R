@@ -372,14 +372,14 @@ imp_check <- function(prep, map, spec, existing = NULL, mode = "add") {
 imp_memory_path <- function(project_dir) file.path(path.expand(project_dir), "config", "import_memory.csv")
 imp_memory_get <- function(project_dir, tg) { p <- imp_memory_path(project_dir)
   # safe: the remembered column matches are a convenience; without them the columns are matched by name
-  d <- tryCatch(if (file.exists(p)) fread(p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
+  d <- tryCatch(if (file.exists(p)) fread(file = p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
   if (is.null(d) || !all(c("target", "heading", "field") %in% names(d))) return(data.table(heading = character(), field = character()))
   d[target == tg, .(heading, field)] }
 imp_memory_put <- function(project_dir, tg, headings, map) { p <- imp_memory_path(project_dir); if (!length(headings)) return(invisible(FALSE))
   k <- nzchar(map) & !startsWith(map, "+"); if (!any(k)) return(invisible(FALSE))
   new <- data.table(target = tg, heading = headings[k], field = map[k])
   # safe: a damaged memory file is replaced by a new one
-  old <- tryCatch(if (file.exists(p)) fread(p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
+  old <- tryCatch(if (file.exists(p)) fread(file = p, colClasses = "character", na.strings = NULL) else NULL, error = function(e) NULL)
   keep <- if (!is.null(old) && all(c("target", "heading", "field") %in% names(old))) old[!(target == tg & imp_norm(heading) %in% imp_norm(new$heading)), .(target, heading, field)] else NULL
   tryCatch({ dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE); fwrite(rbind(keep, new), p); invisible(TRUE) }, error = function(e) invisible(FALSE)) }
 

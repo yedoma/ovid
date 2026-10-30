@@ -30,7 +30,7 @@ write_run_manifest <- function(cfg, t0, counts, settings = list(), packages = c(
   fwrite(setnames(data.table(names(kv), as.character(kv)), c("key", "value")), file.path(adir, "run_manifest.csv"))
   hist <- as.data.table(as.list(c(kv[c("run_id", "pipeline_version", "core_version", "started", "seconds", "user", "config_hash")], unlist(counts))))
   hf <- file.path(adir, "run_history.csv")
-  old <- if (file.exists(hf)) try_or(fread(hf, colClasses = "character"), where = "output/audit/run_history.csv") else NULL
+  old <- if (file.exists(hf)) try_or(fread(file = hf, colClasses = "character"), where = "output/audit/run_history.csv") else NULL
   fwrite(rbind(old, hist[, lapply(.SD, as.character)], fill = TRUE), hf)
   invisible(kv)
 }
@@ -128,7 +128,7 @@ troubleshooting_zip <- function(project_dir, zipfile, check = NULL, n_logs = 10L
     if (!is.null(sc)) { sc <- as.data.table(sc); for (k in names(sc)) if (is.character(sc[[k]])) set(sc, j = k, value = clean(sc[[k]])); fwrite(sc, file.path(tmp, "setup_check_now.csv")) } }
   # set-up tables (secrets left out) and when they changed
   cf <- list.files(file.path(pd, "config"), pattern = "\\.csv$", full.names = TRUE)
-  for (f in cf) { d <- try_or(fread(f, colClasses = "character", na.strings = NULL), where = basename(f)); if (is.null(d)) next
+  for (f in cf) { d <- try_or(fread(file = f, colClasses = "character", na.strings = NULL), where = basename(f)); if (is.null(d)) next
     drop <- grep("password|passwd|token|secret|api_?key", names(d), ignore.case = TRUE, value = TRUE); if (length(drop)) d[, (drop) := NULL]
     for (k in names(d)) set(d, j = k, value = clean(d[[k]]))
     dir.create(file.path(tmp, "config"), showWarnings = FALSE); fwrite(d, file.path(tmp, "config", basename(f))) }
@@ -399,7 +399,7 @@ run_project <- function(cfg, fun, need_raw = TRUE) {                # need_raw =
 
 # Raw files the last run used that are no longer there (deleted, moved or renamed): one problem naming them, before the outputs
 # that held their records are replaced. prev: the last run's file list (paths), now: this run's.
-files_prev <- function(file, col) { d <- tryCatch(fread(file, colClasses = "character", na.strings = NULL), error = function(e) data.table())
+files_prev <- function(file, col) { d <- tryCatch(fread(file = file, colClasses = "character", na.strings = NULL), error = function(e) data.table())
   if (!nrow(d) || !col %in% names(d)) return(character()); if ("status" %in% names(d)) d <- d[status == "ok"]; d[[col]] }
 files_gone_check <- function(prev, now) {
   g <- setdiff(prev[!is.na(prev) & nzchar(prev)], now)

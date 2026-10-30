@@ -23,7 +23,7 @@ APPLIED_PERIOD <- c(remove = "removed", offset = "changed", scale = "changed", d
 
 .applied_row <- function(group, item, does, n, detail = "") data.table(group = group, item = as.character(item), does = as.character(does), n = as.numeric(n), detail = as.character(detail))
 # safe: an output of the last run, only shown; an unreadable one shows as nothing applied until the next run writes it
-.applied_read <- function(f) if (file.exists(f)) tryCatch(fread(f, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
+.applied_read <- function(f) if (file.exists(f)) tryCatch(fread(file = f, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
 .applied_label <- function(x) { x <- gsub("_", " ", as.character(x)); paste0(toupper(substring(x, 1, 1)), substring(x, 2)) }
 .applied_names <- function(d) { v <- intersect(c("variable", "column", "parameter"), names(d)); if (!length(v)) return("")
   u <- unique(d[[v[1]]]); u <- u[!is.na(u) & nzchar(u)]; if (length(u) > 4) paste0(paste(u[1:4], collapse = ", "), " +", length(u) - 4) else paste(u, collapse = ", ") }
@@ -34,7 +34,7 @@ APPLIED_PERIOD <- c(remove = "removed", offset = "changed", scale = "changed", d
 applied_period_rows <- function(adir) {
   f <- list.files(file.path(adir, "detail"), pattern = "\\.csv$", full.names = TRUE)
   # safe: as above, the detail files of the last run are only shown
-  d <- rbindlist(lapply(f, function(x) tryCatch(fread(x, select = c("rule", "reason", "n"), colClasses = "character"), error = function(e) NULL)), fill = TRUE)
+  d <- rbindlist(lapply(f, function(x) tryCatch(fread(file = x, select = c("rule", "reason", "n"), colClasses = "character"), error = function(e) NULL)), fill = TRUE)
   if (!nrow(d)) return(data.table(row = integer(), rule = character(), n = numeric()))
   d <- d[grepl(paste0("row [0-9]+ of ", PERIOD_FILE), reason)]
   d[, .(row = suppressWarnings(as.integer(sub(".*row ([0-9]+) of .*", "\\1", reason))), rule, n = as.numeric(n))][!is.na(row), .(n = sum(n)), by = .(row, rule)] }

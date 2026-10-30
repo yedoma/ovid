@@ -68,7 +68,7 @@ sample_value_ok <- function(want, got) { if (is.na(got)) return(FALSE)
 SAMPLE_ACCEPT_COLS <- c("file", "expected_md5", "checked_by", "checked_on", "note")
 SAMPLE_REF_COLS <- c("file", "what", "value", "source")
 read_sample_table <- function(f, cols) {
-  x <- if (file.exists(f) && file.size(f) > 0) fread(f, colClasses = "character", na.strings = character()) else data.table()
+  x <- if (file.exists(f) && file.size(f) > 0) fread(file = f, colClasses = "character", na.strings = character()) else data.table()
   for (k in setdiff(cols, names(x))) set(x, j = k, value = character(nrow(x))); x[, cols, with = FALSE] }
 
 # Times compared to the millisecond: all.equal() treats a POSIXct as a plain number with a relative tolerance of 1.5e-8, which

@@ -27,7 +27,7 @@ rename_review_plan <- function(project_dir, kind, old, new) {
   rp <- review_path(project_dir); f <- file.path(path.expand(project_dir), "output", "audit", "flags.csv")
   if (!file.exists(rp) || !file.exists(f)) return(none)
   # safe: a review file that cannot be read has nothing to rename
-  d <- review_read(rp); fl <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) NULL)
+  d <- review_read(rp); fl <- tryCatch(fread(file = f, colClasses = "character", na.strings = NULL), error = function(e) NULL)
   pc <- intersect(c("parameter", "channel"), names(fl))[1]
   if (!nrow(d) || is.null(fl) || !kind %in% names(fl) || is.na(pc)) return(none)
   fl <- fl[tolower(trim(fl[[kind]])) == tolower(old)]; if (!nrow(fl)) return(none)
@@ -41,7 +41,7 @@ rename_names <- function(project_dir, kind, spec = get0("RENAMES", ifnotfound = 
   k <- spec[[kind]]; if (is.null(k)) return(character())
   rd <- function(f, col) { p <- file.path(path.expand(project_dir), "config", f); if (!file.exists(p)) return(character())
     # safe: names offered for renaming; a table that cannot be read offers none
-    d <- tryCatch(fread(p, colClasses = "character", na.strings = NULL, select = col), error = function(e) NULL); if (is.null(d) || !ncol(d)) character() else trim(d[[1]]) }
+    d <- tryCatch(fread(file = p, colClasses = "character", na.strings = NULL, select = col), error = function(e) NULL); if (is.null(d) || !ncol(d)) character() else trim(d[[1]]) }
   v <- c(rd(k$main[1], k$main[2]), unlist(lapply(k$cols, function(x) rd(x[1], x[2]))))
   v <- v[nzchar(v)]; v[!duplicated(tolower(v))]
 }

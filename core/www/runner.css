@@ -5,4 +5,4 @@
 .d-run-bar{height:6px;background:var(--bg2,var(--wb-line));border-radius:3px;margin:8px 0 6px;overflow:hidden} .d-run-fill{height:100%;background:var(--acc,var(--wb-acc));transition:width .6s}
 .d-run-item{color:var(--fg4,var(--wb-fg3));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .d-run-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px} .d-run-note{color:var(--fg4,var(--wb-fg3));font-size:12px}
-
+#ovid_runner.recalculating{opacity:1}   /* drawn again only when a run starts or stops: no fade */

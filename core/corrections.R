@@ -21,7 +21,7 @@ correction_state <- function(x, cfg, project_dir = cfg$project_dir) {
   if (nzchar(x$table %||% "")) {
     f <- file.path(path.expand(project_dir %||% ""), "config", x$table)
     # safe: an unreadable table is shown as "by table, unreadable"
-    n <- if (nzchar(project_dir %||% "") && file.exists(f)) tryCatch(nrow(fread(f, colClasses = "character", na.strings = NULL)), error = function(e) NA_integer_) else 0L
+    n <- if (nzchar(project_dir %||% "") && file.exists(f)) tryCatch(nrow(fread(file = f, colClasses = "character", na.strings = NULL)), error = function(e) NA_integer_) else 0L
     return(if (is.na(n)) "by table, unreadable" else if (n) paste0("by table, ", n, " row", if (n != 1) "s") else "by table, none") }
   if (!nzchar(x$setting %||% "")) return("always")
   if (length(x$choices)) { v <- cfg[[x$setting]] %||% x$default %||% x$choices[[1]]; return(names(x$choices)[match(v, x$choices)] %|% as.character(v)) }

@@ -27,7 +27,7 @@ project_info <- function(paths) {
   if (!length(paths)) return(data.table(path = character(), name = character(), there = logical(), last_run = character(), output = character(), cache = character(), raw = character()))
   rbindlist(lapply(paths, function(p) { q <- path.expand(p); there <- dir.exists(q)
     # safe: the Projects list shows "never run" for a project whose history cannot be read
-    h <- if (there) tryCatch(fread(file.path(q, "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) NULL) else NULL
+    h <- if (there) tryCatch(fread(file = file.path(q, "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) NULL) else NULL
     s <- project_settings_read(p)
     data.table(path = p, name = if (there) project_name(p) else basename(p), there = there,
                last_run = if (!is.null(h) && nrow(h) && "started" %in% names(h)) substr(utils::tail(h$started, 1), 1, 16) else "",
@@ -200,8 +200,11 @@ projects_with_open <- function(saved, now) { if (nzchar(saved$project_dir %||% "
   if (length(p) == 1 && !is.na(p) && nzchar(p)) saved$project_dir <- p; saved }
 # open(path, settings): the app opens a project (puts its folders and settings into the app's inputs). settings_now(): the
 # app's settings as they stand (to keep in the project being left).
-projects_server <- function(id, open, settings_now, settings_file = get0("SETTINGS_FILE")) moduleServer(id, function(input, output, session) {
-  ns <- session$ns; tick <- reactiveVal(0)
+# hint and dir_label: the New project dialog's note and folder label (an app that reads sources, not raw folders, says so).
+projects_server <- function(id, open, settings_now, settings_file = get0("SETTINGS_FILE"),
+                            hint = "The new project starts with no raw folders: set them on the Settings page. Processing settings are carried over from the open project.",
+                            dir_label = "Folder (a new or empty one, outside the raw folders)") moduleServer(id, function(input, output, session) {
+  ns <- session$ns; tick <- reactiveVal(0); on_new <- NULL
   st <- function() { e <- env_with("SETTINGS", environment(projects_server)); if (is.null(e)) list() else get("SETTINGS", envir = e) }
   # safe: the list applies in this session; only remembering it failed
   st_set <- function(x) { if (!is.null(settings_file)) tryCatch(settings_save(settings_file, x), error = function(e) NULL); live_touch()
@@ -244,14 +247,27 @@ projects_server <- function(id, open, settings_now, settings_file = get0("SETTIN
     st_set(c(s, list(projects = projects_remember(st(), path.expand(path)))))
     open(path.expand(path), s); tick(tick() + 1)
     showNotification(paste0("Opened ", project_name(path), "."), type = "message") }
-  observeEvent(input$sw_new, { x <- rows()
+  # the folder follows the name (in the app's projects folder) until it is typed over or picked with Browse (the system's own
+  # folder picker, so on this computer only: the in-app browser would close this dialog)
+  new_auto <- reactiveVal("")
+  local_app <- function() isTRUE(session$clientData$url_hostname %in% c("127.0.0.1", "localhost", "::1"))
+  observeEvent(input$sw_new, { if (is.function(on_new)) return(on_new()); x <- rows(); new_auto("")
     showModal(modalDialog(title = "New project", easyClose = TRUE,
       textInput(ns("new_name"), "Name", placeholder = "e.g. 2026 field season, new site"),
-      textInput(ns("new_dir"), "Folder (a new or empty one, outside the raw folders)", width = "100%"),
+      div(style = "display:flex;gap:6px;align-items:flex-end", div(style = "flex:1;min-width:0", textInput(ns("new_dir"), dir_label, width = "100%")),
+          if (local_app()) div(class = "mb-3", actionButton(ns("new_pick"), "Browse\u2026", icon = icon("folder-open"), class = "btn-sm d-browse"))),
       selectInput(ns("new_copy"), "Start with the set-up tables of", c("None (empty)" = "", setNames(x$path[x$there], x$name[x$there])), width = "100%"),
-      p(class = "text-muted", "The new project starts with no raw folders: set them on the Settings page. Processing settings are carried over from the open project."),
+      p(class = "text-muted", hint),
       footer = tagList(modalButton("Cancel"), actionButton(ns("new_ok"), "Make the project", class = "btn-primary")))) })
+  observeEvent(input$new_name, { d <- trim(input$new_dir %||% ""); if (nzchar(d) && !identical(d, new_auto())) return()
+    n <- trim(input$new_name); v <- if (nzchar(n) && !grepl("[/\\\\:]", n)) tilde(file.path(projects_root(), n)) else ""
+    new_auto(v); updateTextInput(session, "new_dir", value = v) }, ignoreInit = TRUE)
+  observeEvent(input$new_pick, { d <- path.expand(trim(input$new_dir %||% "")); start <- if (dir.exists(d)) d else if (dir.exists(dirname(d))) dirname(d) else ""
+    r <- ovid_pick_folder(start, "Where the new project goes"); if (is.null(r) || is.na(r)) return()
+    n <- trim(input$new_name %||% ""); v <- if (nzchar(n) && length(setdiff(list.files(r, all.files = TRUE, no.. = TRUE), PROJECT_KNOWN))) file.path(r, n) else r   # a folder with things in it: the project goes inside
+    new_auto("#picked"); updateTextInput(session, "new_dir", value = tilde(v)) })
   observeEvent(input$new_ok, {
+    if (run_busy()) return(ovid_field_error("new_dir", "A run is going: wait for it, or cancel it, before making another project."))   # its outputs would go to the project left
     r <- tryCatch(project_new(input$new_dir, input$new_name, if (nzchar(input$new_copy %||% "")) input$new_copy, tryCatch(settings_now(), error = function(e) st())),
                   error = function(e) e)
     if (inherits(r, "error")) return(ovid_field_error("new_dir", conditionMessage(r)))
@@ -301,5 +317,8 @@ projects_server <- function(id, open, settings_now, settings_file = get0("SETTIN
   observeEvent(input$sw_forget, { x <- rows()[path == input$sw_forget]; if (!nrow(x)) return()
     if (isTRUE(x$open[1])) return(showNotification("The open project stays in the list.", type = "message"))
     st_set(list(projects = setdiff(projects_known(st()), x$path[1]))); tick(tick() + 1) })
-  invisible(list(refresh = function() tick(tick() + 1)))
+  # for the app: open a project, make one (and open it), and what "New project" does instead of this dialog (the Simple view's own screen)
+  invisible(list(refresh = function() tick(tick() + 1), open = switch_to,
+                 new = function(dir, name = "") { r <- project_new(dir, name, NULL, tryCatch(settings_now(), error = function(e) st())); switch_to(r); invisible(r) },
+                 on_new = function(f) on_new <<- f))
 })

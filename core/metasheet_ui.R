@@ -208,7 +208,7 @@ deploy_check_server <- function(id, project_dir, scan, tick = reactive(0), on_ch
     DT::datatable(r, rownames = FALSE, selection = "multiple", options = list(pageLength = 10, scrollX = TRUE, dom = "tip")) })
   observeEvent(input$accept, { x <- isolate(ck()); if (isTRUE(get0("VIEWER", inherits = TRUE))) return()
     r <- if (is.null(x) || is.null(x$rows)) data.table() else x$rows; sel <- input$rows_rows_selected
-    if (length(sel)) r <- r[sel]; r <- r[match %in% DEP_SUGGESTED]
+    if (length(sel)) r <- r[sel]; r <- if ("match" %in% names(r)) r[match %in% DEP_SUGGESTED] else r[0]   # no rows yet: no columns either
     if (!nrow(r)) return(showNotification(if (length(sel)) "None of the rows selected is a suggestion to accept." else "No suggested matches to accept.", type = "message"))
     d <- tryCatch(dep_accept_dates(project_dir(), r), error = function(e) { showNotification(conditionMessage(e), type = "error", duration = 10); NULL }); if (is.null(d)) return()
     live_touch(); showNotification(paste0(nrow(r), " match", if (nrow(r) == 1) "" else "es", " accepted: From and To are the first and last day of the record."), type = "message"); on_change() })

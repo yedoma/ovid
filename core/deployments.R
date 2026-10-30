@@ -225,7 +225,7 @@ DEPLOY_SHEET_INTRO <- paste("One row per deployment: a logger, by its serial, at
 # list(file = "output/audit/files.csv", serial =, name =, file_col =); only files whose status is "ok" are used.
 dep_scan_files <- function(project_dir, scan) {
   f <- file.path(path.expand(project_dir), scan$file)
-  d <- if (file.exists(f)) try_or(fread(f, colClasses = "character", na.strings = c("", "NA")), data.table(), scan$file) else data.table()
+  d <- if (file.exists(f)) try_or(fread(file = f, colClasses = "character", na.strings = c("", "NA")), data.table(), scan$file) else data.table()
   if (!nrow(d) || !all(c(scan$serial, "first_ts", "last_ts") %in% names(d))) return(data.table(serial = character(), name = character(), first = as.POSIXct(character()), last = as.POSIXct(character()), file = character()))
   if ("status" %in% names(d)) d <- d[status == "ok"]
   g <- function(k) if (!is.null(k) && k %in% names(d)) { x <- d[[k]]; x[is.na(x)] <- ""; x } else rep("", nrow(d))

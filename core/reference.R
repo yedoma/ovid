@@ -82,7 +82,7 @@ reference_server <- function(input, output, session, app, go = list(), docs = fi
       tagList(div(class = "g", g), lapply(seq_len(nrow(x)), function(i) tags$a(href = "#", class = if (identical(cur(), x$id[i])) "on", `data-s` = plain(paste(x$title[i], x$md[i])),
         onclick = sprintf("Shiny.setInputValue('ref_pick','%s',{priority:'event'});return false", x$id[i]), x$title[i]))) }) })
   observeEvent(input$ref_pick, cur(input$ref_pick))
-  output$ref_topic <- renderUI({ req(topics, cur()); t <- topics[id == cur()]; req(nrow(t))
+  output$ref_topic <- renderUI({ req(topics, cur()); t <- topics[id == cur()]; req(nrow(t) > 0)
     body <- tryCatch(HTML(commonmark::markdown_html(t$md, extensions = TRUE)), error = function(e) pre(t$md))
     words <- unique(tolower(unlist(regmatches(paste(t$title, t$md), gregexpr("[A-Za-z_][A-Za-z0-9_]{2,}", paste(t$title, t$md))))))
     rr <- if (!is.null(rv) && t$group != "Glossary") rv[vapply(strsplit(tolower(gsub("[`*]", "", parameter)), "[ /,]+"), function(p) any(p %in% words), NA)] else NULL

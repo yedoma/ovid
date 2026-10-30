@@ -48,7 +48,7 @@ unsaved_server <- function(id, editors, extra = list(), on_apply = function() NU
 display_path <- function(pd) file.path(path.expand(pd), "config", DISPLAY_FILE)
 display_read <- function(pd) { p <- display_path(pd)
   # safe: a table that cannot be read shows nothing here; its editor says why
-  d <- if (file.exists(p)) tryCatch(data.table::fread(p, colClasses = "character"), error = function(e) NULL) else NULL
+  d <- if (file.exists(p)) tryCatch(data.table::fread(file = p, colClasses = "character"), error = function(e) NULL) else NULL
   if (is.null(d) || !"name" %in% names(d)) return(data.table::data.table(name = character(), shown = character()))
   if (!"shown" %in% names(d)) d[["shown"]] <- ""
   d[, .(name = trimws(name), shown)] }
@@ -97,7 +97,7 @@ flow_aside <- function(project = list(), gaps = NULL, sources = NULL, precedence
 flow_precip <- function(path) {
   path <- trimws(path %||% ""); if (!nzchar(path) || !file.exists(path.expand(path))) return(NULL)
   # safe: a preview only; nothing is shown for a file that cannot be read
-  d <- tryCatch(data.table::fread(path.expand(path)), error = function(e) NULL); if (is.null(d) || !nrow(d)) return(NULL)
+  d <- tryCatch(data.table::fread(file = path.expand(path)), error = function(e) NULL); if (is.null(d) || !nrow(d)) return(NULL)
   nm <- names(d); tk <- grep("time|date|^ts$", nm, ignore.case = TRUE)[1]; if (is.na(tk)) tk <- 1L
   num <- which(vapply(d, is.numeric, NA)); vk <- intersect(grep("mm|precip|rain", nm, ignore.case = TRUE), num)[1]; if (is.na(vk)) vk <- setdiff(num, tk)[1]
   if (is.na(vk)) return(NULL)
@@ -110,7 +110,7 @@ flow_precip <- function(path) {
 flow_saved <- function(pd, n = 8, more = NULL) {
   f <- file.path(path.expand(pd), "config", "history", "change_log.csv")
   # safe: as for line 50: its editor says why
-  d <- if (file.exists(f)) tryCatch(data.table::fread(f, colClasses = "character"), error = function(e) NULL) else NULL
+  d <- if (file.exists(f)) tryCatch(data.table::fread(file = f, colClasses = "character"), error = function(e) NULL) else NULL
   if (is.null(d) || !nrow(d)) return(p(class = "dim", "Nothing saved yet."))
   d <- d[order(-seq_len(nrow(d)))][seq_len(min(n, nrow(d)))]
   tagList(tags$table(class = "table", tags$thead(tags$tr(tags$th("When"), tags$th("Table"), tags$th("Rows after"))),

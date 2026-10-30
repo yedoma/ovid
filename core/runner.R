@@ -97,12 +97,19 @@ run_finish <- function() {
   RUNNER$job <- NULL; RUNNER$tick <- RUNNER$tick + 1; unlink(j$dir, recursive = TRUE)
   if (!identical(r$status, "finished")) {                                                         # core manifest.R: the output kept before the run
     rec <- tryCatch(output_recover(j$project_dir), error = function(e) "")                        # a process that was killed did not put it back itself
+    if (!is.null(j$cancelled_at)) rec <- sub("did not finish (the app or computer stopped)", "was cancelled", rec, fixed = TRUE)   # stopped by Cancel, not a crash
     # safe: the note about restored output is extra
     r$restored <- if (nzchar(rec)) rec else tryCatch(run_restored(j$project_dir), error = function(e) "")
     if (nzchar(r$restored)) shiny::withReactiveDomain(j$session, showNotification(r$restored, type = "message", duration = 15)) }
   if (is.function(j$on_done)) shiny::withReactiveDomain(j$session, j$on_done(r))
   invisible(r)
 }
+
+# What the progress box shows of a run: its time, % done, step and the line it is on (for the box and any copy an app shows).
+run_state <- function(j) { w <- run_where(run_lines(j)); secs <- round(as.numeric(difftime(Sys.time(), j$t0, units = "secs")))
+  pct <- if (w$k > 0) round(100 * ((w$k - 1) + w$frac) / w$n) else 1
+  list(time = sprintf("%d:%02d", secs %/% 60, secs %% 60), pct = max(1L, as.integer(pct)), stage = if (w$k > 0) sprintf("Step %d of %d: %s", w$k, w$n, w$stage) else w$stage,
+       item = if (nzchar(w$item)) w$item else if (length(w$last) && nzchar(trimws(w$last))) trimws(w$last) else "") }
 
 # Once in each app's server. busy_ids: the buttons that start a run (or change what a run reads); they are turned off in
 # every window while a run is going, with a note saying why.
@@ -122,15 +129,19 @@ run_server <- function(input, output, session, busy_ids = "run") {
       session$sendCustomMessage("ovid-busy", list(on = run_busy(), ids = as.list(busy_ids),
                                                   why = "A run is going: wait for it, or cancel it in the box at the bottom right.")) }
   })
-  output$ovid_runner <- renderUI({ invalidateLater(700); j <- RUNNER$job; if (is.null(j)) return(NULL)
-    w <- run_where(run_lines(j)); secs <- round(as.numeric(difftime(Sys.time(), j$t0, units = "secs")))
-    pct <- if (w$k > 0) round(100 * ((w$k - 1) + w$frac) / w$n) else 1
-    stopping <- !is.null(j$cancelled_at)
+  # The box is drawn once per run (again when Cancel is pressed); its clock, bar and lines change in place every 0.7 s (ovid-run,
+  # www/runner.js). Drawing it again each time made it blink: Shiny fades an output while it recalculates.
+  box <- reactiveVal("")
+  observe({ invalidateLater(700); j <- RUNNER$job
+    box(if (is.null(j)) "" else paste(format(j$t0), j$label, !is.null(j$cancelled_at)))      # changes only when a run starts, stops or is cancelled
+    if (!is.null(j)) session$sendCustomMessage("ovid-run", run_state(j)) })
+  output$ovid_runner <- renderUI({ if (!nzchar(box())) return(NULL); j <- isolate(RUNNER$job); if (is.null(j)) return(NULL)
+    s <- run_state(j); stopping <- !is.null(j$cancelled_at)
     div(class = "d-run", role = "status",
-      div(class = "d-run-head", strong(j$label), span(class = "d-run-time", sprintf("%d:%02d", secs %/% 60, secs %% 60))),
-      div(class = "d-run-bar", div(class = "d-run-fill", style = sprintf("width:%d%%", max(1L, as.integer(pct))))),
-      div(class = "d-run-stage", if (w$k > 0) sprintf("Step %d of %d: %s", w$k, w$n, w$stage) else w$stage),
-      if (nzchar(w$item)) div(class = "d-run-item", w$item) else if (length(w$last) && nzchar(trimws(w$last))) div(class = "d-run-item", trimws(w$last)),
+      div(class = "d-run-head", strong(j$label), span(class = "d-run-time", s$time)),
+      div(class = "d-run-bar", div(class = "d-run-fill", style = sprintf("width:%d%%", s$pct))),
+      div(class = "d-run-stage", s$stage),
+      div(class = "d-run-item", style = if (!nzchar(s$item)) "display:none", s$item),
       div(class = "d-run-foot",
         if (stopping) span(class = "d-run-note", "Stopping at the next safe point...")
         else span(class = "d-run-note", "The app stays usable while it runs."),

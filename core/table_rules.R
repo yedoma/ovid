@@ -20,7 +20,7 @@ RULE_PERIODS <- list(c("start", "end"), c("from", "to"), c("deployed", "removed"
 # is not there yet, so nothing is reported before the first run.
 known_from <- function(file, col) function(project_dir) { f <- file.path(path.expand(project_dir), file)
   # safe: names to check against; a table that cannot be read gives none, so nothing is called unknown
-  if (!file.exists(f)) return(character()); d <- tryCatch(fread(f, colClasses = "character", select = col), error = function(e) NULL)
+  if (!file.exists(f)) return(character()); d <- tryCatch(fread(file = f, colClasses = "character", select = col), error = function(e) NULL)
   if (is.null(d) || !nrow(d)) character() else unique(c(d[[1]][nzchar(d[[1]])], if (exists("norm_serial", mode = "function")) norm_serial(d[[1]][nzchar(d[[1]])]))) }
 
 # Yes/no cells: shown as Yes or No in both views, written TRUE or FALSE; any of these spellings (any case) is read.

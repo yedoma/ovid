@@ -14,7 +14,7 @@ read_cfg <- function(path) {
     stop(structure(class = c("ovid_bad_table", "error", "condition"), list(message = msg, call = NULL))) }
   sz <- file.size(path)
   if (!is.na(sz) && sz > 0 && any(readBin(path, "raw", min(sz, 65536)) == as.raw(0))) bad("it holds binary data, not text")
-  dt <- tryCatch(fread(path, colClasses = "character", na.strings = NULL, encoding = "UTF-8"), error = function(e) bad(conditionMessage(e)))
+  dt <- tryCatch(fread(file = path, colClasses = "character", na.strings = NULL, encoding = "UTF-8"), error = function(e) bad(conditionMessage(e)))
   for (v in names(dt)) set(dt, j = v, value = trim(fifelse(is.na(dt[[v]]), "", dt[[v]])))
   dt
 }
@@ -89,10 +89,10 @@ backup_cfg <- function(path, new = NULL, who = "", what = "") {
                     rows_removed_or_changed = if (both) sum(!ko %in% kn) else NA_integer_, backup = b)
   lf <- file.path(h, "change_log.csv")
   # safe: an unreadable header is taken as an older log, which is rewritten below (and reported there)
-  hdr <- if (file.exists(lf)) tryCatch(names(fread(lf, nrows = 0)), error = function(e) character()) else character()
+  hdr <- if (file.exists(lf)) tryCatch(names(fread(file = lf, nrows = 0)), error = function(e) character()) else character()
   if (!file.exists(lf) || identical(hdr, HIST_COLS)) fwrite(row, lf, append = file.exists(lf))
   else {                                                   # an older, shorter log: rewrite it with every column
-    prev <- try_or(fread(lf, colClasses = "character", na.strings = NULL), data.table(), "config/history/change_log.csv")
+    prev <- try_or(fread(file = lf, colClasses = "character", na.strings = NULL), data.table(), "config/history/change_log.csv")
     fwrite(rbind(prev, row[, lapply(.SD, as.character)], fill = TRUE)[, c(HIST_COLS, setdiff(names(prev), HIST_COLS)), with = FALSE], lf)
   }
   invisible(b)
