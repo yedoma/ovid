@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (speed, 2026-10-30)**
+- clock_faults() is about 14 times faster on long files: in_sequence() skips the search when the times are already in order, and no longer has findInterval() re-check the sorted list at every record (which made it quadratic); the reset test is one vectorised pass. A test compares it with the old code on sorted, shuffled, stray, reset, resync and bad times (timestamps.R).
+- **Output changes:** none.
+
 **Added (stage times, 2026-10-30)**
 - Every run log (output/logs/*.log) ends with "Time per stage:": the seconds and share of the run of each "[k/N]" step, in every app, in the app and from the command line (util.R stage_mark, stage_times; manifest.R; runner.R).
 - **Output changes:** none; the run log has these lines more.

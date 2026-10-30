@@ -1021,4 +1021,40 @@ cat("stage times in the run log\n")
 local({ STAGES$at <- NULL; stage_mark("not a stage"); stage_mark("[1/2] reading"); Sys.sleep(0.05); stage_mark("[2/2] writing"); st <- stage_times(); STAGES$at <- NULL
   check("each [k/N] message starts a stage and others do not; each is listed with its seconds and share of the run",
         length(st) == 2 && grepl("^  \\[1/2\\] reading +[0-9.]+ s +[0-9]+%$", st[1]) && grepl("[2/2] writing", st[2], fixed = TRUE)) })
+cat("clock faults: the faster in_sequence() and reset test give what the loops gave\n")
+local({ e <- new.env(); source(file.path(CORE_DIR, "timestamps.R"), local = e)
+  # the versions before 2026-10-30, kept here only to compare against
+  seq0 <- function(x) { n <- length(x); if (n < 3) return(rep(TRUE, n))
+    tails <- numeric(0); tidx <- integer(0); prev <- integer(n)
+    for (i in seq_len(n)) { k <- findInterval(x[i], tails) + 1L; prev[i] <- if (k > 1L) tidx[k - 1L] else 0L; tails[k] <- x[i]; tidx[k] <- i }
+    keep <- logical(n); i <- tidx[length(tidx)]; while (i > 0L) { keep[i] <- TRUE; i <- prev[i] }; keep }
+  e0 <- new.env(); source(file.path(CORE_DIR, "timestamps.R"), local = e0); e0$in_sequence <- seq0
+  e0$clock_faults <- function(t, ord = seq_along(t), lo = -Inf, hi = Inf, stray = TRUE) {
+    rows <- data.table(ord = ord, TIMESTAMP = t)[order(ord)]
+    rows[, bad := is.na(TIMESTAMP) | TIMESTAMP < lo | TIMESTAMP > hi]
+    rows[, stray := FALSE]; if (isTRUE(stray)) rows[bad == FALSE, stray := stray_records(TIMESTAMP, ord = ord)]
+    x <- as.numeric(rows$TIMESTAMP); ok <- !rows$bad & !rows$stray; reset <- rep(FALSE, nrow(rows)); cm <- -Inf
+    for (i in which(ok)) { if (x[i] < cm - 86400) reset[i] <- TRUE else if (x[i] > cm) cm <- x[i] }
+    rows[, reset := reset]
+    keep <- ok & !reset; tk <- ifelse(keep, x, Inf)
+    later_min <- c(rev(cummin(rev(tk)))[-1], Inf)
+    rows[, resync := keep & x >= later_min]
+    rows[] }
+  environment(e0$clock_faults) <- e0
+  set.seed(42); g <- 1.6e9 + 1800 * (0:2999)
+  cases <- list(sorted = g, ties = rep(g[1:100], each = 3), short = g[1:2], three = g[c(3, 1, 2)], none = numeric(0),
+                shuffled = sample(g[1:500]), strays = replace(g, sample(3000, 40), 1.6e9 + runif(40, 0, 5.4e6)),
+                reset = c(g[1:1000], 9.47e8 + 1800 * (0:999), g[1001:2000]), resync = c(g[1:1500], g[1400:3000]),
+                bad = replace(g, c(5, 50, 500), c(NA, 9e8, 4e9)), back_hour = c(g[1:200], g[150:400] - 3600))
+  same <- vapply(names(cases), function(k) { x <- cases[[k]]; tt <- as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
+    identical(e$in_sequence(x[!is.na(x)]), seq0(x[!is.na(x)])) &&
+      identical(e$clock_faults(tt, lo = as.POSIXct("2000-01-01", tz = "UTC"), hi = as.POSIXct("2030-01-01", tz = "UTC")), e0$clock_faults(tt, lo = as.POSIXct("2000-01-01", tz = "UTC"), hi = as.POSIXct("2030-01-01", tz = "UTC"))) &&
+      identical(e$clock_faults(tt, ord = rev(seq_along(tt)), stray = FALSE), e0$clock_faults(tt, ord = rev(seq_along(tt)), stray = FALSE)) }, NA)
+  if (!all(same)) cat("  differ:", names(cases)[!same], "\n")
+  check("in_sequence() and clock_faults() give the same rows, flags and order as before on sorted, shuffled, stray, reset, resync and bad times", all(same) && !identical(body(e0$clock_faults), body(e$clock_faults)) && !identical(e0$stray_records(cases$strays), logical(3000)))
+  check("the cases do find each kind of fault", { f <- e$clock_faults(as.POSIXct(cases$reset, origin = "1970-01-01", tz = "UTC"), lo = as.POSIXct("1990-01-01", tz = "UTC"))
+    s <- e$clock_faults(as.POSIXct(cases$strays, origin = "1970-01-01", tz = "UTC")); r <- e$clock_faults(as.POSIXct(cases$resync, origin = "1970-01-01", tz = "UTC"))
+    any(f$reset) && any(s$stray) && any(r$resync) })
+})
+
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

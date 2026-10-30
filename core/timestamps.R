@@ -10,9 +10,10 @@
 
 # TRUE for the records on the longest run of timestamps that never goes backwards, in the order given (patience sorting)
 in_sequence <- function(x) {
-  n <- length(x); if (n < 3) return(rep(TRUE, n))
-  tails <- numeric(0); tidx <- integer(0); prev <- integer(n)
-  for (i in seq_len(n)) { k <- findInterval(x[i], tails) + 1L; prev[i] <- if (k > 1L) tidx[k - 1L] else 0L; tails[k] <- x[i]; tidx[k] <- i }
+  n <- length(x); if (n < 3 || isFALSE(is.unsorted(x))) return(rep(TRUE, n))                # already in order: all of it
+  tails <- numeric(0); tidx <- integer(0); prev <- integer(n); na <- anyNA(x)
+  # tails is sorted by construction, so findInterval() need not check it each time (that check made the loop quadratic)
+  for (i in seq_len(n)) { k <- findInterval(x[i], tails, checkSorted = FALSE, checkNA = na) + 1L; prev[i] <- if (k > 1L) tidx[k - 1L] else 0L; tails[k] <- x[i]; tidx[k] <- i }
   keep <- logical(n); i <- tidx[length(tidx)]; while (i > 0L) { keep[i] <- TRUE; i <- prev[i] }
   keep
 }
@@ -63,7 +64,7 @@ clock_faults <- function(t, ord = seq_along(t), lo = -Inf, hi = Inf, stray = TRU
   rows[, bad := is.na(TIMESTAMP) | TIMESTAMP < lo | TIMESTAMP > hi]
   rows[, stray := FALSE]; if (isTRUE(stray)) rows[bad == FALSE, stray := stray_records(TIMESTAMP, ord = ord)]
   x <- as.numeric(rows$TIMESTAMP); ok <- !rows$bad & !rows$stray; reset <- rep(FALSE, nrow(rows)); cm <- -Inf
-  for (i in which(ok)) { if (x[i] < cm - 86400) reset[i] <- TRUE else if (x[i] > cm) cm <- x[i] }      # running maximum of trusted rows
+  xo <- x[ok]; reset[ok] <- xo < c(cm, cummax(xo)[-length(xo)]) - 86400      # behind the running maximum of the trusted rows before it
   rows[, reset := reset]
   keep <- ok & !reset; tk <- ifelse(keep, x, Inf)
   later_min <- c(rev(cummin(rev(tk)))[-1], Inf)                                                        # smallest trusted time written after each row
