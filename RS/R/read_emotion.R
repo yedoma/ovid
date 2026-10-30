@@ -141,7 +141,7 @@ geotag_table <- function(m) {
                                           as.integer(m[305L, ]), as.integer(m[306L, ]), 0, tz = "UTC") + rd(306L, 4L)))
 }
 emotion_geotags <- function(g) {
-  b <- lapply(g, function(x) jsonlite::base64_dec(x$bytes)); b <- b[lengths(b) == 336L]
+  b <- lapply(g, geotag_bytes); b <- b[lengths(b) == 336L]
   if (!length(b)) return(data.table())
   geotag_table(do.call(cbind, b))[order(photo)]
 }
@@ -218,6 +218,10 @@ BB3_BATT_F <- c(voltage_lpf = 77L, voltage = 82L, current_a = 87L, used_mah = 92
 BB3_WIND  <- c(0x06, 0x05)                                    # 31 bytes: wind estimate
 BB3_WIND_F <- c(wind_speed = 3L, wind_dir = 11L)
 
+# A geotag's 336 bytes, or none when the mission holds it empty or as something else (one such geotag stopped the whole key build).
+geotag_bytes <- function(x) if (is.character(x$bytes) && length(x$bytes) == 1L && nzchar(x$bytes)) jsonlite::base64_dec(x$bytes) else raw()
+BB3_NO_KEY <- paste("No .bb3 key in this project yet: build it once with build_bb3_ring() from an eMotion mission (.mis3)",
+                    "that holds photo geotags, together with the .bb3 logs of those flights.")
 bb3_ring_path <- function(project_dir = if (exists("CFG")) CFG$project_dir else "") {
   o <- getOption("ovid.emotion_ring"); if (!is.null(o)) return(o)
   if (nzchar(project_dir %||% "")) file.path(path.expand(project_dir), "config", "emotion_bb3.ring") else NA_character_
@@ -339,9 +343,7 @@ bb3_locate <- function(fr, rg, types = NULL, sample = 200L, min_share = 0.2) {
 read_bb3 <- function(path, ring = bb3_ring_path(), types = NULL, check_crc = TRUE) {
   fr <- bb3_frames(path, check_crc)
   if (!is.raw(ring) && (is.na(ring) || !file.exists(ring))) {
-    msg <- paste("No .bb3 key in this project yet: build it once with build_bb3_ring() from an eMotion mission (.mis3)",
-                 "that holds photo geotags, together with the .bb3 logs of those flights.")
-    message(msg)
+    msg <- BB3_NO_KEY; message(msg)
     return(list(meta = data.table(file = basename(path), frames = fr$frames, bad_frames = fr$bad, records = sum(fr$flags == 0x83L),
                                   decrypted_pct = 0, note = msg), photos = data.table(), track = data.table(), gps = data.table(), records = data.table()))
   }
@@ -397,7 +399,8 @@ build_bb3_ring <- function(mis3_paths, bb3_paths, out = bb3_ring_path(), check_c
   geo <- list()
   for (mp in mis3_paths) { j <- read_emotion_plan(mp)$json$mission
     for (pf in j$photoFootprints) for (ff in pf$flightFootprints) if (length(ff$geotags)) {
-      b <- lapply(ff$geotags, function(x) jsonlite::base64_dec(x$bytes)); b <- do.call(cbind, b[lengths(b) == 336L])
+      b <- lapply(ff$geotags, geotag_bytes); b <- do.call(cbind, b[lengths(b) == 336L])
+      if (is.null(b) || !ncol(b)) next                              # no usable geotag in this flight
       geo[[ff$bbxName]] <- b[, order(readBin(as.vector(b[281:284, , drop = FALSE]), "integer", ncol(b), 4L, endian = "little")), drop = FALSE] } }
   used <- data.table(); edges <- list()
   for (bp in bb3_paths) {

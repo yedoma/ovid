@@ -136,10 +136,21 @@ world_file <- function(path) { w <- c(sub("\\.[^.]+$", ".tfw", path), sub("\\.[^
 
 # ---- one source: every dataset file -> one row ---------------------------------------------------------------------
 DATASET_ROLES <- c("raster", "lidar_tile", "dataset_meta")
-read_source_datasets <- function(files) {
+# sdir: the source's cache folder: each file's header is kept there (datasets.rds) by path, size and time, so a rescan reads
+# only new or changed files (as for photos); dropped when the reading code changes (STEP_HASH$datasets).
+read_source_datasets <- function(files, sdir = NULL) {
   f <- files[role %in% DATASET_ROLES & status == ""]
-  if (!nrow(f)) return(data.table())
-  rows <- lapply(seq_len(nrow(f)), function(i) {
+  cf <- if (!is.null(sdir)) file.path(sdir, "datasets.rds"); key <- if (exists("STEP_HASH")) STEP_HASH$datasets else NULL
+  if (!nrow(f)) { if (!is.null(cf)) unlink(cf); return(data.table()) }
+  fk <- paste(f$rel, f$size, as.numeric(f$mtime))
+  # safe: a damaged cache is read again from the source
+  old <- if (!is.null(cf) && !is.null(key) && file.exists(cf)) tryCatch(readRDS(cf), error = function(e) NULL)
+  old <- if (identical(old$key, key)) old$rows else list()
+  # several files at once (core par_map; the header reads wait on the drive); a file that could not be read is reported here,
+  # in order, as when they were read one by one
+  todo <- which(!fk %in% names(old))
+  got <- par_map(todo, what = "datasets", function(i) {
+    err <- NULL
     p <- f$path[i]; r <- tryCatch(switch(f$format[i],
       sat_imd = read_imd(p), spot_dimap = read_dimap(p),
       lidar_tile = { h <- read_las(p); if (is.null(h)) NULL else { bb <- box_ll(h$xmin, h$ymin, h$xmax, h$ymax, h$epsg, h$crs)
@@ -153,14 +164,19 @@ read_source_datasets <- function(files) {
         list(epsg = epsg, crs = if (nzchar(crs %||% "")) substr(sub("^(PROJCS|GEOGCS)\\[\"([^\"]*)\".*", "\\2", crs), 1, 80) else NA, gsd_m = g$gsd_m %||% NA,
              detail = if (!is.null(g$width)) paste(g$width, "x", g$height, "px") else NA, bb = bb,
              geometry_from = if (is.null(bb)) NA else if (!is.null(g$xmin) && is.null(wf)) "GeoTIFF tags" else "world file") }),
-      error = function(e) { problem(f$rel[i], conditionMessage(e)); NULL })
+      error = function(e) { err <<- conditionMessage(e); NULL })
     if (is.null(r)) r <- list()
     if (!is.null(r$bb)) { b <- r$bb; r[c("lat_min", "lon_min", "lat_max", "lon_max")] <- as.list(b)
       r$footprint <- sprintf("%.6f %.6f;%.6f %.6f;%.6f %.6f;%.6f %.6f;%.6f %.6f", b[1], b[2], b[1], b[4], b[3], b[4], b[3], b[2], b[1], b[2]) }
     r$bb <- NULL; r[vapply(r, function(x) is.null(x) || length(x) != 1, TRUE)] <- NULL
-    as.data.table(c(list(.i = i), r))
+    list(row = as.data.table(r), err = err)
   })
-  d <- rbindlist(rows, fill = TRUE); setorder(d, .i); d[, .i := NULL]
+  new <- setNames(lapply(got, function(x) if (inherits(x, "error")) list(row = data.table(), err = conditionMessage(x)) else x), fk[todo])
+  rows <- lapply(seq_len(nrow(f)), function(i) { x <- new[[fk[i]]] %||% old[[fk[i]]]; x$row <- cbind(data.table(.i = i), x$row); x })
+  if (!is.null(cf) && !is.null(key) && length(todo)) { keep <- c(old[intersect(names(old), fk)], new); tmp <- paste0(cf, ".part")
+    saveRDS(list(key = key, rows = keep[unique(names(keep))]), tmp); file.rename(tmp, cf) }
+  for (i in seq_along(rows)) if (!is.null(rows[[i]]$err)) problem(f$rel[i], rows[[i]]$err)   # every scan, cached or not, as before
+  d <- rbindlist(lapply(rows, `[[`, "row"), fill = TRUE); setorder(d, .i); d[, .i := NULL]
   for (k in setdiff(DATASET_COLS, names(d))) set(d, j = k, value = rep(NA, nrow(d)))
   d <- cbind(f[, .(rel, folder, file)], d[, setdiff(DATASET_COLS, c("rel", "folder", "file")), with = FALSE])
   for (k in c("platform", "product", "acquired", "date_source", "crs", "footprint", "geometry_from", "detail")) set(d, j = k, value = as.character(d[[k]]))

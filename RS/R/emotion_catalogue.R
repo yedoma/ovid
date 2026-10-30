@@ -31,6 +31,8 @@ emotion_log_summary <- function(path, ring = bb3_ring_path()) {
                                            acc_xy = accXY, acc_z = accZ, pitch, yaw, roll)] else data.table()
     row[, `:=`(log_decoded = TRUE, log_decrypted_pct = 100)]
   } else if (kind == "bb3") {
+    if (!is.raw(ring) && (!length(ring) || is.na(ring) || !file.exists(ring))) {   # no key: nothing can be read, so the file is not opened
+      row[, log_note := BB3_NO_KEY]; message(BB3_NO_KEY); return(list(log = row, track = data.table(), photos = data.table())) }
     x <- read_bb3(path, ring)
     if (!nrow(x$records) || is.na(x$meta$decrypted_pct)) { row[, log_note := x$meta$note %||% "no drone records"]
       return(list(log = row, track = data.table(), photos = data.table())) }
@@ -59,7 +61,8 @@ read_source_emotion <- function(files, sdir, ring = bb3_ring_path()) {
   cdir <- file.path(sdir, "emotion"); dir.create(cdir, recursive = TRUE, showWarnings = FALSE)
   rk <- if (length(ring) && !is.na(ring) && file.exists(ring)) unname(tools::md5sum(ring)) else "no key"
   sh <- if (exists("STEP_HASH") && !is.null(STEP_HASH$emotion)) STEP_HASH$emotion else ""
-  one <- function(f, i, what, fun) {
+  # cached(): the file's summary from the cache (or from another source's cache, copied over), else NULL
+  cached <- function(f, i, what) {
     rkk <- if (what == "log" && grepl("\\.bb3$", f$file[i], ignore.case = TRUE)) rk
     key <- hash_of(list(f$file[i], f$size[i], as.numeric(f$mtime[i]), rkk, sh))       # no folder: a copy in another source shares it
     name <- paste0(what, "_", hash_of(list(f$file[i], f$size[i]), 12L)); used <<- c(used, cache_file(cdir, name, key))
@@ -69,15 +72,23 @@ read_source_emotion <- function(files, sdir, ring = bb3_ring_path()) {
                    cache_file(cdir, paste0(what, "_", hash_of(f$rel[i], 12L)), hash_of(list(f$rel[i], f$size[i], as.numeric(f$mtime[i]), rkk, sh)))))
         # safe: a damaged cache is read again from the source
         if (file.exists(cf) && !is.null(r <- tryCatch(readRDS(cf), error = function(e) NULL))) { cache_write(cdir, name, key, r); break }
-    if (is.null(r)) { r <- tryCatch(fun(f$path[i]), error = function(e) { problem(f$rel[i], paste("not read:", conditionMessage(e))); NULL })
-                      if (!is.null(r)) cache_write(cdir, name, key, r) }
-    if (!is.null(r)) lapply(r, function(d) if (is.data.table(d) && nrow(d)) d[, rel := f$rel[i]] else d)
-  }
+    list(r = r, name = name, key = key) }
+  # the files the cache does not have are read several at once (core par_map; a decoded .bb3 is mostly waiting on the drive and
+  # the CRC of its frames), at most four, as each holds a whole log in memory; then each is kept in the cache as before
+  read_all <- function(f, what, fun, workers = min(4L, run_workers())) {
+    cs <- lapply(seq_len(nrow(f)), function(i) cached(f, i, what)); miss <- which(vapply(cs, function(x) is.null(x$r), NA))
+    k <- vapply(cs[miss], function(x) paste(x$name, x$key), ""); first <- miss[!duplicated(k)]   # copies of one file (same name, size, time): read once
+    got <- par_map(first, function(i) fun(f$path[i]), workers = workers, what = if (what == "log") "flight logs" else "missions")
+    for (j in seq_along(first)) { i <- first[j]; r <- got[[j]]
+      if (inherits(r, "error")) { problem(f$rel[i], paste("not read:", conditionMessage(r))); r <- NULL }
+      if (!is.null(r)) cache_write(cdir, cs[[i]]$name, cs[[i]]$key, r)
+      for (c2 in miss[k == k[match(i, miss)]]) cs[[c2]]$r <- r }
+    lapply(seq_len(nrow(f)), function(i) { r <- cs[[i]]$r; if (!is.null(r)) lapply(r, function(d) if (is.data.table(d) && nrow(d)) d[, rel := f$rel[i]] else d) }) }
   used <- character()
   lg <- files[format == "sensefly_log" & status == "" & size > 0]
   ms <- files[format == "emotion_plan" & status == "" & grepl("\\.mis3$", file, ignore.case = TRUE)]
-  L <- lapply(seq_len(nrow(lg)), function(i) { if (exists("run_tick")) run_tick(i, nrow(lg), lg$file[i]); one(lg, i, "log", function(p) emotion_log_summary(p, ring)) })
-  M <- lapply(seq_len(nrow(ms)), function(i) one(ms, i, "plan", emotion_plan_summary))
+  L <- read_all(lg, "log", function(p) emotion_log_summary(p, ring))
+  M <- read_all(ms, "plan", emotion_plan_summary)
   cache_prune(cdir, used)
   st <- function(x, k) rbindlist(lapply(x, function(r) r[[k]]), fill = TRUE)
   out <- list(logs = st(L, "log"), tracks = st(L, "track"), photos = st(L, "photos"),
@@ -86,7 +97,7 @@ read_source_emotion <- function(files, sdir, ring = bb3_ring_path()) {
     wait <- sum(!n$log_decoded & grepl("key", n$log_note)); link <- sum(n$log_kind == "link" | n$log_note == "no drone records")
     say("    ", nrow(lg), " flight logs: ", sum(n$log_decoded), " read",
         if (link) paste0(", ", link, " eMotion link files skipped") else "", if (wait) paste0(", ", wait, " .bb3 waiting for the key (scan their eMotion mission with them)") else "",
-        if (nrow(ms)) paste0("; ", nrow(ms), " eMotion mission(s)") else "") }
+        if (nrow(ms)) paste0("; ", nrow(ms), if (nrow(ms) == 1) " eMotion mission" else " eMotion missions") else "") }
   out
 }
 
@@ -96,6 +107,11 @@ read_source_emotion <- function(files, sdir, ring = bb3_ring_path()) {
 emotion_key_auto <- function(files, ring, build = build_bb3_ring) {
   if (!length(ring) || is.na(ring)) return(FALSE)
   if (file.exists(ring)) return(TRUE)
+  # the key is the same for every eBee log (one keystream): a project without one takes it from another RS project that has
+  # it (only read there), so a new project decodes its logs without building the key again
+  other <- setdiff(Sys.glob(file.path(path.expand(ovid_projects_home("RS")), "*", "config", basename(ring))), normalizePath(ring, mustWork = FALSE))
+  if (length(other)) { dir.create(dirname(ring), recursive = TRUE, showWarnings = FALSE)
+    if (file.copy(other[1], ring, overwrite = FALSE)) { say("    .bb3 key taken from the project in ", tilde(dirname(dirname(other[1]))), " and kept in this one (config/", basename(ring), ")"); return(TRUE) } }
   ms <- files[format == "emotion_plan" & status == "" & grepl("\\.mis3$", file, ignore.case = TRUE)]
   lg <- files[format == "sensefly_log" & status == "" & size > 0 & grepl("\\.bb3$", file, ignore.case = TRUE) & !grepl("_em\\.bb3$", file, ignore.case = TRUE)]
   if (!nrow(ms) || !nrow(lg)) return(FALSE)

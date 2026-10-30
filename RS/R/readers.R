@@ -6,7 +6,7 @@
 
 FORMATS <- list(
   list(format = "image_jpg",       family = "camera",  role = "image",         pattern = "\\.jpe?g$"),
-  list(format = "image_tif",       family = "camera",  role = "image",         pattern = "^(IMG|DJI|DSC|MAX|R0)[0-9]*_.*\\.tiff?$"),   # camera TIFFs (Sequoia bands)
+  list(format = "image_tif",       family = "camera",  role = "image",         pattern = "^(IMG|DJI|DSC|MAX|R0|THM)[0-9]*_.*\\.tiff?$"),   # camera TIFFs (Sequoia bands; senseFly thermoMAP frames THM_*.tif)
   list(format = "sat_imd",         family = "dataset", role = "dataset_meta",  pattern = "\\.imd$"),
   list(format = "spot_dimap",      family = "dataset", role = "dataset_meta",  pattern = "^metadata\\.dim$"),
   list(format = "image_raw",       family = "camera",  role = "image_raw",     pattern = "\\.(cr2|cr3|dng|nef|arw)$"),
@@ -71,8 +71,10 @@ SENSOR_WIDTH_MM <- c(FC300X = 6.17, FC300S = 6.17, FC300C = 6.17, FC330 = 6.17, 
                      ZenmuseP1 = 35.9, `S.O.D.A.` = 13.2, `Canon PowerShot S110` = 7.44)
 NO_RTK_AIRCRAFT <- c("Phantom 3 Professional", "Phantom 3 Advanced", "Phantom 3 Standard", "Phantom 4", "Phantom 4 Pro", "Phantom 4 Pro V2")
 
+# Several files at once (core par_map, forked; one at a time on Windows): reading a file's head waits on the drive far longer
+# than the parsing takes (26 ms a photo on a USB drive, 7.5 ms with eight at once), so the waits overlap. Rows stay in order.
 read_image_meta <- function(paths) {
-  rows <- lapply(paths, function(p) {
+  rows <- par_map(paths, what = "image headers", function(p) {
     b <- file_head(p); e <- read_exif(b); x <- xmp_text(b)
     if (is.na(x) && length(b) == HEAD_BYTES && !is.na(e$make) && e$make == "DJI") { b <- file_head(p, 4L * HEAD_BYTES); x <- xmp_text(b) }
     tags <- c(DJI_TAGS, SF_TAGS)
@@ -83,6 +85,7 @@ read_image_meta <- function(paths) {
     d$irradiance <- !is.na(x) && grepl("Irradiance", x, fixed = TRUE)          # a downwelling light sensor (DLS, sunshine sensor) wrote its reading
     d$band <- xmp_tag(x, "Camera:BandName"); d
   })
+  bad <- Filter(function(r) inherits(r, "error"), rows); if (length(bad)) stop(conditionMessage(bad[[1]]))   # as when read one by one
   d <- rbindlist(rows, fill = TRUE)
   for (k in c("rtk_flag", "rtk_std_lat", "rtk_std_lon", "rtk_std_hgt", "alt_rel", "gimbal_pitch", "acc_xy", "acc_z", "speed_x", "speed_y", "speed_z")) set(d, j = k, value = suppressWarnings(as.numeric(d[[k]])))
   # sensor width from the EXIF focal plane resolution (pixels per inch, cm or mm), else from the table of known cameras
