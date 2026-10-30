@@ -118,7 +118,8 @@ step_hashes <- function(env = parent.frame()) list(
   files = code_fingerprint("discover_files", env = env),
   read  = code_fingerprint(c("read_source", "clock_checks", "tz_rows_for"), shallow = "run_pipeline_steps", env = env),
   qc    = code_fingerprint(c("assign_sensors", "apply_qc", "gt_period", "period_step", "period_apply", "find_gaps", "rule_applies", "remove_rows", "site_groups"), shallow = "run_pipeline_steps", env = env),
-  site  = code_fingerprint(c("soil_phase", "remove_rows"), shallow = "run_pipeline_steps", env = env))
+  site  = code_fingerprint(c("soil_phase", "remove_rows"), shallow = "run_pipeline_steps", env = env),
+  between = code_fingerprint(c("daily_means", "between_site_checks"), shallow = "run_pipeline_steps", env = env))
 
 # Ground temperature records are kept long (one row per value: logger, channel, time), so remove_rows() covers
 # removing single values and whole periods. "auto" writes a line per value (old value kept) up to 200 values, else one
@@ -382,10 +383,19 @@ run_pipeline_steps <- function(cfg = CFG) {
   # The between-site check compares the daily means of every site, so it runs once all are built, and its flags go into the
   # records' flag column before the site files are written: the files, the export and its WMO codes carry them. A cached
   # site whose between-site flags are the same as last time keeps its files.
-  tp <- rbindlist(lapply(parts, function(x) x[variable == "temp", .(site, depth_m, TIMESTAMP, value, logger_id, channel, variable)]))
-  dd <- daily_means(tp[, .(site, depth_m, TIMESTAMP, value)], cfg$min_complete)
-  bs <- if (isTRUE(cfg$between_site_check)) tryCatch(between_site_checks(dd, tp, cfg), error = function(e) { problem("between-site check", conditionMessage(e)); NULL }) else NULL
-  tp <- NULL; bsp <- attr(bs, "periods")
+  # The daily means and the between-site check are kept with the cache keys of every site's records (and the code and
+  # settings they use): a run whose sites are all as before reads them back; a change at any site works them out again.
+  kb <- hash_of(list(STEP_HASH$between, sgs, lapply(sgs, function(sg) site_done[[sg]]$k6), cfg[setdiff(names(cfg), "run_anyway")]))
+  cb <- if (inc) cache_read(file.path(cdir, "site"), "_between", kb) else NULL
+  if (!is.null(cb)) { dd <- cb$dd; bs <- cb$bs; FLAGS$list <- c(FLAGS$list, cb$flags); for (pp in cb$problems) problem(pp$where, pp$problem)
+    c_used <- c(c_used, cache_file(file.path(cdir, "site"), "_between", kb))
+  } else { f0 <- length(FLAGS$list); p0 <- length(AUDIT$problems)
+    tp <- rbindlist(lapply(parts, function(x) x[variable == "temp", .(site, depth_m, TIMESTAMP, value, logger_id, channel, variable)]))
+    dd <- daily_means(tp[, .(site, depth_m, TIMESTAMP, value)], cfg$min_complete)
+    bs <- if (isTRUE(cfg$between_site_check)) tryCatch(between_site_checks(dd, tp, cfg), error = function(e) { problem("between-site check", conditionMessage(e)); NULL }) else NULL
+    tp <- NULL
+    if (inc) c_used <- c(c_used, cache_write(file.path(cdir, "site"), "_between", kb, list(dd = dd, bs = bs, flags = FLAGS$list[seq_along(FLAGS$list) > f0], problems = AUDIT$problems[seq_along(AUDIT$problems) > p0]))) }
+  bsp <- attr(bs, "periods")
   # flags decided not a problem (config/review_decisions.csv) leave the records' flag column; flags.csv keeps them, marked accepted (core config.R)
   acc <- review_accept(qc_flags_table(FLAGS$list, data.table(site = character(), logger_id = character(), channel = character(), start = character(), end = character(),
                        check = character()), "GT", FALSE), review_read(review_path(cfg$project_dir)), "site", "channel")[accepted == TRUE][, parameter := paste(logger_id, channel)]

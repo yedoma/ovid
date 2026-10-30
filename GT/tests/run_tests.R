@@ -269,6 +269,8 @@ if (!is.null(res)) {
   check("a removal on one site redoes the logger there only, and gives what a run from scratch gives",
         !is.null(r5) && !is.null(rf) && as.integer(v5("loggers_reused")) == as.integer(v5("loggers_checked")) - 1L &&
         as.integer(v5("sites_reused")) == as.integer(v5("sites_total")) - 1L && identical(outs_of(proj), outs_of(full)))
+  check("the daily means and between-site check are kept once for the whole project, and a change at one site works them out again (the run above gives what a run from scratch gives)",
+        length(list.files(file.path(proj, "cache", "site"), "^_between")) == 1L && !length(list.files(file.path(full, "cache", "site"), "^_between")))
   run_w <- function(w) { p <- file.path(root, paste0("workers", w)); unlink(p, recursive = TRUE); dir.create(p); file.copy(file.path(proj, "config"), p, recursive = TRUE)
     ow <- options(ovid.workers = w); on.exit(options(ow))
     invisible(capture.output(r <- tryCatch(run_pipeline(modifyList(cfg, list(project_dir = p, incremental = FALSE))), error = function(e) NULL)))
@@ -550,6 +552,12 @@ local({                                                               # depths, 
           identical(a, b) && identical(a3, b3) && any(a$k > 1L) && length(run_starts(character(), numeric())) == 0L)
     check("site files: values and flags cast at once give the same CSV as casting each and merging (gaps, blank and missing flags, one depth)",
           same_csv(tmp) && same_csv(tmp[depth_m == 0.5])) })
+  local({ set.seed(4); n <- 20000                                                 # the air-like check's rows: pasted only where the channel has a bad day
+    d <- data.table(channel = sample(c(paste0("T", 1:6), NA), n, TRUE), TIMESTAMP = t0 + sample(c(0:20000 * 900, NA), n, TRUE), variable = sample(c("temp", "vwc"), n, TRUE, c(.9, .1)))
+    tt <- d$variable == "temp"; bad <- data.table(channel = c("T3", "T3", NA, "T5"), date = as.Date(c("2020-01-02", "2020-03-03", "2020-01-01", NA)))
+    k0 <- which(tt & paste(d$channel, as.Date(d$TIMESTAMP)) %in% paste(bad$channel, bad$date))                     # before 2026-10-30
+    k <- which(tt & d$channel %in% bad$channel); k <- k[paste(d$channel[k], as.Date(d$TIMESTAMP[k])) %in% paste(bad$channel, bad$date)]
+    check("air-like days: matching only the rows of channels with a bad day finds the same rows (missing channels and days too)", identical(k0, k) && length(k) > 0) })
   check("between-site key: empty with no flags for the site, set with some", identical(between_site_key(per, "B"), "") && nzchar(between_site_key(per, "A")) &&
         identical(between_site_key(NULL, "A"), ""))
   check("summary-only settings and Run anyway are left out of the cache key", all(c("water_year_start", "permafrost_years", "run_anyway", "fill_min_depth") %in% SUMMARY_KEYS) &&

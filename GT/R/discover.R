@@ -19,6 +19,15 @@ EXPORT_ADVICE <- c(rbr = "Open the .hex in Ruskin and export it as text (.txt), 
 
 WATER_LOGGER_NOTE <- "HOBO water-level or conductivity logger: read by WLR, not GT"
 
+# f() with what it would record (problems, warnings) kept instead of recorded, and its console text dropped: for a worker
+# (core util.R par_map), whose records would be lost; the caller records them in the main process.
+quiet_call <- function(f) {
+  np0 <- length(AUDIT$problems); lg <- get0("LOG", ifnotfound = NULL); nl0 <- if (is.environment(lg)) length(lg$lines) else 0L; w <- list()
+  on.exit({ AUDIT$problems <- AUDIT$problems[seq_len(np0)]; if (is.environment(lg)) lg$lines <- lg$lines[seq_len(nl0)] })   # also when par_map runs it here
+  utils::capture.output(r <- withCallingHandlers(f(), warning = function(e) { w[[length(w) + 1L]] <<- e; invokeRestart("muffleWarning") }))
+  list(r = r, problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], warnings = w)
+}
+
 # File names in one canonical Unicode form (NFC), so an accented name written by macOS (NFD) matches its export
 
 discover_files <- function(cfg, rules = NULL) {
@@ -40,11 +49,21 @@ discover_files <- function(cfg, rules = NULL) {
   m[, readable := FORMAT_INFO$readable[match(format, FORMAT_INFO$format)] %in% TRUE]
   m[, role := FORMAT_INFO$role[match(format, FORMAT_INFO$format)]]
   # identity from each file's header
-  ids <- lapply(seq_len(nrow(m)), function(i) {
+  id_of <- function(i) {
     if (known[i]) return(hc[[m$sig[i]]]$id)
     if (is.na(m$type[i])) return(NULL)
     tryCatch(if (m$readable[i] || m$format[i] == "hobo_binary") read_logger_file(m$path[i], m$format[i], header_only = TRUE)$meta else name_identity(m$path[i], m$format[i]),
-             error = function(e) { x <- name_identity(m$path[i], m$format[i]); x$error <- conditionMessage(e); x }) })
+             error = function(e) { x <- name_identity(m$path[i], m$format[i]); x$error <- conditionMessage(e); x }) }
+  # the headers not known yet are read in parallel (core util.R par_map; one at a time on Windows): what a reader notes is
+  # kept there and noted here in file order, as one at a time; a file its worker did not read is read here
+  todo <- which(!known & !is.na(m$type))
+  if (run_workers() > 1L && length(todo)) {
+    ids <- lapply(seq_len(nrow(m)), function(i) if (i %in% todo) NULL else id_of(i))
+    got <- par_map(todo, function(i) quiet_call(function() id_of(i)), what = "reading file details")
+    for (k in seq_along(todo)) { x <- got[[k]]
+      ids[todo[k]] <- list(if (!is.list(x) || inherits(x, "error") || !identical(names(x), c("r", "problems", "warnings"))) id_of(todo[k])
+                           else { for (p in x$problems) problem(p$where, p$problem); for (w in x$warnings) warning(w); x$r }) }
+  } else ids <- lapply(seq_len(nrow(m)), id_of)
   gv <- function(k) vapply(ids, function(x) if (is.null(x) || is.null(x[[k]]) || !length(x[[k]])) NA_character_ else as.character(x[[k]])[1], "")
   m[, `:=`(serial = gv("serial"), model = gv("model"), title = gv("title"), stated_offset = suppressWarnings(as.numeric(gv("offset_hours"))),
            download = gv("download"), read_error = gv("error"), water = gv("water") %in% "TRUE")]

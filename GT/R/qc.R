@@ -178,7 +178,7 @@ apply_qc <- function(d, rules, manual, type, serial, cfg) {
     day <- d[tt, .(rng = max(value) - min(value), n = .N), by = .(channel, depth_m, date = as.Date(TIMESTAMP))]
     z0 <- cfg$air_like_min_depth                                         # m below the ground (fixed in CFG)
     bad <- day[!is.na(depth_m) & depth_m >= z0 & rng > cfg$air_like_daily_range & n >= 4]
-    if (nrow(bad)) { k <- which(tt & paste(d$channel, as.Date(d$TIMESTAMP)) %in% paste(bad$channel, bad$date))
+    if (nrow(bad)) { k <- which(tt & d$channel %in% bad$channel); k <- k[paste(d$channel[k], as.Date(d$TIMESTAMP[k])) %in% paste(bad$channel, bad$date)]   # channel and day, pasted only where the channel has a bad day
       add_flag(d, k, "air_like", paste0("daily range above ", cfg$air_like_daily_range, " \u00b0C at ", depth_lab(z0), " or deeper: the sensor may be exposed or above the ground")) }
   }
   if (any(tt) && isTRUE(cfg$check_pre_install)) {                      # all sensors read the same temperature: the string is not in the ground yet
