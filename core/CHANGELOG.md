@@ -5,6 +5,30 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (shared text sizes and contrast, 2026-10-30; all five apps)**
+- Tokens (shell.R): muted text (fg4) and a new subtle-text token (fg3, the scheme's grey lifted) reach 4.5:1 on the page, top bar and panels in every scheme (legible_col); gray stays for lines and disabled controls. Test: all 19 schemes.
+- Sizes onto the type scale (11 / 12.5 / 13.5 / 14 / 26): tables 13 -> 13.5 px, rail section labels 10.5 -> 11 px, table row numbers 12 -> 12.5 px, value-box numbers 26 px, Simple step titles 15.5 -> 14 px and numbers 13 -> 12.5 px, project-list paths 11.5 -> 11 px.
+- Contrast: rail labels, the top bar's "//" and breadcrumb arrows, row numbers and Simple's brand separator use readable tokens; a project row's path and "open" stay readable when the row is highlighted.
+- theme.R legible_css(): a table pager's disabled Previous/Next (Bootstrap's 75 % grey, 4.14:1 in RS) is readable.
+- theme.R: legible_col() calls base::t(), so a t() defined elsewhere (the test files' time helper) no longer breaks it.
+- **Output changes:** none to data; screens only.
+
+**Fixed and added (projects and file reads, 2026-10-30)**
+- Every req(nrow(x)) became req(nrow(x) > 0) (22, in core and all apps): Shiny takes 0 as a value, so an output or button over an empty table went on and failed (WLR, Datum, Survey history: "object 'site' not found").
+- simple.R: a Simple-view save with no initials typed wrote a blank "who" in the change log; it now records the computer's user.
+- metasheet_ui.R: Accept the suggested matches with no rows yet failed (match, a column the empty table lacked, was read as the base function); it now says there is nothing to accept.
+- A missing file whose path holds a space was run as a shell command by fread() (data.table reads such text as a command): every read of a file now names it as file= (31 calls in core and RS). It showed as "error in running command" when a project folder had a space in its name.
+- projects.R: the New project dialog fills in the folder from the name (in the app's projects folder), has Browse (the system's folder picker, on this computer), and takes the app's own note and folder label (hint, dir_label; the defaults are as before). projects_server() returns open(), new() and on_new() for the app (the RS Simple view's own start screen). runner.R: run_state() is shared, and the progress box's numbers also update any copy an app shows (data-ovid-run).
+- **Output changes:** none.
+
+**Fixed (progress box, 2026-10-30)**
+- runner.R: the progress box at the bottom right blinked while a run went: it was drawn again every 0.7 s, and Shiny fades an output while it is drawn. It is now drawn once per run (again on Cancel), and its clock, bar and lines change in place (ovid-run, www/runner.js).
+- **Output changes:** none.
+
+**Fixed (launcher, 2026-10-30)**
+- launcher_app: clicking an app opened nothing: the tab was opened only once the app answered, seconds after the click, and browsers block that as a pop-up. The tab now opens on the click with a "Starting <app>…" page in the app's colour, then turns into the app (or says why it didn't start); while an app runs the launcher also shows an "Open <app> at 127.0.0.1:<port>" link.
+- **Output changes:** none.
+
 **Changed (speed, 2026-10-30)**
 - clock_faults() is about 14 times faster on long files: in_sequence() skips the search when the times are already in order, and no longer has findInterval() re-check the sorted list at every record (which made it quadratic); the reset test is one vectorised pass. A test compares it with the old code on sorted, shuffled, stray, reset, resync and bad times (timestamps.R).
 - step_of() (the most common time step, used by every app) counts the steps without making a factor of each one; about 6 times faster on long records, with the same tie rule (the smaller step) and the same result; a test compares it with the old code (util.R).

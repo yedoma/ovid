@@ -25,6 +25,8 @@ ovid_tokens <- function(pal) {
             red = .or(pal$red, "#cc6666"), green = .or(pal$green, "#b5bd68"), yellow = .or(pal$yellow, pal$gold, "#f0c674"),
             blue = .or(pal$blue, "#81a2be"), purple = .or(pal$purple, "#b294bb"), aqua = .or(pal$aqua, pal$teal, "#8abeb7"),
             orange = .or(pal$orange, "#de935f"))
+  # muted (fg4) and subtle (fg3, gray lifted) text readable on the page, top bar and raised panels (4.5:1); gray stays for lines
+  t$fg4 <- legible_col(t$fg4, c(t$bg, t$bgh, t$bg1)); t$fg3 <- legible_col(t$gray, c(t$bg, t$bgh, t$bg1))
   t$acc <- .or(pal$accent, pal$acc, t$blue)
   t$acc2 <- .or(pal$acc2, mix_col(t$acc, fg, 0.25))
   t$onacc <- if (contrast_ratio(t$acc, t$bgh) >= contrast_ratio(t$acc, "#ffffff")) t$bgh else "#ffffff"

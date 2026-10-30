@@ -990,7 +990,46 @@ local({ source(file.path(CORE_DIR, "launcher_app", "logic.R"), local = TRUE)
   b <- if (file.exists(bat)) readLines(bat, warn = FALSE) else ""; m <- if (file.exists(cmdf)) readLines(cmdf, warn = FALSE) else ""
   check("both entry scripts prefer runtime/ beside them, keep its library apart, and start core/launcher_app/start.R; Windows then looks in the registry and Program Files",
         any(grepl("runtime\\R\\bin\\x64\\Rscript.exe", b, fixed = TRUE)) && any(grepl("R_LIBS_USER", b)) && any(grepl("HKLM\\SOFTWARE\\R-core", b, fixed = TRUE)) &&
-        any(grepl("start.R", b, fixed = TRUE)) && any(grepl("runtime/R/bin/Rscript", m, fixed = TRUE)) && any(grepl("R_LIBS_USER", m)) && any(grepl("start.R", m, fixed = TRUE))) })
+        any(grepl("start.R", b, fixed = TRUE)) && any(grepl("runtime/R/bin/Rscript", m, fixed = TRUE)) && any(grepl("R_LIBS_USER", m)) && any(grepl("start.R", m, fixed = TRUE)))
+  la <- paste(readLines(file.path(CORE_DIR, "launcher_app", "app.R"), warn = FALSE), collapse = "\n")
+  check("the app's tab opens on the click itself (a browser blocks a tab opened seconds later), shows a waiting page, then the app or why it failed; a link opens it if the tab was blocked",
+        grepl("document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-open]'); if (b) ovidTab(b.dataset.open); }, true)", la, fixed = TRUE) &&
+        grepl("`data-open` = k", la, fixed = TRUE) && grepl("`data-k` = k", la, fixed = TRUE) && grepl("if (ovidOurs(w)) w.location.replace(m.url)", la, fixed = TRUE) &&
+        grepl('sendCustomMessage("ovid-fail"', la, fixed = TRUE) && grepl('tags$a(class = "hint", href = r$url', la, fixed = TRUE)) })
+
+cat("files with a space in their path (fread)\n")
+local({ files <- list.files(CORE_DIR, "\\.R$", full.names = TRUE); bare <- unlist(lapply(files, function(f) { x <- readLines(f, warn = FALSE)
+    x[grepl("fread\\((?!\\s*(file|text|cmd|input)\\s*=)", x, perl = TRUE) & !grepl("^\\s*#", x)] }))
+  d <- file.path(tempfile("ovid sp"), "my project"); dir.create(file.path(d, "output", "audit"), recursive = TRUE)
+  out <- capture.output(r <- tryCatch(fread(file = file.path(d, "output", "audit", "run_history.csv")), error = function(e) "missing"), type = "message")
+  check("every read of a file names it as file=, so a missing file whose path has a space is never run as a shell command",
+        !length(bare) && identical(r, "missing") && !any(grepl("system command", out))) })
+
+cat("projects and runs (projects.R, runner.R)\n")
+local({ pj <- paste(readLines(file.path(CORE_DIR, "projects.R"), warn = FALSE), collapse = "\n"); rn <- paste(readLines(file.path(CORE_DIR, "runner.R"), warn = FALSE), collapse = "\n")
+  check("no new project is made while a run is going (its outputs would land in the project left), and a cancelled run that had to be ended is not called a crash",
+        grepl('if (run_busy()) return(ovid_field_error("new_dir"', pj, fixed = TRUE) && grepl('"was cancelled", rec, fixed = TRUE)', rn, fixed = TRUE)) })
+
+cat("Simple edit: who goes in the change log (simple.R)\n")
+local({ sm <- paste(readLines(file.path(CORE_DIR, "simple.R"), warn = FALSE), collapse = "\n")
+  check("a save with no initials typed records the computer's user in the change log, not a blank", grepl('if (!nzchar(w %||% "")) w <- Sys.getenv("USER"', sm, fixed = TRUE)) })
+
+cat("req() on a row count (all apps)\n")
+local({ root <- dirname(CORE_DIR); fs <- c(list.files(CORE_DIR, "[.]R$", full.names = TRUE),
+    unlist(lapply(c("RS", "GS", "WLR", "CS", "GT"), function(a) list.files(file.path(root, a, c("pages", "simple", "workbench")), "[.]R$", full.names = TRUE))))
+  bad <- unlist(lapply(fs, function(f) grep("req\\(nrow\\([^()]*\\)\\)", readLines(f, warn = FALSE), value = TRUE)))
+  check("no req(nrow(x)): Shiny takes 0 as a value, so it never stopped on an empty table (WLR Survey history failed: 'site' not found)", !length(bad)) })
+
+cat("deployment check (metasheet_ui.R)\n")
+local({ m <- paste(readLines(file.path(CORE_DIR, "metasheet_ui.R"), warn = FALSE), collapse = "\n")
+  check("Accept the suggested matches with no rows yet says so (match, a column it lacked, was read as the base function)",
+        grepl('r <- if ("match" %in% names(r)) r[match %in% DEP_SUGGESTED] else r[0]', m, fixed = TRUE)) })
+
+cat("the run's progress box (runner.R)\n")
+local({ r <- paste(readLines(file.path(CORE_DIR, "runner.R"), warn = FALSE), collapse = "\n"); j <- paste(readLines(file.path(CORE_DIR, "www", "runner.js"), warn = FALSE), collapse = "\n")
+  check("the progress box is drawn once per run and its clock, bar and lines change in place, so it does not blink while a scan runs",
+        !grepl("renderUI({ invalidateLater(700)", r, fixed = TRUE) && grepl('session$sendCustomMessage("ovid-run", run_state(j))', r, fixed = TRUE) &&
+        grepl("Shiny.addCustomMessageHandler('ovid-run', run)", j, fixed = TRUE)) })
 
 cat("click-through tests read only the test project (uitest.R)\n")
 local({ u <- paste(readLines(file.path(CORE_DIR, "uitest.R"), warn = FALSE), collapse = "\n")
@@ -1072,4 +1111,9 @@ local({ z <- 3; f <- function(x) if (x == 7) stop("bad file") else x * z
   b <- par_map(as.list(1:40), f, workers = 4); g <- par_fun(function(x) x + z)
   check("par_map in R processes of its own gives what forking gives, an error item returned as its condition; FUN takes only the values it names",
         identical(lapply(a[-7], identity), lapply(b[-7], identity)) && inherits(b[[7]], "error") && identical(sort(ls(environment(g))), "z") && !is.null(PAR$cl)) })
+# Muted and subtle text (rail labels, top bar, row numbers, Simple's step numbers) readable in every scheme (shell.R tokens).
+if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(shiny)); source(file.path(CORE_DIR, "theme.R"), local = TRUE); source(file.path(CORE_DIR, "shell.R"), local = TRUE)
+  pals <- c(list(nord_palette()), lapply(names(OVID_ALT_SCHEMES), function(n) scheme_palette(n, nord_palette(), "blue")))
+  low <- unlist(lapply(pals, function(p) { t <- ovid_tokens(p); vapply(c(t$fg4, t$fg3), function(c) min(vapply(c(t$bg, t$bgh, t$bg1), function(b) contrast_ratio(c, b), 0)), 0) }))
+  check(sprintf("muted (fg4) and subtle (fg3) text reach 4.5:1 on the page, top bar and panels in all %d schemes", length(pals)), all(low >= 4.5 - 1e-6)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

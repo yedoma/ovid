@@ -159,8 +159,8 @@ contrast_ratio <- function(a, b) {
 legible_col <- function(col, on, min = 4.5) {
   ok <- function(x) all(vapply(on, function(b) contrast_ratio(x, b), 0) >= min)
   if (ok(col)) return(col)
-  lab <- grDevices::convertColor(t(grDevices::col2rgb(col) / 255), from = "sRGB", to = "Lab")
-  up <- mean(vapply(on, function(b) grDevices::convertColor(t(grDevices::col2rgb(b) / 255), from = "sRGB", to = "Lab")[1], 0)) < 50
+  lab <- grDevices::convertColor(base::t(grDevices::col2rgb(col) / 255), from = "sRGB", to = "Lab")
+  up <- mean(vapply(on, function(b) grDevices::convertColor(base::t(grDevices::col2rgb(b) / 255), from = "sRGB", to = "Lab")[1], 0)) < 50
   for (i in 1:200) { lab[1] <- lab[1] + if (up) 0.5 else -0.5
     r <- pmin(pmax(grDevices::convertColor(lab, from = "Lab", to = "sRGB"), 0), 1); x <- grDevices::rgb(r[1], r[2], r[3])
     if (ok(x) || lab[1] <= 0 || lab[1] >= 100) return(x) }
@@ -267,6 +267,7 @@ legible_css <- function(good = "--green", acc = "--acc") paste0(
   ".check.bad,.lost.yes{color:color-mix(in srgb, var(--red) 65%, var(--fg))}",
   ".lost.no{color:color-mix(in srgb, var(", good, ") 70%, var(--fg))}",
   ".tag{color:var(--fg)} .tag.acc{color:color-mix(in srgb, var(", acc, ") 40%, var(--fg))}",
+  "body .dataTables_wrapper .page-item.disabled .page-link,body .dataTables_wrapper .page-link.disabled{color:color-mix(in srgb,var(--fg3) 60%,var(--fg)) !important}",   # Bootstrap pager: its 75 % grey
   "body .dataTables_wrapper .dataTables_processing{background:var(--bg2) !important;color:var(--fg) !important;border:1px solid var(--bg3)}")
 
 # ---- Alternate colour schemes (Settings > Colours) -------------------------------------------------------------------

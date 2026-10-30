@@ -7,17 +7,17 @@ a{color:var(--acc)} a:hover,a:focus{color:var(--fg);text-decoration:none}
 :focus-visible{outline:2px solid var(--acc);outline-offset:1px}
 h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em;line-height:1.3} h3{font-size:15px;font-weight:600;margin:0 0 10px}
 h4{font-size:13.5px;font-weight:600;color:var(--fg);margin:22px 0 8px}
-.lede{color:var(--fg4);max-width:80ch;margin:0 0 14px} .dim,.help-block{color:var(--fg4)} hr{border-color:var(--bg2)}
+.lede{color:var(--fg4);max-width:80ch;margin:0 0 14px} .dim,.help-block{color:var(--fg4)} body .text-muted{color:var(--fg4) !important} hr{border-color:var(--bg2)}
 label,.control-label{color:var(--fg4);font-weight:500;font-size:12.5px;margin-bottom:3px}
 
 /* top bar */
 .d-top{position:fixed;top:0;left:0;right:0;height:var(--d-top);background:var(--bgh);border-bottom:1px solid var(--bg2);display:flex;align-items:center;gap:12px;padding:0 12px 0 8px;z-index:1030}
 .d-brand{font-weight:600;font-size:15px;white-space:nowrap;display:flex;gap:6px;align-items:baseline;letter-spacing:.01em}
 .d-brand-icon{width:20px;height:20px;align-self:center;border-radius:4px}
-.d-brand-d{color:var(--fg)} .d-brand-sep{color:var(--gray)} .d-brand-app{color:var(--acc)}
+.d-brand-d{color:var(--fg)} .d-brand-sep{color:var(--fg3)} .d-brand-app{color:var(--acc)}
 .d-context{display:flex;align-items:center;min-width:0;overflow:hidden;white-space:nowrap;color:var(--fg4);font-size:13px;margin-left:10px;padding-left:14px;border-left:1px solid var(--bg2)}
 .d-context .shiny-html-output{display:inline-flex;align-items:center}
-.d-crumb{overflow:hidden;text-overflow:ellipsis} .d-crumb+.d-crumb:before,.d-context .shiny-html-output .d-crumb:before{content:'\203A';color:var(--gray);margin:0 8px}
+.d-crumb{overflow:hidden;text-overflow:ellipsis} .d-crumb+.d-crumb:before,.d-context .shiny-html-output .d-crumb:before{content:'\203A';color:var(--fg3);margin:0 8px}
 .d-ctx-page{color:var(--fg);font-weight:600}
 .d-top-right{margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap}
 /* the bar never overflows: the corrections chip gives way first (cut short, then the short form), then the run state; the view
@@ -29,7 +29,7 @@ label,.control-label{color:var(--fg4);font-weight:500;font-size:12.5px;margin-bo
 
 /* navigation rail */
 .d-rail{position:fixed;top:var(--d-top);left:0;bottom:0;width:var(--d-rail);padding:10px 8px;background:var(--bgh);border-right:1px solid var(--bg2);overflow-y:auto;overflow-x:hidden;z-index:1020;transition:width .15s}
-.d-rail-sec{padding:16px 10px 4px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;white-space:nowrap}
+.d-rail-sec{padding:16px 10px 4px;color:var(--fg3);text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-weight:600;white-space:nowrap}
 .d-rail-link{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;margin:1px 0;border-radius:var(--d-r);color:var(--fg4);white-space:nowrap;font-size:13.5px}
 .d-rail-link .fa,.d-rail-link .fas,.d-rail-link svg{width:18px;flex:0 0 18px;text-align:center;color:var(--gray)}
 .d-rail-link,.d-rail-link:hover,.d-brand,.d-brand:hover{text-decoration:none} .d-rail-link:hover,.d-rail-link:focus{background:var(--bg1);color:var(--fg)}
@@ -70,7 +70,7 @@ body.d-has-focus{overflow:hidden}
 .d-split.on{display:flex;gap:var(--d-gap);align-items:flex-start} .d-split-main{min-width:0} .d-split.on>.d-split-main{flex:1 1 auto}
 .d-split.on>.d-split-side{flex:0 0 var(--d-split-w);min-width:0;border-left:1px solid var(--bg2);padding-left:var(--d-gap);max-height:calc(100vh - 140px);overflow:auto}
 .d-split.on>.d-split-side>h4:first-child{margin-top:0}
-.d-split-btn.active{background:var(--bg3);border-color:var(--acc);color:var(--fg)}
+.d-split-btn.active{background:var(--bg1);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);color:var(--fg)}
 
 /* controls: one size and one button hierarchy (primary, default, danger, link) */
 .form-control,.selectize-input,.selectize-input.full,.input-group-addon{background:var(--bg) !important;color:var(--fg) !important;border:1px solid var(--bg3) !important;box-shadow:none !important;border-radius:var(--d-r);font-size:13.5px}
@@ -120,7 +120,7 @@ code{background:var(--bg2);color:var(--fg);padding:1px 5px;border-radius:3px;fon
 .datepicker table tr td.old,.datepicker table tr td.new{color:var(--gray)} .input-daterange .input-group-addon{color:var(--fg4) !important}
 
 /* tables (DT) */
-table.dataTable{color:var(--fg);border-collapse:collapse !important;font-size:13px}
+table.dataTable{color:var(--fg);border-collapse:collapse !important;font-size:13.5px} .bslib-value-box .value-box-value{font-size:26px}
 table.dataTable thead th,table.dataTable thead td{background:var(--bg1);color:var(--fg4);border-bottom:1px solid var(--bg2) !important;font-weight:600;white-space:nowrap}
 table.dataTable tbody tr{background:var(--bg) !important}
 table.dataTable tbody td{white-space:nowrap;border-top:1px solid var(--bg1) !important;box-shadow:none !important;font-variant-numeric:tabular-nums;padding:6px 10px !important}
