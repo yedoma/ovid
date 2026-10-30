@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (flight ids and the R version, 2026-10-30)**
+- Flight ids and review ids stay the same under R 4.6.2, which had moved them all (core hash_bytes).
+- **Output changes:** none; ids are the ones R 4.6.1 gave.
+
 **Fixed (Workbench edit, 2026-10-29)**
 - The Workbench's Edit flight saves a positioning change again: the save no longer judged "in the Workbench" from the page address (it dropped the change unless the address said ?ui=workbench). **Output changes:** none.
 

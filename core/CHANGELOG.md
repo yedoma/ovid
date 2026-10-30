@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (hashes and the R version, 2026-10-30)**
+- hash_of and review_hash (cache keys, flight ids, review ids) no longer depend on the R version: R 4.6.2 writes its version into serialize()'s bytes, which had moved them (util.R hash_bytes).
+- **Output changes:** none; every hash is the one R 4.6.1 gave.
+
 **Changed (launcher on Windows, 2026-10-29)**
 - "Open ovid.bat" starts the launcher on Windows (runtime\\ beside it, else the installed R from the registry, Program Files or PATH); both entry scripts run core/launcher_app/start.R. Stop ends the whole process tree (Rscript.exe and its Rterm.exe); apps are started with Rscript.exe on Windows; the shortcut label is Ctrl+ off the Mac. Tests for each branch. **Output changes:** none.
 
