@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (speed, 2026-10-30)**
+- Reading and stitching loggers reads the raw files of loggers that are not reused in parallel (core par_map, as in WLR), a few loggers at a time; problems are recorded in the same order as before. On Windows it reads one file at a time as before. **Output changes:** none.
+
 **Changed (names, 2026-10-29)**
 - excel_time is now excel_datetime (it returns a date-time; WLR's excel_time returns seconds after midnight). **Output changes:** none.
 

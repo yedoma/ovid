@@ -269,6 +269,13 @@ if (!is.null(res)) {
   check("a removal on one site redoes the logger there only, and gives what a run from scratch gives",
         !is.null(r5) && !is.null(rf) && as.integer(v5("loggers_reused")) == as.integer(v5("loggers_checked")) - 1L &&
         as.integer(v5("sites_reused")) == as.integer(v5("sites_total")) - 1L && identical(outs_of(proj), outs_of(full)))
+  run_w <- function(w) { p <- file.path(root, paste0("workers", w)); unlink(p, recursive = TRUE); dir.create(p); file.copy(file.path(proj, "config"), p, recursive = TRUE)
+    ow <- options(ovid.workers = w); on.exit(options(ow))
+    invisible(capture.output(r <- tryCatch(run_pipeline(modifyList(cfg, list(project_dir = p, incremental = FALSE))), error = function(e) NULL)))
+    if (!is.null(r)) list(outs = outs_of(p), problems = fread(file.path(p, "output", "audit", "problems.csv"), colClasses = "character")) }
+  w1 <- run_w(1L); w2 <- run_w(2L)
+  check("files read ahead in parallel give what one at a time gives, with the same problems in the same order",
+        !is.null(w1) && !is.null(w2) && identical(w1$outs, w2$outs) && identical(w1$problems, w2$problems) && nrow(w1$problems) > 0)
   q0 <- read_cfg(cfg_path(proj, "qc"))
   fwrite(rbind(q0, data.table(variable = "temp", applies_to = s_hobo, min = "-30", max = "30", max_spike = "", max_flat_hours = "", flat_exempt_band = "", action = "flag",
                               notes = "for one site", rule_id = ""), fill = TRUE), cfg_path(proj, "qc"))

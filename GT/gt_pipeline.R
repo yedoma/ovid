@@ -192,15 +192,21 @@ run_pipeline_steps <- function(cfg = CFG) {
   for (d in c("read", "qc")) dir.create(file.path(cdir, d), recursive = TRUE, showWarnings = FALSE)
   cfg_key <- key_cfg(cfg, c("raw_dirs", "metadata_dir", "project_dir", "incremental", "ask_unzoned", SUMMARY_KEYS))
   SIDE3 <- c("read_counts", "events", "clock", "file_read", "xchk", "meta_rows")
-  key3 <- list(); data3 <- list(); seen_l <- list()
-  for (lid in unique(src$logger_id)) {
-    run_tick(match(lid, unique(src$logger_id)), uniqueN(src$logger_id), lid)
+  key3 <- list(); data3 <- list(); seen_l <- list(); lids <- unique(src$logger_id)
+  for (lid in lids) {
     fr <- src[logger_id == lid][order(dl)]
     sn <- fr$serial[1]
     key3[[lid]] <- k3 <- hash_of(list(STEP_HASH$read, fr[, .(rel, md5, format, serial, type, dl)], m[bundle %in% fr$bundle, .(rel, md5, format, model, status, role)],
                                       if (any(fr$format == "campbell_toa5")) cfgs$campbell, key_rows(tz_rows_for(cfgs$timezones, fr$serial, fr$rel, if ("model" %in% names(fr)) fr$model else NA)),
                                       key_rows(cfgs$time[norm_serial(serial) == sn]), cfg_key))
-    data3[[lid]] <- d3 <- sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "read"), lid, k3))
+    data3[[lid]] <- sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "read"), lid, k3))
+  }
+  # the files of loggers that are read, not reused, are read ahead in parallel a few loggers at a time (R/stitch.R)
+  todo <- lids[!(inc & file.exists(unlist(data3[lids])))]; pre <- new.env(); par <- run_workers() > 1L
+  for (lid in lids) {
+    run_tick(match(lid, lids), length(lids), lid)
+    fr <- src[logger_id == lid][order(dl)]
+    k3 <- key3[[lid]]; d3 <- data3[[lid]]
     c3 <- if (inc && file.exists(d3)) cache_read(file.path(cdir, "read"), lid, k3) else NULL
     if (!is.null(c3)) {
       for (n in SIDE3) assign(n, c(get(n), c3$side[[n]]))
@@ -212,9 +218,11 @@ run_pipeline_steps <- function(cfg = CFG) {
       audit_flush(paste0("1_", lid)); next
     }
     n0 <- vapply(SIDE3, function(n) length(get(n)), 0L); np0 <- length(AUDIT$problems); unreadable <- character()
+    if (par && !exists(lid, envir = pre, inherits = FALSE)) read_ahead(c(lid, todo[match(todo, lids) > match(lid, lids)]), src, cfgs, cfg, pre)
+    pr <- if (par) get0(lid, envir = pre, inherits = FALSE); if (par) suppressWarnings(rm(list = lid, envir = pre))
     parts <- list()
     for (i in seq_len(nrow(fr))) {
-      r <- tryCatch(read_source(fr[i], cfgs, cfg), error = function(e) { problem(fr$rel[i], paste("could not be read:", conditionMessage(e))); NULL })
+      r <- tryCatch(read_pre(pr[[fr$path[i]]]) %||% read_source(fr[i], cfgs, cfg), error = function(e) { problem(fr$rel[i], paste("could not be read:", conditionMessage(e))); NULL })
       # a file with no data rows at all is skipped and reported (a table that holds only other channels is not this)
       if (!is.null(r) && !nrow(r$data) && identical(as.integer(r$meta$rows), 0L)) { problem(fr$rel[i], "holds no readings; skipped"); r <- NULL }
       if (is.null(r)) { m[path == fr$path[i], status := "unreadable"]; unreadable <- c(unreadable, fr$path[i]); next }

@@ -23,6 +23,31 @@ read_source <- function(fr, cfgs, cfg) {
   list(data = d, events = r$events, meta = r$meta, zone = z)
 }
 
+# Reading ahead in parallel (core util.R par_map). read_quiet() reads one file and keeps what read_source() would have
+# recorded (problems, warnings) instead of recording it; its console text is dropped. read_pre() records that in the main
+# process when the file's turn comes, so the problem list and the log are in the same order as a run one file at a time.
+read_quiet <- function(fr, cfgs, cfg) {
+  np0 <- length(AUDIT$problems); lg <- get0("LOG", ifnotfound = NULL); nl0 <- if (is.environment(lg)) length(lg$lines) else 0L; w <- list()
+  on.exit({ AUDIT$problems <- AUDIT$problems[seq_len(np0)]; if (is.environment(lg)) lg$lines <- lg$lines[seq_len(nl0)] })   # also when par_map reads a small batch here, not in workers
+  utils::capture.output(r <- withCallingHandlers(read_source(fr, cfgs, cfg), warning = function(e) { w[[length(w) + 1L]] <<- e; invokeRestart("muffleWarning") }))
+  list(r = r, problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], warnings = w)
+}
+read_pre <- function(x) {
+  if (is.null(x) || inherits(x, "error")) return(NULL)                    # not read ahead, or failed there: read in its turn
+  for (p in x$problems) problem(p$where, p$problem)
+  for (w in x$warnings) warning(w)
+  x$r
+}
+# The files of the next loggers to read, at least four per worker but whole loggers, so memory stays bounded; into
+# pre[[logger]], by path.
+read_ahead <- function(lids, src, cfgs, cfg, pre) {
+  n <- cumsum(vapply(lids, function(l) sum(src$logger_id == l), 0L)); k <- which(n >= 4L * run_workers())[1]
+  lids <- lids[seq_len(if (is.na(k)) length(lids) else k)]
+  fr <- src[logger_id %in% lids]
+  got <- par_map(seq_len(nrow(fr)), function(i) read_quiet(fr[i], cfgs, cfg), what = "reading files")
+  for (l in lids) assign(l, setNames(got[fr$logger_id == l], fr$path[fr$logger_id == l]), envir = pre)
+}
+
 # Clock faults inside one file, found from the order the rows were written in:
 #   impossible_time  before min_year or in the future
 #   stray_record     a corrupt time stamp among good readings (off the time grid and out of written order)
