@@ -131,6 +131,11 @@ log_candidates <- function(f, logs, n = 8L) {
 # The satellite, aerial, LiDAR and raster files (datasets.csv) and GIS layers (gis_layers.csv), one row per folder and kind:
 # files, where they are (no position, inside or near the flights, or far from them), and whether removal is suggested (no
 # position, or more than pad_deg from every flight). Removing writes an ignore rule for the folder (geodata_rule).
+# The folders the catalogue set aside (catalogue/set_aside.csv), one row per folder and kind, as the Other geodata tab lists them.
+geodata_set_aside <- function(sa) {
+  if (is.null(sa) || !nrow(sa)) return(data.table(source_id = character(), folder = character(), kind = character(), files = integer(), where = character(), suggest = character()))
+  sa <- copy(sa); sa[is.na(folder), folder := ""]
+  sa[, .(files = .N, where = why[1], suggest = "remove"), by = .(source_id, folder, kind)][order(-files)] }
 geodata_folders <- function(ds, gl, fl, pad_deg = 0.5) {
   pick <- function(d, kind) if (is.null(d) || !nrow(d)) NULL else d[, .(source_id, folder = as.character(folder), kind = if (is.null(kind)) as.character(d$kind) else kind,
                                                                      lat_min = suppressWarnings(as.numeric(lat_min)), lat_max = suppressWarnings(as.numeric(lat_max)),
@@ -152,5 +157,4 @@ geodata_rule <- function(folders) {
   folders <- unique(folders[!is.na(folders)])
   data.table(pattern = ifelse(nzchar(folders), paste0("^", rx_escape(folders), "/[^/]+$"), "^[^/]+$"), action = "ignore", reason = GEODATA_REASON)
 }
-# The review id of a folder of other geodata (config/review_decisions.csv), so a folder kept is not asked about again.
-geodata_id <- function(source_id, folder, kind) review_hash(paste("geodata", source_id, folder, kind, sep = "|"))
+# geodata_id(): R/geodata.R
