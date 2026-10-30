@@ -6,6 +6,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
 ## Unreleased
 
 **Changed (speed, 2026-10-30)**
+- Building site records: the between-site flags find each sensor's temperature rows once, not by scanning every row for every flagged period (between_site_mark, R/qc.R); a test compares it with the old code. **Output changes:** none.
 - Reading and stitching loggers reads the raw files of loggers that are not reused in parallel (core par_map, as in WLR), a few loggers at a time; problems are recorded in the same order as before. On Windows it reads one file at a time as before. **Output changes:** none.
 
 **Changed (names, 2026-10-29)**

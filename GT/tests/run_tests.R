@@ -518,6 +518,21 @@ local({                                                               # depths, 
   per <- data.table(site = "A", logger_id = "L", channel = "1", start = t0 - 3600, end = t0 + 86399)
   y <- between_site_mark(copy(x), per)
   check("between-site flags go into the records' flag column, only in their stretch and channel", identical(y$flag, c("differs_from_other_sites", "spike", "")))
+  local({ old <- function(x, periods) {                                            # between_site_mark() before 2026-10-30, to compare against
+      if (is.null(periods) || !nrow(periods) || is.null(x) || !nrow(x)) return(x)
+      p <- periods[site %in% unique(x$site)]; if (!nrow(p)) return(x)
+      if (!"flag" %in% names(x)) x[, flag := ""]
+      for (i in seq_len(nrow(p))) { k <- which(x$variable == "temp" & x$site == p$site[i] & x$logger_id == p$logger_id[i] & x$channel == p$channel[i] &
+                                             x$TIMESTAMP >= p$start[i] & x$TIMESTAMP <= p$end[i])
+        if (length(k)) flag_mark(x, "flag", k, "differs_from_other_sites") }
+      x }
+    set.seed(7); n <- 20000
+    z <- data.table(site = sample(c("A", "B", NA), n, TRUE, c(.45, .45, .1)), logger_id = sample(c("L1", "L2"), n, TRUE), channel = sample(c("1", "2", NA), n, TRUE, c(.45, .45, .1)),
+                    variable = sample(c("temp", "rh", NA), n, TRUE, c(.8, .1, .1)), TIMESTAMP = t0 + sample(c(seq(0, 86400 * 60, 1800), NA), n, TRUE), value = 1, flag = sample(c("", "spike"), n, TRUE, c(.9, .1)))
+    pz <- data.table(site = c("A", "A", "B", "B", NA, "A"), logger_id = c("L1", "L1", "L2", "L1", "L1", "L2"), channel = c("1", "1", "2", NA, "1", "9"),
+                     start = t0 + 86400 * c(1, 3, 10, 0, 0, 0), end = t0 + 86400 * c(5, 20, 30, 60, 60, 60))       # overlapping, missing keys, no records
+    check("between-site flags: finding each sensor's rows once gives what scanning every row per period gave (overlaps, missing keys, missing times)",
+          identical(between_site_mark(copy(z), pz), old(copy(z), pz)) && any(between_site_mark(copy(z), pz)$flag == "differs_from_other_sites;differs_from_other_sites")) })
   check("between-site key: empty with no flags for the site, set with some", identical(between_site_key(per, "B"), "") && nzchar(between_site_key(per, "A")) &&
         identical(between_site_key(NULL, "A"), ""))
   check("summary-only settings and Run anyway are left out of the cache key", all(c("water_year_start", "permafrost_years", "run_anyway", "fill_min_depth") %in% SUMMARY_KEYS) &&

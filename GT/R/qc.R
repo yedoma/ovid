@@ -283,8 +283,11 @@ between_site_mark <- function(x, periods) {
   if (is.null(periods) || !nrow(periods) || is.null(x) || !nrow(x)) return(x)
   p <- periods[site %in% unique(x$site)]; if (!nrow(p)) return(x)
   if (!"flag" %in% names(x)) x[, flag := ""]
-  for (i in seq_len(nrow(p))) { k <- which(x$variable == "temp" & x$site == p$site[i] & x$logger_id == p$logger_id[i] & x$channel == p$channel[i] &
-                                         x$TIMESTAMP >= p$start[i] & x$TIMESTAMP <= p$end[i])
+  # each sensor's temperature rows are found once, then each period's among them (a scan of every row per period was slow)
+  key <- function(a, b, c) paste(a, b, c, sep = "\u001f")
+  r <- which(x$variable == "temp" & !is.na(x$site) & !is.na(x$logger_id) & !is.na(x$channel)); g <- split(r, key(x$site[r], x$logger_id[r], x$channel[r]))
+  for (i in seq_len(nrow(p))) { if (is.na(p$site[i]) || is.na(p$logger_id[i]) || is.na(p$channel[i])) next
+    r <- g[[key(p$site[i], p$logger_id[i], p$channel[i])]]; k <- r[which(x$TIMESTAMP[r] >= p$start[i] & x$TIMESTAMP[r] <= p$end[i])]
     if (length(k)) flag_mark(x, "flag", k, "differs_from_other_sites") }
   x
 }
