@@ -43,15 +43,16 @@ load_outputs <- function(pd) {
   a <- file.path(pd, "output", "audit")
   if (!file.exists(file.path(a, "audit_index.csv"))) return(NULL)
   # safe: an output table that cannot be read shows as empty until the next run writes it
-  rd <- function(f, ...) if (file.exists(file.path(a, f))) tryCatch(fread(file.path(a, f), ...), error = function(e) data.table()) else data.table()
+  rd <- function(f, ...) if (file.exists(file.path(a, f))) tryCatch(fread(file = file.path(a, f), ...), error = function(e) data.table()) else data.table()
   chr <- list(character = "logger_id")
   src <- rd("sources.csv", colClasses = list(character = c("logger_id", "header_name")), na.strings = NULL)
   meta <- rd("metadata.csv", colClasses = list(character = c("station", "stream", "logger_id", "serial", "table")))
   if (nrow(meta) && !"conflicting_values" %in% names(meta)) meta[, conflicting_values := 0L]
+  with_cols <- function(d, cols) { for (v in setdiff(cols, names(d))) d[, (v) := rep(NA_character_, nrow(d))]; d }   # only the columns it lacks; values as read
   list(index = rd("audit_index.csv", colClasses = list(character = c("station", "logger_id", "stream", "column", "first", "last"))),
        summary = rd("audit_summary.csv"), manifest = rd("file_manifest.csv", colClasses = chr),
        registry = rd("logger_registry.csv", colClasses = list(character = c("logger_id", "table", "station", "stream", "serial"))), gaps = rd("gaps.csv", colClasses = chr),
-       dict = rd("column_dictionary.csv", colClasses = chr), meta = meta, sources = src,
+       dict = with_cols(rd("column_dictionary.csv", colClasses = chr), c("logger_id", "table", "raw_column", "unit", "process", "parameter", "group")), meta = meta, sources = src,   # dict missing or mid-run: empty, with its columns
        problems = rd("problems.csv", colClasses = "character"),
        checks = rd("timestamp_checks.csv", colClasses = list(character = c("logger_id", "table", "from", "to", "station", "stream")), na.strings = ""),
        pstats = rd("parameter_stats.csv", colClasses = list(character = c("station", "stream", "parameter"))),
@@ -60,7 +61,7 @@ load_outputs <- function(pd) {
        dups = rd("duplicate_sources.csv", colClasses = list(character = c("station_a", "stream_a", "station_b", "stream_b"))),
        derived = rd("derived_summary.csv", colClasses = list(character = c("station", "stream"))),
        breaks = rd("breakpoints.csv", colClasses = list(character = c("station", "stream", "break_month"))),
-       estimated = { f <- file.path(path.expand(pd), "output", "derived", "daily_estimated.csv"); if (file.exists(f)) fread(f, colClasses = list(character = c("station", "stream"))) else data.table() },
+       estimated = { f <- file.path(path.expand(pd), "output", "derived", "daily_estimated.csv"); if (file.exists(f)) fread(file = f, colClasses = list(character = c("station", "stream"))) else data.table() },
        file_rules = { x <- rd("file_rule_counts.csv"); if (!nrow(x)) { y <- rd("file_audit.csv"); if ("rule" %in% names(y)) x <- y }; x },   # file_audit.csv held these before core 1.4
        file_audit = { x <- rd("file_audit.csv", colClasses = list(character = c("logger_id", "table"))); if ("reconciles" %in% names(x)) x else data.table() },
        proghist = rd("program_history.csv", colClasses = list(character = c("station", "logger_id", "table", "program", "os", "columns_added", "columns_removed"))),

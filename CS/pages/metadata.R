@@ -19,7 +19,7 @@
       dups = if (nrow(o$dups)) o$dups[, .(`Table A` = paste(station_a, "/", stream_a), `Table B` = paste(station_b, "/", stream_b), `Columns that match` = columns_matching,
                                          `Columns in A` = columns_a, `Columns in B` = columns_b, `Share of the smaller table` = share, From = from, To = to, Examples = examples)] else data.table(),
       runs = if (nrow(o$runs)) { r <- o$runs[rev(seq_len(.N))]; setnames(copy(r), names(r), gsub("_", " ", names(r))) } else data.table(),
-      problems = if (nrow(o$problems)) o$problems[, .(Where = where, Problem = problem)] else data.table())
+      problems = if (nrow(o$problems)) o$problems[, .(Where = where, Problem = problem)] else data.table(Where = character(), Problem = character()))   # an export of none still has its heading row
   })
   output$md_dup_ui <- renderUI({ o <- outs(); if (is.null(o) || input$md_view != "dups" || !nrow(o$dups) || VIEWER) return(NULL)
     ch <- unique(c(paste(o$dups$station_a, o$dups$stream_a, sep = "|||"), paste(o$dups$station_b, o$dups$stream_b, sep = "|||")))

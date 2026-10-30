@@ -825,5 +825,12 @@ local({                                                               # plots dr
   a <- run_w(1L); b <- run_w(2L)
   check("plots drawn in parallel are the same files as drawn one at a time, and a second run reuses every one",
         length(a$png) > 0 && identical(a$png, b$png) && a$again && b$again && identical(b$reused, length(b$png)) && identical(a$reused, b$reused)) })
+local({                                                               # every file read names it as file= (a missing path with a space ran as a shell command)
+  fs <- list.files(here, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests)/", fs)]
+  bare <- unlist(lapply(fs, function(f) { x <- readLines(f, warn = FALSE); x[grepl("fread\\((?!\\s*[A-Za-z_.]+\\s*=[^=])(?!\\s*\\))", x, perl = TRUE) & !grepl("^\\s*#", x)] }))
+  check("every file read names it as file= (a missing file whose path has a space is never run as a shell command)", !length(bare))
+  sf <- paste(readLines(file.path(here, "pages", "setup_flow.R"), warn = FALSE), collapse = "\n"); au <- paste(readLines(file.path(here, "pages", "audit.R"), warn = FALSE), collapse = "\n")
+  check("Site, Data and Audit, Export file audit download a note when there is nothing yet (they failed: '..keep' not found, fwrite of NULL)",
+        grepl("if (is.null(d) || !NROW(d))", sf, fixed = TRUE) && grepl("if (is.null(fa))", au, fixed = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

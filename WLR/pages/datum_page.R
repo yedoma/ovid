@@ -12,7 +12,7 @@
     if (isTRUE(input$gh_moved)) { mv <- unique(h[!is.na(status) & nzchar(status), .(site, code)]); h <- h[mv, on = .(site, code), nomatch = 0] }
     h[order(site, code, time)] })
   output$gh_plot <- renderPlot({ h <- gh_data(); validate(need(nrow(h) > 0, "No surveys to show.")); plot_gps_history(h) }, bg = NORD$bg)
-  output$gh_tbl <- renderDT({ h <- gh_data(); req(nrow(h))
+  output$gh_tbl <- renderDT({ h <- gh_data(); req(nrow(h) > 0)
     ovid_dt(h[, .(site, code, gps_name, time, z, rms, z_kind, change_from_previous_m, change_from_first_m, n_surveys, sd_m, range_m, status, source)], selection = "multiple", page = 12) %>%
       formatStyle("status", color = NORD$yellow, fontWeight = 600) })
   observeEvent(input$gh_exclude, { h <- gh_data(); s <- input$gh_tbl_rows_selected

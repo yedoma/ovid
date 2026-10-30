@@ -103,7 +103,7 @@ wb_edit_server <- function(input, output, session, ctx) {
       footer = tagList(modalButton("Cancel"), actionButton("wb_do_remove", "Write rows", class = "btn-primary")))) })
   output$wb_rm_preview <- renderUI(wb_preview(rm_rows()[, .(station, stream, parameter, start, end)]))
   observeEvent(input$wb_do_remove, { if (!nzchar(trim(input$wb_rm_reason %||% ""))) return(ovid_field_error("wb_rm_reason", "Give a reason; it goes in the audit trail."))
-    r <- rm_rows(); req(nrow(r))
+    r <- rm_rows(); req(nrow(r) > 0)
     if (E$manual$append(as.data.frame(r))) done(sprintf("%d row(s) written to the corrections over a period. Run to apply.", nrow(r)), "wb_rm_author") })
 
   # restore (manual removals only; a value removed by a rule comes back when the rule is changed)

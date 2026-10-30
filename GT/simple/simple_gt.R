@@ -28,7 +28,7 @@ sp_gt_registry <- function(dir) {
   none <- data.table(serial = character(), name = character()); if (!length(dir) || !nzchar(dir %||% "")) return(none)
   f <- file.path(path.expand(dir), REGISTRY_NAMES$file); if (!file.exists(f)) return(none)
   # safe: an unreadable registry offers no names
-  r <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) NULL); k <- REGISTRY_NAMES
+  r <- tryCatch(fread(file = f, colClasses = "character", na.strings = NULL), error = function(e) NULL); k <- REGISTRY_NAMES
   if (is.null(r) || !all(c(k$serial, k$name) %in% names(r))) return(none)
   r <- data.table(serial = norm_serial(r[[k$serial]]), name = trim(r[[k$name]]), at = if (k$order %in% names(r)) r[[k$order]] else "")[nzchar(serial) & nzchar(name)]
   r[order(serial, at)][, .(name = name[.N]), by = serial] }
@@ -279,7 +279,7 @@ simple_server <- function(input, output, session, std) {
   observeEvent(input$sp_all, all_tiles(!all_tiles()))
   cur <- reactive({ x <- facts(); req(x); k <- pick(); if (is.null(k) || !k %in% x$f$site) x$f[state != "off"]$site[1] %||% x$f$site[1] else k })
   shown <- reactive({ x <- facts(); req(x); f <- x$f; w <- input$sp_filter %||% "all"; q <- tolower(trim(input$sp_q %||% ""))
-    f <- switch(w, look = f[state %in% c("warn", "error")], unnamed = f[!named], assumed = f[assumed == TRUE], f)
+    f <- switch(w, look = f[state %in% c("warn", "error")], unnamed = f[named == FALSE], assumed = f[assumed == TRUE], f)
     if (nzchar(q)) f <- f[grepl(q, tolower(site), fixed = TRUE) | grepl(q, tolower(loggers), fixed = TRUE) | grepl(q, tolower(suggest), fixed = TRUE)]
     f })
   output$sp_hero <- renderUI({ o <- outs()
@@ -315,7 +315,7 @@ simple_server <- function(input, output, session, std) {
     t <- as.POSIXct(tt) + 43200
     session$onFlushed(function() ts_view_send(session, "sp_plot", t, s, zone = "UTC", height = 300), once = TRUE) })
   output$sp_profile <- renderPlot({ req(identical(input$sp_kind, "profile")); o <- outs(); k <- cur(); a <- o$annual
-    req(nrow(a)); a <- a[site == k & isTRUE_v(complete) & year_type %in% c("calendar", "")]; validate(need(nrow(a) > 0, "No complete year at this site yet: the profile needs one."))
+    req(nrow(a) > 0); a <- a[site == k & isTRUE_v(complete) & year_type %in% c("calendar", "")]; validate(need(nrow(a) > 0, "No complete year at this site yet: the profile needs one."))
     y <- max(a$year); a <- a[year == y][order(depth_m)]; l <- o$alt[site == k & year == y]; alt <- if (nrow(l)) l$alt_m[1] else NA_real_
     g <- ggplot2::ggplot(a, ggplot2::aes(y = depth_m)) + ggplot2::geom_vline(xintercept = 0, colour = MI$gray, linewidth = 0.3) +
       ggplot2::geom_path(ggplot2::aes(x = min), colour = MI$blue, linewidth = 0.8) + ggplot2::geom_path(ggplot2::aes(x = max), colour = MI$red, linewidth = 0.8) +
@@ -409,7 +409,7 @@ simple_server <- function(input, output, session, std) {
   dmsg <- reactiveVal(NULL); output$sp_d_msg <- renderUI({ m <- dmsg(); if (is.null(m)) NULL else p(class = "sp-warn-t", m) })
   observeEvent(input$sp_d_even, { a <- input$sp_d_first; b <- input$sp_d_step; req(is.finite(a), is.finite(b)); setz(sp_gt_even(a, b, nrow(dsens()))); dmsg(NULL) })
   observeEvent(input$sp_d_copy, { k <- input$sp_d_copy; if (!nzchar(k %||% "")) return(); setz(sp_gt_site_sensors(sens(), k)$depth_m); dmsg(paste("Filled from", k, "; check them, then Add to changes.")) }, ignoreInit = TRUE)
-  observeEvent(input$sp_d_tmpl, { h <- dhit(); req(nrow(h)); r <- sp_gt_parse_list(h$depths[1], nrow(dsens())); if (nzchar(r$error)) dmsg(paste("Template:", r$error)) else { setz(r$z); dmsg(NULL) } })
+  observeEvent(input$sp_d_tmpl, { h <- dhit(); req(nrow(h) > 0); r <- sp_gt_parse_list(h$depths[1], nrow(dsens())); if (nzchar(r$error)) dmsg(paste("Template:", r$error)) else { setz(r$z); dmsg(NULL) } })
   observeEvent(input$sp_d_paste_go, { r <- sp_gt_parse_list(input$sp_d_paste, nrow(dsens())); if (nzchar(r$error)) dmsg(r$error) else { setz(r$z); dmsg(NULL) } })
   dok <- function() { p0 <- dprob(); if (any(nzchar(p0))) { dmsg(sprintf("Not added: %s.", paste(unique(p0[nzchar(p0)]), collapse = "; "))); FALSE } else TRUE }
   observeEvent(input$sp_d_add, { if (!dok()) return(); ed$propose(sp_gt_depth_ops(dsite(), dvals())); dmsg(NULL)

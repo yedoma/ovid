@@ -111,7 +111,7 @@ WLR_REPORT_SECTIONS <- c("Site, loggers and datum" = "info", "Deployments and ba
 wlr_report_limits <- function(project_dir, sites, mode = "same") {
   if (identical(mode, "free") || !length(sites)) return(NULL)
   # safe: no water-year table yet means no water-year page
-  wy <- tryCatch(fread(out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (!nrow(wy)) return(NULL)
+  wy <- tryCatch(fread(file = out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (!nrow(wy)) return(NULL)
   wy <- wy[site %in% sites]; if (!nrow(wy)) return(NULL); x <- wy[, .(unit = rep(site, 2), key = rep(parameter, 2), value = c(min, max))]
   rbind(axis_limits(x[key != "elev_m"], mode), axis_limits(x[key == "elev_m"], "span"))
 }
@@ -125,7 +125,7 @@ wlr_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
   air <- read_out(project_dir, "air_runs.csv"); if (nrow(air) && "site" %in% names(air)) air <- air[air$site == st] else air <- data.table()
   ms <- read_out(project_dir, "measurements.csv"); if (nrow(ms)) ms <- ms[ms$site == st]
   # safe: no water-year table yet means no water-year rows
-  wy <- tryCatch(fread(out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (nrow(wy)) wy <- wy[wy$site == st]
+  wy <- tryCatch(fread(file = out_dir(project_dir, "summaries", "water_year.csv")), error = function(e) data.table()); if (nrow(wy)) wy <- wy[wy$site == st]
   plots <- list(); daily <- list(); allp <- list()
   for (i in seq_len(nrow(s))) { d <- load_deployment(s$deployment[i], project_dir); if (is.null(d) || !nrow(d)) next
     pp <- intersect(c("depth_m", "elev_m", "temp_c", "spc_uscm"), names(d)); pp <- pp[vapply(pp, function(p) any(!is.na(d[[p]])), logical(1))]

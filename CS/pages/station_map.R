@@ -21,7 +21,7 @@
     if (!nrow(d)) return(empty_msg("No stations yet. Run the pipeline, then give coordinates under Station details on Sites and field log."))
     p(class = "dim", sprintf("%d of %d stations with data have coordinates.", nrow(n[status != "nodata"]), nrow(d[status != "nodata"]))) })
   observe({
-    req(identical(input$nav, "Map")); d <- map_rows(); req(nrow(d))
+    req(identical(input$nav, "Map")); d <- map_rows(); req(nrow(d) > 0)
     d <- d[!is.na(lat) & !is.na(lon) & abs(lat) <= 90 & abs(lon) <= 180]
     if (!identical(input$map_show, "all")) d <- d[status != "nodata"]
     col <- c(recording = GB$green, ended = GB$orange, nodata = GB$gray)
@@ -33,7 +33,7 @@
       legend = lapply(shown, function(k) list(col = unname(col[k]), label = unname(MAP_STATUS[k])))))
   })
   observeEvent(input$map_pick, open_station(input$map_pick))
-  output$map_missing <- renderDT({ d <- map_rows(); req(nrow(d)); d <- d[status != "nodata" & (is.na(lat) | is.na(lon))]
+  output$map_missing <- renderDT({ d <- map_rows(); req(nrow(d) > 0); d <- d[status != "nodata" & (is.na(lat) | is.na(lon))]
     validate(need(nrow(d) > 0, "Every station with data has coordinates."))
     ovid_dt(d[order(-records), .(station, records = num(records), first, last, loggers)], page = 10) })
 

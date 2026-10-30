@@ -17,7 +17,7 @@
     if (run_busy()) return(note("A run is already going: wait for it, or cancel it in the box at the bottom right.", type = "warning"))
     o <- outs(); f <- o$files[match(rf_rows()$file[s], o$files$rel)]; cfg <- current_cfg()
     lids <- forget_gt_files(cfg$project_dir, file.path(f$dir, f$file))
-    do_run(cfg, after = function() { m <- tryCatch(fread(file.path(path.expand(cfg$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+    do_run(cfg, after = function() { m <- tryCatch(fread(file = file.path(path.expand(cfg$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
       g <- function(k) { v <- m$value[match(k, m$key)]; if (is.na(v)) "?" else v }
       note("Rescanned ", length(s), " file(s) (", length(lids), " logger(s) read again). Reused from the last run: ", g("loggers_reused"), " logger(s) and ", g("sites_reused"), " site(s).", duration = 10) }) })
   observeEvent(input$rf_setserial, { if (!nzchar(trim(input$rf_serial))) return(note("Type the serial first.", type = "warning")); rf_rule("serial", trim(input$rf_serial)) })

@@ -1,7 +1,7 @@
 # GS: reading the catalogue and a survey's measurements, and their display names. Sourced by app.R.
 load_catalogue <- function() {
   f <- file.path(CAT, "surveys.csv")   # no catalogue built yet: an empty table with the columns the pages use
-  s <- if (file.exists(f)) fread(f, colClasses = list(character = c("datetime_start", "datetime_end"))) else
+  s <- if (file.exists(f)) fread(file = f, colClasses = list(character = c("datetime_start", "datetime_end"))) else
     data.table(survey_id = character(), kind = character(), type = character(), format = character(), array = character(), primary_file = character(),
                datetime_start = character(), datetime_end = character(), year = integer(), n_read = integer(), pct_retained = numeric())
   s[datetime_start == "", datetime_start := NA_character_]
@@ -35,6 +35,6 @@ NICE_FORMAT <- c(agi_stg = "AGI SuperSting (.stg)", agi_stg_earthimager = "Earth
 ARRAY_NAMES <- c(`dipole-dipole` = "Dipole-dipole", `pole-dipole` = "Pole-dipole", `pole-pole` = "Pole-pole", wenner = "Wenner", schlumberger = "Schlumberger", mixed = "Mixed")
 nice_array <- function(x) { x <- ifelse(is.na(x), "", x); m <- sub("^mixed \\(mostly (.*)\\)$", "\\1", x)
   ifelse(grepl("^mixed \\(mostly", x), paste("Mixed, mostly", ifelse(m %in% c("wenner", "schlumberger"), ARRAY_NAMES[m], tolower(ARRAY_NAMES[m] %|na|% m))), ARRAY_NAMES[x] %|na|% x) }
-read_meas <- function(sid) { d <- fread(file.path(PROJECT, "output", "surveys", sid, "measurements.csv")); e <- isolate(ELEV())
+read_meas <- function(sid) { d <- fread(file = file.path(PROJECT, "output", "surveys", sid, "measurements.csv")); e <- isolate(ELEV())
   if (!is.null(e) && sid %in% e$survey_id) apply_elevations(d, e[survey_id == sid]) else d }
-read_part <- function(sid, f) { p <- file.path(PROJECT, "output", "surveys", sid, f); if (file.exists(p)) fread(p) else NULL }
+read_part <- function(sid, f) { p <- file.path(PROJECT, "output", "surveys", sid, f); if (file.exists(p)) fread(file = p) else NULL }

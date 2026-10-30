@@ -115,7 +115,7 @@ normalise_timestamps <- function(x, file = "") {
 read_toa5 <- function(path, cols, mtime, sep = ",") {
   if (is.na(sep) || !nzchar(sep)) sep <- ","
   sk <- toa5_skip(path)                                            # core logger_files.R: the header, blank lines left aside
-  rd <- function() fread(path, skip = sk, header = FALSE, sep = sep, quote = "\"", fill = TRUE, blank.lines.skip = TRUE,
+  rd <- function() fread(file = path, skip = sk, header = FALSE, sep = sep, quote = "\"", fill = TRUE, blank.lines.skip = TRUE,
                          colClasses = "character", na.strings = NULL, encoding = "Latin-1",
                          showProgress = FALSE, strip.white = TRUE)
   n_lines <- length(readLines(path, n = sk + 1L, warn = FALSE, skipNul = TRUE))

@@ -6,7 +6,7 @@
 # ---- reading outputs back ----------------------------------------------------------------------------------------
 
 read_out <- function(project_dir, file, ...) { f <- out_dir(project_dir, "audit", file)
-  if (file.exists(f) && file.info(f)$size > 0) try_or(fread(f, ...), data.table(), paste0("output/audit/", file, ": could not be read")) else data.table() }
+  if (file.exists(f) && file.info(f)$size > 0) try_or(fread(file = f, ...), data.table(), paste0("output/audit/", file, ": could not be read")) else data.table() }
 
 as_ts <- function(x) as.POSIXct(x, tz = "UTC", tryFormats = c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%dT%H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d"))
 
@@ -19,7 +19,7 @@ fix_ts_cols <- function(dt, cols = c("TIMESTAMP", "start", "end", "first", "last
 load_deployment <- function(deployment, project_dir) {
   f <- out_dir(project_dir, "sites", paste0(safe_name(deployment), ".csv"))
   if (!file.exists(f)) return(NULL)
-  fix_ts_cols(fread(f, na.strings = c("", "NA")))
+  fix_ts_cols(fread(file = f, na.strings = c("", "NA")))
 }
 
 # Every deployment at one site, oldest first: one record for the site across years and loggers.
@@ -32,11 +32,11 @@ load_site <- function(site, project_dir) {
 
 load_baro <- function(project_dir) {                       # cleaned record of each barologger, by serial
   f <- list.files(out_dir(project_dir, "baro"), pattern = "\\.csv$", full.names = TRUE); f <- f[!startsWith(basename(f), "station__")]
-  setNames(lapply(f, function(x) fix_ts_cols(fread(x, na.strings = c("", "NA")))), sub("^.*__", "", tools::file_path_sans_ext(basename(f))))
+  setNames(lapply(f, function(x) fix_ts_cols(fread(file = x, na.strings = c("", "NA")))), sub("^.*__", "", tools::file_path_sans_ext(basename(f))))
 }
 load_baro_stations <- function(project_dir) {              # stitched series of each baro station
   f <- list.files(out_dir(project_dir, "baro"), pattern = "^station__.*\\.csv$", full.names = TRUE)
-  setNames(lapply(f, function(x) { d <- fix_ts_cols(fread(x, na.strings = c("", "NA"))); d[, baro_serial := as.character(baro_serial)] }),
+  setNames(lapply(f, function(x) { d <- fix_ts_cols(fread(file = x, na.strings = c("", "NA"))); d[, baro_serial := as.character(baro_serial)] }),
            sub("^station__", "", tools::file_path_sans_ext(basename(f))))
 }
 
@@ -44,7 +44,7 @@ load_baro_stations <- function(project_dir) {              # stitched series of 
 removed_values <- function(serial, project_dir, from = NULL, to = NULL) {
   f <- out_dir(project_dir, "audit", "detail", paste0(safe_name(paste0("logger_", serial)), ".csv"))
   if (!file.exists(f)) return(data.table())
-  a <- fread(f, colClasses = "character", na.strings = "")[level == "cell"]
+  a <- fread(file = f, colClasses = "character", na.strings = "")[level == "cell"]
   if (!nrow(a)) return(data.table())
   a <- a[, .(TIMESTAMP = as_ts(timestamp), parameter = column, rule, reason, old_value = suppressWarnings(as.numeric(old_value)))]
   if (!is.null(from)) a <- a[TIMESTAMP >= from]; if (!is.null(to)) a <- a[TIMESTAMP <= to]
@@ -79,7 +79,7 @@ export_table <- function(d, serial, project_dir, versions = "both", hide_accepte
   out <- d[, c("TIMESTAMP", "site", "logger_id", "year", intersect("baro_serial", names(d)), vals, intersect("drift_offset_m", names(d))), with = FALSE]
   rm <- removed_values(serial, project_dir)
   if (hide_accepted && nrow(fl) && "site" %in% names(d)) d <- review_unmark(copy(d), fl[(attr(fl, "accepted", exact = TRUE) %||% flag_accepted(fl)) & site == d$site[1] & logger_id %in% c(as.character(serial), as.character(d$logger_id[1]))])   # flags decided not a problem leave the flag columns (core config.R)
-  qr <- file.path(path.expand(project_dir), "config", "qc_rules.csv"); rules <- if (file.exists(qr)) fread(qr, colClasses = "character", na.strings = "") else data.table()
+  qr <- file.path(path.expand(project_dir), "config", "qc_rules.csv"); rules <- if (file.exists(qr)) fread(file = qr, colClasses = "character", na.strings = "") else data.table()
   has <- function(x) !is.na(x) & nzchar(x)
   tested <- if (nrow(rules)) unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter]) else character()
   wc <- list()
@@ -147,7 +147,7 @@ file_audit <- function(man, contrib, by_file) {
 # Sites side by side or one under another, every record or hourly / daily means, any period.
 corrected_data <- function(project_dir, sites, values = c("depth_m", "temp_c"), res = "raw", from = NULL, to = NULL, layout = "long", flags = TRUE, flag_scheme = "wmo", versions = "both") {
   d <- rbindlist(lapply(sites, function(s) { f <- out_dir(project_dir, "corrected", paste0(safe_name(s), ".csv")); if (!file.exists(f)) return(NULL)
-    x <- fread(f, na.strings = c("", "NA")); setnames(x, 1, "TIMESTAMP"); x[, TIMESTAMP := as_ts(TIMESTAMP)]; x[, logger_id := as.character(logger_id)]; x }), fill = TRUE)
+    x <- fread(file = f, na.strings = c("", "NA")); setnames(x, 1, "TIMESTAMP"); x[, TIMESTAMP := as_ts(TIMESTAMP)]; x[, logger_id := as.character(logger_id)]; x }), fill = TRUE)
   if (!nrow(d)) return(data.table())
   if (!is.null(from)) d <- d[TIMESTAMP >= as.POSIXct(format(from), tz = "UTC")]
   if (!is.null(to)) d <- d[TIMESTAMP < as.POSIXct(format(as.Date(to) + 1), tz = "UTC")]
@@ -203,7 +203,7 @@ corrected_data_zip <- function(project_dir, sites, zipfile, values = c("depth_m"
 
 # ---- approvals and NetCDF --------------------------------------------------------------------------------------------------
 read_approvals <- function(project_dir) { f <- file.path(path.expand(project_dir), "config", "approvals.csv")
-  if (file.exists(f)) try_or(fread(f, colClasses = "character", na.strings = NULL), where = "approvals.csv") else NULL }
+  if (file.exists(f)) try_or(fread(file = f, colClasses = "character", na.strings = NULL), where = "approvals.csv") else NULL }
 
 # What each value is in CF terms. Only names from the CF standard name table are given; the rest have a long name only.
 NC_WLR <- list(
@@ -226,7 +226,7 @@ site_netcdf <- function(project_dir, site, path, values = c("depth_m", "elev_m",
   if (is.null(d) || !nrow(d)) return(NULL)
   setnames(d, 1, "TIMESTAMP"); d[, TIMESTAMP := as.POSIXct(TIMESTAMP, tz = "UTC")]
   if (res == "raw") { f <- out_dir(project_dir, "corrected", paste0(safe_name(site), ".csv"))      # the deployment of each time, for its uncertainty
-    raw <- fread(f, na.strings = c("", "NA"), select = c(1, which(names(fread(f, nrows = 0)) %in% c("logger_id", "year")))); setnames(raw, 1, "TIMESTAMP"); raw[, TIMESTAMP := as_ts(TIMESTAMP)]
+    raw <- fread(file = f, na.strings = c("", "NA"), select = c(1, which(names(fread(file = f, nrows = 0)) %in% c("logger_id", "year")))); setnames(raw, 1, "TIMESTAMP"); raw[, TIMESTAMP := as_ts(TIMESTAMP)]
     d <- merge(d, unique(raw[, .(TIMESTAMP, logger_id = as.character(logger_id), year)], by = "TIMESTAMP"), by = "TIMESTAMP", all.x = TRUE, suffixes = c("", ".r")) }
   s0 <- site; u <- read_out(project_dir, "uncertainty.csv"); if (nrow(u)) u <- u[site == s0]
   vals <- intersect(values, intersect(names(NC_WLR), names(d)))

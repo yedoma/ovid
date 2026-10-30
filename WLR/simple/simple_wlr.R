@@ -28,7 +28,7 @@ sp_wlr_daily <- function(pd, site) {
   f <- out_dir(pd, "corrected", paste0(safe_name(site), ".csv")); if (!file.exists(f)) return(NULL)
   key <- paste(f, file.mtime(f)); if (!is.null(SP_WLR_DAILY[[key]])) return(SP_WLR_DAILY[[key]])
   # safe: a corrected file that cannot be read shows as no daily values
-  d <- tryCatch({ h <- names(fread(f, nrows = 0)); fread(f, select = intersect(h, c(grep("^TIMESTAMP", h, value = TRUE)[1], "site", SUMMARY_PARAMS))) }, error = function(e) NULL)
+  d <- tryCatch({ h <- names(fread(file = f, nrows = 0)); fread(file = f, select = intersect(h, c(grep("^TIMESTAMP", h, value = TRUE)[1], "site", SUMMARY_PARAMS))) }, error = function(e) NULL)
   if (is.null(d) || !nrow(d)) return(NULL)
   tc <- grep("^TIMESTAMP", names(d), value = TRUE)[1]; if (is.na(tc)) return(NULL); setnames(d, tc, "TIMESTAMP")
   if (!inherits(d$TIMESTAMP, "POSIXct")) d[, TIMESTAMP := as.POSIXct(as.character(TIMESTAMP), tz = "UTC")]; d[, site := as.character(site)]
@@ -47,7 +47,7 @@ sp_wlr_facts <- function(o, pd) {
   ck <- if (nrow(o$checks) && all(c("difference_m", "visit_time") %in% names(o$checks))) copy(o$checks)[!is.na(difference_m)] else data.table()
   un <- file.path(pd, "output", "audit", "uncertainty.csv")
   # safe: no uncertainty table (an older run) shows as no figure
-  un <- if (file.exists(un)) tryCatch(fread(un), error = function(e) data.table()) else data.table()
+  un <- if (file.exists(un)) tryCatch(fread(file = un), error = function(e) data.table()) else data.table()
   daily <- list(); lim <- sp_wlr_tape_m(); need <- CFG$min_complete %||% 0.8
   f <- rbindlist(lapply(split(s, by = "site"), function(x) { k <- x$site[1]; x <- x[order(start)]; d <- sp_wlr_daily(pd, k); daily[[k]] <<- d
     lc <- sp_wlr_level_col(d); lv <- if (!is.null(lc)) { v <- d[[lc]][is.finite(d[[lc]])]; utils::tail(v, 1) } else NA_real_

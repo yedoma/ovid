@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (found by the click-through test, 2026-10-30)**
+- The heatmap (Sensors, Site notebook, Explore) failed with the test project: its colour limits came out missing (no finite temperature in the period, or a fixed scale with empty boxes); it now falls back to the automatic scale, or says there is not enough data. Simple, View: "Not named" broke the tiles (f[!named] is a not-join in data.table).
+- A missing file whose path holds a space was run as a shell command by fread(): every file read names it as file=.
+- **Output changes:** none.
+
 **Changed (speed, 2026-10-30)**
 - Building site records: the between-site flags find each sensor's temperature rows once, not by scanning every row for every flagged period (between_site_mark, R/qc.R); a test compares it with the old code. **Output changes:** none.
 - Stitching and site records: a reading's place among those of its channel and time, and the first value there, come from one pass over rows already sorted, not from grouping them again (run_starts, run_rank in R/stitch.R); a site's values and flags are cast to its wide file at once, not cast apart and merged (site_wide in R/export.R). Tests compare both with the old code. **Output changes:** none.

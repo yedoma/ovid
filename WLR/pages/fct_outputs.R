@@ -14,7 +14,7 @@ load_outputs <- function(pd) {
   if (!file.exists(file.path(a, "summary.csv"))) return(NULL)
   rd <- function(f, ts = TRUE) { p <- file.path(a, f)
     # safe: an output table that cannot be read shows as empty until the next run writes it
-    d <- if (file.exists(p) && file.info(p)$size > 0) tryCatch(fread(p, na.strings = c("", "NA")), error = function(e) data.table()) else data.table()
+    d <- if (file.exists(p) && file.info(p)$size > 0) tryCatch(fread(file = p, na.strings = c("", "NA")), error = function(e) data.table()) else data.table()
     if (!is.null(OUT_COLS[[f]])) for (v in setdiff(OUT_COLS[[f]], names(d))) set(d, j = v, value = if (nrow(d)) NA else logical())   # a run that wrote none (every logger waiting in Needs you)
     for (v in intersect(SERIAL_COLS, names(d))) set(d, j = v, value = as.character(d[[v]]))
     if (ts && nrow(d)) fix_ts_cols(d) else d }

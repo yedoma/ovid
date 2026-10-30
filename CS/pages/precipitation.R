@@ -13,7 +13,7 @@
   pr_info <- reactive({ k <- pr_key(); pr_sum()[station == k[1] & stream == k[2]][1] })
   pr_file <- function(kind) file.path(pd(), "output", "precip", paste0(safe_name(paste(pr_key(), collapse = "__")), "_", kind, ".csv"))
   # safe: an output table that cannot be read shows as empty until the next run writes it
-  pr_read <- function(kind, ...) { rv$tick; f <- pr_file(kind); if (!file.exists(f)) return(data.table()); tryCatch(fread(f, ...), error = function(e) data.table()) }
+  pr_read <- function(kind, ...) { rv$tick; f <- pr_file(kind); if (!file.exists(f)) return(data.table()); tryCatch(fread(file = f, ...), error = function(e) data.table()) }
   pr_daily <- reactive({ d <- pr_read("daily", colClasses = list(character = "Date")); req(nrow(d) > 0)
     validate(need(all(c("Date", "precip_mm") %in% names(d)), paste0("The daily precipitation table for this gauge is not in the expected form (", basename(pr_file("daily")), " has columns: ", paste(utils::head(names(d), 6), collapse = ", "), "). Press Reprocess precipitation under Gauge set-up.")))
     d[, Date := as.Date(Date)]; d <- d[!is.na(Date)]; req(nrow(d) > 0); d })

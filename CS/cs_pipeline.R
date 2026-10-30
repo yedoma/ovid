@@ -456,7 +456,7 @@ run_pipeline_steps <- function(cfg = CFG) {
   fwrite(idx[level == "cell", .(n = sum(entries)), by = .(station, logger_id, stream, column, rule)][order(-n)], file.path(adir, "audit_by_column.csv"))
   comb <- file.path(adir, "audit_log.csv"); unlink(comb)
   if (AUDIT$n <= cfg$audit_combined_max) {
-    for (f in list.files(file.path(adir, "detail"), full.names = TRUE)) fwrite(fread(f, colClasses = "character", na.strings = ""), comb, append = file.exists(comb))
+    for (f in list.files(file.path(adir, "detail"), full.names = TRUE)) fwrite(fread(file = f, colClasses = "character", na.strings = ""), comb, append = file.exists(comb))
   } else say(sprintf("  %s audit entries: kept as one file per logger and station in audit/detail/ (no combined audit_log.csv)",
                      format(AUDIT$n, big.mark = ",")), col = "fg4")
   fwrite(man[, .(path, status, format, logger_id, id_source, station_name, model, serial, table, program, size, rows, first_ts, last_ts, dup_of)][order(logger_id, table, first_ts)],

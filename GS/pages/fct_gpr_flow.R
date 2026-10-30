@@ -79,7 +79,7 @@ gpr_flow_caption <- function(line, flow, applied) paste0(line, " · ", if (is.nu
 
 # Markers added by hand for a line (trace, note), from config/gpr_markers.csv.
 gpr_markers_read <- function(project, line = NULL) { p <- file.path(gpr_cfg_dir(project), "gpr_markers.csv")
-  x <- if (file.exists(p)) ensure_cols(fread(p, colClasses = "character"), GPR_MARKER_COLS) else empty_cfg(GPR_MARKER_COLS)
+  x <- if (file.exists(p)) ensure_cols(fread(file = p, colClasses = "character"), GPR_MARKER_COLS) else empty_cfg(GPR_MARKER_COLS)
   if (!is.null(line)) { ln <- line; x <- x[x$line == ln] }; x[, trace := suppressWarnings(as.integer(trace))][] }
 gpr_marker_add <- function(project, line, trace, note = "", time = Sys.time()) {
   p <- file.path(gpr_cfg_dir(project), "gpr_markers.csv"); x <- gpr_markers_read(project)[, trace := as.character(trace)]
@@ -104,7 +104,7 @@ gpr_pick_row <- function(line, x, y, vaxis, dist, velocity, thaw_m = 0, v_top = 
 }
 gpr_picks_path <- function(project) file.path(gpr_cfg_dir(project), "gpr_picks.csv")
 gpr_picks_read <- function(project, line = NULL) { p <- gpr_picks_path(project)
-  x <- if (file.exists(p)) ensure_cols(fread(p, colClasses = "character"), GPR_PICK_COLS) else empty_cfg(GPR_PICK_COLS)
+  x <- if (file.exists(p)) ensure_cols(fread(file = p, colClasses = "character"), GPR_PICK_COLS) else empty_cfg(GPR_PICK_COLS)
   if (!is.null(line)) { ln <- line; x <- x[x$line == ln] }; x[] }
 gpr_pick_add <- function(project, row) { p <- gpr_picks_path(project); x <- gpr_picks_read(project)
   x <- rbind(x, row[, lapply(.SD, as.character)], fill = TRUE); dir.create(dirname(p), showWarnings = FALSE, recursive = TRUE); fwrite_safe(x, p); invisible(x) }

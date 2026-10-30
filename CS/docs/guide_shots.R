@@ -20,7 +20,7 @@ guide_project <- function(dir = GUIDE_DIR, golden = file.path("tests", "golden")
   dir.create(file.path(dir, "raw"), recursive = TRUE, showWarnings = FALSE); dir.create(file.path(dir, "project"), showWarnings = FALSE)
   file.copy(list.files(file.path(golden, "raw"), full.names = TRUE), file.path(dir, "raw"), recursive = TRUE)
   Sys.setenv(CS_NO_RUN = "1"); source("cs_pipeline.R", local = TRUE)
-  st <- fread(file.path(golden, "settings.csv"), colClasses = "character")
+  st <- fread(file = file.path(golden, "settings.csv"), colClasses = "character")
   st <- setNames(lapply(st$value, function(v) { n <- suppressWarnings(as.numeric(v)); if (is.na(n)) v else n }), st$setting)
   invisible(capture.output(run_pipeline(modifyList(CFG, c(list(raw_dirs = file.path(dir, "raw"), project_dir = file.path(dir, "project"),
                                                           make_plots = FALSE, incremental = FALSE), st)))))

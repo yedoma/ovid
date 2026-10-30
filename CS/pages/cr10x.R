@@ -11,7 +11,7 @@
   })
   matches <- reactive({ rv$tick; rv$fsl_tick
     # safe: an output of the last run, only shown
-    f <- file.path(pd(), "config", "cr10x_fsl_matches.csv"); live_stamp(f); if (file.exists(f)) tryCatch(fread(f, na.strings = ""), error = function(e) NULL) else NULL })
+    f <- file.path(pd(), "config", "cr10x_fsl_matches.csv"); live_stamp(f); if (file.exists(f)) tryCatch(fread(file = f, na.strings = ""), error = function(e) NULL) else NULL })
   observeEvent(input$cx_match, {
     if (VIEWER) return()
     cfg <- current_cfg(); if (!folders_ok(cfg)) return()

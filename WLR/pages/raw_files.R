@@ -16,7 +16,7 @@
   observeEvent(input$rf_rescan, { if (VIEWER) return(); s <- input$rf_tbl_rows_selected; if (!length(s)) return(note("Select files first.", type = "warning"))
     if (run_busy()) return(note("A run is already going: wait for it, or cancel it in the box at the bottom right.", type = "warning"))
     cfg <- current_cfg(); n <- forget_wlr_files(cfg$project_dir, rf_rows()$rel[s])
-    do_run(cfg, after = function() { m <- tryCatch(fread(file.path(path.expand(cfg$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+    do_run(cfg, after = function() { m <- tryCatch(fread(file = file.path(path.expand(cfg$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
       g <- function(k) { v <- m$value[match(k, m$key)]; if (is.na(v)) "?" else v }
       note("Rescanned ", length(s), " file(s). Reused from the last run: ", g("files_reused"), " file(s) as read and ", g("plots_reused"), " plot(s).", duration = 10) }) })
   observeEvent(input$rf_setserial, { if (!nzchar(trim(input$rf_serial))) return(note("Type the serial first.", type = "warning")); rf_rule("serial", trim(input$rf_serial)) })

@@ -123,7 +123,7 @@
     n <- forget_files(pd(), r$path, r$logger_id, r$table)
     if (!isTRUE(cfg$incremental)) note("Reusing unchanged loggers is switched off on the Project step, so this is a full run.", type = "warning")
     # safe: a note after the run only
-    do_run(cfg, stay = TRUE, after = function() if (isTRUE(cfg$incremental)) { m <- tryCatch(fread(file.path(pd(), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
+    do_run(cfg, stay = TRUE, after = function() if (isTRUE(cfg$incremental)) { m <- tryCatch(fread(file = file.path(pd(), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
       if (!is.null(m)) note(sprintf("Rescanned %s. %s of %s logger tables and %s of %s station tables were reused unchanged.", if (nrow(r) > 1) paste(nrow(r), "files") else r$file[1],
         m[key == "tables_reused", value], m[key == "logger_tables", value], m[key == "stations_reused", value], m[key == "station_tables", value]), duration = 10) }) })
   observeEvent(input$rf_assign, rf_set("assign")); observeEvent(input$rf_ignore, rf_set("ignore")); observeEvent(input$rf_clear, rf_set("clear"))

@@ -42,7 +42,7 @@
   applied_server("applied", pd, out_seen, edit = if (!VIEWER) "QC")   # the corrections applied, in the top bar (core applied.R)
   # safe: shown as no output yet; a run writes it again
   outs <- reactive({ rv$tick; out_seen(); tryCatch(load_outputs(pd()), error = function(e) NULL) })
-  gt_files <- reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
+  gt_files <- reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
     if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = rel, first = first_ts, last = last_ts)] })
   gt_deps <- reactive({ s <- live_table(cfg_path(pd(), "sensors")); if (!nrow(s) || !all(c("serial", "site") %in% names(s))) return(NULL)
     unique(s[nzchar(site), .(serial = as.character(serial), from = as.character(start %||% ""), to = as.character(end %||% ""), name = site)]) })

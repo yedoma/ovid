@@ -82,7 +82,7 @@
     tagList(p(class = "muted mt-2 mb-1", "Reporting checklist (Herring et al. 2023, Table 1):"),
       lapply(items, function(x) div(class = "muted", paste(if (identical(x[2], "TRUE")) "\u2713" else "\u2013", x[1])))) })
   survey_flags <- function(s) { f <- file.path(PROJECT, "output", "surveys", s$survey_id, "flags.csv")
-    x <- if (file.exists(f)) fread(f, colClasses = "character", na.strings = NULL) else data.table()   # a survey with no flags has a header-only file
+    x <- if (file.exists(f)) fread(file = f, colClasses = "character", na.strings = NULL) else data.table()   # a survey with no flags has a header-only file
     if (!nrow(x)) return(data.table(meas_id = integer(), flag = character(), rule = character(), value = character()))
     x[profile == cat_profile(s)][, meas_id := as.integer(meas_id)][] }
   fname <- function(s, what) paste0(survey_label(s)$file_date, "_", gsub("[^A-Za-z0-9._-]+", "_", survey_label(s)$name), "_", what, ".zip")

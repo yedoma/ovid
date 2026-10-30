@@ -14,7 +14,7 @@ DGPS_CODES <- c("T", "TOC", "GS")
 # Emlid-style survey CSV: Name, Location (the code: T / TOC / GS), Elevation and/or Ellipsoidal height, Elevation RMS,
 # Solution status, Averaging start ("2026-09-01 12:55:22.8 UTC-06:00"). Only FIX solutions are kept.
 read_dgps_file <- function(path) {
-  d <- fread(path, colClasses = "character", na.strings = c("", "NA"), encoding = "UTF-8")
+  d <- fread(file = path, colClasses = "character", na.strings = c("", "NA"), encoding = "UTF-8")
   setnames(d, trim(names(d)))
   col <- function(...) { for (n in c(...)) if (n %in% names(d)) return(trim(d[[n]])); rep(NA_character_, nrow(d)) }
   elev <- suppressWarnings(as.numeric(col("Elevation"))); ell <- suppressWarnings(as.numeric(col("Ellipsoidal height")))

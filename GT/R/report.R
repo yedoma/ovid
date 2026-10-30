@@ -2,7 +2,7 @@
 # Part of Ovid Core // GT. Sourced by gt_pipeline.R; not meant to be run on its own.
 
 gt_read <- function(project_dir, dir, f) { p <- out_dir(project_dir, dir, f)
-  if (file.exists(p) && file.info(p)$size > 0) try_or(fread(p, na.strings = c("", "NA"), colClasses = list(character = intersect(c("serial", "channel", "site", "logger_id"), names(fread(p, nrows = 0))))),
+  if (file.exists(p) && file.info(p)$size > 0) try_or(fread(file = p, na.strings = c("", "NA"), colClasses = list(character = intersect(c("serial", "channel", "site", "logger_id"), names(fread(file = p, nrows = 0))))),
                                                      data.table(), paste0("output/", dir, "/", f, ": left out of the report")) else data.table() }
 
 # What the last run did: downloads (including those that need an export), loggers, sites, clock events, sensor health, removals, problems.
@@ -41,7 +41,7 @@ gt_run_report_doc <- function(project_dir) {
 # What the files say about one site's instrument and loggers, for the front of its report. Everything is optional: a part that has no data is left out.
 gt_site_info <- function(st, d, project_dir) {
   sp <- file.path(path.expand(project_dir), "config", "sites.csv")
-  cfg <- if (file.exists(sp)) try_or(fread(sp, colClasses = "character", na.strings = ""), data.table(), "config/sites.csv: site details left out of the report") else data.table(); if (nrow(cfg)) cfg <- cfg[site == st]
+  cfg <- if (file.exists(sp)) try_or(fread(file = sp, colClasses = "character", na.strings = ""), data.table(), "config/sites.csv: site details left out of the report") else data.table(); if (nrow(cfg)) cfg <- cfg[site == st]
   lg <- gt_read(project_dir, "audit", "loggers.csv"); if (nrow(lg)) lg <- lg[logger_id %in% unique(d$logger_id)]
   ss <- gt_read(project_dir, "audit", "sites_summary.csv"); if (nrow(ss)) ss <- ss[site == st]
   g <- col_or_null                                                           # core util.R

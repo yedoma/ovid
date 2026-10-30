@@ -896,4 +896,13 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
 local({ library(data.table); src <- paste(readLines(file.path(.app, "pages/folders.R"), warn = FALSE), collapse = "\n")
   check("Needs you notes with no problems and no counts are an empty table, not a TRUE matrix (it gave a blank row that broke the side panel)",
         grepl("rbindlist(list(pr, ", src, fixed = TRUE) && !grepl("rbind(pr, ", src, fixed = TRUE) && nrow(rbindlist(list(NULL, NULL), fill = TRUE)) == 0) })
+local({                                                               # every file read names it as file= (a missing path with a space ran as a shell command)
+  fs <- list.files(.app, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests)/", fs)]
+  bare <- unlist(lapply(fs, function(f) { x <- readLines(f, warn = FALSE); x[grepl("fread\\((?!\\s*[A-Za-z_.]+\\s*=[^=])(?!\\s*\\))", x, perl = TRUE) & !grepl("^\\s*#", x)] }))
+  check("every file read names it as file= (a missing file whose path has a space is never run as a shell command)", !length(bare))
+  fo <- paste(readLines(file.path(.app, "pages", "fct_outputs.R"), warn = FALSE), collapse = "\n")
+  check("the column dictionary read while a run is still writing it has its columns (Explore failed: 'parameter' not found, 'logger_id' not found)",
+        grepl('dict = with_cols(rd("column_dictionary.csv"', fo, fixed = TRUE))
+  md <- paste(readLines(file.path(.app, "pages", "metadata.R"), warn = FALSE), collapse = "\n")
+  check("Metadata, Problems exported with none is a CSV with its heading row (it was an empty file)", grepl("else data.table(Where = character(), Problem = character())", md, fixed = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$pass, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

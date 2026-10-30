@@ -46,7 +46,7 @@ config_settings_list <- function(tab, keys) {
 # What the last run redid, from its manifest: water loggers whose record and set-up had not changed are reused.
 run_redone <- function(pd) {
   f <- file.path(path.expand(pd), "output", "audit", "run_manifest.csv"); if (!file.exists(f)) return("")
-  m <- tryCatch(fread(f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+  m <- tryCatch(fread(file = f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   n <- v("water_loggers"); r <- v("water_loggers_reused"); if (anyNA(c(n, r))) return("")
   wb_redone(n - r, n, "water loggers")

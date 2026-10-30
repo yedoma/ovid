@@ -33,7 +33,7 @@ app_run <- function(cfg, done) {
 # What the last run redid, from its manifest: logger and station tables whose inputs had not changed are reused.
 run_redone <- function(pd) {
   f <- file.path(path.expand(pd), "output", "audit", "run_manifest.csv"); if (!file.exists(f)) return("")
-  m <- tryCatch(fread(f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+  m <- tryCatch(fread(file = f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   lt <- v("logger_tables"); st <- v("station_tables"); lr <- v("tables_reused"); sr <- v("stations_reused")
   if (anyNA(c(lt, st, lr, sr))) return("")
@@ -49,7 +49,7 @@ update_settings <- function(x) {
 # History of the set-up tables (config/history/change_log.csv), newest first, and going back to one saved version.
 hist_log <- function(pd) { f <- file.path(pd, "config", "history", "change_log.csv"); if (!file.exists(f)) return(data.table())
   # safe: a history that cannot be read lists nothing
-  d <- tryCatch(fread(f, colClasses = "character", na.strings = NULL), error = function(e) data.table()); d[order(-seq_len(.N))] }
+  d <- tryCatch(fread(file = f, colClasses = "character", na.strings = NULL), error = function(e) data.table()); d[order(-seq_len(.N))] }
 hist_restore <- function(pd, r, who = "") {
   tb <- sub(" \\(.*$", "", r$table); cur <- file.path(pd, "config", tb); bk <- file.path(pd, "config", "history", r$backup)
   if (!file.exists(bk)) return(FALSE)

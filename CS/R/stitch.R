@@ -132,7 +132,7 @@ clock_shifts <- function(project_dir, logger_id, table, files = character()) {
   tc <- rd("time_corrections.csv", TIME_COLS)[logger_id == lg & (table == "" | table == tb)]
   mf <- file.path(path.expand(project_dir), "output", "audit", "file_manifest.csv")
   # safe: the last run's file manifest; without it no zone shifts are shown
-  g <- if (file.exists(mf)) tryCatch(fread(mf, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
+  g <- if (file.exists(mf)) tryCatch(fread(file = mf, colClasses = "character", na.strings = ""), error = function(e) data.table()) else data.table()
   if (nrow(g) && all(c("path", "logger_id", "table") %in% names(g))) {
     g <- g[logger_id == lg & table == tb & (!length(files) | basename(path) %in% basename(files))]
     if ("first_ts" %in% names(g)) g[, first_ts := as.numeric(parse_time(first_ts))]

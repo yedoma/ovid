@@ -435,4 +435,14 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
   ui <- tryCatch(ui_click_through(normalizePath(here), c(GS_PROJECT_DIR = file.path(tmp, "project"), GS_RAW_DIRS = dirname(raw), GS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check(nrow(ui) > 3 && !nrow(bad), "every page opens in a browser with no output, JavaScript or server error (the test project)") })
+local({                                                               # found by the click-through test (30 Oct 2026)
+  fs <- c(list.files(file.path(here, c("R", "pages", "simple", "workbench")), "\\.R$", full.names = TRUE), file.path(here, c("app.R", "gs_pipeline.R")))
+  bare <- unlist(lapply(fs, function(f) { x <- readLines(f, warn = FALSE); x[grepl("fread\\((?!\\s*(file|text|cmd|input|sep)\\s*=)", x, perl = TRUE) & !grepl("^\\s*#", x)] }))
+  mt <- paste(readLines(file.path(here, "pages", "map_and_transects.R"), warn = FALSE), collapse = "\n")
+  check(!length(bare) && grepl("if (!any(dir.exists(path.expand(CFG$raw_dirs))))", mt, fixed = TRUE),
+        "every file read names it as file= (a missing path with a space ran as a shell command); Scan with no raw folder there says to choose one, with no set-up question")
+  sg <- paste(readLines(file.path(here, "simple", "simple_gs.R"), warn = FALSE), collapse = "\n")
+  check(grepl('x[dated == FALSE]', sg, fixed = TRUE) && grepl("x <- x_all() %||% data.table()", sg, fixed = TRUE) && grepl('f <- "README.txt"', sg, fixed = TRUE),
+        "Simple View's No date filter draws (x[!dated] was a not-join); Survey data and Previews download a note on an empty project instead of failing")
+})
 if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green")

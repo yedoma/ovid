@@ -59,7 +59,7 @@ mod_stack_server <- function(id, cat_s, stats, transects, pick, read_meas, has_m
     output$stack_area <- renderUI({ k <- nrow(shown())
       if (!k) return(p(class = "muted", "No measurements to draw for this project."))
       plotOutput(session$ns("stack_plot"), height = paste0(140 + 230 * ceiling(k / 3), "px")) })
-    output$stack_plot <- renderPlot({ f <- shown(); req(nrow(f))
+    output$stack_plot <- renderPlot({ f <- shown(); req(nrow(f) > 0)
       d <- rbindlist(lapply(f$survey_id, function(s) { x <- read_meas(s); cbind(survey_id = s, x[, .(rhoa_ohmm)], pseudo_xy(x)) }))
       plot_stack(d, f, lim()) }, res = 96)
     cmp <- reactive({ req(nzchar(input$cmp %||% ""), ref()); f <- figs_all()

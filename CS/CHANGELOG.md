@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (found by the click-through test, 2026-10-30)**
+- Metadata, Problems exported with none was an empty file; it now has its heading row.
+- Explore and Column names failed ("Object 'parameter' not found", "object 'logger_id' not found") when the outputs were read while a run was still writing them: the column dictionary is read with its columns when it is missing.
+- A missing file whose path holds a space was run as a shell command by fread(): every file read names it as file=.
+- **Output changes:** none.
+
 **Changed (speed, 2026-10-30)**
 - Stitching reads the TOA5 and TOB3 files of logger tables that are not reused in parallel (core par_map, as in GT and WLR), a few tables at a time; problems are recorded in the same order as before, and a file that fails in a worker is read again as before. On Windows it reads one file at a time as before. A test compares 1 and 2 workers. **Output changes:** none.
 

@@ -78,7 +78,7 @@ inversion_files <- function(s1, meas, flags, dir, model = NULL) {
 # a pattern with one group says where it is. Rows for elevations.csv; heights of different kinds (orthometric, ellipsoidal)
 # are never mixed: the elevation column wins.
 gnss_elevations <- function(path, survey_id, pattern = "([0-9]+)\\D*$", author = "") {
-  x <- fread(path, colClasses = "character", na.strings = c("", "NA")); nm <- tolower(gsub("[^a-z0-9]", "", tolower(names(x))))
+  x <- fread(file = path, colClasses = "character", na.strings = c("", "NA")); nm <- tolower(gsub("[^a-z0-9]", "", tolower(names(x))))
   pick <- function(c) { k <- match(c, nm); k <- k[!is.na(k)]; if (length(k)) names(x)[k[1]] else NA_character_ }
   nc <- pick(c("name", "pointname", "point", "id", "pointid", "gpsname", "label"))
   zc <- pick(c("elevation", "elevationm", "orthometricheight", "orthometricheightm", "z", "altitude", "alt"))
@@ -98,7 +98,7 @@ gnss_elevations <- function(path, survey_id, pattern = "([0-9]+)\\D*$", author =
 # it a table, else a point name column a GNSS file, else a distance column a table. name: the file's name as the person gave it.
 # Returns the rows for elevations.csv and which kind it was ("table" or "gnss").
 elevation_file_rows <- function(path, survey_id, name = basename(path), author = "") {
-  x <- fread(path, colClasses = "character", na.strings = c("", "NA")); if (ncol(x) < 2) stop("could not read that file as a table")
+  x <- fread(file = path, colClasses = "character", na.strings = c("", "NA")); if (ncol(x) < 2) stop("could not read that file as a table")
   nm <- tolower(gsub("[^a-z0-9]", "", tolower(names(x)))); col <- function(...) { i <- which(nm %in% c(...))[1]; if (is.na(i)) NULL else x[[i]] }
   el <- col("electrode", "elec", "e", "electrodeno"); ds <- col("distance", "dist", "x", "distancem", "s")
   z <- col("elevation", "elev", "z", "height", "elevationm", "zm")

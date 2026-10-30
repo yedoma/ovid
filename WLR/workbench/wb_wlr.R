@@ -34,7 +34,7 @@ wb_tables <- function(o, pd) {
                           d[, .(key = paste0("site:", site[1]), group = site[1], label = "Whole record", serial = paste(unique(serial), collapse = ", "),
                                 site = site[1], records = sum(records), kind = "site", n = .N), by = site][n > 1][, n := NULL][, site := NULL][, .(key, group, label, serial, site = group, records, kind)],
                           d)[order(group, kind != "site")]
-  st <- tryCatch(fread(out_dir(pd, "audit", "baro_stations.csv"), colClasses = "character"), error = function(e) data.table(serial = character(), station = character()))
+  st <- tryCatch(fread(file = out_dir(pd, "audit", "baro_stations.csv"), colClasses = "character"), error = function(e) data.table(serial = character(), station = character()))
   b <- if (!is.null(o) && nrow(o$loggers)) o$loggers[kind == "baro", .(serial = as.character(serial), records)] else data.table(serial = character(), records = integer())
   b <- b[vapply(serial, function(s) !is.null(wb_baro_file(pd, s)), NA)]
   if (nrow(b)) { b[, station := st$station[match(serial, st$serial)]]; b[is.na(station), station := paste("Baro", serial)]
@@ -45,7 +45,7 @@ wb_baro_file <- function(pd, serial) { f <- list.files(out_dir(pd, "baro"), patt
   f <- f[!startsWith(basename(f), "station__")]; if (length(f)) f[1] else NULL }
 wb_load <- function(key, pd) { if (!length(key) || is.na(key[1]) || !nzchar(key[1])) return(NULL); k <- wb_split(key)   # nothing chosen yet
   if (!length(k$kind)) return(NULL)
-  d <- if (k$kind == "dep") load_deployment(k$id, pd) else if (k$kind == "site") load_site(k$id, pd) else { f <- wb_baro_file(pd, k$id); if (is.null(f)) NULL else fix_ts_cols(fread(f, na.strings = c("", "NA"))) }
+  d <- if (k$kind == "dep") load_deployment(k$id, pd) else if (k$kind == "site") load_site(k$id, pd) else { f <- wb_baro_file(pd, k$id); if (is.null(f)) NULL else fix_ts_cols(fread(file = f, na.strings = c("", "NA"))) }
   if (!is.null(d) && "logger_id" %in% names(d)) set(d, j = "logger_id", value = as.character(d$logger_id))
   if (!is.null(d) && k$kind == "site") { sn <- suppressWarnings(as.numeric(d$logger_id)); if (!all(is.na(sn))) set(d, j = "serial", value = sn) }   # the grid's serial column
   d }
@@ -370,7 +370,7 @@ wb_server <- function(input, output, session, std) {
                  nonce = as.numeric(Sys.time()),
                  lead = paste0(n, " missing value", if (n > 1) "s", ", filled with a straight line in time between the last value before and the first after ",
                                "(linear interpolation, for short gaps: see the references file). The filled values are flagged and listed in the audit trail."))) })
-  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc)); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
+  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc) > 0); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })
 
@@ -395,7 +395,7 @@ wb_server <- function(input, output, session, std) {
   wb_edit_server(input, output, session, ctx)
   wbgb_deps <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$summary)) NULL else o$summary[, .(serial = as.character(serial), from = fmt_ts(start), to = fmt_ts(end), name = site)] })
   # safe: an output of the last run, only shown
-  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)
+  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)
       if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = path, first = first_ts, last = last_ts)] }), pd, wbgb_deps,
     open = function(r) { k <- { tb <- tables(); x <- tb[serial == r$serial & kind == "dep"]; y <- x[grepl(substr(format(r$first, "%Y"), 1, 4), label, fixed = TRUE)]; if (nrow(y)) y$key[1] else if (nrow(x)) x$key[1] else NA_character_ }; if (is.na(k)) return(showNotification(paste(r$serial, "has no table in this view yet."), type = "message"))
       wb_jump_to(session, input, key, jump, set_view, k, NULL, format(r$first, "%Y-%m-%d"), format(r$last, "%Y-%m-%d")) })   # core grouping.R

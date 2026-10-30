@@ -60,7 +60,7 @@ setup_check <- function(cfg) {
   fr <- cf$file_rules; for (i in seq_len(nrow(fr))) if (!tolower(fr$action[i]) %in% c("ignore", "serial", "use", "tz", "baro", "water")) add("error", "file_rules.csv", paste("row", i), "action must be ignore, serial, use, tz, baro or water")
   last <- file.path(pd, "output", "audit", "deployments.csv")
   # safe: the last run's deployments, for hang lengths only
-  deps <- if (file.exists(last)) tryCatch(fix_ts_cols(fread(last, colClasses = list(character = "serial"))), error = function(e) NULL) else NULL
+  deps <- if (file.exists(last)) tryCatch(fix_ts_cols(fread(file = last, colClasses = list(character = "serial"))), error = function(e) NULL) else NULL
   if (!is.null(md)) {
     h <- hang_lengths(md, deps)
     for (i in which(h$status %in% c("missing", "not a number on the sheet")))
@@ -70,7 +70,7 @@ setup_check <- function(cfg) {
   g <- cf$baro_groups
   for (i in seq_len(nrow(g))) if (!nzchar(g$primary[i])) add("error", "baro_groups.csv", paste(g$year[i], g$group[i]), "no primary barologger", "Pick one on the Barometric page.")
   pr <- file.path(pd, "output", "audit", "problems.csv")
-  if (file.exists(pr)) { p <- fread(pr, colClasses = "character"); for (i in seq_len(nrow(p))) add("warning", "Last run", p$where[i], p$problem[i]) }
+  if (file.exists(pr)) { p <- fread(file = pr, colClasses = "character"); for (i in seq_len(nrow(p))) add("warning", "Last run", p$where[i], p$problem[i]) }
   if (!is.null(deps) && nrow(deps)) {
     nz <- deps[has_data == TRUE & is.na(z_ref)]
     if (nrow(nz)) add("info", "dGPS", paste(nrow(nz), "deployments"), paste("no surveyed reference elevation:", paste(head(unique(nz$site), 8), collapse = ", "), if (uniqueN(nz$site) > 8) "..."), "Link survey points on the Datum and dGPS page.")

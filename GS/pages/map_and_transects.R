@@ -90,13 +90,16 @@
   # The set-up check comes first: with errors, a question (review, rebuild anyway, cancel); a rebuild anyway is logged.
   observeEvent(input$rebuild, do_rebuild(FALSE))
   observeEvent(input$rebuild_force, { removeModal(); do_rebuild(TRUE) })
-  observeEvent(input$rebuild_review, { removeModal(); ovid_go(session, "Setup") })
+  observeEvent(input$rebuild_review, { removeModal(); ovid_go(session, "Setup"); updateTabsetPanel(session, "simple_step", selected = "import") })   # Standard; Simple: Import
   do_rebuild <- function(force) {
     if (run_busy()) return(showNotification("A scan is already going: wait for it, or cancel it in the box at the bottom right.", type = "warning"))
     if (is_imported()) return(showNotification("This is an imported catalogue: go back to your own catalogue to scan it.", type = "warning"))
     CFG$raw_dirs <<- trim(strsplit(input$set_raw, "\n")[[1]]); CFG$raw_dirs <<- CFG$raw_dirs[nzchar(CFG$raw_dirs)]; CFG$project_dir <<- ovid_project_dir(input$set_project)   # none set: the default folder (core util.R)
     SETTINGS <<- utils::modifyList(SETTINGS, list(raw_dirs = CFG$raw_dirs, project_dir = CFG$project_dir)); settings_save(SETTINGS_FILE, SETTINGS[c("raw_dirs", "project_dir")]); set_paths()   # only what changed: other keys (ui, time zone) may have been saved since start
     HOME_PROJECT <<- CFG$project_dir; proj(CFG$project_dir)                  # the folder set here is the user's own catalogue
+    if (!any(dir.exists(path.expand(CFG$raw_dirs))))                           # nothing to read (a new install's default folder is not there yet): no question, just say so
+      return(showNotification(if (length(CFG$raw_dirs)) paste0("The raw ERT archive folder was not found (", paste(CFG$raw_dirs, collapse = ", "), "): choose it with Browse…, then Scan.")
+                              else "Choose the raw ERT archive folder with Browse…, then Scan.", type = "warning", duration = 10))
     e <- tryCatch(setup_check(CFG), error = function(e) { showNotification(paste("The set-up check could not run:", conditionMessage(e)), type = "warning"); NULL }); e <- if (is.null(e)) NULL else e[level == "error"]
     if (!force && !is.null(e) && nrow(e)) return(showModal(setup_gate(e, "rebuild_review", "rebuild_force", "Scan")))
     cfg <- CFG; if (force) cfg$run_anyway <- setup_problem_lines(e)

@@ -23,7 +23,7 @@ LOGGER_LIST_INTRO <- paste(DEPLOY_SHEET_INTRO, "Instead of (or as well as) a reg
 # What the last run redid, from its manifest: loggers whose files and set-up had not changed are reused.
 run_redone <- function(pd) {
   f <- file.path(path.expand(pd), "output", "audit", "run_manifest.csv"); if (!file.exists(f)) return("")
-  m <- tryCatch(fread(f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+  m <- tryCatch(fread(file = f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   n <- v("loggers_checked"); r <- v("loggers_reused"); if (anyNA(c(n, r))) return("")
   wb_redone(n - r, n, "loggers")

@@ -6,7 +6,7 @@
   progs <- reactive({ rv$prog_tick; tryCatch(load_programs(list(project_dir = pd())), error = function(e) list()) })
   prog_matches <- reactive({ rv$prog_tick; rv$tick
     # safe: an output of the last run, only shown
-    f <- file.path(pd(), "config", "program_matches.csv"); live_stamp(f); if (file.exists(f)) tryCatch(fread(f, na.strings = ""), error = function(e) NULL) else NULL })
+    f <- file.path(pd(), "config", "program_matches.csv"); live_stamp(f); if (file.exists(f)) tryCatch(fread(file = f, na.strings = ""), error = function(e) NULL) else NULL })
   observe({ p <- progs(); updateSelectInput(session, "prog_pick", choices = c("(none)" = "", vapply(p, `[[`, "", "name")), selected = isolate(input$prog_pick)) })
   prog_run <- function() {
     cfg <- current_cfg(); if (!folders_ok(cfg)) return()

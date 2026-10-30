@@ -27,7 +27,7 @@ wb_removed <- function(pd, key) {
   empty <- data.table(timestamp = as.POSIXct(character(), tz = "UTC"), parameter = character(), rule = character(), old_value = numeric(), reason = character())
   if (!file.exists(f)) return(empty)
   # safe: a table of the last run, only shown; none until a run writes it
-  x <- tryCatch(fread(f, colClasses = "character", na.strings = ""), error = function(e) NULL)
+  x <- tryCatch(fread(file = f, colClasses = "character", na.strings = ""), error = function(e) NULL)
   if (is.null(x) || !nrow(x)) return(empty)
   # parse_dt (core/util.R), not as.POSIXct(): that picks one format for the whole column and drops every time of day
   # when one element reads as a date only
@@ -213,7 +213,7 @@ wb_server <- function(input, output, session, std) {
          d = wb_digits(c(w[[p]], s$old))) }
   rules <- reactive({ d <- E$qc$data(); if (is.null(d)) data.table() else as.data.table(d) })
   # each parameter's unit (parameter_info.csv, the Parameter guide) and range limits (its quality rule), for the grid and chart
-  units <- reactive({ outs(); pi <- tryCatch(fread(file.path(pd(), "config", "parameter_info.csv"), colClasses = "character", na.strings = NULL), error = function(e) NULL)
+  units <- reactive({ outs(); pi <- tryCatch(fread(file = file.path(pd(), "config", "parameter_info.csv"), colClasses = "character", na.strings = NULL), error = function(e) NULL)
     # safe: without the default list the parameters keep their own names
     if (is.null(pi) || !all(c("pattern", "unit") %in% names(pi))) pi <- tryCatch(default_parameter_info(), error = function(e) NULL)
     ps <- params_all(); if (is.null(pi) || !length(ps)) return(NULL); wb_match(ps, pi$pattern, pi$unit, regex = TRUE) })
@@ -322,7 +322,7 @@ wb_server <- function(input, output, session, std) {
         if (nzchar(ru$max_flat_hours %||% "")) wb_kv("flat hours", ru$max_flat_hours), if (nzchar(ru$action %||% "")) wb_kv("action", ru$action))),
       station_box)
   })
-  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc)); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
+  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc) > 0); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })
 
@@ -350,7 +350,7 @@ wb_server <- function(input, output, session, std) {
   wbgb_deps <- reactive({ s <- tryCatch(as.data.table(E$stations$data()), error = function(e) data.table())
     if (!nrow(s) || !all(c("logger_id", "station") %in% names(s))) NULL else unique(s[nzchar(station), .(serial = as.character(logger_id), from = as.character(start), to = as.character(end), name = station)]) })
   # safe: an output of the last run, only shown; none until a run writes it
-  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "file_manifest.csv"), colClasses = "character"), error = function(e) NULL)
+  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "file_manifest.csv"), colClasses = "character"), error = function(e) NULL)
       if (is.null(f) || !nrow(f) || !"logger_id" %in% names(f)) NULL else f[nzchar(logger_id), .(serial = logger_id, file = path, first = first_ts, last = last_ts)] }), pd, wbgb_deps,
     open = function(r) { s <- wbgb_deps(); st <- if (!is.null(s) && nrow(s[serial == r$serial])) s[serial == r$serial]$name[1] else r$serial
       k <- first_key(st); if (is.null(k)) return(showNotification(paste(r$serial, "has no station table yet."), type = "message"))

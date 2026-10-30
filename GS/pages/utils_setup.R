@@ -41,7 +41,7 @@ electrode_rows_for <- function(status, sid, s1 = NULL) {
 # What the last rebuild redid, from its manifest: surveys whose measurements and set-up had not changed are reused.
 run_redone <- function(pd) {
   f <- file.path(path.expand(pd), "output", "audit", "run_manifest.csv"); if (!file.exists(f)) return("")
-  m <- tryCatch(fread(f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
+  m <- tryCatch(fread(file = f, colClasses = "character"), error = function(e) setnames(data.table(character(), character()), c("key", "value")))
   v <- function(k) suppressWarnings(as.integer(m[key == k, value][1]))
   n <- v("surveys_checked"); r <- v("surveys_reused"); if (anyNA(c(n, r))) return("")
   wb_redone(n - r, n, "surveys")

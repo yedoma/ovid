@@ -187,7 +187,7 @@ wb_server <- function(input, output, session, std) {
   cfg_now <- reactive(wb_cfg(E))
   flags_now <- reactive({ d <- dat(); s1 <- part()$s1; cf <- cfg_now(); qc_survey(d, s1$survey_id, s1$type, cf$qc, prof_now(), cf$manual, s1, cf$electrodes) })
   flags_last <- reactive({ std$rv$tick; f <- file.path(PROJECT, "output", "surveys", key(), "flags.csv"); if (!file.exists(f)) return(NULL)
-    x <- fread(f, colClasses = "character", na.strings = NULL); if (!nrow(x)) return(NULL); x[profile == prof_now()][, meas_id := as.integer(meas_id)][] })
+    x <- fread(file = f, colClasses = "character", na.strings = NULL); if (!nrow(x)) return(NULL); x[profile == prof_now()][, meas_id := as.integer(meas_id)][] })
   now <- reactive(wb_flag_cells(flags_now(), dat()))
   last <- reactive(wb_flag_cells(flags_last(), dat()))
   flag_text <- function(ids, f) { if (is.null(f) || !nrow(f)) return(rep("", length(ids))); x <- f[, .(t = paste(unique(flag), collapse = ", ")), by = meas_id]
@@ -324,7 +324,7 @@ wb_server <- function(input, output, session, std) {
   })
 
   # safe: an output of the last run, only shown
-  wb_import_aside <- function() { m <- tryCatch(fread(file.path(PROJECT, "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
+  wb_import_aside <- function() { m <- tryCatch(fread(file = file.path(PROJECT, "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] else NA
     steps <- c(Files = "every file under the archive folders, by what it contains; zip files opened, never changed", Surveys = "originals, copies, subsets, merged files and processed sets, linked",
                Measurements = "AGI .stg (with .crs and .cmd), IRIS Prosys exports and Res2DInv .dat in one measurement model", QC = "the profiles' rules, the manual flags and the electrodes turned off; flags only, nothing removed",
@@ -341,7 +341,7 @@ wb_server <- function(input, output, session, std) {
   # safe: the status bar shows what it has
   output$wb_status <- renderUI({ std$rv$tick; cc <- cells(); g <- tryCatch(grid(), error = function(e) NULL)
     # safe: a count for the status bar only
-    pf <- file.path(PROJECT, "output", "audit", "problems.csv"); np <- if (file.exists(pf)) nrow(tryCatch(fread(pf), error = function(e) data.table())) else 0L
+    pf <- file.path(PROJECT, "output", "audit", "problems.csv"); np <- if (file.exists(pf)) nrow(tryCatch(fread(file = pf), error = function(e) data.table())) else 0L
     mid <- if (!identical(view(), "wb-data") || is.null(g)) NULL else if (nrow(cc)) span(paste(num(uniqueN(cc$r)), "measurements selected")) else span(paste(num(g$n), "measurements"))
     tagList(span(style = paste0("color:", PAL$fg), if (np) tags$a(href = "#", `data-ovid-go` = "Settings", style = "color:inherit", paste(np, "problems")) else "No problems"),   # a number, no light
             if (isTRUE(std$stale())) tags$a(class = "wb-stale", href = "#", `data-ovid-go` = "wb-import", HTML("&#9679; Set-up changed since the last scan")),

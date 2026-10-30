@@ -53,7 +53,7 @@ mod_gpr_map_server <- function(id, lines, tracks, flows, selected, markers, rada
       g <- plotly::add_trace(g, type = "scattermapbox", mode = "markers", lat = if (!is.null(t0) && nrow(t0)) t0$lat[1] else 0, lon = if (!is.null(t0) && nrow(t0)) t0$lon[1] else 0,
                              hoverinfo = "skip", marker = list(size = 13, color = PAL$fg, opacity = 0), showlegend = FALSE, name = "cursor")
       g$x$source <- session$ns("map"); b <- plotly::plotly_build(g) |> plotly::event_register("plotly_click") |> plotly::event_register("plotly_hover"); map_n(length(b$x$data) - 1L); b })
-    observeEvent(plotly::event_data("plotly_click", source = session$ns("map")), {
+    observeEvent(suppressWarnings(plotly::event_data("plotly_click", source = session$ns("map"))), {
       cd <- plotly::event_data("plotly_click", source = session$ns("map"))$customdata; if (length(cd) && grepl("|", cd[1], fixed = TRUE)) select_line(sub("\\|.*$", "", cd[1])) })
 
     output$tbl <- renderDT({ s <- shown(); validate(need(nrow(s) > 0, "No line matches these filters."))
@@ -65,13 +65,13 @@ mod_gpr_map_server <- function(id, lines, tracks, flows, selected, markers, rada
     # ---- read-only radargram, with a line for the shared cursor added as one more shape ----
     rg_n <- reactiveVal(0L)
     output$rg <- plotly::renderPlotly({ R <- radargram(); f <- R$fig; f$x$source <- session$ns("rg"); b <- plotly::event_register(plotly::plotly_build(f), "plotly_hover"); rg_n(length(b$x$layout$shapes)); b })
-    observeEvent(plotly::event_data("plotly_hover", source = session$ns("rg")), {     # radargram -> dot on the map
+    observeEvent(suppressWarnings(plotly::event_data("plotly_hover", source = session$ns("rg"))), {     # radargram -> dot on the map
       e <- plotly::event_data("plotly_hover", source = session$ns("rg")); t <- tracks()[[selected() %||% ""]]; if (is.null(e$x) || is.null(t) || nrow(t) < 2L) return()
       tr <- radargram()$to_trace(e$x[1]); c <- t[order(trace)][!duplicated(trace)]
       if (tr < min(c$trace) || tr > max(c$trace)) return()
       plotly::plotlyProxyInvoke(plotly::plotlyProxy("map", session), "restyle",
         list(lat = list(list(approx(c$trace, c$lat, tr)$y)), lon = list(list(approx(c$trace, c$lon, tr)$y)), `marker.opacity` = 1), list(map_n())) })
-    observeEvent(plotly::event_data("plotly_hover", source = session$ns("map")), {    # selected track -> line on the radargram
+    observeEvent(suppressWarnings(plotly::event_data("plotly_hover", source = session$ns("map"))), {    # selected track -> line on the radargram
       cd <- plotly::event_data("plotly_hover", source = session$ns("map"))$customdata; if (!length(cd) || !grepl("|", cd[1], fixed = TRUE)) return()
       if (!identical(sub("\\|.*$", "", cd[1]), selected())) return()
       x <- radargram()$to_x(as.integer(sub("^.*\\|", "", cd[1])))

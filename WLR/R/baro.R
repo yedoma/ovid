@@ -167,7 +167,7 @@ read_external_baro <- function(tab) {
   for (i in seq_len(nrow(tab))) { r <- tab[i]; nm <- trim(r$name); f <- path.expand(trim(r$file)); if (!nzchar(nm) || !nzchar(f)) next
     where <- paste("external_baro.csv row", i)
     if (!file.exists(f)) { problem(where, paste("file not found:", r$file)); next }
-    d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) { problem(where, conditionMessage(e)); NULL }); if (is.null(d) || !nrow(d)) next
+    d <- tryCatch(fread(file = f, showProgress = FALSE), error = function(e) { problem(where, conditionMessage(e)); NULL }); if (is.null(d) || !nrow(d)) next
     tc <- if (nzchar(trim(r$time_column))) trim(r$time_column) else names(d)[grepl("^(timestamp|datetime|date ?time|time)$", names(d), ignore.case = TRUE)][1]
     pc <- trim(r$pressure_column); u <- EXT_BARO_UNITS[tolower(gsub("[^A-Za-z]", "", r$units %||% "kpa"))]; if (is.na(u)) u <- 1
     if (is.na(tc) || !tc %in% names(d) || !pc %in% names(d)) { problem(where, paste0("columns '", tc, "' / '", pc, "' not found in ", basename(f))); next }

@@ -130,7 +130,7 @@ site_groups <- function(site) { u <- unique(site); ifelse(is.na(u), SITE_NONE, u
 forget_gt_files <- function(project_dir, paths) {
   pd <- path.expand(project_dir); cd <- file.path(pd, "cache"); paths <- normalizePath(paths, winslash = "/", mustWork = FALSE)
   # safe: the last run's file list, to find what to forget; with none there is nothing to forget
-  fa <- tryCatch(fread(file.path(pd, "output", "audit", "files.csv"), colClasses = list(character = c("rel", "type", "serial"))), error = function(e) data.table())
+  fa <- tryCatch(fread(file = file.path(pd, "output", "audit", "files.csv"), colClasses = list(character = c("rel", "type", "serial"))), error = function(e) data.table())
   lids <- character()
   if (nrow(fa) && all(c("rel", "type", "serial") %in% names(fa))) {
     hit <- fa[vapply(rel, function(r) any(paths == r | endsWith(paths, paste0("/", r))), logical(1)) & !is.na(type) & !is.na(serial)]

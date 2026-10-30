@@ -159,7 +159,7 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
     observeEvent(input$save, { k <- input$line %||% ""; req(nzchar(k))
       v <- tryCatch(gpr_flow_save(project(), k, P(), vel(), vtop(), thaw(), input$preset %||% ""), error = function(e) { showNotification(paste("The flow was not saved:", conditionMessage(e)), type = "error"); NULL })
       if (!is.null(v)) { bump(); showNotification(sprintf("Flow v%d saved with %s.", v, k), type = "message") } })
-    observeEvent(input$all, { g <- lines(); req(nrow(g)); have <- vapply(g$line, function(k) length(gpr_flow_history(project(), k)) > 0L, NA)
+    observeEvent(input$all, { g <- lines(); req(nrow(g) > 0); have <- vapply(g$line, function(k) length(gpr_flow_history(project(), k)) > 0L, NA)
       showModal(modalDialog(title = sprintf("Apply this flow to all %d lines?", nrow(g)),
         p(sprintf("Each line gets it as a new saved version: %d have no flow yet; %d already have one and keep their earlier versions (pick one to go back).", sum(!have), sum(have))),
         p(class = "muted", "The flow: ", paste(vapply(gpr_order(P()$order), function(k) paste0(GPR_STEPS[[k]], " (", gpr_step_summary(k, P(), mhz()), ")"), ""), collapse = " → ")),
@@ -192,9 +192,9 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
 
     # ---- the cursor: a hover on the radargram picks the trace; a click picks or adds a marker ----
     cur_tr <- reactiveVal(NULL); tr_d <- debounce(reactive(cur_tr()), 60)
-    observeEvent(plotly::event_data("plotly_hover", source = ns("rg")), { e <- plotly::event_data("plotly_hover", source = ns("rg")); if (!is.null(e$x)) cur_tr(X()$tr_of(e$x[1])) })
+    observeEvent(suppressWarnings(plotly::event_data("plotly_hover", source = ns("rg"))), { e <- plotly::event_data("plotly_hover", source = ns("rg")); if (!is.null(e$x)) cur_tr(X()$tr_of(e$x[1])) })
     observeEvent(input$line, cur_tr(NULL))
-    observeEvent(plotly::event_data("plotly_click", source = ns("rg")), { e <- plotly::event_data("plotly_click", source = ns("rg")); t <- input$tool %||% "cursor"
+    observeEvent(suppressWarnings(plotly::event_data("plotly_click", source = ns("rg"))), { e <- plotly::event_data("plotly_click", source = ns("rg")); t <- input$tool %||% "cursor"
       if (is.null(e$x)) return(); k <- input$line %||% ""; tr <- X()$tr_of(e$x[1]); cur_tr(tr); if (t == "cursor") return()
       if (t == "pick" && topo()) return(showNotification("Picks are taken with Topography off, on a depth or time axis.", type = "warning"))
       ok <- tryCatch({ if (t == "pick") gpr_pick_add(project(), gpr_pick_row(k, e$x[1], e$y[1], input$v %||% "depth", X()$full, vel(), thaw(), vtop(), input$layer %||% "", flow_cur()$version %||% NA))

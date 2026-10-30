@@ -337,7 +337,7 @@ wb_server <- function(input, output, session, std) {
         wb_period_steps(E$period$data(), c(p$site, ci$logger, ci$sensor), c(a$p, ci$sensor), ci$t), qc_step)),
       correct_box(ci), site_box())
   })
-  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc)); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
+  observeEvent(input$wb_zoom_sel, { cc <- cells(); req(nrow(cc) > 0); g <- grid(); tt <- as.numeric(range(g$w$TIMESTAMP[cc$r]))   # zoom the chart to it
     pad <- max(diff(tt) * 0.15, 6 * stats::median(diff(as.numeric(g$w$TIMESTAMP)), na.rm = TRUE), 3600, na.rm = TRUE)
     session$sendCustomMessage("wb-chart-view", list(x0 = tt[1] - pad, x1 = tt[2] + pad)) })
 
@@ -362,7 +362,7 @@ wb_server <- function(input, output, session, std) {
   wb_edit_server(input, output, session, ctx)
   wbgb_deps <- reactive({ s <- live_table(cfg_path(pd(), "sensors")); if (!nrow(s) || !all(c("serial", "site") %in% names(s))) NULL else unique(s[nzchar(site), .(serial = as.character(serial), from = as.character(start %||% ""), to = as.character(end %||% ""), name = site)]) })
   # safe: an output of the last run, only shown
-  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)
+  group_by_server("wbgb", reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)
       if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = rel, first = first_ts, last = last_ts)] }), pd, wbgb_deps,
     open = function(r) { k <- { s <- wbgb_deps(); site <- if (!is.null(s) && nrow(s[serial == r$serial])) s[serial == r$serial]$name[1] else r$serial; tb <- tables(); x <- tb[tb$site == site & tb$kind == "temp"]; if (nrow(x)) x$key[1] else NA_character_ }; if (is.na(k)) return(showNotification(paste(r$serial, "has no table in this view yet."), type = "message"))
       wb_jump_to(session, input, key, jump, set_view, k, NULL, format(r$first, "%Y-%m-%d"), format(r$last, "%Y-%m-%d")) })   # core grouping.R
@@ -387,7 +387,7 @@ wb_server <- function(input, output, session, std) {
       div(class = "wb-p", style = "color:var(--wb-fg2)", paste0(nrow(y), if (nrow(y) == 1) " flagged stretch" else " flagged stretches", " in the selection (", paste(unique(y$check), collapse = ", "), "). They leave Needs you; the values are not changed.")),
       div(class = "wb-form2", textInput("wb_ok_reason", "Why it is not a problem (kept with the decision)", value = isolate(input$wb_dec_reason %||% ""), width = "100%"), textInput("wb_ok_author", "Initials", width = "100%")),
       uiOutput("wb_ok_err"), footer = tagList(modalButton("Cancel"), actionButton("wb_ok_do", "Mark not a problem", class = "btn-primary")))) })
-  observeEvent(input$wb_ok_do, { y <- hit_items(); req(nrow(y)); why <- trim(input$wb_ok_reason %||% "")
+  observeEvent(input$wb_ok_do, { y <- hit_items(); req(nrow(y) > 0); why <- trim(input$wb_ok_reason %||% "")
     if (!nzchar(why)) { output$wb_ok_err <- renderUI(div(class = "text-danger", style = "font-size:12px", "Say why, in a few words: it goes with the decision.")); return() }
     new <- data.table(id = y$id, decision = "not a problem", note = paste0(why, " (", y$where, " \u00b7 ", y$parameter, " \u00b7 ", y$check, " \u00b7 ", y$start, ")"), author = trim(input$wb_ok_author %||% ""), at = format(Sys.time(), "%Y-%m-%d %H:%M"))
     review_write(file.path(pd(), "config", REVIEW_FILE), y$id, new); removeModal(); clear_sel()   # core config.R

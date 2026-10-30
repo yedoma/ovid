@@ -44,7 +44,7 @@
       f <- report_write(doc, tempfile("report_"), input$rp_fmt, NORD); file.copy(f[1], file, overwrite = TRUE) }))
   output$xp_dl <- downloadHandler(xp_name, xp_write)
   fv_tape_tab <- reactive({ o <- outs(); req(o); f <- file.path(out_dir(pd(), "audit"), "tape_offsets.csv")
-    if (!file.exists(f)) return(data.table()); x <- fread(f, colClasses = list(character = c("serial", "year")))
+    if (!file.exists(f)) return(data.table()); x <- fread(file = f, colClasses = list(character = c("serial", "year")))
     if (!isTRUE(input$fv_tape_all)) x <- x[status != "ok"]
     if (all(c("checks", "largest_diff_m") %in% names(x))) x[checks < 2, largest_diff_m := NA]   # one check has no spread: its median is the check
     x[order(status != "check the metadata", -abs(median_diff_m))] })
@@ -57,8 +57,8 @@
       reason = sprintf("tape offset %+.2f m checked and kept as it is", x$median_diff_m), author = current_user(session), stringsAsFactors = FALSE))
     if (isTRUE(ok)) showNotification(sprintf("%d deployment(s) kept as they are. Run the pipeline to clear the warning.", nrow(x)), type = "message") })
   output$fv_drift <- renderDT({ o <- outs(); req(o); f <- file.path(out_dir(pd(), "audit"), "drift_corrections.csv")
-    validate(need(file.exists(f), "Nothing yet. Drift is off unless you turn it on in Settings or add a drift row under Quality rules, Corrections over a period; then run the pipeline.")); ovid_dt(fread(f), page = 10) })
-  hy_rd <- function(dir, f) { o <- outs(); req(o); p <- file.path(out_dir(pd(), dir), f); if (file.exists(p)) fread(p) else data.table() }
+    validate(need(file.exists(f), "Nothing yet. Drift is off unless you turn it on in Settings or add a drift row under Quality rules, Corrections over a period; then run the pipeline.")); ovid_dt(fread(file = f), page = 10) })
+  hy_rd <- function(dir, f) { o <- outs(); req(o); p <- file.path(out_dir(pd(), dir), f); if (file.exists(p)) fread(file = p) else data.table() }
   hy_dt <- function(x, none) { validate(need(nrow(x) > 0, none)); ovid_dt(x, page = 12) }
   output$hy_unc <- renderDT(hy_dt(hy_rd("audit", "uncertainty.csv"), "No water deployment in the last run."))
   output$hy_be <- renderDT(hy_dt(hy_rd("audit", "barometric_efficiency.csv"), "Needs a week or more of hourly readings with the air pressure moving."))

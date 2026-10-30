@@ -31,7 +31,7 @@ export_survey <- function(s1, meas, flags, rules, profile, zipfile, project_dir 
                qc = list(profile = profile, rules = rules[, .(rule, value, flag, applies_to)],
                          measurements = nrow(m), passed = sum(m$qc_pass), flagged = sum(!m$qc_pass)),
                manual_flags = if (!is.null(manual) && nrow(manual)) manual[survey_id == s1$survey_id] else list(),
-               elevations = { ef <- file.path(path.expand(project_dir), "config", "elevations.csv"); e <- if (file.exists(ef)) fread(ef, colClasses = "character")[survey_id == s1$survey_id] else NULL
+               elevations = { ef <- file.path(path.expand(project_dir), "config", "elevations.csv"); e <- if (file.exists(ef)) fread(file = ef, colClasses = "character")[survey_id == s1$survey_id] else NULL
                               if (is.null(e) || !nrow(e)) "as recorded by the instrument" else list(source = unique(e$source), note = "z of the electrodes set from config/elevations.csv", rows = e) },
                note = "measurements_all.csv holds every measurement as read from the source file; QC only adds qc_pass and qc_flags.")
   jsonlite::write_json(prov, file.path(tmp, "provenance.json"), auto_unbox = TRUE, pretty = TRUE, dataframe = "rows")
@@ -49,7 +49,7 @@ export_archive <- function(zipfile, project_dir = CFG$project_dir, with_measurem
   for (f in c("projects.csv", "sites.csv", "transects.csv", "surveys.csv", "qc_profiles.csv", "manual_flags.csv"))
     if (file.exists(file.path(pd, "config", f))) file.copy(file.path(pd, "config", f), file.path(tmp, "metadata", f))
   if (with_measurements) file.copy(file.path(pd, "output", "surveys"), tmp, recursive = TRUE)
-  writeLines(archive_index(fread(file.path(cat_dir, "surveys.csv"), colClasses = list(character = c("datetime_start", "datetime_end")))), file.path(tmp, "index.html"))
+  writeLines(archive_index(fread(file = file.path(cat_dir, "surveys.csv"), colClasses = list(character = c("datetime_start", "datetime_end")))), file.path(tmp, "index.html"))
   writeLines(c("Ovid GS catalogue", paste("Exported", format(Sys.time(), "%Y-%m-%d %H:%M"), "by", APP_NAME, APP_VERSION), "",
                "Open index.html in a browser to browse the surveys. surveys.csv holds every survey with its metadata, statistics and QC",
                "result; files.csv lists every file in the archive; survey_stats.csv has the distributions; previews/ the pseudosections;",

@@ -109,7 +109,7 @@ wb_edit_server <- function(input, output, session, ctx) {
       div(class = "wb-p", style = "color:var(--wb-fg2)", "The values are blanked on the next run; the old values stay in the audit trail. Raw files are not changed."),
       footer = tagList(modalButton("Cancel"), actionButton("wb_do_remove", "Write rows", class = "btn-primary")))) })
   output$wb_rm_preview <- renderUI(wb_preview(rm_rows()[, .(serial, site, parameter, start, end)]))
-  observeEvent(input$wb_do_remove, { if (!why_ok("wb_rm_reason")) return(); r <- rm_rows(); req(nrow(r))
+  observeEvent(input$wb_do_remove, { if (!why_ok("wb_rm_reason")) return(); r <- rm_rows(); req(nrow(r) > 0)
     if (E$manual$append(as.data.frame(r))) done(sprintf("%d row(s) written to the corrections over a period. Run to apply.", nrow(r)), "wb_rm_author") })
 
   # drop whole records
@@ -121,7 +121,7 @@ wb_edit_server <- function(input, output, session, ctx) {
       wb_sec("Rows for the corrections over a period"), uiOutput("wb_dr_preview"),
       footer = tagList(modalButton("Cancel"), actionButton("wb_do_drop", "Write rows", class = "btn-primary")))) })
   output$wb_dr_preview <- renderUI(wb_preview(dr_rows()[, .(serial, site, parameter, start, end)]))
-  observeEvent(input$wb_do_drop, { if (!why_ok("wb_dr_reason")) return(); r <- dr_rows(); req(nrow(r))
+  observeEvent(input$wb_do_drop, { if (!why_ok("wb_dr_reason")) return(); r <- dr_rows(); req(nrow(r) > 0)
     if (E$manual$append(as.data.frame(r))) done(sprintf("%d row(s) written to the corrections over a period. Run to apply.", nrow(r)), "wb_dr_author") })
 
   # out of the water
@@ -134,7 +134,7 @@ wb_edit_server <- function(input, output, session, ctx) {
       wb_sec("Rows for out_of_water.csv"), uiOutput("wb_ow_preview"),
       footer = tagList(modalButton("Cancel"), actionButton("wb_do_oow", "Write rows", class = "btn-primary")))) })
   output$wb_ow_preview <- renderUI(wb_preview(ow_rows()[, .(serial, site, start, end, cause)]))
-  observeEvent(input$wb_do_oow, { if (!why_ok("wb_ow_reason")) return(); r <- ow_rows(); req(nrow(r))
+  observeEvent(input$wb_do_oow, { if (!why_ok("wb_ow_reason")) return(); r <- ow_rows(); req(nrow(r) > 0)
     if (E$oow$append(as.data.frame(r))) done(sprintf("%d row(s) written to out_of_water.csv. Run to apply.", nrow(r)), "wb_ow_author") })
 
   # restore (manual removals and out-of-water periods only; a value removed by a quality rule comes back when the rule is changed)
@@ -175,7 +175,7 @@ wb_edit_server <- function(input, output, session, ctx) {
     if (E$time$append(as.data.frame(r))) done("Row written to time_corrections.csv. Run to apply.", "wb_ck_author") })
 
   # deployment dates: the logger went in after the selected records, or came out at the first of them
-  dt_row <- reactive({ s <- ctx$sel(); req(s); p0 <- ctx$part(); r <- p0$row; req(nrow(r))
+  dt_row <- reactive({ s <- ctx$sel(); req(s); p0 <- ctx$part(); r <- p0$row; req(nrow(r) > 0)
     after <- function(t) { a <- times_all(); k <- a[a > max(t)]; if (length(k)) min(k) else max(t) + 1 }
     if (identical(input$wb_dt_what %||% "deployed", "deployed")) wb_dates_row(r$serial[1], r$year[1], "deployed", after(s$t), input$wb_dt_reason %||% "", input$wb_dt_author %||% "")
     else wb_dates_row(r$serial[1], r$year[1], "removed", min(s$t), input$wb_dt_reason %||% "", input$wb_dt_author %||% "") })

@@ -327,7 +327,7 @@ read_campbell_toa5 <- function(path, header_only = FALSE, patterns = NULL) {
   keep <- which(!is.na(var) & var != "skip")
   sk <- toa5_skip(path); hl <- suppressWarnings(readLines(path, n = sk + 40L, warn = FALSE, skipNul = TRUE))
   if (!any(nzchar(trimws(hl[-seq_len(sk)])))) return(list(meta = modifyList(meta, list(rows = 0L)), data = empty_data(), events = empty_events()))   # the header only
-  d <- fread(path, skip = sk, header = FALSE, sep = th$sep, colClasses = "character", na.strings = NULL, fill = TRUE, blank.lines.skip = TRUE)
+  d <- fread(file = path, skip = sk, header = FALSE, sep = th$sep, colClasses = "character", na.strings = NULL, fill = TRUE, blank.lines.skip = TRUE)
   meta$rows <- nrow(d)
   if (!nrow(d) || !length(keep)) return(list(meta = meta, data = empty_data(), events = empty_events()))
   tt <- parse_dt(d[[1]])

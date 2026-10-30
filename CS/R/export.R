@@ -10,7 +10,7 @@ qc_wmo_register(c(sw_above_physical_limit = 3L, lw_outside_physical_limit = 3L, 
                   differs_from_other_stations = 2L))
 
 read_flags <- function(project_dir) { f <- file.path(path.expand(project_dir), "output", "audit", "flags.csv")
-  if (file.exists(f)) fread(f, colClasses = "character", na.strings = NULL) else data.table() }
+  if (file.exists(f)) fread(file = f, colClasses = "character", na.strings = NULL) else data.table() }
 
 # The station table with a <parameter>_flag column beside every parameter that has a suspect or removed value; or, with
 # scheme = "wmo", a <parameter>_qc column beside every parameter holding the WMO code (WMO BUFR table 0 33 020; see WMO_QC in core/qc.R).
@@ -29,11 +29,11 @@ flagged_station <- function(station, stream, project_dir, from = NULL, to = NULL
   fl <- read_flags(project_dir); if (nrow(fl)) fl <- fl[station == dt$station[1] & stream == dt$stream[1] & !(hide_accepted & flag_accepted(fl))]   # an accepted flag marks no value unless hide_accepted is off (core config.R)
   rf <- file.path(project_dir, "output", "audit", "detail", paste0(safe_name(paste0("station_", station, "__", stream)), ".csv"))
   qf <- file.path(project_dir, "output", "qc", paste0(safe_name(paste(station, stream, sep = "__")), "_removed.csv"))
-  rem <- if (file.exists(qf)) setnames(fread(qf, colClasses = "character", na.strings = ""), "parameter", "column")
-         else if (file.exists(rf)) fread(rf, colClasses = "character", na.strings = "")[stage == "qc"] else data.table()
+  rem <- if (file.exists(qf)) setnames(fread(file = qf, colClasses = "character", na.strings = ""), "parameter", "column")
+         else if (file.exists(rf)) fread(file = rf, colClasses = "character", na.strings = "")[stage == "qc"] else data.table()
   vals <- setdiff(names(dt), c(META_COLS)); out <- dt[, c("station", "stream", "TIMESTAMP", intersect("RECORD", names(dt)), "logger_id"), with = FALSE]
   wmo <- identical(scheme, "wmo")
-  if (wmo) { rd <- function(f) if (file.exists(f)) fread(f, colClasses = "character", na.strings = "") else data.table()
+  if (wmo) { rd <- function(f) if (file.exists(f)) fread(file = f, colClasses = "character", na.strings = "") else data.table()
     rules <- rd(file.path(project_dir, "config", "qc_rules.csv")); cal <- rd(file.path(project_dir, "output", "audit", "calibrations_applied.csv"))
     if (nrow(cal)) cal <- cal[station == dt$station[1] & stream == dt$stream[1]]
     has <- function(x) !is.na(x) & nzchar(x)
@@ -72,7 +72,7 @@ CS_REPORT_SECTIONS <- c("Logger and program" = "info", "Program history" = "prog
 # percentile of every station's records (output/audit/parameter_stats.csv). keys: station and stream.
 cs_report_limits <- function(project_dir, keys, mode = "same") {
   f <- file.path(path.expand(project_dir), "output", "audit", "parameter_stats.csv"); if (identical(mode, "free") || !file.exists(f)) return(NULL)
-  ps <- fread(f, colClasses = list(character = c("station", "stream", "parameter"))); k <- as.data.table(keys)
+  ps <- fread(file = f, colClasses = list(character = c("station", "stream", "parameter"))); k <- as.data.table(keys)
   ps <- ps[paste(station, stream) %in% paste(k$station, k$stream) | (station %in% k$station[!nzchar(k$stream %||% "")])]
   if (!nrow(ps)) return(NULL)
   axis_limits(ps[, .(unit = rep(station, 2), key = rep(parameter, 2), value = c(p01, p99))], mode)
@@ -81,7 +81,7 @@ station_report_doc <- function(station, stream, project_dir, groups = default_gr
   ro <- report_opts(opts); want <- function(id) report_wants(ro, id)
   project_dir <- path.expand(project_dir); a <- file.path(project_dir, "output", "audit")
   whole <- is.null(stream) || !nzchar(stream)
-  dt <- if (whole) load_station_all(station, project_dir) else load_station(station, stream, project_dir); rd <- function(f, ...) if (file.exists(file.path(a, f))) fread(file.path(a, f), ...) else data.table()
+  dt <- if (whole) load_station_all(station, project_dir) else load_station(station, stream, project_dir); rd <- function(f, ...) if (file.exists(file.path(a, f))) fread(file = file.path(a, f), ...) else data.table()
   in_scope <- function(d) d[station == dt$station[1] & (whole | stream == dt$stream[1])]
   meta <- rd("metadata.csv", colClasses = "character"); if (nrow(meta)) meta <- in_scope(meta)
   idx <- rd("audit_index.csv", colClasses = list(character = c("station", "stream"))); if (nrow(idx)) idx <- in_scope(idx)[level == "cell"]
@@ -145,7 +145,7 @@ station_report <- function(station, stream, project_dir, file, groups = default_
 # Each station's UTC offset from Station details (config/station_info.csv); NA where none is given.
 station_offsets <- function(project_dir, stations) {
   f <- file.path(path.expand(project_dir), "config", "station_info.csv")
-  si <- if (file.exists(f)) fread(f, colClasses = "character", na.strings = "") else data.table(station = character(), utc_offset_hours = character())
+  si <- if (file.exists(f)) fread(file = f, colClasses = "character", na.strings = "") else data.table(station = character(), utc_offset_hours = character())
   o <- suppressWarnings(as.numeric(si$utc_offset_hours[match(stations, si$station)])); setNames(o, stations)
 }
 
@@ -181,7 +181,7 @@ station_netcdf <- function(station, stream, project_dir, path, from = NULL, to =
       list(long_name = if (!is.na(r)) pinfo$topic[r] else v, units = unit, `_FillValue` = -9999, coordinates = "time lat lon", ancillary_variables = paste0(v, "_qc"))))
     vars[[length(vars) + 1]] <- list(name = paste0(v, "_qc"), dims = "time", data = q, type = "byte", atts = cf_qc_atts(v, cf[1])) }
   sif <- file.path(path.expand(project_dir), "config", "station_info.csv")
-  si <- if (file.exists(sif)) try_or(fread(sif, colClasses = "character"), data.table(), "config/station_info.csv: NetCDF positions left blank") else data.table()
+  si <- if (file.exists(sif)) try_or(fread(file = sif, colClasses = "character"), data.table(), "config/station_info.csv: NetCDF positions left blank") else data.table()
   s0 <- station; si <- if (nrow(si) && "station" %in% names(si)) si[station == s0] else data.table()
   lat <- suppressWarnings(as.numeric(si$latitude[1] %||% NA)); lon <- suppressWarnings(as.numeric(si$longitude[1] %||% NA))
   vars <- c(vars, nc_station_vars(paste(station, stream, sep = " / "), lat, lon))
@@ -202,8 +202,8 @@ build_export <- function(project_dir, keys, zipfile, from = NULL, to = NULL, fla
   n_prob <- length(AUDIT$problems)                 # problems from here on go into the export's problems.csv
   root <- file.path(tempfile("export_"), "campbell_export"); dir.create(file.path(root, "data"), recursive = TRUE)
   if (summaries) dir.create(file.path(root, "summaries")); report <- report && length(formats) > 0; if (report) dir.create(file.path(root, "reports"))
-  dict <- if (file.exists(file.path(a, "column_dictionary.csv"))) fread(file.path(a, "column_dictionary.csv"), colClasses = "character", na.strings = NULL) else data.table()
-  ps <- if (file.exists(file.path(a, "parameter_stats.csv"))) fread(file.path(a, "parameter_stats.csv"), colClasses = list(character = c("station", "stream", "parameter"))) else data.table()
+  dict <- if (file.exists(file.path(a, "column_dictionary.csv"))) fread(file = file.path(a, "column_dictionary.csv"), colClasses = "character", na.strings = NULL) else data.table()
+  ps <- if (file.exists(file.path(a, "parameter_stats.csv"))) fread(file = file.path(a, "parameter_stats.csv"), colClasses = list(character = c("station", "stream", "parameter"))) else data.table()
   done <- list(); so <- station_offsets(project_dir, unique(keys$station)); left_alone <- character()
   if (!is.na(out_offset) && all(is.na(so)) && is.na(unzoned_offset))
     stop(structure(class = c("ovid_ask_zone", "error", "condition"), list(message = "None of these stations has a UTC offset in Station details. Which zone were their loggers set to?", call = NULL, n = length(so))))

@@ -66,7 +66,7 @@ preflight <- function(cfg = CFG) {
     for (i in which(tolower(fr$action) == "assign" & !nzchar(fr$station) & !nzchar(fr$stream))) add("error", "file_rules.csv", i, "assign needs a station", "Fill in the station.")
     d <- fr[, .N, by = .(file, table)][N > 1]; for (k in seq_len(nrow(d))) add("warning", "file_rules.csv", "", paste0(d$file[k], " has ", d$N[k], " rules; they are applied in order"), "Keep one.") }
   # gauges and sites, against the last run where there is one
-  ss <- file.path(pdir, "output", "audit", "station_summary.csv"); have <- if (file.exists(ss)) fread(ss, colClasses = list(character = c("station", "stream"))) else NULL
+  ss <- file.path(pdir, "output", "audit", "station_summary.csv"); have <- if (file.exists(ss)) fread(file = ss, colClasses = list(character = c("station", "stream"))) else NULL
   pg <- rd("precip_gauges.csv")
   if (!is.null(pg) && nrow(pg)) { pg <- ensure_cols(pg, PRECIP_COLS)
     for (i in which(!tolower(pg$gauge_type) %in% c("pluvio2", "geonor"))) add("error", "precip_gauges.csv", i, paste0("gauge_type '", pg$gauge_type[i], "' is not known"), "Use pluvio2 or geonor.")

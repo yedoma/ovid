@@ -92,12 +92,12 @@ wb_edit_server <- function(input, output, session, ctx) {
   observeEvent(input$wb_act_remove, { s <- need_sel(); req(s, !VIEWER)
     dialog("Remove values", s, div(class = "wb-p", style = "color:var(--wb-fg2)", "The values are removed on the next run; the old values stay in the audit trail. Raw files are not changed."), "wb_rm", "Write rows") })
   output$wb_rm_preview <- renderUI(wb_preview(rm_rows("remove", "wb_rm_reason", "wb_rm_author")[, .(site, depth_m, variable, start, end, action)]))
-  observeEvent(input$wb_rm_do, { if (!why_ok("wb_rm_reason")) return(); r <- rm_rows("remove", "wb_rm_reason", "wb_rm_author"); req(nrow(r))
+  observeEvent(input$wb_rm_do, { if (!why_ok("wb_rm_reason")) return(); r <- rm_rows("remove", "wb_rm_reason", "wb_rm_author"); req(nrow(r) > 0)
     if (E$manual$append(as.data.frame(r))) done(sprintf("%d row(s) written to the corrections over a period. Run to apply.", nrow(r)), "wb_rm_author") })
   observeEvent(input$wb_act_flag, { s <- need_sel(); req(s, !VIEWER)
     dialog("Flag values", s, div(class = "wb-p", style = "color:var(--wb-fg2)", "The values are kept and flagged (manual_flag) on the next run, as a suspect reading."), "wb_fl", "Write rows") })
   output$wb_fl_preview <- renderUI(wb_preview(rm_rows("flag", "wb_fl_reason", "wb_fl_author")[, .(site, depth_m, variable, start, end, action)]))
-  observeEvent(input$wb_fl_do, { if (!why_ok("wb_fl_reason")) return(); r <- rm_rows("flag", "wb_fl_reason", "wb_fl_author"); req(nrow(r))
+  observeEvent(input$wb_fl_do, { if (!why_ok("wb_fl_reason")) return(); r <- rm_rows("flag", "wb_fl_reason", "wb_fl_author"); req(nrow(r) > 0)
     if (E$manual$append(as.data.frame(r))) done(sprintf("%d row(s) written to the corrections over a period. Run to apply.", nrow(r)), "wb_fl_author") })
 
   # trim the start or the end of the record

@@ -38,8 +38,8 @@ load_station <- function(station, stream = NULL, project_dir = CFG$project_dir, 
           else nanoparquet::read_parquet(f, col_select = intersect(columns, nanoparquet::read_parquet_schema(f)$name))
     dt <- as.data.table(as.data.frame(dt))
   } else {
-    dt <- if (is.null(columns)) fread(f, colClasses = list(character = c("station", "stream", "logger_id", "source_file")))
-          else { have <- names(fread(f, nrows = 0)); fread(f, select = intersect(columns, have)) }
+    dt <- if (is.null(columns)) fread(file = f, colClasses = list(character = c("station", "stream", "logger_id", "source_file")))
+          else { have <- names(fread(file = f, nrows = 0)); fread(file = f, select = intersect(columns, have)) }
   }
   if (!inherits(dt$TIMESTAMP, "POSIXct")) dt[, TIMESTAMP := as.POSIXct(TIMESTAMP, tz = "UTC")]
   attr(dt$TIMESTAMP, "tzone") <- "UTC"
@@ -49,7 +49,7 @@ load_station <- function(station, stream = NULL, project_dir = CFG$project_dir, 
 # The logger tables that make up a station.
 station_streams <- function(station, project_dir = CFG$project_dir) {
   f <- file.path(path.expand(project_dir), "output", "audit", "station_summary.csv")
-  if (file.exists(f)) { s <- fread(f, colClasses = list(character = c("station", "stream"))); st <- station; return(s[station == st, stream]) }
+  if (file.exists(f)) { s <- fread(file = f, colClasses = list(character = c("station", "stream"))); st <- station; return(s[station == st, stream]) }
   f <- list.files(file.path(path.expand(project_dir), "output", "stations"), pattern = paste0("^", safe_name(station), "__.*\\.(csv|parquet)$"))
   unique(sub("^.*?__", "", tools::file_path_sans_ext(f), perl = TRUE))
 }

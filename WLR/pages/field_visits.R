@@ -8,7 +8,7 @@
     s <- s[!is.na(s) & nzchar(s)]; req(length(s) > 0); updateSelectInput(session, "fv_site", choices = s, selected = isolate(input$fv_site)) })   # req(0) would pass
   observe({ o <- outs(); req(o); updateSelectizeInput(session, "sm_sites", choices = sort(unique(o$summary$site)), selected = isolate(input$sm_sites)) })
   sm_tab <- reactive({ f <- out_dir(pd(), "summaries", paste0(input$sm_by %||% "water_year", ".csv")); validate(need(file.exists(f), "No summaries yet: run the pipeline."))
-    x <- fread(f); x <- x[parameter == input$sm_param]; if (length(input$sm_sites)) x <- x[site %in% input$sm_sites]
+    x <- fread(file = f); x <- x[parameter == input$sm_param]; if (length(input$sm_sites)) x <- x[site %in% input$sm_sites]
     if (isTRUE(input$sm_complete)) x <- x[complete == TRUE]; x[, parameter := NULL]; x })
   output$sm_tbl <- renderDT({ x <- sm_tab(); validate(need(nrow(x) > 0, "Nothing for this choice.")); ovid_dt(x, page = 15) })
   output$sm_dl <- downloadHandler(function() paste0("summary_", input$sm_by, "_", input$sm_param, ".csv"), function(file) fwrite(sm_tab(), file))

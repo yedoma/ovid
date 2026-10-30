@@ -715,14 +715,14 @@ run_pipeline_steps <- function(cfg = CFG) {
   sm <- rbindlist(summ, fill = TRUE); n7_hit <- 0L
   fl7 <- NULL; flags7 <- function() { if (is.null(fl7)) { fl7 <<- read_out(cfg$project_dir, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))   # read once, as export_table() would,
     setattr(fl7, "accepted", flag_accepted(fl7)) }; fl7 }                                                                                         # and which are accepted worked out once
-  tested <- { qr <- cfg_path(cfg$project_dir, "qc"); rules <- if (file.exists(qr)) fread(qr, colClasses = "character", na.strings = "") else data.table(); has <- function(x) !is.na(x) & nzchar(x)
+  tested <- { qr <- cfg_path(cfg$project_dir, "qc"); rules <- if (file.exists(qr)) fread(file = qr, colClasses = "character", na.strings = "") else data.table(); has <- function(x) !is.na(x) & nzchar(x)
     if (nrow(rules)) sort(unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter])) else character() }      # as export_table() reads them
   for (st in unique(sm$site)) { r <- sm[site == st][order(start)]; f <- file.path(out, "corrected", paste0(safe_name(st), ".csv"))
     k7 <- hash_of(list(CACHE_VERSION, STEP_HASH$corrected, BASE_OFFSET, st, r$deployment, r$serial, unlist(key6[unique(r$serial)]), tested, "both",
                     flags_out[accepted & site == st, .(logger_id, parameter, start, end, check)]))
     cf <- sub("\\.rds$", ".csv", cache_file(file.path(cdir, "corrected"), st, k7))
     if (inc && file.exists(cf)) { file.copy(cf, f, overwrite = TRUE); n7_hit <- n7_hit + 1L }
-    else { x <- rbindlist(lapply(seq_len(nrow(r)), function(i) export_table(fix_ts_cols(fread(written[[r$deployment[i]]], na.strings = c("", "NA"))), r$serial[i], cfg$project_dir, "both", !isFALSE(cfg$hide_accepted_flags), fl = flags7())), fill = TRUE)   # both versions: the export picks one
+    else { x <- rbindlist(lapply(seq_len(nrow(r)), function(i) export_table(fix_ts_cols(fread(file = written[[r$deployment[i]]], na.strings = c("", "NA"))), r$serial[i], cfg$project_dir, "both", !isFALSE(cfg$hide_accepted_flags), fl = flags7())), fill = TRUE)   # both versions: the export picks one
            fwrite(x, f); if (inc) file.copy(f, cf, overwrite = TRUE) }
     if (inc) c_used <- c(c_used, cf) }
   if (inc) { cache_prune(file.path(cdir, "read"), READ_CACHE$used); cache_prune(file.path(cdir, "plots"), p_used)

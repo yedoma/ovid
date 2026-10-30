@@ -142,7 +142,7 @@ read_agi_cmd <- function(path) {
 # Prosys II/III name the columns xA (m), yA (m), zA (m), VMN (mV), IAB (mA), Dev. Rho (%), M (mV/V) (as read by ResIPy).
 read_syscal_prosys <- function(path) {
   h <- head_of(path, 1); n <- c("," = lengths(regmatches(h, gregexpr(",", h))), ";" = lengths(regmatches(h, gregexpr(";", h))), "\t" = lengths(regmatches(h, gregexpr("\t", h))))
-  raw <- fread(path, sep = names(n)[which.max(n)], colClasses = "character", na.strings = c("", "NA"), fill = TRUE, encoding = "Latin-1")
+  raw <- fread(file = path, sep = names(n)[which.max(n)], colClasses = "character", na.strings = c("", "NA"), fill = TRUE, encoding = "Latin-1")
   orig <- names(raw); key <- tolower(gsub("[^A-Za-z0-9]", "", sub("\\(.*", "", orig)))
   setnames(raw, make.unique(ifelse(nzchar(orig), trim(orig), "blank")))
   col <- function(...) { i <- match(c(...), key); i <- i[!is.na(i)][1]; if (is.na(i)) rep(NA_real_, nrow(raw)) else num_cells(sub(",", ".", raw[[i]], fixed = TRUE)) }

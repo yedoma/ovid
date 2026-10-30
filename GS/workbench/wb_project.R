@@ -35,7 +35,7 @@ wb_project_server <- function(input, output, session, ctx) {
   output$wb_scan <- renderUI({ std$rv$tick; f <- found(); if (!nrow(f)) f <- data.table(rel = character(), size = numeric())
     cf <- file.path(PROJECT, "output", "catalogue", "files.csv")
     # safe: an output of the last run, only shown
-    m <- if (file.exists(cf)) tryCatch(fread(cf, colClasses = "character", na.strings = NULL)[!grepl("!/", rel, fixed = TRUE)], error = function(e) NULL) else NULL
+    m <- if (file.exists(cf)) tryCatch(fread(file = cf, colClasses = "character", na.strings = NULL)[!grepl("!/", rel, fixed = TRUE)], error = function(e) NULL) else NULL
     i <- if (!is.null(m)) match(f$rel, m$rel) else rep(NA_integer_, nrow(f))
     new <- sum(is.na(i)); changed <- sum(!is.na(i) & suppressWarnings(as.numeric(m$size[i])) != f$size, na.rm = TRUE)
     s <- std$cat_s(); o <- s[kind %in% c("original", "merged")]

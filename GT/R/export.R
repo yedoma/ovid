@@ -122,7 +122,7 @@ build_export <- function(project_dir, sites, zipfile, from = NULL, to = NULL, re
       fwrite(so, file.path(tmp, "soil", paste0(safe_name(s), "_soil.csv"))) } }
   }
   if (summaries) { dir.create(file.path(tmp, "summaries"))
-    for (f in list.files(file.path(od, "summaries"), "\\.csv$", full.names = TRUE)) { x <- fread(f); if ("site" %in% names(x)) x <- x[site %in% sites]; fwrite(export_depths(x, sgn), file.path(tmp, "summaries", basename(f))) } }
+    for (f in list.files(file.path(od, "summaries"), "\\.csv$", full.names = TRUE)) { x <- fread(file = f); if ("site" %in% names(x)) x <- x[site %in% sites]; fwrite(export_depths(x, sgn), file.path(tmp, "summaries", basename(f))) } }
   dir.create(file.path(tmp, "metadata"))
   if (nrow(sc)) fwrite(sc[site %in% sites], file.path(tmp, "metadata", "sites.csv"))
   se <- try_or(read_cfg(cfg_path(project_dir, "sensors")), data.table(), "config/sensors.csv: sensors and depths left out of the export"); if (nrow(se)) { se <- se[site %in% sites]   # as typed ("+0.3" above the ground) into numbers in the project's convention, which a column names
@@ -130,7 +130,7 @@ build_export <- function(project_dir, sites, zipfile, from = NULL, to = NULL, re
     fwrite(se, file.path(tmp, "metadata", "sensors_and_depths.csv")) }
   if (audit) { dir.create(file.path(tmp, "audit"))
     for (f in c("audit_index.csv", "flags.csv", "sensor_health.csv", "between_sites.csv", "gaps.csv", "reconciliation.csv", "files.csv", "bundles.csv", "run_manifest.csv")) {
-      p <- file.path(od, "audit", f); if (file.exists(p)) { x <- fread(p); if ("site" %in% names(x)) x <- x[is.na(site) | site %in% sites | !nzchar(site)]; fwrite(x, file.path(tmp, "audit", f)) } } }
+      p <- file.path(od, "audit", f); if (file.exists(p)) { x <- fread(file = p); if ("site" %in% names(x)) x <- x[is.na(site) | site %in% sites | !nzchar(site)]; fwrite(x, file.path(tmp, "audit", f)) } } }
   if (length(reports)) write_gt_reports(project_dir, file.path(tmp, "reports"), sites, reports, progress = function(i, n, what) progress(i, n, paste("report:", what)), opts = report_opts)
   probs <- problems_since(n_prob); if (nrow(probs)) fwrite(probs, file.path(tmp, "problems.csv"))
   applied_export(project_dir, tmp)                  # every correction applied in the run (core applied.R)

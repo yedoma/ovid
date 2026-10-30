@@ -26,4 +26,5 @@
   output$au_files <- renderDT({ f <- au_fdata(); validate(need(nrow(f) > 0, "No files in this view."))
     ovid_dt(f[order(folder_year, serial, name), .(name, folder_year, kind, format, serial, status, used, readings_read, in_output, dropped, dropped_why, values_removed, reconciles, used_in, what_happened, md5, first_ts, last_ts)], page = 12) %>%
       formatStyle("reconciles", color = styleEqual(c(TRUE, FALSE), c(NORD$green, NORD$red))) })
-  output$au_fdl <- downloadHandler(function() "file_audit.csv", function(file) fwrite(outs()$fileaudit, file, dateTimeAs = "write.csv"))
+  output$au_fdl <- downloadHandler(function() "file_audit.csv", function(file) { fa <- outs()$fileaudit; if (is.null(fa)) { showNotification("No file audit yet: run the app first.", type = "warning"); fa <- data.table(note = "No file audit yet.") }   # a note, not a failed download
+    fwrite(fa, file, dateTimeAs = "write.csv") })

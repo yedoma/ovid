@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (found by the click-through test, 2026-10-30)**
+- Site, Data and Audit, Export file audit failed the download when there was nothing yet ('..keep' not found; fwrite of nothing): they now download a note and say so.
+- A missing file whose path holds a space was run as a shell command by fread(): every file read names it as file=.
+- **Output changes:** none.
+
 **Changed (speed, 2026-10-30)**
 - Writing the corrected data reads flags.csv once, not once per deployment (export_table() takes it); season_year() parses each year's 15 September once, not once per record. A full run is about a third faster, and a run with everything reused takes about a third of the time (stage 6 from 33 s to 4 s on the Scotty Creek project). Tests compare both with the old code. **Output changes:** none.
 - Plots are drawn in parallel on macOS and Linux (core par_map; one at a time on Windows), a few loggers at a time; each logger's cache is written once its plots exist, so reruns reuse them as before, and a plot a worker does not deliver is drawn in the main process. The PNG files are byte-identical; a test compares 1 and 2 workers. **Output changes:** none.

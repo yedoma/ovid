@@ -16,7 +16,7 @@ SP_CS_STOPPED_DAYS <- 30                      # a station whose last record is t
 sp_cs_daily <- function(pd, station, stream) {
   f <- file.path(pd, "output", "derived", paste0(safe_name(paste(station, stream, sep = "__")), "_daily.csv")); if (!file.exists(f)) return(NULL)
   # safe: a daily file that cannot be read shows as no daily values
-  d <- tryCatch(fread(f), error = function(e) NULL); if (is.null(d) || !nrow(d) || !"Date" %in% names(d)) return(NULL)
+  d <- tryCatch(fread(file = f), error = function(e) NULL); if (is.null(d) || !nrow(d) || !"Date" %in% names(d)) return(NULL)
   d[, Date := as.Date(Date)][] }
 sp_cs_col <- function(d, what) { if (is.null(d)) return(NULL); nm <- names(d)[vapply(d, is.numeric, NA)]
   cs_home_pick(nm[!grepl("_(min|max|sd|n|quality|flag)$", nm)], SP_CS_PARAMS[[what]]$rx) }

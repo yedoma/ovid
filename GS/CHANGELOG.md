@@ -7,6 +7,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (found by the click-through test, 2026-10-30)**
+- GPR: the radargram and map listeners no longer warn "plotly_hover event ... not registered" before their plot is drawn.
+- Scan with no raw folder there (a new install's default ~/Projects/Ovid/Projects/GS/raw) asked "the set-up needs attention ... Scan anyway"; it now says to choose the folder with Browse…, then Scan. "Review the set-up" in Simple goes to Import.
+- A missing file whose path holds a space was run as a shell command by fread(): every file read names it as file= (20 calls).
+- Simple, View: "No date" broke the tiles (x[!dated] is a not-join in data.table); Export, Survey data and Previews on an empty project failed the download: they now download a note.
+- **Output changes:** none.
+
 **Tests (2026-10-29)**
 - The Workbench structure check names the part that fails (it failed once in a full parallel run and could not be repeated). **Output changes:** none.
 

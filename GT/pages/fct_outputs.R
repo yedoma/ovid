@@ -4,7 +4,7 @@ load_outputs <- function(pd) {
   if (!file.exists(file.path(a, "summary.csv"))) return(NULL)
   rd <- function(dir, f) { p <- file.path(dir, f)
     # safe: an output table that cannot be read shows as empty until the next run writes it
-    d <- if (file.exists(p) && file.info(p)$size > 0) tryCatch(fread(p, na.strings = c("", "NA"), colClasses = list(character = intersect(c("serial", "channel", "sensor", "site", "logger_id"), names(fread(p, nrows = 0))))), error = function(e) data.table()) else data.table()
+    d <- if (file.exists(p) && file.info(p)$size > 0) tryCatch(fread(file = p, na.strings = c("", "NA"), colClasses = list(character = intersect(c("serial", "channel", "sensor", "site", "logger_id"), names(fread(file = p, nrows = 0))))), error = function(e) data.table()) else data.table()
     d }
   # safe: as above
   dd <- tryCatch(readRDS(file.path(s, "daily.rds")), error = function(e) data.table())

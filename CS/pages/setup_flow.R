@@ -45,7 +45,7 @@
   # the information panel and the status line of each step
   output$flow_info <- renderUI({ o <- outs(); s <- st_all()
     # safe: an empty history means "not run yet"
-    h <- tryCatch(fread(file.path(pd(), "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) data.table())
+    h <- tryCatch(fread(file = file.path(pd(), "output", "audit", "run_history.csv"), colClasses = "character"), error = function(e) data.table())
     x <- review$items(); n_iss <- sum(x$kind == "flag")
     gp <- if (!is.null(o) && nrow(o$gaps)) { g <- copy(o$gaps)[order(-as.numeric(gap_hours))][as.numeric(gap_hours) >= 24]
       if (nrow(g)) data.table(where = paste(g$logger_id, g$table), what = paste(flow_span(g$gap_hours), "without records"),

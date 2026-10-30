@@ -131,7 +131,8 @@
         tags$td(substr(fmt_ts(r$end[i]), 1, 10)), tags$td(if (is.na(r$T_ST[i])) "\u2014" else formatC(as.numeric(r$T_ST[i]), format = "f", digits = 2)), tags$td(r$measured_to[i] %|% ""),
         tags$td(num(r$records[i])), tags$td(ovid_flag(stat[i], if (stat[i] == "ok") "ok" else "warn")))))) })
   output$site_dl <- downloadHandler(function() paste0("site_", safe_name(site_cur() %||% "site"), ".csv"), function(file) { d <- load_site(site_cur(), pd())
-    keep <- intersect(c("TIMESTAMP", "site", "deployment", "logger_id", "depth_m", "elev_m", "dtw_m", "temp_c", "baro_kpa", "pres_kpa", grep("_flag$", names(d), value = TRUE)), names(d))
+    if (is.null(d) || !NROW(d)) { showNotification("No data for this site yet: run the app first.", type = "warning"); return(fwrite(data.table(note = "No data for this site yet."), file)) }
+    d <- as.data.table(d); keep <- intersect(c("TIMESTAMP", "site", "deployment", "logger_id", "depth_m", "elev_m", "dtw_m", "temp_c", "baro_kpa", "pres_kpa", grep("_flag$", names(d), value = TRUE)), names(d))
     x <- d[, ..keep]; x[, TIMESTAMP := fmt_ts(TIMESTAMP)]; fwrite(x, file) })
 
   # Needs you: the one review list (core flow.R): the shown sites' flags, loggers that look moved and the run's findings

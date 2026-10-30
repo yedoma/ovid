@@ -123,7 +123,7 @@ air_daily <- function(dd, air_cfg, min_complete = 0.8) {
   if (!is.null(air_cfg) && nrow(air_cfg)) for (i in seq_len(nrow(air_cfg))) { r <- air_cfg[i]; f <- path.expand(trim(r$file))
     if (!nzchar(f)) next
     if (!file.exists(f)) { problem("air_temperature.csv", paste("row", i, "file not found:", r$file)); next }
-    d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) { problem("air_temperature.csv", paste("row", i, conditionMessage(e))); NULL })
+    d <- tryCatch(fread(file = f, showProgress = FALSE), error = function(e) { problem("air_temperature.csv", paste("row", i, conditionMessage(e))); NULL })
     if (is.null(d) || !nrow(d)) next
     tc <- if (nzchar(trim(r$time_column))) trim(r$time_column) else names(d)[grepl("^(timestamp|datetime|date ?time|time|date)$", names(d), ignore.case = TRUE)][1]
     vc <- trim(r$value_column)

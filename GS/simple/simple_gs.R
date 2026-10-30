@@ -152,8 +152,8 @@ simple_server <- function(input, output, session, std) {
   x_all <- reactive({ std$rv$tick; sp_gs_surveys(cat_s()) })
   last_run <- reactive({ cat_s(); f <- file.path(PROJECT, "output", "audit", "run_history.csv"); if (!file.exists(f)) return(NULL)
     # safe: the run history is shown only
-    h <- tryCatch(fread(f), error = function(e) NULL); if (is.null(h) || !nrow(h)) NULL else h[.N] })
-  files <- reactive({ cat_s(); f <- file.path(CAT, "files.csv"); if (file.exists(f)) tryCatch(fread(f, colClasses = "character"), error = function(e) data.table()) else data.table() })
+    h <- tryCatch(fread(file = f), error = function(e) NULL); if (is.null(h) || !nrow(h)) NULL else h[.N] })
+  files <- reactive({ cat_s(); f <- file.path(CAT, "files.csv"); if (file.exists(f)) tryCatch(fread(file = f, colClasses = "character"), error = function(e) data.table()) else data.table() })
 
   # ---- Import
   output$sp_read <- renderUI({ s <- cat_s(); if (is.null(s) || !nrow(s)) return(p(class = "sp-dim", "Nothing scanned yet."))
@@ -189,7 +189,7 @@ simple_server <- function(input, output, session, std) {
   observeEvent(input$sp_survey, sel_s(input$sp_survey))
   observeEvent(input$sp_all, all_tiles(!all_tiles()))
   shown <- reactive({ x <- x_all(); req(x); w <- input$sp_filter %||% "folder"; q <- tolower(trim(input$sp_q %||% ""))
-    if (w == "site") x <- x[nzchar(site)] else if (w == "look") x <- x[look == TRUE] else if (w == "nodate") x <- x[!dated]
+    if (w == "site") x <- x[nzchar(site)] else if (w == "look") x <- x[look == TRUE] else if (w == "nodate") x <- x[dated == FALSE]   # x[!dated] is read as a not-join
     if (w == "folder") x[, `:=`(group = folder, grouped_by = "folder")]
     if (nzchar(q)) x <- x[grepl(q, tolower(paste(name, site, folder, survey_id)), fixed = TRUE)]
     x })
@@ -285,7 +285,7 @@ simple_server <- function(input, output, session, std) {
   observeEvent(input$sp_ed_s, { x <- x_all(); s <- x[survey_id == input$sp_ed_s]; if (!nrow(s)) return()
     updateTextInput(session, "sp_ed_name", value = s$name); updateTextInput(session, "sp_ed_date", value = if (s$dated) substr(s$date, 1, 10) else "")
     updateSelectizeInput(session, "sp_ed_tr", selected = s$transect_id); updateSelectInput(session, "sp_ed_q", selected = if (s$quality %in% c("Unknown", "")) "" else s$quality) })
-  observeEvent(input$sp_ed_add, { x <- x_all(); s <- x[survey_id == input$sp_ed_s]; req(nrow(s)); k <- sp_gs_key(s$name, s$survey_id)
+  observeEvent(input$sp_ed_add, { x <- x_all(); s <- x[survey_id == input$sp_ed_s]; req(nrow(s) > 0); k <- sp_gs_key(s$name, s$survey_id)
     d <- trim(input$sp_ed_date %||% ""); if (nzchar(d) && is.na(suppressWarnings(as.Date(d, optional = TRUE))) && !grepl("^(19|20)\\d{2}(-\\d{2})?$", d))
       return(showNotification("A date as YYYY-MM-DD (or YYYY-MM, or the year).", type = "warning"))
     now <- list(display_name = s$name, acquired_date = if (s$dated) substr(s$date, 1, 10) else "", transect_id = s$transect_id, quality = if (s$quality == "Unknown") "" else s$quality)
@@ -336,7 +336,7 @@ simple_server <- function(input, output, session, std) {
       out <- file.path(dir, ifelse(dirname(fs) == CAT, "catalogue", "config")); for (d in unique(out)) dir.create(d, showWarnings = FALSE); file.copy(fs, file.path(out, basename(fs)))
       zip::zip(file, c(file.path("catalogue", basename(fs[dirname(fs) == CAT])), file.path("config", basename(fs[dirname(fs) != CAT]))), root = dir) })
   output$sp_data <- downloadHandler(filename = function() "survey_data.zip", contentType = "application/zip",
-    content = function(file) { x <- x_all(); dir <- tempfile("data"); dir.create(dir); fs <- character()
+    content = function(file) { x <- x_all() %||% data.table(); dir <- tempfile("data"); dir.create(dir); fs <- character()   # nothing scanned: the README alone
       withProgress(message = "Collecting the surveys", value = 0, for (i in seq_len(nrow(x))) { s <- x[i]; incProgress(1 / nrow(x)); if (!has_meas(s$survey_id)) next
         k <- safe_name(paste0(s$name, "_", sub("^ERT-", "", s$survey_id))); dir.create(file.path(dir, k)); d <- read_meas(s$survey_id); fl <- read_part(s$survey_id, "flags.csv")
         if (!is.null(fl) && nrow(fl)) d[, flags := fcoalesce(fl[, .(f = paste(unique(flag), collapse = ";")), by = meas_id]$f[match(meas_id, unique(fl$meas_id))], "")] else d[, flags := ""]
@@ -348,7 +348,9 @@ simple_server <- function(input, output, session, std) {
         "(the QC profile's flags; values kept), beside the original file as recorded. Apparent resistivity: Telford et al. (1990); Loke (2004)."), file.path(dir, "README.txt"))
       zip::zip(file, c(fs, "README.txt"), root = dir) })
   output$sp_prev <- downloadHandler(filename = function() "previews.zip", contentType = "application/zip",
-    content = function(file) { d <- file.path(CAT, "previews"); f <- list.files(d, "\\.png$"); validate(need(length(f), "No previews were made.")); zip::zip(file, f, root = d) })
+    content = function(file) { d <- file.path(CAT, "previews"); f <- list.files(d, "\\.png$")
+      if (!length(f)) { d <- tempfile("prev"); dir.create(d); f <- "README.txt"; writeLines("No previews yet: scan the archive first (Import).", file.path(d, f)) }   # not a failed download
+      zip::zip(file, f, root = d) })
 }
 
 # A survey in the list of changes: its name and id ("SL2SCH · ERT-a5faacf3c4"), the id read back by sp_gs_apply.

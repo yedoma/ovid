@@ -90,9 +90,11 @@ smooth_steps <- function(v, default = 7) { v <- suppressWarnings(as.numeric(v));
 plot_heatmap <- function(d, title = "", res = "day", dz = 0.05, smooth = 1, interp = TRUE, lim = NULL, isotherms = c(-5, 2, 5),
                          show_zero = TRUE, show_sensors = TRUE, trans = "linear", caption = NULL, depth_lim = NULL) {
   if (is.null(d) || !nrow(d)) return(msg_plot("No temperature data for this site."))
-  g <- heatmap_grid(d, res, dz, smooth, interp)
+  g <- tryCatch(heatmap_grid(d, res, dz, smooth, interp), error = function(e) data.table())   # e.g. no reading at all in the period
   if (!nrow(g)) return(msg_plot("Not enough sensors to draw a profile."))
   v <- g$temp[is.finite(g$temp)]
+  if (!length(v)) return(msg_plot("Not enough data to draw a profile for this period."))
+  if (length(lim) != 2 || !all(is.finite(lim)) || lim[2] <= lim[1]) lim <- NULL      # a fixed scale with an empty box, or no spread: the automatic one
   if (is.null(lim)) lim <- { m <- stats::quantile(v, c(0.01, 0.99), na.rm = TRUE); c(min(m[[1]], -1), max(m[[2]], 1)) }
   stops <- sort(unique(c(lim[1], lim[1] * 0.55, lim[1] * 0.2, lim[1] * 0.04, 0, lim[2] * 0.08, lim[2] * 0.25, lim[2] * 0.55, lim[2])))
   stops <- stops[stops >= lim[1] & stops <= lim[2]]

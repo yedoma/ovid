@@ -46,6 +46,6 @@
     validate(need(length(bb), "No barologger covers this year.")); plot_baro(bb, paste("Baro stations,", y)) }, bg = NORD$bg)
   output$bo_diff <- renderPlot({ o <- outs(); req(o); validate(need(nrow(o$bcmp) > 0, "Two or more barologgers are needed for a comparison.")); d <- copy(o$bcmp); d[, day := as.Date(day)]; plot_baro_diff(d) }, bg = NORD$bg)
   output$bo_checks <- renderDT({ rv$tick; f <- file.path(pd(), "output", "audit", "baro_checks.csv"); validate(need(file.exists(f), "Run the pipeline to check the barologgers listed above."))
-    d <- fread(f); keep <- intersect(c("barologger", "reference", "method", "applied", "offset_kpa", "offset_ci_low", "offset_ci_high", "drift_kpa_per_year", "drift_ci_low", "drift_ci_high", "mk_p", "offset_material", "drift_material", "days", "report", "note"), names(d))
+    d <- fread(file = f); keep <- intersect(c("barologger", "reference", "method", "applied", "offset_kpa", "offset_ci_low", "offset_ci_high", "drift_kpa_per_year", "drift_ci_low", "drift_ci_high", "mk_p", "offset_material", "drift_material", "days", "report", "note"), names(d))
     ovid_dt(d[, ..keep], page = 12) })
   output$bo_scores <- renderDT({ o <- outs(); req(o); ovid_dt(o$sugg[as.character(year) == input$bo_year][order(group, -score)], page = 12) })

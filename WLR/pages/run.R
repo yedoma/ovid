@@ -41,12 +41,12 @@
   applied_server("applied", pd, out_seen, edit = if (!VIEWER) "QC")   # the corrections applied, in the top bar (core applied.R)
   # safe: shown as no output yet; a run writes it again
   outs <- reactive({ rv$tick; out_seen(); tryCatch(load_outputs(pd()), error = function(e) NULL) })
-  wl_files <- reactive({ outs(); f <- tryCatch(fread(file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
+  wl_files <- reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
     if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = path, first = first_ts, last = last_ts)] })
   wl_deps <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$summary)) NULL else o$summary[, .(serial = as.character(serial), from = fmt_ts(start), to = fmt_ts(end), name = site)] })
   wl_level <- function(serial) { f <- list.files(file.path(pd(), "output", "sites"), paste0("^", rx_escape(serial), "__.*\\.csv$"), full.names = TRUE)   # water above the sensor, for moves
     # safe: a file that cannot be read adds nothing to this preview
-    if (!length(f)) return(NULL); d <- rbindlist(lapply(f, function(x) tryCatch(fread(x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)), fill = TRUE)
+    if (!length(f)) return(NULL); d <- rbindlist(lapply(f, function(x) tryCatch(fread(file = x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)), fill = TRUE)
     if (!nrow(d)) NULL else d[, .(t = parse_dt(TIMESTAMP), v = depth_m)] }
   gb <- group_by_server("gb", wl_files, pd, wl_deps, level = wl_level, jump_min = 0.05, unit = "m", open = function(r) { s <- wl_deps(); s <- if (!is.null(s)) s[serial == r$serial] else NULL
     if (!is.null(s) && nrow(s)) { site_cur(s$name[1]); go("Site") } else showNotification(paste(r$serial, "has no site yet: give it one on Loggers and deployments."), type = "message") })
