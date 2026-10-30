@@ -19,9 +19,9 @@
     x <- C(); x$flights <- copy(x$flights); x$flights[flight_id %in% ids, `:=`(mission_set = value, mission_status = if (value == "own") "single" else "confirmed")]
     if (value == "own") x$flights[flight_id %in% ids, `:=`(mission = paste0(mission, "-", flight_id), mission_part = 1L, mission_parts = 1L)]
     C(x); showNotification(msg, type = "message") }
-  observeEvent(input$m_confirm, { f <- cur(); if (is.null(f) || !nrow(f) || is.na(f$mission)) return()
+  observeEvent(input$m_confirm, { f <- cur(); if (is.null(f) || !nrow(f)) return(showNotification("Select a flight first.", type = "warning")); if (is.na(f$mission)) return(showNotification("This flight is not part of a grouping.", type = "warning"))
     set_mission(fl()[mission == f$mission]$flight_id, f$mission, "Grouping confirmed") })
-  observeEvent(input$m_split, { f <- cur(); if (is.null(f) || !nrow(f)) return()
+  observeEvent(input$m_split, { f <- cur(); if (is.null(f) || !nrow(f)) return(showNotification("Select a flight first.", type = "warning"))
     set_mission(f$flight_id, "own", "Sortie split off (the others regroup on the next rebuild)") })
   lk_cur <- reactive({ f <- cur(); if (is.null(f) || !nrow(f)) data.table() else C()$links[flight_id == f$flight_id] })
   output$links <- renderDT({ l <- lk_cur(); if (!nrow(l)) return(ovid_dt(data.table(` ` = "No linked files"), opts = list(dom = "t")))

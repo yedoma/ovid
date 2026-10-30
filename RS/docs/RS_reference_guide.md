@@ -35,8 +35,10 @@ change them in `CFG` at the top of `rs_pipeline.R` or in the files under `<proje
 ## Quick start
 
 1. Open the app: double-click `Open RS (Mac).command` in Ovid_Apps (or `Ovid_RS.bat` on Windows). Packages install themselves on the first start.
-2. On **Sources**, press **Browse…** to pick a drive or folder (for example an external disk with the flight archive), give it a short name and press **Scan folder**.
-   The first scan opens every image once; later scans only read folders whose files changed.
+2. The Simple view of a new install first asks for a catalogue: **Start a new catalogue** (a name; the folder is filled in under
+   `~/Projects/Ovid/Projects/RS`) or **open one you have**. On **Import**, add each drive or folder with **Browse…** and **Add to list**,
+   then **Scan N folders** (Standard: **Sources**, **Add to list** and **Scan the new folders**, or **Scan folder** for one at once).
+   The first scan reads every photo's header once (several at once); later scans read only new or changed files.
 3. On **Map**, every flight appears on satellite imagery, coloured by positioning status. Click a flight on the map or in the table to see it beside the map.
 4. On **Flight**, give it a display name, project and site, and, in the **Workbench**, confirm or reject the files linked to it. Everything you type is saved to `config/` and backed up.
 5. On **QA**, work through the flights with flags and the files tied to no flight.
@@ -102,6 +104,8 @@ on several sources is one flight with copies: copies are found by the flight id,
 - Remove (Sources page) takes a source out of `config/sources.csv` and its rows out of the catalogue. Its folder and files are never touched.
 - A source that is not plugged in keeps its last scan. Its flights stay in the catalogue and the Sources page shows it as not connected.
 - `config/file_rules.csv` can ignore a path pattern (for example a recycle bin) or give it a role.
+- Folders added to the list and not scanned yet are rows of `config/sources.csv` with no scan in the cache: they stay when the page is
+  reloaded, and their short name can be changed or the folder removed freely. A new project has no source and no placeholder folder.
 
 ## 2. Formats and roles
 
@@ -278,7 +282,14 @@ Only headers and sidecars are read. Catalogue: `output/catalogue/datasets.csv`.
 
 ### Other geodata: keep or remove
 
-The Other geodata tab lists satellite, aerial, LiDAR, raster and GIS files by folder, with **Keep** or **Remove**. Remove is an ignore rule in `file_rules.csv` (the files are not touched); Keep is a review decision (`review_decisions.csv`). A folder with no position, or far from the flights, is suggested for removal.
+Drives often hold geodata from other work (national layers, thesis maps, map caches). When the catalogue is built, a satellite, aerial,
+LiDAR or raster file or GIS layer is catalogued when its folder holds or sits beside flight photos (the same folder, one inside it or one
+around it), or when it lies within `spatial_max_km` (5 km, an ovid default; calibration options) of a flight. Everything else is **set
+aside** in `catalogue/set_aside.csv` with the reason: no position read, a basemap more than `spatial_max_extent_km` (200 km) across, or
+its distance to the nearest flight (the gap between the file's box and the flight's, equirectangular approximation, Snyder 1987). Nothing
+is dropped or changed, and no rescan is needed to change it. The Other geodata tab lists the folders set aside: **Keep** brings a folder
+back on the next rebuild (a review decision, `review_decisions.csv`); **Remove** adds an ignore rule to `file_rules.csv` so later scans
+skip it. Sources (Standard) and Import (Simple) switch GIS layers or imagery off altogether (`geodata_gis_layers`, `geodata_imagery`).
 
 ## 10. GIS layers
 

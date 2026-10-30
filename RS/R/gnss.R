@@ -147,7 +147,7 @@ read_gnss_file <- function(file, name = basename(file)) {
   else if (grepl("\\.xml$", name, ignore.case = TRUE)) { d <- read_landxml_points(file); dev <- "Leica" }
   else {
     # safe: the next line returns "no rows read" as the file's problem
-    d <- tryCatch(fread(file, colClasses = "character", fill = TRUE, encoding = "UTF-8"), error = function(e) NULL)
+    d <- tryCatch(fread(file = file, colClasses = "character", fill = TRUE, encoding = "UTF-8"), error = function(e) NULL)
     if (is.null(d) || !nrow(d)) return(structure(data.table(), problem = paste(name, ": no rows read")))
     hdr <- names(d)
     if (all(grepl("^V[0-9]+$", hdr))) {   # no header: Leica style ID, E, N, H [, code] (or ID, lat, lon, h)

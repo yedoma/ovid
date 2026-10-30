@@ -5,10 +5,10 @@ setup_check <- function(cfg) {
   chk <- check_collector(c("level", "area", "item", "problem", "fix")); add <- chk$add
   cfgs <- tryCatch(load_configs(cfg), error = function(e) { add("error", "Set-up tables", "", conditionMessage(e), "Fix or remove the file named."); NULL })
   s <- if (is.null(cfgs)) data.table(source_id = character(), path = character()) else cfgs$sources
-  # sources stand in for raw folders: one that is not plugged in keeps its last scan, so that is only a note
-  if (!nrow(s)) check_folders(add, cfg$raw_dirs, cfg$project_dir, "Folders")
-  else check_folders(function(level, ...) add(if (level == "error" && grepl("raw data folder", list(...)[[3]])) "info" else level, ...),
-                     s$path[dir.exists(path.expand(s$path))] %||% "", cfg$project_dir, "Folders")
+  # RS reads sources, not raw folders: a new project has none yet (its first scan adds one), so only the project folder is checked;
+  # a source not plugged in keeps its last scan, so that is only a note
+  check_folders(function(level, what, item, problem, fix) if (!grepl("raw data folder", problem)) add(level, what, item, problem, fix),
+                character(), cfg$project_dir, "Folders")
   for (i in which(!dir.exists(path.expand(s$path)))) add("info", "Sources", s$source_id[i], paste0("Not plugged in (", s$path[i], "); its last scan is used."), "Connect the drive to rescan it.")
   for (d in unique(s$source_id[duplicated(s$source_id)])) add("error", "Sources", d, "This source_id is used twice in sources.csv.", "Give each source its own short name.")
   if (is.null(cfgs)) return(chk$result())

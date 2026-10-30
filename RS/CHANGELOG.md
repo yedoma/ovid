@@ -5,6 +5,54 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (text and formatting review, 2026-10-30)**
+- Wording: "ovid" in lower case (calibration notes, the viewer's title and "made with" line, STAC descriptions, "worked out by ovid"); plurals written out (1 flight, 1 source, 1 thing to look at; the run log's flight(s), source(s), problem(s) ...); help texts name tables in plain words (the flights table, Set-up tables) instead of config file names; the Needs you explanation of accuracy covers positions not known as well as standalone GNSS.
+- Tables: plain headings instead of column names (coverage on the Timeline; files not matched, datasets and products on QA; the last run's problems; Needs you in sentence case); empty tables say so (GIS layers, satellite and raster files, GNSS quality, QA tables).
+- Formatting: no space before the colon in a flight's checks; placeholders that fit their boxes; the folder box no longer suggests the old /Volumes/Drive.
+- Second pass (computed styles at 1280/1440/1920 on every page): Simple tables at 13.5 px with legible headings and counts right-aligned (Images, GSD, Flights); RS notes, legends, map notes and Timeline text on the type scale (12.5 / 11 px); Sources counts at 26 px; STAC description and the core-not-found message say "ovid". Test: the .bb3 key test no longer picks up a key from the user's own RS projects.
+- **Output changes:** none to the catalogue; the calibration notes written into a new project say "ovid default".
+
+**Fixed (eBee footprints, 2026-10-30)**
+- eBee flights had no footprints (none in the map's one footprint per year either) in a project without the .bb3 key: their logs could not be decoded, so their height above the ground was unknown. The key build during a scan stopped at the first eMotion mission holding an empty geotag ("is.raw(input) is not TRUE"); it now skips such geotags and flights. A project with no key now takes it from another RS project that has one (only read there; the key is one keystream for every log) and keeps a copy in its config. A year with no footprint is left out of the per-year outlines.
+- **Output changes:** yes, after a rescan: eBee flights gain their decoded logs, heights and footprints.
+
+**Added (footprint colours by drone, sensor and year, 2026-10-30)**
+- The Map, its one-footprint-per-year layers (now one per year, drone family and sensor), the legend, the coverage report, the Simple view's map and the offline viewer colour footprints by drone, sensor and year: each drone family its own pair of muted hues (DJI red and orange, eBee blue and purple with a magenta mix for thermal, others green and teal), optical and its other sensor (LiDAR, NIR, thermal) apart, and each year in view its own shade within the drone's hue band (the hue turned by steps of year_step_deg and lighter or darker in turn), at least 15 dE (CIELAB) from every other year of that drone and sensor and from the other sensor of the same year, all legible on the map. Set in config/footprint_colours.csv (Set-up tables): family, match, colours as palette names, + mixes or #hex. Style, Colour flights by: "Drone, sensor and year" is the default; Positioning and the others stay.
+- **Output changes:** none to the catalogue; the map, report and viewer colours change.
+
+**Fixed (thermal flights, 2026-10-30)**
+- senseFly thermoMAP frames (THM_*.tif) were read as rasters, so thermal eBee flights never became flights (T7 2022: two thermal flights, 11,667 frames, listed as rasters with no position). They carry senseFly EXIF, GPS and drone XMP, and are now camera images like the Sequoia band TIFFs. Satellite, aerial and LiDAR rasters' headers are also read several at once (core par_map), as photo headers are.
+- Raster, LAS and metadata headers are kept in the source's cache (datasets.rds, by path, size and time), as photo headers are: a rescan reads only new or changed files (a 3-source test: 19.5 s -> 2.6 s).
+- thermoMAP frames give no pixel count or sensor size: 640 x 512 px and a sensor width from senseFly's 14 cm/px at 75 m and the frames' focal length (10.75 mm with 9 mm) are filled in when the catalogue is built (CAMERA_SPECS; _hub/Derived_values_references.md 14.x). Footprints follow where a flight's height above the ground is known (a linked log or base).
+- DJI Air 2S photos (camera FC3411) give no sensor size: 13.2 mm (1-inch, DJI's specs) is filled in when the catalogue is built, so their flights get footprints and a ground sample distance (_hub/Derived_values_references.md 14.x).
+- **Output changes:** yes: thermal frames leave datasets.csv and make flights.
+
+**Fixed (found by the stress and click-through test, 2026-10-30)**
+- The Simple report said "1 have corrected positions"; and a source with no flights showed "NA flights".
+- Keep and Remove on the Map's Other geodata tab saved nothing: the staged choice read the rows' own (blank) decision column.
+- Timeline, Keep as a site (and the other buttons over a table) with no row picked failed: x[NULL] dropped the table's columns.
+- A page reloaded during a scan showed "Nothing scanned yet" after it: the scan's end now makes every open page read the catalogue again.
+- A folder name with accents gave a source id of underscores ("Été site A" -> _t_site_A); now Ete_site_A.
+- Export file audit on an empty project gave a failed download; it now downloads a one-line note and says so.
+- (core) A new project could be made while a scan was running (the scan's outputs then went to the project left); a cancelled run that had to be ended was reported as "the app or computer stopped".
+- **Output changes:** source ids of new folders with accented names.
+
+**Changed (faster scans, 2026-10-30)**
+- A first scan reads photo headers several at once (core par_map; one at a time on Windows): reading a header waits on the drive far longer than parsing it (26 ms a photo on a USB drive, 7.5 ms with eight at once). eBee .bb3 logs are decoded several at once (at most four), copies of one log once, and not opened at all while the project has no .bb3 key (nothing could be read from them). A cold scan of a 5,941-file year folder took 66 s instead of 184 s; the catalogue is identical, file for file (cold and warm, and with the key).
+- **Output changes:** none (a damaged .bb3 in a project with no key is no longer listed in problems.csv, as it is not opened).
+
+**Added (other geodata set aside, 2026-10-30)**
+- Satellite, aerial, LiDAR and raster files and GIS layers are catalogued when they sit beside flight photos (the same folder, or one inside or around it) or lie within spatial_max_km (5 km, an ovid default) of a flight; the rest is set aside in catalogue/set_aside.csv with the reason (no position read, a basemap over spatial_max_extent_km = 200 km across, N km from the nearest flight), never dropped or changed. The Map's Other geodata tab lists the folders set aside; Keep brings one back on the next rebuild. Sources (Standard) and Import (Simple) switch GIS layers and imagery on or off (calibration options geodata_gis_layers, geodata_imagery). Decided when the catalogue is built: no rescan needed. Distances by the equirectangular approximation (Snyder 1987; _hub/Derived_values_references.md 14.x).
+- **Output changes:** yes: geodata far from every flight leaves datasets.csv, gis_layers.csv and gis_features.csv for set_aside.csv. The golden test's expected outputs gain set_aside.csv and four calibration rows: run `Rscript tests/test_golden.R accept "<your name>"` after checking them.
+
+**Added (starting a catalogue, 2026-10-30)**
+- Simple, Import: a new install first asks to start a new catalogue (a name; the folder is filled in under ~/Projects/Ovid/Projects/RS, Browse to change it) or open one you have; New project in the menu shows the same. Folders are added to a list (Add to list; each with its short name, Remove, and a note when one is inside another) and scanned together with "Scan N folders"; the list is kept in sources.csv, so it survives a reload. The scan's progress (which folder of how many, time, Cancel) shows on Import itself; after it, "View the flights". View, Edit and Export wait until there is a catalogue. Standard, Sources: Add to list and "Scan the new folders" too.
+- **Output changes:** none.
+
+**Fixed (starting fresh and every button, 2026-10-30)**
+- A new project scans its first folder straight away: the placeholder raw folder /Volumes/Drive is gone, so no "set-up needs attention" question, no "overlaps a source ... inside NA" (an empty list of sources counted every path as inside one) and no fake source written by "Scan anyway"; a folder that is not there is never added as a source. Rescan and Rebuild with no source say "add a drive or folder first". Browse works in Simple. Opening or making another project shows its own catalogue at once (the old one stayed until a reload). The sticky "No catalogue yet" message is gone; "Review the set-up" opens Sources (Standard) or Import (Simple). On an empty project, Report (PDF), Footprints (GeoJSON), file audit, the Timeline's site-name buttons and the Flight page's Save, Confirm and Split say what is missing instead of failing or doing nothing; a scan that ends after the page was reloaded no longer errors. Simple says "1 flight", "1 sensor".
+- **Output changes:** none; a project that relied on the placeholder had no data in it.
+
 **Fixed (flight ids and the R version, 2026-10-30)**
 - Flight ids and review ids stay the same under R 4.6.2, which had moved them all (core hash_bytes).
 - **Output changes:** none; ids are the ones R 4.6.1 gave.

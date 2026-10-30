@@ -121,7 +121,7 @@ scan_source <- function(src, cfg, rules) {
   ring <- bb3_ring_path(cfg$project_dir); emotion_key_auto(files, ring)   # no .bb3 key yet: built from the source's .mis3 and .bb3
   emo <- read_source_emotion(files, sdir, ring)              # senseFly logs and eMotion missions (R/emotion_catalogue.R)
   gis <- read_source_gis(files); if (nrow(gis$layers)) say("    ", nrow(gis$layers), " GIS layers, ", nrow(gis$features), " features kept for the map")
-  ds <- read_source_datasets(files); if (nrow(ds)) say("    ", nrow(ds), " satellite, aerial, LiDAR and raster files: ", paste(ds[, .N, by = kind][, paste(N, kind)], collapse = ", "))
+  ds <- read_source_datasets(files, sdir); if (nrow(ds)) say("    ", nrow(ds), " satellite, aerial, LiDAR and raster files: ", paste(ds[, .N, by = kind][, paste(N, kind)], collapse = ", "))
   files[, path := NULL]
   tmp <- file.path(sdir, "scan.rds.part")   # written aside then renamed, so a stopped scan keeps the last good one
   saveRDS(list(files = files, images = img, records = recs, emotion = emo, datasets = ds, gis_layers = gis$layers, gis_features = gis$features, scanned = Sys.time(), root = root), tmp)

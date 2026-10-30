@@ -3,14 +3,14 @@
 # flights table through a callback from app.R; a site is never filled in on a guess.
 
 timeline_css <- function(pal = PAL) tags$style(HTML(sprintf("
-.tl-wrap{overflow-x:auto} table.tl{border-collapse:collapse;font-size:.85rem} table.tl th,table.tl td{border:1px solid %1$s;padding:3px 4px;vertical-align:top}
+.tl-wrap{overflow-x:auto} table.tl{border-collapse:collapse;font-size:12.5px} table.tl th,table.tl td{border:1px solid %1$s;padding:3px 4px;vertical-align:top}
 table.tl thead th,table.tl tr:first-child th{text-align:center;font-weight:500} table.tl td{min-width:34px;max-width:150px} table.tl td.tl-empty{background:%2$s}
 th.tl-site{cursor:pointer;white-space:nowrap;text-align:left;font-weight:500} tr.tl-row.on th.tl-site{color:%3$s} tr.tl-row.on td{background:%2$s}
 .tl-sq{display:inline-block;margin:1px;border-radius:2px;cursor:pointer;vertical-align:middle} .tl-sq.on{outline:2px solid %4$s;outline-offset:1px}
-.tl-key{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;font-size:.85rem}
+.tl-key{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;font-size:12.5px}
 .tl-strip{display:flex;gap:4px;align-items:flex-end;overflow-x:auto;padding:4px 0} .tl-yr{flex:1 0 46px;cursor:pointer;border-radius:4px;padding:2px}
 .tl-yr.on{background:%2$s;outline:1px solid %3$s} .tl-sqs{display:flex;flex-wrap:wrap-reverse;align-content:flex-start;min-height:10px}
-.tl-lab{font-size:.75rem;text-align:center;border-top:1px solid %1$s;margin-top:2px}", pal$bg3, pal$bg2, pal$accent, pal$fg)))
+.tl-lab{font-size:11px;text-align:center;border-top:1px solid %1$s;margin-top:2px}", pal$bg3, pal$bg2, pal$accent, pal$fg)))
 
 # ---- the Timeline page -------------------------------------------------------------------------------------------------------
 mod_timeline_ui <- function(id) {

@@ -67,8 +67,8 @@
     le_staged(edit_stage(le_staged(), le_ps()$flight_id[i], "kind", "flight", le_step())) })
 
   # ---- Other geodata ----
-  le_geo_all <- reactive({ x <- C()                               # no catalogue yet: no folders, with the columns the tab uses
-    g <- if (is.null(x)) geodata_folders(NULL, NULL, fl()) else geodata_folders(x$datasets, x$gis_layers, fl()); if (!nrow(g)) return(g[, `:=`(id = character(), decision = character())])
+  le_geo_all <- reactive({ x <- C()                               # the folders set aside when the catalogue was built (R/geodata.R), Keep brings one back
+    g <- geodata_set_aside(if (is.null(x)) NULL else x$set_aside); if (!nrow(g)) return(g[, `:=`(id = character(), decision = character())])
     g[, id := geodata_id(source_id, folder, kind)]; d <- decisions(); g[, decision := fifelse(id %in% d$id, "kept", "")]
     s <- le_last(le_geo_st(), c("source_id", "folder", "kind")); if (nrow(s)) g[s, on = .(source_id, folder, kind), decision := paste0(i.decision, " (not saved)")]
     g })
@@ -78,10 +78,10 @@
   output$geodata <- renderDT({ C(); ovid_long_table(isolate(le_geo_tbl()), selection = "multiple", dom = "ti", height = "40vh") })
   le_geo_proxy <- dataTableProxy("geodata")
   observeEvent(le_geo_tbl(), replaceData(le_geo_proxy, le_geo_tbl(), rownames = FALSE, resetPaging = FALSE, clearSelection = "none"), ignoreInit = TRUE)
-  le_geo_stage <- function(rows, decision) { if (!nrow(rows)) return(showNotification("Select folders first.", type = "warning"))
-    le_geo_st(rbind(le_geo_st(), rows[, .(source_id, folder, kind, decision = decision, step = le_step())])) }
-  observeEvent(input$gd_keep, le_geo_stage(le_geo()[input$geodata_rows_selected], "keep"))
-  observeEvent(input$gd_remove, le_geo_stage(le_geo()[input$geodata_rows_selected], "remove"))
+  le_geo_stage <- function(rows, what) { if (!nrow(rows)) return(showNotification("Select folders first.", type = "warning"))   # what: not "decision", the rows' own column
+    le_geo_st(rbind(le_geo_st(), rows[, .(source_id, folder, kind, decision = what, step = le_step())])) }
+  observeEvent(input$gd_keep, le_geo_stage(le_geo()[input$geodata_rows_selected %||% integer()], "keep"))
+  observeEvent(input$gd_remove, le_geo_stage(le_geo()[input$geodata_rows_selected %||% integer()], "remove"))
   observeEvent(input$gd_suggested, { g <- le_geo(); s0 <- le_step(); if (nrow(g)) le_geo_st(rbind(le_geo_st(), g[, .(source_id, folder, kind, decision = suggest, step = s0)])) })
 
   # ---- Site names found in folder names (the Timeline page) ----
@@ -99,8 +99,8 @@
     nm <- rows[nzchar(found)]; if (nrow(nm)) le_names(rbind(le_names(), data.table(found = nm$found, site = to(nm), step = s0)))
     if (any(!nzchar(rows$found))) { t <- to(rows[!nzchar(found)]); if (nzchar(t)) { f <- fl(); ids <- f$flight_id[(if ("site_folder" %in% names(f)) f$site_folder else f$site) %in% c("", NA)]
       le_staged(edit_stage(le_staged(), ids, "site", t, s0)) } } }
-  le_sn_rows <- reactive(le_sn_all()[input$sn_table_rows_selected])
-  observeEvent(input$sn_accept, { r <- le_sn_rows()[nzchar(suggested)]; if (!nrow(r)) return(showNotification("None of the selected names has a suggestion.", type = "warning")); le_sn_stage(r, function(x) x$suggested) })
+  le_sn_rows <- reactive({ s <- le_sn_all(); if (!nrow(s)) return(data.table(found = character(), suggested = character())); s[input$sn_table_rows_selected %||% integer()] })   # x[NULL] would drop the columns; none found yet: no columns either
+  observeEvent(input$sn_accept, { if (!nrow(le_sn_rows())) return(showNotification("Select names first.", type = "warning")); r <- le_sn_rows()[nzchar(suggested)]; if (!nrow(r)) return(showNotification("None of the selected names has a suggestion.", type = "warning")); le_sn_stage(r, function(x) x$suggested) })
   observeEvent(input$sn_map, { t <- trim(input$sn_to %||% ""); if (!nzchar(t)) return(showNotification("Pick or type the known site first.", type = "warning")); le_sn_stage(le_sn_rows(), function(x) rep(t, nrow(x))) })
   observeEvent(input$sn_keep, le_sn_stage(le_sn_rows()[nzchar(found)], function(x) x$found))
   observeEvent(input$sn_not, le_sn_stage(le_sn_rows()[nzchar(found)], function(x) rep("", nrow(x))))
@@ -130,5 +130,5 @@
                                                   author = WHO, at = format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
       if (ok) le_geo_st(le_geo_st()[0]) else bad <- c(bad, "file_rules.csv") }
     if (length(bad)) showNotification(paste(paste(bad, collapse = ", "), "not saved: open with other changes on the Set-up tables page, or not made yet (rebuild first)."), type = "warning", duration = 8)
-    else showNotification(paste0("Saved.", if (nrow(nm) || nrow(gs)) " Site names and removed folders apply on the next rebuild." else ""), type = "message") }
+    else showNotification(paste0("Saved.", if (nrow(nm) || nrow(gs)) " Site names, kept and removed folders apply on the next rebuild (Sources, Rebuild catalogue)." else ""), type = "message") }
   observeEvent(input$sv_save, le_save_all()); observeEvent(input$sv_key, le_save_all())

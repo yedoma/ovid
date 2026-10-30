@@ -20,7 +20,7 @@
   observeEvent(list(cur(), live_stamp(cfg_path(CFG$project_dir, "flights"))), { f <- cur(); if (is.null(f) || !nrow(f)) return()   # a change saved on any page shows here
     cf <- load_configs(CFG)$flights[flight_id == f$flight_id]; if (identical(list(f$flight_id, cf), e_shown())) return(); e_shown(list(f$flight_id, cf))
     rs_flight_form_update(session, "e_", if (nrow(cf)) as.list(cf[1]) else list()) })   # the form shared with the Workbench (pages/ui.R)
-  observeEvent(input$e_save, { f <- cur(); if (is.null(f) || !nrow(f)) return()
+  observeEvent(input$e_save, { f <- cur(); if (is.null(f) || !nrow(f)) return(showNotification("Select a flight first.", type = "warning"))
     if (save_flight(f$flight_id, rs_flight_form_read(input, "e_"))) showNotification("Saved", type = "message") })
   # flights.csv is written only through its Set-up tables editor (core/editor.R): from this page, the Timeline's Set site and
   # the Workbench's Edit flight (the same form) alike, so an edit not yet saved in the editor is neither lost nor written over.

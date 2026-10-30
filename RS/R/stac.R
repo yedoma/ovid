@@ -106,7 +106,7 @@ stac_export <- function(dir, flights, ds = NULL, products = NULL, title = "ovid 
   if (!is.null(flights) && nrow(flights)) for (i in seq_len(nrow(flights))) { f <- flights[i]
     b <- stac_bbox(f$lon_min, f$lat_min, f$lon_max, f$lat_max); dt <- stac_time(f$start_utc); if (is.null(b) || is.null(dt)) next
     pj <- if (nzchar(f$project %||% "")) f$project else "unassigned"
-    cl <- coll_of(stac_id(paste0("flights-", pj)), paste("Drone flights,", pj), paste("UAV flights of project", pj, "in the Ovid RS catalogue."))
+    cl <- coll_of(stac_id(paste0("flights-", pj)), paste("Drone flights,", pj), paste("UAV flights of project", pj, "in the ovid RS catalogue."))
     props <- list(datetime = dt, start_datetime = dt, end_datetime = stac_time(f$end_utc) %||% dt, platform = f$aircraft %||% NULL, instruments = if (nzchar(f$sensor %||% "")) list(f$sensor) else NULL,
                   gsd = if (is.finite(f$gsd_cm_median %||% NA)) round(f$gsd_cm_median / 100, 4) else NULL, `proj:epsg` = 4326L,
                   `view:sun_elevation` = if (is.finite(f$sun_elev_max_deg %||% NA)) round(f$sun_elev_max_deg, 1) else NULL,
@@ -118,7 +118,7 @@ stac_export <- function(dir, flights, ds = NULL, products = NULL, title = "ovid 
                       assets = list(images = list(href = paste0(f$source_id, ":", f$folder), title = paste(f$n_images, "images"), roles = list("data"))))) }
   if (!is.null(ds) && nrow(ds)) for (i in seq_len(nrow(ds))) { d <- ds[i]
     b <- stac_bbox(d$lon_min, d$lat_min, d$lon_max, d$lat_max); dt <- stac_time(d$acquired); if (is.null(b) || is.null(dt)) next
-    cl <- coll_of("imagery-and-lidar", "Satellite, aerial and LiDAR", "Scenes, photographs, LiDAR tiles and rasters in the Ovid RS catalogue.")
+    cl <- coll_of("imagery-and-lidar", "Satellite, aerial and LiDAR", "Scenes, photographs, LiDAR tiles and rasters in the ovid RS catalogue.")
     lidar <- identical(d$kind, "lidar")
     ys <- stac_year_span(d$acquired)
     props <- list(datetime = dt, start_datetime = ys$start, end_datetime = ys$end, platform = d$platform %||% NULL, gsd = if (is.finite(d$gsd_m %||% NA)) d$gsd_m else NULL,
@@ -143,7 +143,7 @@ stac_export <- function(dir, flights, ds = NULL, products = NULL, title = "ovid 
     props <- props[!vapply(props, function(v) is.null(v) || (length(v) == 1 && (is.na(v) || identical(v, ""))), logical(1))]
     add_item(cl, list(type = "Feature", stac_version = "1.0.0", stac_extensions = I(unname(STAC_EXT[if (!is.null(props$`proj:epsg`)) "proj"])), id = stac_id(p$product_id),
                       bbox = b, geometry = stac_geom(b), properties = props, assets = list(data = list(href = p$file, roles = list("data"))))) }
-  root <- list(type = "Catalog", stac_version = "1.0.0", id = "ovid-rs", title = title, description = "Drone flights, imagery, LiDAR and products catalogued by Ovid RS.",
+  root <- list(type = "Catalog", stac_version = "1.0.0", id = "ovid-rs", title = title, description = "Drone flights, imagery, LiDAR and products catalogued by ovid RS.",
                links = c(list(list(rel = "root", href = "./catalog.json", type = "application/json"), list(rel = "self", href = "./catalog.json", type = "application/json")),
                          lapply(names(cols), function(k) list(rel = "child", href = paste0("./", k, "/collection.json"), type = "application/json"))))
   write_stac_json(root, file.path(dir, "catalog.json"))

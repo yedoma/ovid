@@ -83,9 +83,10 @@ server <- function(input, output, session, embedded = FALSE) {
   time_zone_server(input, on_change = function(z) CFG$base_offset_h <<- z)   # Settings > Time zone (core shell.R)
   colours_server(input, output, "RS")                                       # Settings > Colours (core shell.R)
   troubleshoot_server(output, function() CFG$project_dir, function() setup_check(CFG))   # the lifebuoy in the top bar (core shell.R)
-  projects_server("proj", settings_now = function() utils::modifyList(SETTINGS, list(project_dir = CFG$project_dir, viewer_title = CFG$viewer_title, base_offset_h = CFG$base_offset_h)),
-                  open = function(path, s) { CFG <<- project_apply_settings(CFG, s, path); projects_inputs(session, s, "base_offset_h"); rv$tick <- rv$tick + 1 })                   # the Projects list (core projects.R)
-  run_server(input, output, session, busy_ids = c("s_scan", "s_rescan", "s_build", "scan_force", "x_make", "wb_x_make", "wb_export"))    # scans in the background (core runner.R)
+  PROJ <- projects_server("proj", hint = "The new project starts empty: add its folders on Import (Simple) or Sources (Standard). Processing settings are carried over from the open project.",
+                  dir_label = "Folder (a new or empty one)", settings_now = function() utils::modifyList(SETTINGS, list(project_dir = CFG$project_dir, viewer_title = CFG$viewer_title, base_offset_h = CFG$base_offset_h)),
+                  open = function(path, s) { CFG <<- project_apply_settings(CFG, s, path); projects_inputs(session, s, "base_offset_h"); sel(NULL); reload() })   # the new project's catalogue at once                   # the Projects list (core projects.R)
+  run_server(input, output, session, busy_ids = c("s_scan", "s_rescan", "s_build", "scan_force", "s_add", "sp_add", "s_scan_new", "sp_scan_new", "x_make", "wb_x_make", "wb_export"))    # scans in the background (core runner.R)
   C <- reactiveVal(load_cat()); sel <- reactiveVal(NULL)
   rv <- reactiveValues(tick = 0)                               # tick: the catalogue was read again (after a build or a scan)
   reload <- function() { C(load_cat()); rv$tick <- isolate(rv$tick) + 1 }
@@ -143,16 +144,18 @@ server <- function(input, output, session, embedded = FALSE) {
   fp_memo <- new.env()                                          # each set of flights is joined once (pages/fct_footprints.R)
   observeEvent(C(), rm(list = ls(fp_memo), envir = fp_memo))
   years_fp <- reactive({ if (!isTRUE(input$f_year_fp)) return(list()); x <- C(); if (is.null(x)) return(list())
-    year_footprints(le_view(), x$footprints, fp_kinds(input$f_fp), fp_memo) })
+    year_footprints(le_view(), x$footprints, fp_kinds(input$f_fp), fp_memo, fp_tab()) })
+  fp_tab <- reactive({ rv$tick; live_stamp(cfg_path(CFG$project_dir, "footprint_colours"))   # the colours by drone, sensor and year (R/footprints.R)
+    tryCatch(load_configs(CFG)$footprint_colours, error = function(e) fp_colours_default()) })
   observe({ f <- fold_joined(le_view()); x <- isolate(C()); if (is.null(x)) return()      # a joined flight is one (pages/list_edits.R)
     ym <- isTRUE(input$f_year_fp); yf <- years_fp()
     if (over("flights", nrow(f))) f <- f[0]
     g <- if (nrow(x$geometry)) x$geometry[kind != "derived" & (is.na(flight_id) | flight_id == "" | flight_id %in% f$flight_id)] else data.table()
-    p <- x$points[flight_id %in% f$flight_id]
+    p <- x$points[flight_id %in% f$flight_id]; fc <- fp_colours(f, fp_tab())   # colour by drone, sensor and year
     session$sendCustomMessage("rsmap", list(
-      flights = f[, .(id = flight_id, col = unname(STATUS_COL[positioning_status] %|na|% PAL$gray), name, date, year, site, aircraft, sensor, n = n_images,
+      flights = f[, .(id = flight_id, col = unname(STATUS_COL[positioning_status] %|na|% PAL$gray), dcol = fc$col, name, date, year, site, aircraft, sensor, n = n_images,
                       gb = round(size_gb, 1), status = positioning_status, lat_min, lon_min, lat_max, lon_max, fp_kind = fpk, fp_area_km2 = round(fp_area_m2 / 1e6, 3))],
-      fp = if (ym) NULL else fp_rings_json(x$footprints, f), years = year_layers(yf), year_mode = ym,
+      fp = if (ym) NULL else fp_rings_json(x$footprints, f), years = year_layers(yf), year_mode = ym, dkey = fp_colour_key(fc, f),
       pal = unname(c(PAL$blue, PAL$accent, PAL$green, PAL$red, PAL$purple, PAL$teal, PAL$gold, PAL$fg, PAL$fg4, mix_col(PAL$blue, PAL$bone, 0.5))),
       points = lapply(split(p[, .(lat, lon)], p$flight_id), function(d) unname(as.matrix(d))),
       geom = if (nrow(g)) g[, .(id = fifelse(is.na(flight_id), "", flight_id), kind, what, ref, line)] else list(), fit = FALSE)) })
@@ -183,10 +186,11 @@ server <- function(input, output, session, embedded = FALSE) {
   rep_file <- reactiveVal(NULL)
   observeEvent(input$rep_make, session$sendCustomMessage("rs-report", TRUE))
   observeEvent(input$report_png, { r <- input$report_png
+    if (!nrow(le_view())) return(showNotification("No flights in view: scan a source first, or clear the filters.", type = "warning"))
     if (!is.null(r$error)) return(showNotification(paste("The report was not made: the map could not be drawn (", r$error, ").", sep = ""), type = "error"))
     withProgress(message = "Writing the report", value = 0.3, {
       v <- le_view(); fm <- fold_joined(v); ym <- isTRUE(input$f_year_fp); kinds <- fp_kinds(input$f_fp)
-      yf <- year_footprints(v, C()$footprints, kinds, fp_memo)
+      yf <- year_footprints(v, C()$footprints, kinds, fp_memo, fp_tab())
       blocks <- lapply(yf, function(x) c(x, list(facts = year_facts(v[flight_id %in% x$ids], x$u, x$kind, x$with))))
       pick <- function(id, lab) { s <- input[[id]]; if (length(s)) paste0(lab, ": ", paste(s, collapse = ", ")) else NULL }
       filt <- paste(c(pick("f_year", "Year"), pick("f_site", "Site"), pick("f_aircraft", "Aircraft"), pick("f_sensor", "Sensor"), pick("f_status", "Positioning"), pick("f_source", "Source"),
@@ -228,7 +232,7 @@ server <- function(input, output, session, embedded = FALSE) {
   source(file.path(APP_DIR, "pages", "gnss_files.R"), local = TRUE)
   source(file.path(APP_DIR, "pages", "browse.R"), local = TRUE)
   source(file.path(APP_DIR, "pages", "set_up_check.R"), local = TRUE)
-  invisible(list(E = E, C = C, sel = sel, rv = rv, stale = stale, chk = chk, fchk = fchk, fchk_raw = fchk_raw, reload = reload, show_edit = show_edit, save_flight = save_flight, flight_row = flight_row, busy = run_busy))
+  invisible(list(E = E, C = C, sel = sel, rv = rv, stale = stale, proj = PROJ, src_cfg = src_cfg, queued = queued, src_scanned = src_scanned, chk = chk, fchk = fchk, fchk_raw = fchk_raw, reload = reload, show_edit = show_edit, save_flight = save_flight, flight_row = flight_row, busy = run_busy))
 }
 
 # Three views of one project: Simple (simple/simple_rs.R), Standard (above) and the Workbench (workbench/wb_rs.R).

@@ -43,7 +43,7 @@ wb_edit_server <- function(input, output, session, ctx) {
   output$wb_out_preview <- renderUI(wb_preview(out_rows()))
   observeEvent(input$wb_out_do, { r <- out_rows(); n <- length(ctx$sel()$rel)
     if (!nzchar(trim(input$wb_out_reason %||% ""))) return(ovid_field_error("wb_out_reason", "Give a reason."))
-    if (E$file_rules$append(as.data.frame(r))) done(sprintf("%d image(s) left out in file_rules.csv. Rebuild to apply.", n)) })
+    if (E$file_rules$append(as.data.frame(r))) done(paste(if (n == 1) "1 image" else paste(n, "images"), "left out (file rules, Set-up tables). Rebuild to apply.")) })
 
   # what people decide about the flight: the Flight page's form (pages/ui.R), saved as it saves it
   observeEvent(input$wb_act_edit, { p0 <- ctx$part()

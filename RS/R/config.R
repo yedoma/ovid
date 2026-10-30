@@ -75,21 +75,37 @@ RS_CALIBRATION <- rbindlist(list(
   list("max_correction_age_s", "Oldest corrections", "s", "10", "Emlid firmware 31 onward drops a fix after 10 s without corrections (Emlid staff, community forum)", "", ""),
   list("max_baseline_m", "Longest baseline", "m", "60000", "Emlid Reach RTK working range up to 60 km (PPK up to 100 km); the + 1 ppm term of the RTK spec grows with it", "", ""),
   list("min_fixed_pct", "Fewest fixed positions", "%", "", "no published minimum; set your own", "", ""),
-  list("checkpoint_survey_rmse_h_cm", "Checkpoint survey RMSE, horizontal", "cm", "2", "Ovid default, about an RTK receiver over a short baseline (Emlid RTK 7 mm + 1 ppm H); use the receiver's own RMS where it is exported",
+  list("checkpoint_survey_rmse_h_cm", "Checkpoint survey RMSE, horizontal", "cm", "2", "ovid default, about an RTK receiver over a short baseline (Emlid RTK 7 mm + 1 ppm H); use the receiver's own RMS where it is exported",
        "2", "Scotty Creek differential GPS, +/- 0.02 m (Leica SR530 / Viva GS10: Connon et al. 2018; Disher et al. 2021)"),
-  list("checkpoint_survey_rmse_v_cm", "Checkpoint survey RMSE, vertical", "cm", "3", "Ovid default, about an RTK receiver over a short baseline (Emlid RTK 14 mm + 1 ppm V); use the receiver's own RMS where it is exported",
+  list("checkpoint_survey_rmse_v_cm", "Checkpoint survey RMSE, vertical", "cm", "3", "ovid default, about an RTK receiver over a short baseline (Emlid RTK 14 mm + 1 ppm V); use the receiver's own RMS where it is exported",
        "2", "Scotty Creek differential GPS, +/- 0.02 m (Leica SR530 / Viva GS10: Connon et al. 2018; Disher et al. 2021)"),
   list("geotag_corrected_m", "Geotag accuracy that counts as corrected", "m", "0.1", "RTK/PPK geotags are about 0.02 m (DJI Phantom 4 RTK, M350 RTK: 1 cm + 1 ppm H), standalone GNSS metres; 0.1 m separates them", "", ""),
   list("blur_limit_px", "Motion blur limit", "px", "1", "convention: no well-cited paper gives a fixed pixel limit (Sieberth et al. 2014, 2016; gap 15)", "", ""),
   list("fwd_overlap_target_pct", "Forward overlap target", "%", "", "no fixed target; judge against the platform's spec conditions (Zenmuse P1 75 %); accuracy is fairly insensitive once the network is strong (James et al. 2020)", "", ""),
   list("side_overlap_target_pct", "Side overlap target", "%", "", "no fixed target; judge against the platform's spec conditions (Zenmuse P1 55 %, Zenmuse L2 20 %)", "", ""),
   list("min_sun_elev_deg", "Lowest sun elevation", "deg", "", "no well-cited fixed minimum; shadow lowers NIR in boreal peatland (Chasmer et al. 2011)", "", ""),
-  list("check_placed_ok_pct", "Positions check: placed for ok", "%", "95", "Ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
-  list("check_placed_look_pct", "Positions check: placed for look (below: bad)", "%", "50", "Ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
-  list("photoset_max_images", "Photo set: a run of fewer images than this", "images", "20", "Ovid default; no published threshold; set your own. A photo set is kept apart from mapping flights and is not checked as one", "", ""),
-  list("check_standalone_max_m", "Accuracy check: worst standalone accuracy for look (above: bad)", "m", "5", "standalone GNSS geotags are good to 2-5 m (see geotag_corrected_m); worse suggests a bad fix", "", "")))
+  list("check_placed_ok_pct", "Positions check: placed for ok", "%", "95", "ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
+  list("check_placed_look_pct", "Positions check: placed for look (below: bad)", "%", "50", "ovid default (interface design, 9 Oct 2026); no published threshold; set your own", "", ""),
+  list("photoset_max_images", "Photo set: a run of fewer images than this", "images", "20", "ovid default; no published threshold; set your own. A photo set is kept apart from mapping flights and is not checked as one", "", ""),
+  list("check_standalone_max_m", "Accuracy check: worst standalone accuracy for look (above: bad)", "m", "5", "standalone GNSS geotags are good to 2-5 m (see geotag_corrected_m); worse suggests a bad fix", "", ""),
+  list("spatial_max_km", "Other geodata: farthest from a flight to catalogue", "km", "5", "ovid default (30 Oct 2026); no published threshold; set your own. Folders beside flight photos and folders kept on the Other geodata tab are catalogued at any distance", "", ""),
+  list("spatial_max_extent_km", "Other geodata: largest extent to catalogue (above: a basemap)", "km", "200", "ovid default (30 Oct 2026); no published threshold; a national or provincial layer spans hundreds of km", "", ""),
+  list("geodata_gis_layers", "Catalogue GIS layers (1 yes, 0 no)", "", "1", "ovid default: on", "", ""),
+  list("geodata_imagery", "Catalogue satellite, aerial, LiDAR and raster files (1 yes, 0 no)", "", "1", "ovid default: on", "", "")))
 setnames(RS_CALIBRATION, c("value", "label", "unit", "default_number", "default_source", "scotty_number", "scotty_source"))
 RS_CALIBRATION[, `:=`(app = "RS", allowed = "", notes = "")]; setcolorder(RS_CALIBRATION, CALIB_CATALOGUE_COLS)
+
+# Footprint colours on the map, the report and the viewer (config/footprint_colours.csv): one row per drone family, matched
+# on the aircraft, camera and make (match, a pattern; a blank match takes every flight the rows above did not), with a colour
+# for its optical footprints, one for its other sensor (LiDAR, NIR), and one for thermal (blank: the other sensor's). A colour
+# is a palette name (red, gold, blue, purple, green, teal ...), two joined by + (their mix) or a #hex. Each year in view gets
+# its own shade of it, the hue turned by steps of year_step_deg and lighter or darker in turn, at least 15 dE from every other
+# year of that drone and sensor (R/footprints.R fp_year_shades).
+FP_COLOUR_COLS <- c("family", "match", "optical_col", "other_col", "thermal_col", "year_step_deg", "note")
+fp_colours_default <- function() data.table(family = c("DJI", "eBee", "Other"),
+  match = c("DJI|Zenmuse|Phantom|Matrice|Mavic|Inspire|^FC[0-9]", "senseFly|eBee|S[.]O[.]D[.]A|thermoMAP|Duet|Aeria|Sequoia|S110", ""),
+  optical_col = c("red", "blue", "green"), other_col = c("gold", "purple", "teal"), thermal_col = c("", "purple+red", ""),
+  year_step_deg = "16", note = c("DJI drones and Zenmuse cameras", "senseFly eBee and its cameras", "every other drone"))
 
 CONFIG_FILES <- list(
   sources    = list(file = "sources.csv",    cols = SOURCE_COLS,    label = "Archive sources"),
@@ -102,6 +118,7 @@ CONFIG_FILES <- list(
   products   = list(file = "products.csv",   cols = PRODUCT_COLS,   label = "Products"),
   gnss_bases = list(file = "gnss_bases.csv", cols = GNSS_BASE_COLS, label = "GNSS bases"),
   drone_cameras = list(file = "drone_cameras.csv", cols = DRONE_CAMERA_COLS, label = "Drone cameras", default = function() drone_cameras_default()),
+  footprint_colours = list(file = "footprint_colours.csv", cols = FP_COLOUR_COLS, label = "Footprint colours", default = function() fp_colours_default()),
   calibration = calibration_config(RS_CALIBRATION))   # Ovid/timezones.R: camera clocks
 
 # Site names found in folder names, mapped through config/site_names.csv (found -> site; any case): a blank site there means

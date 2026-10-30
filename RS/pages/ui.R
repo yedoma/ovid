@@ -34,7 +34,7 @@ std_pages <- function() list(
   ovid_tool("Timeline", icon = "timeline",
     mod_timeline_ui("timeline"),                                       # RS/pages/mod_timeline.R: sites by year, Set site
     card(card_header("Site names found in folder names"),               # pages/list_edits.R; saved with the Save bar
-      p(class = "muted", "Names read from folder names that are not known sites (sites.csv), with a suggested known site: the same name in another case, a name within it, or the site whose flights overlap these. Saved to site_names.csv; the next rebuild applies them. A name kept as a site is added to sites.csv."),
+      p(class = "muted", "Names read from folder names that are not known sites (the sites table), with a suggested known site: the same name in another case, a name within it, or the site whose flights overlap these. Saved to site_names.csv; the next rebuild applies them. A name kept as a site is added to sites.csv."),
       DTOutput("sn_table"),
       div(class = "d-flex flex-wrap gap-2 align-items-end mt-2",
         actionButton("sn_accept", "Use the suggestion", class = "btn-sm mb-3"),
@@ -55,7 +55,7 @@ std_pages <- function() list(
         DTOutput("links"),
         layout_columns(col_widths = c(6, 3, 3), textInput("l_reason", NULL, placeholder = "Reason (optional)"),
           actionButton("l_confirm", "Confirm link", class = "btn-outline-primary w-100"), actionButton("l_reject", "Reject link", class = "btn-outline-danger w-100")),
-        p(class = "muted", "Confirmed and rejected links are kept in config/links.csv and win over what the scan finds."),
+        p(class = "muted", "Confirmed and rejected links are kept in the links table (Set-up tables) and win over what the scan finds."),
         h3(class = "mt-3", "Logs no flight has yet"),
         p(class = "muted", "Flight logs not linked to any flight, from the same aircraft and within a day of this flight (any day when it has no time), the closest photo-tag count first."),
         DTOutput("log_cands"), actionButton("lc_link", "Link this log", class = "btn-outline-primary btn-sm mt-2")))),
@@ -65,7 +65,7 @@ std_pages <- function() list(
         selectInput("d_kind", "Kind", NULL, multiple = TRUE), selectInput("d_platform", "Platform", NULL, multiple = TRUE),
         selectInput("d_year", "Year", NULL, multiple = TRUE), ovid_switch("d_sidecars", "Show every file of a scene", FALSE),
         actionButton("d_show", "Show these on the map", class = "btn-primary"),
-        p(class = "muted mt-2", "Footprints come from vendor metadata (solid) or file headers (dashed, worked out by Ovid). A date from a folder or file name is marked inferred. Nothing is processed.")),
+        p(class = "muted mt-2", "Footprints come from vendor metadata (solid) or file headers (dashed, worked out by ovid). A date from a folder or file name is marked inferred. Nothing is processed.")),
       card(card_header(textOutput("d_n", inline = TRUE)), DTOutput("d_table")),
       card(card_header("GIS layers (shapefile, GeoJSON, GPX)"), DTOutput("g_layers")))),
   "Tools",
@@ -98,13 +98,15 @@ std_pages <- function() list(
         tags$details(class = "mt-2", tags$summary("Duplicates"), DTOutput("s_dup"))),
       card(card_header("Add or update a source"),
         div(class = "d-flex gap-2 align-items-end",
-          div(class = "flex-grow-1", textInput("s_path", "Folder or drive", placeholder = "/Volumes/Drive", width = "100%")),
+          div(class = "flex-grow-1", textInput("s_path", "Folder or drive", placeholder = "/Volumes/T7/2024-Drone Flights", width = "100%")),
           div(class = "mb-3", ovid_browse_button("s_path"))),
-        textInput("s_id", "Short name (optional)", placeholder = "Drive"),
-        actionButton("s_scan", "Scan folder", class = "btn-primary"), actionButton("s_rescan", "Rescan connected drives"),
+        textInput("s_id", "Short name (optional)", placeholder = "e.g. T7 2024"),
+        actionButton("s_scan", "Scan folder", class = "btn-primary"), actionButton("s_add", "Add to list"), uiOutput("s_new_btn", inline = TRUE), actionButton("s_rescan", "Rescan connected drives"),
         actionButton("s_build", "Rebuild catalogue"),
+        div(class = "mt-3", checkboxInput("s_gd_gis", "Also catalogue GIS layers", TRUE), checkboxInput("s_gd_img", "Also catalogue satellite, aerial, LiDAR and raster files", TRUE),
+            p(class = "muted", "Other geodata more than 5 km from every flight (and not beside its photos) is set aside, not catalogued: Map, Other geodata lists it, and Keep brings a folder back. The distance is a calibration option (Set-up tables).")),
         p(class = "muted mt-2", "Mission plans, KMLs, DJI MRK/RTK files, eMotion geotags and eBee logs kept in a folder of their own: scan that folder as a source too (subfolders included). Its files are matched to DJI and eBee flights by flight number, image names, area and time."),
-        p(class = "muted mt-2", "A first scan reads the small sidecar files (MRK, logs, metadata) and every photo's header once; later scans read only new or changed files. Only drone photos make flights (Set-up tables > drone_cameras.csv). The app stays usable while it scans; a stopped scan keeps the source's last good scan."),
+        p(class = "muted mt-2", "A first scan reads the small sidecar files (MRK, logs, metadata) and every photo's header once; later scans read only new or changed files. Only drone photos make flights (the drone cameras table, Set-up tables). The app stays usable while it scans; a stopped scan keeps the source's last good scan."),
         hr(), h3("Shareable viewer"), rs_viewer_ui("x_title", "x_make", "x_dl")),
       card(class = "mt-3", card_header("Set-up check and file audit"),
         div(class = "d-flex gap-2 align-items-center mb-2", uiOutput("chk_sum", inline = TRUE), span(class = "ms-auto"),
@@ -139,14 +141,14 @@ rs_list_ui <- function() tagList(
       p(class = "muted", textOutput("ps_rule", inline = TRUE)),
       DTOutput("photosets"), actionButton("ps_back", "Back to flights", class = "btn-sm mt-2")),
     nav_panel(textOutput("n_geodata", inline = TRUE), value = "geodata",
-      p(class = "muted", "Satellite, aerial, LiDAR, raster and GIS files the scan found, by folder. Remove adds an ignore rule for the folder (file_rules.csv); the files stay where they are and stay in the file audit. Keep marks the folder as looked at."),
+      p(class = "muted", "Satellite, aerial, LiDAR, raster and GIS files the scan found, by folder. Remove adds an ignore rule for the folder (file rules, Set-up tables); the files stay where they are and stay in the file audit. Keep marks the folder as looked at."),
       DTOutput("geodata"),
       div(class = "d-flex gap-2 mt-2", actionButton("gd_keep", "Keep", class = "btn-sm"), actionButton("gd_remove", "Remove", class = "btn-sm btn-outline-danger"),
           actionButton("gd_suggested", "Use the suggestion for all shown", class = "btn-sm")))),
   uiOutput("save_bar"))
 # Parts shown on two pages: on the Standard pages and on the Workbench's Products and STAC export tabs (workbench/wb_project.R),
 # each with its own ids (an id may appear only once in a page); the server fills both (pages/qa.R, pages/set_up_check.R).
-rs_products_ui <- function(tbl) tagList(p(class = "muted", "Products recorded in Set-up tables > products.csv, with their level and how they were made."), DTOutput(tbl))
+rs_products_ui <- function(tbl) tagList(p(class = "muted", "Products recorded in the products table (Set-up tables), with their level and how they were made."), DTOutput(tbl))
 rs_stac_ui <- function(dl) tagList(p(class = "muted", "The STAC catalogue (output/stac/) lists every flight, dataset and product for any STAC browser; each rebuild writes it, titled as the viewer."),
                                   downloadButton(dl, "Download the STAC catalogue (ZIP)"))
 # The viewer: one button writes it in the background (make) and then downloads it through a hidden link (dl).
@@ -166,11 +168,11 @@ rs_flight_form <- function(prefix, v = list()) { id <- function(k) paste0(prefix
     selectInput(id("status"), "Positioning status", c("(as found)" = "", POSITIONING), g("status"), width = "100%"),
     textInput(id("status_note"), "Reason for changing the status (optional)", g("status_note"), width = "100%", placeholder = "where it came from; your initials"),
     textAreaInput(id("notes"), "Notes", g("notes"), rows = 3, width = "100%"),
-    layout_columns(col_widths = c(6, 6), textInput(id("panel"), "Calibration panel", g("panel"), placeholder = "multispectral: panel ID"),
-                   textInput(id("panel_capture"), "Panel imaged", g("panel_capture"), placeholder = "e.g. before and after")),
+    layout_columns(col_widths = c(6, 6), textInput(id("panel"), "Calibration panel", g("panel"), placeholder = "panel ID"),
+                   textInput(id("panel_capture"), "Panel imaged", g("panel_capture"), placeholder = "before, after")),
     checkboxInput(id("exclude"), "Leave out of the archive and the viewer", rs_flight_excluded(v)),
     actionButton(id("save"), "Save", class = "btn-primary"),
-    p(class = "muted mt-2", "Saved to config/flights.csv (backed up); blank keeps what the scan found, and the files themselves are never changed. Shown at once; the next rebuild writes it into the catalogue."))
+    p(class = "muted mt-2", "Saved to the flights table (Set-up tables), with the version before kept; blank keeps what the scan found, and the files themselves are never changed. Shown at once; the next rebuild writes it into the catalogue."))
 }
 rs_flight_form_update <- function(session, prefix, v) { id <- function(k) paste0(prefix, k); g <- function(k) rs_flight_value(v, RS_FLIGHT_FORM[[k]])
   for (k in c("name", "project", "site", "status_note", "panel", "panel_capture")) updateTextInput(session, id(k), value = g(k))

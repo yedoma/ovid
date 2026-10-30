@@ -15,7 +15,7 @@ For someone new to the archive, or a field check: four steps in one column, and 
 
 <figure><img src="img/guide/rs_simple_view.png" alt="Simple view, step 2 View: a tile per folder guess and the footprints" style="width:100%"></figure>
 
-- **Import**: the sources with when each was last scanned, **Scan plugged-in drives**, and **Add a drive or folder**. **What was read** counts the flights and photo sets, images and sources, with a checklist: files listed, image details read, flights grouped, logs and geotags linked, flights with a site, and corrected positions (RTK or PPK).
+- **Import**: a new install first asks for a catalogue: **Start a new catalogue** (a name; the folder is filled in) or **open one you have**. Then add each drive or folder with **Browse…** and **Add to list** (each gets a short name you can change) and press **Scan N folders**: the progress, with Cancel, shows on Import, and **View the flights** follows. **What was read** counts the flights and photo sets, images and sources, with a checklist. View, Edit and Export wait until there is a catalogue. **Other geodata** switches GIS layers and imagery on or off; geodata far from every flight is set aside, not catalogued (Standard, Map, Other geodata).
 - **View**: one tile per folder guess, year or site (flights, sensors, dates, the share with corrected positions), and the footprints of the group picked, for one year or all. **Need a look** shows the groups with a check to look at.
 - **Edit**: **Folder names → sites** gives each folder name the site it means, for every flight in that folder; **Flight details** sets a flight's name, project, notes and whether it is in the archive; drag a flight onto a site, rename a site or give it a place.
 - **Export**: the catalogue report (one page, HTML), the catalogue tables (.zip) and every flight's footprint as GeoJSON, for a GIS.
@@ -30,7 +30,7 @@ Changes wait in a list until **Save**, with **Undo** and a change log; they appl
 
 The pages on the left: **Archive** (Map, Timeline, Flight, Imagery), **Tools** (GNSS), **Review** (QA) and **Setup** (Sources, Set-up tables, Convert, Reference); **Settings** is the gear.
 
-1. **Sources:** **Browse…** to a drive or folder, give it a short name and press **Scan folder**. The first scan opens every image once; later scans read only the folders whose files changed.
+1. **Sources:** **Browse…** to a drive or folder, then **Scan folder** (one at once) or **Add to list** and **Scan the new folders** (several in one run). The first scan reads every photo's header once; later scans read only new or changed files.
 2. **Map:** every flight on satellite imagery, coloured by positioning status. Click a flight on the map or in the table to see it beside the map. The figures across the top count the flights, images, the share placed and the share RTK or PPK corrected.
 3. **Flight:** a flight's display name, project and site, its files and its checks.
 4. **QA:** the flights with flags and the files tied to no flight.

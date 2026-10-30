@@ -34,7 +34,7 @@ wb_project_server <- function(input, output, session, ctx) {
     plugged <- if (nrow(s)) sum(dir.exists(path.expand(s$path))) else 0
     tile <- function(v, k, cls = "") div(class = paste("wb-tile", cls), div(class = "v", v), div(class = "k", k))
     # safe: an output of the last run, only shown
-    m <- tryCatch(fread(file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
+    m <- tryCatch(fread(file = file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] %|% "0" else "0"
     div(class = "wb-tiles", tile(num(nrow(s)), "sources"), tile(num(plugged), "plugged in now"), tile(num(as.numeric(v("files"))), "files"),
         tile(num(as.numeric(v("images"))), "images"), tile(num(if (is.null(x)) 0 else nrow(x$flights)), "flights"),

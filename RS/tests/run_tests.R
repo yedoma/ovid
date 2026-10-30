@@ -516,6 +516,7 @@ local({                                                               # .bb3 rec
 })
 local({                                                               # the .bb3 key built during a scan (R/emotion_catalogue.R), with a stand-in builder
   ring <- file.path(tempfile("ring"), "config", "emotion_bb3.ring"); got <- NULL
+  home <- ovid_projects_home; assign("ovid_projects_home", function(app, root) tempfile("home"), envir = environment(emotion_key_auto))   # no other project's key
   build <- function(m, b, out) { got <<- b; dir.create(dirname(out), recursive = TRUE); writeBin(as.raw(1:4), out); list(closed = TRUE, blocks = 1L) }
   fs <- data.table(file = c("plan.mis3", "EP-01_0359.bb3", "EP-01_0359_em.bb3"), format = c("emotion_plan", "sensefly_log", "sensefly_log"), status = "", size = 10,
                    path = c("/x/plan.mis3", "/x/EP-01_0359.bb3", "/x/EP-01_0359_em.bb3"))
@@ -523,6 +524,63 @@ local({                                                               # the .bb3
   ok <- emotion_key_auto(fs, ring, build); again <- { got <- NULL; emotion_key_auto(fs, ring, build) }
   check(!n0 && ok && file.exists(ring) && again && is.null(got) && identical(normalizePath(bb3_ring_path(dirname(dirname(ring))), "/", FALSE), normalizePath(ring, "/", FALSE)),   # same path, whichever separators (Windows' dirname gives "/")
         "a scan builds the .bb3 key from a source's .mis3 and .bb3 logs when the project has none, into its config folder, and only once")
+  assign("ovid_projects_home", home, envir = environment(emotion_key_auto))
+})
+local({                                                               # found in the stress test (30 Oct 2026)
+  srcs <- paste(readLines(file.path(here, "pages", "sources.R"), warn = FALSE), collapse = "\n"); sim <- paste(readLines(file.path(here, "simple", "simple_rs.R"), warn = FALSE), collapse = "\n")
+  check(identical(safe_name(ascii_name("Été site A")), "Ete_site_A"), "a folder with accents gets a source id in plain letters (Ete_site_A, not _t_site_A)")
+  td <- tempfile("rs_ds"); dir.create(td); file.copy(file.path(here, "tests", "samples", "raster__gsddsm.tif"), file.path(td, "dsm.tif")); sd <- tempfile("rs_dsc"); dir.create(sd)
+  fs <- list_source(td, data.table(pattern = character(), action = character(), reason = character())); d1 <- read_source_datasets(fs, sd); d2 <- read_source_datasets(fs, sd)
+  check(nrow(d1) == 1 && file.exists(file.path(sd, "datasets.rds")) && isTRUE(all.equal(d1, d2)), "raster headers are kept in the source's cache: a rescan gives the same rows without reading the file again")
+  cf <- camera_fill(data.table(model = c("thermoMAP", "FC6310"), focal_mm = c(9, 8.8), px_x = c(NA, 5472), px_y = c(NA, 3648), sensor_w_mm = c(NA, 13.2), sensor_w_source = c(NA, "EXIF")))
+  check(cf$px_x[1] == 640 && cf$px_y[1] == 512 && abs(cf$sensor_w_mm[1] - 10.752) < 0.001 && cf$sensor_w_mm[2] == 13.2 && cf$px_x[2] == 5472,
+        "a thermoMAP frame gets 640 x 512 px and a 10.75 mm sensor from senseFly's figures (14 cm/px at 75 m, 9 mm lens); a camera that gives its own size keeps it")
+  yrs <- 2026:2019; fl8 <- rbindlist(list(data.table(aircraft = "DJI M350", sensor = "Zenmuse P1", fpk = "optical", year = yrs), data.table(aircraft = "DJI M350", sensor = "Zenmuse L2", fpk = "lidar", year = yrs),
+    data.table(aircraft = "senseFly eBee X", sensor = "S.O.D.A.", fpk = "optical", year = yrs), data.table(aircraft = "senseFly eBee", sensor = "thermoMAP", fpk = "optical", year = yrs)))
+  fc8 <- cbind(fl8, fp_colours(fl8)); lab <- function(h) grDevices::convertColor(t(grDevices::col2rgb(h)) / 255, "sRGB", "Lab"); de <- function(a, b) sqrt(sum((lab(a) - lab(b))^2))
+  yr_ok <- all(vapply(split(fc8$col, paste(fc8$family, fc8$cls)), function(cc) min(combn(cc, 2, function(p) de(p[1], p[2]))) >= 15, NA))
+  pr_ok <- all(vapply(yrs, function(y) de(fc8[family == "DJI" & cls == "optical" & year == y]$col, fc8[family == "DJI" & cls == "lidar" & year == y]$col) >= 15, NA))
+  check(yr_ok && pr_ok && all(vapply(fc8$col, contrast_ratio, 0, PAL$bg) >= 3) && identical(unique(fc8$family), c("DJI", "eBee")),
+        "footprint colours: every year of a drone and sensor (8 years) at least 15 dE from every other, optical and LiDAR of a year 15 dE apart, all legible on the map")
+  ec <- paste(readLines(file.path(here, "R", "emotion_catalogue.R"), warn = FALSE), collapse = "\n")
+  check(length(geotag_bytes(list(bytes = NULL))) == 0 && length(geotag_bytes(list(bytes = list()))) == 0 && length(geotag_bytes(list(bytes = jsonlite::base64_enc(as.raw(1:3))))) == 3 &&
+        grepl('Sys.glob(file.path(path.expand(ovid_projects_home("RS")), "*", "config", basename(ring)))', ec, fixed = TRUE),
+        "an empty eMotion geotag no longer stops the .bb3 key build, and a project with no key takes it from another RS project (eBee footprints need the decoded log)")
+  check(identical(format_of("THM_00039_02130.tif"), "image_tif") && identical(format_of("ortho_area.tif"), "raster"),
+        "senseFly thermoMAP frames (THM_*.tif, with EXIF and GPS) are drone photos, not rasters: T7 2022's two thermal flights were missing")
+  check(grepl("!identical(t, session$userData$run_seen) && is.null(RUNNER$job)", srcs, fixed = TRUE) && grepl('if ("last_scanned" %in% names(sc))', sim, fixed = TRUE),
+        "a page reloaded during a scan reads the catalogue when the scan ends (it showed Nothing scanned yet), and the Simple sources list draws without a scan date")
+  check(grepl('fcoalesce(n$N[match(sid, n$source_id)], 0L)', sim, fixed = TRUE), "a source with no flights says 0 flights, not NA flights")
+  check(grepl('if (cor == 1) "1 has" else paste(cor, "have"), " corrected positions', sim, fixed = TRUE), "the Simple report says 1 has corrected positions (it said 1 have)")
+  le <- paste(readLines(file.path(here, "pages", "list_edits.R"), warn = FALSE), collapse = "\n")
+  check(!grepl("_rows_selected\\]", le) && identical(names(data.table(found = "a")[NULL %||% integer()]), "found"),
+        "a button over a table with no row picked says so (x[NULL] dropped the columns: Keep as a site failed)")
+  check(grepl("decision = what, step = le_step()", le, fixed = TRUE), "Keep and Remove on the Other geodata tab save the choice (the rows' own decision column, blank, was saved instead)")
+})
+local({                                                               # other geodata: catalogued beside or near the flights, the rest set aside with the reason
+  fl <- data.table(lat_min = 61.30, lat_max = 61.31, lon_min = -121.31, lon_max = -121.30)
+  ds <- data.table(source_id = "S", rel = c("F1/ortho.tif", "Near/a.tif", "Far/b.tif", "Tiles/t.png", "Canada/c.tif"), folder = c("F1", "Near", "Far", "Tiles", "Canada"), kind = "raster",
+                   lat_min = c(61.30, 61.32, 62.5, NA, 42), lat_max = c(61.31, 61.33, 62.6, NA, 70), lon_min = c(-121.31, -121.30, -121.3, NA, -140), lon_max = c(-121.30, -121.29, -121.2, NA, -52))
+  gl <- data.table(source_id = "S", rel = "GIS/plots.shp", folder = "GIS", lat_min = 61.30, lat_max = 61.305, lon_min = -121.305, lon_max = -121.30)
+  r <- geodata_review(ds, gl, fl, data.table(source_id = "S", folder = "F1/img"), max_km = 5, max_extent_km = 200); w <- setNames(r$files$why, r$files$rel)
+  check(r$files[rel == "F1/ortho.tif"]$keep && r$files[rel == "Near/a.tif"]$keep && r$files[rel == "GIS/plots.shp"]$keep && grepl("km from the nearest flight", w[["Far/b.tif"]]) &&
+        w[["Tiles/t.png"]] == "no position read" && grepl("basemap", w[["Canada/c.tif"]]) && abs(box_gap_km(62.5, 62.6, -121.3, -121.2, 61.30, 61.31, -121.31, -121.30) - 132.5) < 1,
+        "other geodata beside a flight's photos or within 5 km is catalogued; far, unplaced and basemap-sized folders are set aside with the reason (equirectangular km)")
+  r2 <- geodata_review(ds, gl, fl, NULL, kept = geodata_id("S", "Far", "raster"), on = c(gis = FALSE, imagery = TRUE))
+  check(r2$files[rel == "Far/b.tif"]$keep && !r2$files[rel == "GIS/plots.shp"]$keep && grepl("switched off", r2$files[rel == "GIS/plots.shp"]$why),
+        "a folder kept on the Other geodata tab is catalogued at any distance; a kind switched off is set aside")
+})
+local({                                                               # a new project with no source: no set-up gate, and only real folders become sources
+  pd <- tempfile("rs_fresh"); cf <- modifyList(CFG, list(project_dir = pd)); cfgs <- load_configs(cf)
+  check(!length(CFG$raw_dirs) && !any(setup_check(cf)$level == "error"), "a new project with no source has no set-up error (no placeholder raw folder), so its first scan is not stopped by a question")
+  src <- tempfile("rs_src"); dir.create(src); cfgs <- add_source(cfgs, cf, src)
+  bad <- tryCatch({ add_source(cfgs, cf, file.path(tempdir(), "no_such_drive")); "added" }, error = function(e) conditionMessage(e))
+  check(nrow(load_configs(cf)$sources) == 1 && grepl("was not found", bad), "the first scan of a folder writes exactly one source, and a folder that is not there is never added")
+  pd2 <- tempfile("rs_empty"); e <- tryCatch({ run_pipeline_steps(modifyList(CFG, list(project_dir = pd2))); "" }, error = function(e) conditionMessage(e))
+  check(grepl("^No source yet: add a drive or folder", e) && !nrow(load_configs(modifyList(CFG, list(project_dir = pd2)))$sources), "a run with no source says to add a folder and writes no source")
+  app <- paste(readLines(file.path(here, "app.R"), warn = FALSE), collapse = "\n"); srcs <- paste(readLines(file.path(here, "pages", "sources.R"), warn = FALSE), collapse = "\n")
+  check(grepl("sel(NULL); reload() })", app, fixed = TRUE) && grepl("inn <- s$source_id[in_dirs(p, np)]", srcs, fixed = TRUE) && grepl('c("s_path", "sp_path", ', paste(readLines(file.path(here, "pages", "browse.R"), warn = FALSE), collapse = ""), fixed = TRUE),
+        "opening another project reads its catalogue at once; the overlap check says nothing when there is no source; Browse works in Simple too")
 })
 local({                                                               # the set-up check of gnss_bases.csv and drone_cameras.csv (R/preflight.R)
   pd <- tempfile("rs_setup"); cf <- modifyList(CFG, list(project_dir = pd, raw_dirs = character())); invisible(load_configs(cf))

@@ -14,6 +14,7 @@ SP_RS_FOLDER_ITEM <- "site for this folder name"   # the list-of-changes entry t
 sp_rs_corrected <- function(f) sum(f[kind != "photo set"]$positioning_status %in% CORRECTED_STATES)
 sp_rs_generic <- function(x) grepl(SIMPLE_GENERIC_FOLDERS, trim(as.character(x)), ignore.case = TRUE, perl = TRUE)   # a camera's or a backup's folder (R/config.R)
 
+sp_rs_n <- function(n, word, words = paste0(word, "s"), shown = n) paste(shown, if (isTRUE(n == 1)) word else words)   # "1 flight", "2 flights"
 sp_rs_chr <- function(d, cols) { d <- as.data.table(d); for (v in names(d)) set(d, j = v, value = { x <- as.character(d[[v]]); x[is.na(x)] <- ""; x }); ensure_cols(d, cols) }
 sp_rs_blank <- function(d, ...) { r <- as.data.table(as.list(stats::setNames(rep("", ncol(d)), names(d)))); x <- list(...)
   for (k in names(x)) set(r, j = k, value = as.character(x[[k]])); r }
@@ -49,6 +50,7 @@ sp_rs_groups <- function(f, by) { if (is.null(f) || !nrow(f)) return(NULL)
 
 # The footprints of some flights as GeoJSON (one Feature per flight part; the catalogue's rings are "lat lon;lat lon ...").
 sp_rs_geojson <- function(fp, f) {
+  if (is.null(fp) || !nrow(fp) || is.null(f) || !nrow(f)) return('{"type":"FeatureCollection","features":[]}')   # nothing scanned yet
   x <- fp[flight_id %in% f$flight_id]; if (!nrow(x)) return('{"type":"FeatureCollection","features":[]}')
   feat <- vapply(split(x, by = c("flight_id", "part")), function(d) { r <- d[1]; ff <- f[flight_id == r$flight_id][1]
     rings <- vapply(d$line, function(l) { p <- do.call(rbind, lapply(strsplit(strsplit(l, ";", fixed = TRUE)[[1]], " ", fixed = TRUE), as.numeric)); if (!is.matrix(p)) return("")
@@ -60,14 +62,18 @@ sp_rs_geojson <- function(fp, f) {
 
 # ---- interface ---------------------------------------------------------------------------------------------------------------
 sp_rs_import_ui <- function() tagList(
-  p(class = "sp-lead", "The archive is read from drives and folders (the sources). A drive that is not plugged in keeps its last scan; nothing on a source is ever changed."),
-  div(class = "sp-cols",
-    div(class = "sp-card", div(class = "sp-h", "Sources"), uiOutput("sp_sources"),
-      div(class = "sp-row", tags$button(type = "button", class = "btn sp-btn", onclick = "document.getElementById('s_rescan').click()", "Scan plugged-in drives")),
-      tags$details(tags$summary("Add a drive or folder"),
-        textInput("sp_path", "Folder or drive", placeholder = "/Volumes/Drive", width = "100%"), ovid_browse_button("sp_path"),
-        tags$button(type = "button", class = "btn sp-btn2", onclick = "Shiny.setInputValue('s_path', document.getElementById('sp_path').value); setTimeout(function(){document.getElementById('s_scan').click()}, 200)", "Scan this folder"))),
-    div(class = "sp-card", div(class = "sp-h", "What was read"), uiOutput("sp_read"), uiOutput("sp_checks"))))
+  uiOutput("sp_choose"),                                                     # choose a catalogue (a new install; New project in the menu)
+  conditionalPanel("!output.sp_choosing",
+    uiOutput("sp_run"), uiOutput("sp_next"),                                 # the scan's progress; after it, the way on to View
+    div(class = "sp-cols",
+      div(class = "sp-card", uiOutput("sp_sources"),
+        div(class = "sp-row sp-addrow", div(class = "sp-fill", textInput("sp_path", NULL, placeholder = "/Volumes/T7/2024-Drone Flights", width = "100%")),
+            ovid_browse_button("sp_path"), actionButton("sp_add", "Add to list", class = "sp-btn2")),
+        uiOutput("sp_scan_btns"),
+        tags$details(class = "sp-small", style = "margin-top:10px", tags$summary("Other geodata"),
+          checkboxInput("sp_gd_gis", "Also catalogue GIS layers", TRUE), checkboxInput("sp_gd_img", "Also catalogue satellite, aerial, LiDAR and raster files", TRUE),
+          p(class = "sp-dim", "Geodata more than 5 km from every flight, and not beside its photos, is set aside rather than catalogued; Standard, Map, Other geodata lists it."))),
+      div(class = "sp-card", div(class = "sp-h", "What was read"), uiOutput("sp_read"), uiOutput("sp_checks")))))
 
 sp_rs_view_ui <- function() tagList(
   uiOutput("sp_hero"),
@@ -79,7 +85,7 @@ sp_rs_view_ui <- function() tagList(
     div(class = "sp-card", div(class = "sp-row", style = "margin-top:0", tags$b(textOutput("sp_map_title", inline = TRUE)), div(class = "sp-fill"),
                                 selectInput("sp_year", NULL, "All years", width = "130px")),
         plotly::plotlyOutput("sp_map", height = "380px"),
-        p(class = "sp-dim sp-small", "Photo footprints from the camera's sensor and focal length at the flying height (pinhole, nadir); LiDAR as its swath. Gold: optical, blue: LiDAR."))),
+        p(class = "sp-dim sp-small", "Photo footprints from the camera's sensor and focal length at the flying height (pinhole, nadir); LiDAR as its swath. Coloured by drone, sensor and year, each year its own shade (footprint colours, Standard: Set-up tables)."))),
   div(class = "sp-card", div(class = "sp-h", textOutput("sp_rows_title", inline = TRUE)), uiOutput("sp_rows")),
   div(class = "sp-card", div(class = "sp-h", textOutput("sp_flight_title", inline = TRUE)), uiOutput("sp_flight")))
 
@@ -99,20 +105,29 @@ SP_RS_CSS <- paste(".sp-checks{margin-top:10px;border-top:1px solid var(--sp-lin
   ".sp-check{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:7px 0;border-bottom:1px solid var(--sp-line)}",
   ".sp-check>.sp-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--sp-ok);align-self:center}",
   ".sp-check.sp-warn>.sp-dot{background:var(--sp-warn)} .sp-check.sp-error>.sp-dot{background:var(--sp-err)} .sp-check>.sp-fill{flex:1}",
-  ".sp-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums} .sp-table th{text-align:left;font-weight:600;color:var(--sp-mut);padding:4px 12px 4px 0;border-bottom:1px solid var(--sp-line2)}",
+  ".sp-table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums} .sp-table th{text-align:left;font-weight:600;color:var(--sp-fg2);padding:4px 12px 4px 0;border-bottom:1px solid var(--sp-line2)}",
   ".sp-table td{padding:4px 12px 4px 0;border-bottom:1px solid var(--sp-line);vertical-align:middle} .sp-table tr.on td{background:color-mix(in srgb,var(--sp-acc) 10%,transparent)}",
-  ".sp-table .form-group{margin:0} .sp-plug{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--sp-mut)} .sp-plug.on{background:var(--sp-ok)}",
+  ".sp-table .sp-n{text-align:right} .sp-table .form-group{margin:0} .sp-plug{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--sp-mut)} .sp-plug.on{background:var(--sp-ok)}",
   ".sp-filters .form-group{margin:0} .sp-filters .shiny-options-group{display:flex;flex-wrap:wrap;gap:6px}",
   ".sp-filters .radio-inline{margin:0;padding:4px 12px;border:1px solid var(--sp-line2);border-radius:999px} .sp-filters .radio-inline input{display:none}",
   ".sp-filters .radio-inline:has(input:checked){border-color:var(--sp-acc);box-shadow:inset 0 0 0 1px var(--sp-acc)}",
   ".sp-rs-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start} .sp-rs-cols .sp-tiles{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}",
-  "@media (max-width:1000px){.sp-rs-cols{grid-template-columns:1fr}} .sp-card .form-group{margin-bottom:6px}")
+  "@media (max-width:1000px){.sp-rs-cols{grid-template-columns:1fr}} .sp-card .form-group{margin-bottom:6px}",
+  ".sp-addrow{align-items:flex-start;margin-top:10px} .sp-addrow .form-group{margin:0} .sp-big{font-size:17px;font-weight:600;margin-bottom:4px}",
+  ".sp-name{width:100%;max-width:220px;background:transparent;color:inherit;border:1px solid var(--sp-line2);border-radius:4px;padding:2px 6px;font:inherit}",
+  ".sp-next{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:0 0 16px;padding:12px 14px;border:1px solid var(--sp-acc);border-radius:6px}",
+  ".sp-run{margin-bottom:16px} .sp-run .d-run-bar{margin:12px 0 8px} .sp-step.sp-off{opacity:.45;pointer-events:none}",
+  ".sp-plist>div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--sp-line)} .sp-plist>div:first-child{border-top:0}",
+  "html.sp-root:has(.sp-body .tab-pane.active[data-value=\"import\"]) #ovid_runner{display:none}")   # the progress is shown on Import itself
 
 simple_ui <- function(req) {
   pages <- Filter(function(x) inherits(x, "ovid_tool"), std_pages())                              # the Standard pages, hidden: their
   hidden <- lapply(pages, function(x) tabPanel(x$title, value = x$value, div(class = "d-tool", x$ui)))   # inputs exist for its server
   simple_page("RS", PAL, import = sp_rs_import_ui(), view = sp_rs_view_ui(), edit = sp_rs_edit_ui(), export = sp_rs_export_ui(),
-              project = projects_switch_ui("proj"), hidden = hidden, theme = THEME, head = tagList(std_head(), tags$style(HTML(SP_RS_CSS))))
+              project = projects_switch_ui("proj"), hidden = hidden, theme = THEME, head = tagList(std_head(), tags$style(HTML(SP_RS_CSS)),
+                tags$script(HTML("$(function(){ Shiny.addCustomMessageHandler('sp-rs-lock', function(m){ document.querySelectorAll('.sp-step').forEach(function(b){   // View, Edit and Export wait for a catalogue
+                  if (b.dataset.step !== 'import') { b.classList.toggle('sp-off', m.on); b.setAttribute('aria-disabled', m.on ? 'true' : 'false'); } });
+                  if (m.on) { var a = document.querySelector('.sp-step[data-step=\\'import\\']'); if (a && !a.classList.contains('on')) a.click(); } }); });"))))
 }
 
 # ---- server ------------------------------------------------------------------------------------------------------------------
@@ -129,17 +144,92 @@ simple_server <- function(input, output, session, std) {
   F <- reactive({ x <- C(); if (is.null(x)) return(NULL); sp_rs_flights(x$flights, std$fchk(), cfg_fl(), sites_tab()) })
 
   # ---- Import
-  output$sp_sources <- renderUI({ x <- C(); s <- if (is.null(x)) data.table() else x$sources; if (!nrow(s)) return(p(class = "sp-dim", "No sources yet: add a drive or folder."))
+  # Choosing a catalogue: on a new install (no project chosen yet), and from New project in the menu. Nothing opens by default.
+  choosing <- reactiveVal(is.null(SETTINGS$project_dir) && !nzchar(Sys.getenv("RS_PROJECT_DIR")))
+  output$sp_choosing <- reactive(choosing()); outputOptions(output, "sp_choosing", suspendWhenHidden = FALSE)
+  std$proj$on_new(function() choosing(TRUE))
+  observe(session$sendCustomMessage("sp-rs-lock", list(on = choosing() || is.null(C()))))
+  new_auto <- reactiveVal("")
+  output$sp_choose <- renderUI({ if (!choosing()) return(NULL)
+    known <- isolate(tryCatch(project_info(projects_known(SETTINGS)), error = function(e) data.table()))
+    known <- if (nrow(known)) known[there == TRUE] else known
+    js_open <- function(p) sprintf("Shiny.setInputValue('sp_open', %s, {priority: 'event'})", jsonlite::toJSON(p, auto_unbox = TRUE))
+    tagList(p(class = "sp-lead", "A catalogue lists the drone flights, imagery and survey files found on your drives and folders. It reads them and never changes them."),
+      div(class = "sp-cols",
+        div(class = "sp-card", div(class = "sp-h", "Start a new catalogue"),
+          textInput("sp_new_name", "Name", placeholder = "e.g. 2026 field season", width = "100%"),
+          div(class = "sp-row sp-addrow", div(class = "sp-fill", textInput("sp_new_dir", "Saved in", width = "100%")), ovid_browse_button("sp_new_dir")),
+          div(class = "sp-row", actionButton("sp_new_go", "Start the catalogue", class = "sp-btn"),
+              if (isolate(!is.null(C())) || nrow(known)) actionLink("sp_choose_back", "Back to the open catalogue"))),
+        div(class = "sp-card", div(class = "sp-h", "Or open one you have"),
+          if (nrow(known)) div(class = "sp-plist", lapply(seq_len(nrow(known)), function(i) div(span(tags$b(known$name[i]), div(class = "sp-dim sp-small", tilde(known$path[i]),
+              if (nzchar(known$last_run[i])) paste(" \u00b7 run", known$last_run[i]) else " \u00b7 never run")),
+              tags$button(type = "button", class = "btn sp-btn2", onclick = js_open(known$path[i]), "Open"))))
+          else p(class = "sp-dim", "No catalogue yet on this computer."),
+          div(class = "sp-row sp-addrow", div(class = "sp-fill", textInput("sp_open_dir", "Open a folder from somewhere else", width = "100%")), ovid_browse_button("sp_open_dir")),
+          div(class = "sp-row", actionButton("sp_open_go", "Open", class = "sp-btn2"))))) })
+  observeEvent(input$sp_new_name, { d <- trim(input$sp_new_dir %||% ""); if (nzchar(d) && !identical(d, new_auto())) return()   # the folder follows the name until it is changed
+    n <- trim(input$sp_new_name); v <- if (nzchar(n) && !grepl("[/\\\\:]", n)) tilde(file.path(projects_root(), n)) else ""
+    new_auto(v); updateTextInput(session, "sp_new_dir", value = v) }, ignoreInit = TRUE)
+  observeEvent(input$sp_new_go, { n <- trim(input$sp_new_name %||% ""); d <- trim(input$sp_new_dir %||% "")
+    if (!nzchar(n)) return(showNotification("Give the catalogue a name.", type = "warning"))
+    if (nzchar(why <- project_name_problem(n, projects_known(SETTINGS)))) return(showNotification(why, type = "warning"))
+    if (run_busy()) return(showNotification("A scan is going: wait for it or cancel it first.", type = "warning"))
+    r <- tryCatch(std$proj$new(if (nzchar(d)) d else file.path(projects_root(), n), n), error = function(e) e)
+    if (inherits(r, "error")) return(showNotification(conditionMessage(r), type = "error", duration = 10))
+    choosing(FALSE); steps$go("import") })
+  open_project <- function(p) { p <- path.expand(trim(p %||% ""))
+    if (!nzchar(p) || !dir.exists(p)) return(showNotification("That folder was not found.", type = "error"))
+    ow <- project_owner(p); if (nzchar(ow) && !identical(ow, project_app())) return(showNotification(paste0("That folder is a project of ovid ", ow, "."), type = "error"))
+    if (!nzchar(ow) && !dir.exists(file.path(p, "config")) && length(list.files(p, no.. = TRUE))) return(showNotification("That folder is not an ovid RS catalogue.", type = "error"))
+    if (run_busy()) return(showNotification("A scan is going: wait for it or cancel it first.", type = "warning"))
+    std$proj$open(p); choosing(FALSE); steps$go(if (is.null(std$C())) "import" else "view") }
+  observeEvent(input$sp_open, open_project(input$sp_open)); observeEvent(input$sp_open_go, open_project(input$sp_open_dir))
+  observeEvent(input$sp_choose_back, choosing(FALSE))
+
+  # the sources: scanned ones and the folders waiting in the list (short name editable, Remove, a note when one is inside another)
+  output$sp_sources <- renderUI({ s <- std$src_cfg(); x <- C(); sc <- if (is.null(x)) data.table() else x$sources
+    if (!nrow(s)) return(tagList(div(class = "sp-big", "Add the folder or drive that holds your flights"),
+      p(class = "sp-dim", "For example a drive's top folder, or one year's folder. Add as many as you like, then scan them together. Read only: nothing on them is changed.")))
     f <- F(); n <- if (!is.null(f)) f[, .N, by = source_id] else data.table(source_id = character(), N = integer())
-    tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Source"), tags$th("Last scanned"), tags$th("Flights"))),
-      tags$tbody(lapply(seq_len(nrow(s)), function(i) { r <- s[i]; on <- sp_rs_plugged(r)
-        tags$tr(tags$td(span(class = paste("sp-plug", if (on) "on"), title = if (on) "plugged in" else "not plugged in: its last scan is used"), tags$b(r$source_id),
-                        div(class = "sp-dim sp-small", sp_rs_src_path(r), if (!on) " · not plugged in")),
-                tags$td(as.character(r$last_scanned %||% "")), tags$td(n$N[match(r$source_id, n$source_id)] %||% 0)) }))) })
+    np <- normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE); done <- std$src_scanned(s$source_id)
+    rm_js <- function(sid) sprintf("Shiny.setInputValue('sp_rm', %s, {priority: 'event'})", jsonlite::toJSON(sid, auto_unbox = TRUE))
+    tagList(div(class = "sp-h", "Sources"),
+      tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Source"), tags$th("Status"), tags$th(""))),
+        tags$tbody(lapply(seq_len(nrow(s)), function(i) { sid <- s$source_id[i]; on <- dir.exists(path.expand(s$path[i]))
+          inside <- s$source_id[-i][if (length(np[-i])) startsWith(np[i], paste0(np[-i], "/")) else logical()]
+          when <- if ("last_scanned" %in% names(sc)) as.character(sc$last_scanned[match(sid, sc$source_id)]) else NA_character_
+          tags$tr(tags$td(span(class = paste("sp-plug", if (on) "on"), title = if (on) "plugged in" else "not plugged in: its last scan is used"),
+                          if (done[i]) tags$b(sid) else tags$input(type = "text", class = "sp-name", value = sid, `aria-label` = "Short name",
+                            onchange = sprintf("Shiny.setInputValue('sp_rename', {sid: %s, name: this.value}, {priority: 'event'})", jsonlite::toJSON(sid, auto_unbox = TRUE))),
+                          div(class = "sp-dim sp-small", s$path[i], if (!on) " \u00b7 not plugged in", if (length(inside)) paste0(" \u00b7 inside ", inside[1], ": its files count here only"))),
+                  tags$td(if (done[i]) paste0(if (length(when) && !is.na(when)) paste0("scanned ", substr(when, 1, 16), " \u00b7 ") else "", sp_rs_n(fcoalesce(n$N[match(sid, n$source_id)], 0L), "flight")) else span(class = "sp-dim", "waiting to be scanned")),
+                  tags$td(tags$button(type = "button", class = "btn sp-btn2", onclick = rm_js(sid), "Remove"))) })))) })
+  output$sp_scan_btns <- renderUI({ q <- nrow(std$queued()); s <- std$src_cfg(); scanned <- nrow(s) - q
+    div(class = "sp-row", if (q) actionButton("sp_scan_new", paste("Scan", sp_rs_n(q, "folder", "folders")), class = "sp-btn"),
+      if (scanned) tags$button(type = "button", class = if (q) "btn sp-btn2" else "btn sp-btn", onclick = "document.getElementById('s_rescan').click()", "Rescan plugged-in drives"),
+      if (q || !nrow(s)) span(class = "sp-dim sp-small", "Read only. A first scan of a big drive can take a while; you can cancel it at any point.")) })
+  # the scan's progress where you are looking (the same run as the box in the corner, its numbers updated in place: core runner.js)
+  run_key <- reactiveVal("")
+  observe({ invalidateLater(1000); j <- RUNNER$job; run_key(if (is.null(j)) "" else paste(format(j$t0), j$label, !is.null(j$cancelled_at))) })
+  output$sp_run <- renderUI({ if (!nzchar(run_key())) return(NULL); j <- isolate(RUNNER$job); if (is.null(j)) return(NULL); st <- run_state(j); stopping <- !is.null(j$cancelled_at)
+    div(class = "sp-card sp-run", `data-ovid-run` = "",
+      div(class = "sp-row", style = "margin-top:0;justify-content:space-between", tags$b(j$label),
+          actionButton("sp_run_cancel", if (stopping) "Stopping" else "Cancel", class = "sp-btn2", disabled = if (stopping) NA)),
+      div(class = "d-run-bar", div(class = "d-run-fill", style = sprintf("width:%d%%", st$pct))),
+      tags$dl(class = "sp-kv", tags$dt("Now"), tags$dd(span(class = "d-run-stage", st$stage), div(class = "d-run-item sp-dim sp-small", style = if (!nzchar(st$item)) "display:none", st$item)),
+              tags$dt("Time"), tags$dd(span(class = "d-run-time", st$time))),
+      p(class = "sp-dim sp-small", style = "margin:8px 0 0", if (stopping) "Stopping at the next safe point." else
+        "You can leave this page; the scan keeps going. Cancel keeps what was read so far, and the next scan picks up from there.")) })
+  observeEvent(input$sp_run_cancel, run_cancel())
+  output$sp_next <- renderUI({ x <- C(); if (nzchar(run_key()) || is.null(x)) return(NULL); f <- F()
+    div(class = "sp-next", span(tags$b(paste0(sp_rs_n(sum(f$kind != "photo set"), "flight"), if (any(f$kind == "photo set")) paste0(" and ", sp_rs_n(sum(f$kind == "photo set"), "photo set")) else "", " in the catalogue.")), " ",
+                                span(class = "sp-dim", "Next: see them on the map, grouped by folder, year or site.")),
+        tags$button(type = "button", class = "btn sp-btn", onclick = go_step("view"), "View the flights \u2192")) })
   output$sp_read <- renderUI({ x <- C(); if (is.null(x)) return(p(class = "sp-dim", "Nothing scanned yet.")); f <- F(); s <- x$sources
     off <- if (nrow(s)) sum(!sp_rs_plugged(s)) else 0L
     tags$dl(class = "sp-kv",
-      tags$dt("Flights"), tags$dd(sprintf("%s (%d flights, %d photo sets)", num(nrow(f)), sum(f$kind != "photo set"), sum(f$kind == "photo set"))),
+      tags$dt("Flights"), tags$dd(sprintf("%s (%s, %s)", num(nrow(f)), sp_rs_n(sum(f$kind != "photo set"), "flight"), sp_rs_n(sum(f$kind == "photo set"), "photo set"))),
       tags$dt("Images"), tags$dd(num(sum(sp_rs_num(f$n_images), na.rm = TRUE))),
       tags$dt("Sources"), tags$dd(sprintf("%d; %d not plugged in (their flights come from the last scan)", nrow(s), off)),
       tags$dt("Catalogue"), tags$dd(format(x$made, "%Y-%m-%d %H:%M"))) })
@@ -151,7 +241,7 @@ simple_server <- function(input, output, session, std) {
     div(class = "sp-checks",
       row("ok", "Files listed", if (is.na(nfiles)) "—" else sprintf("%s files; %s left unassigned", num(nfiles), num(nrow(x$unassigned)))),
       row("ok", "Image details read", sprintf("%s images (EXIF and XMP)", num(sum(sp_rs_num(f$n_images), na.rm = TRUE)))),
-      row("ok", "Flights grouped", sprintf("%d flights; %d found in more than one place, each counted once", nrow(f), cp)),
+      row("ok", "Flights grouped", sprintf("%s; %d found in more than one place, each counted once", sp_rs_n(nrow(f), "flight"), cp)),
       row(if (lk >= nrow(fl)) "ok" else "warn", "Logs and geotags linked", sprintf("%d / %d flights", min(lk, nrow(f)), nrow(f))),
       row(if (!nos) "ok" else "warn", "Flights with a site", if (!nos) sprintf("%d of %d", nrow(f), nrow(f)) else sprintf("%d of %d have none yet: name the folders in Edit", nos, nrow(f))),
       row(if (cor == nrow(fl)) "ok" else "warn", "Corrected positions (RTK or PPK)", sprintf("%d of %d flights; %d standalone, %d unknown", cor, nrow(fl),
@@ -175,8 +265,8 @@ simple_server <- function(input, output, session, std) {
   output$sp_hero <- renderUI({ f <- F()
     if (is.null(f)) return(simple_hero("off", "Nothing scanned yet", "Add a drive or folder and scan it.", tags$button(type = "button", class = "btn sp-btn", onclick = go_step("import"), "Import")))
     d <- substr(f$date[f$date != "undated"], 1, 10); nl <- sum(f$look)
-    simple_hero(if (nl) "warn" else "ok", sprintf("%s flights · %d sensors", num(nrow(f)), uniqueN(f$sensor[nzchar(f$sensor)])),
-      paste0(if (length(d)) paste0(min(d), " to ", max(d), ". ") else "", if (nl) sprintf("%d have a check to look at (clock, positions, accuracy or log).", nl) else "Every check is fine.")) })
+    simple_hero(if (nl) "warn" else "ok", paste(sp_rs_n(nrow(f), "flight", shown = num(nrow(f))), "·", sp_rs_n(uniqueN(f$sensor[nzchar(f$sensor)]), "sensor")),
+      paste0(if (length(d)) paste0(min(d), " to ", max(d), ". ") else "", if (nl) sprintf("%s a check to look at (clock, positions, accuracy or log).", if (nl == 1) "1 has" else paste(nl, "have")) else "Every check is fine.")) })
   output$sp_tiles <- renderUI({ g <- groups(); if (is.null(g) || !nrow(g)) return(p(class = "sp-dim", "No flight matches.")); k <- cur()
     if (!all_tiles()) g <- utils::head(g, SP_RS_TILES)
     lapply(seq_len(nrow(g)), function(i) { r <- g[i]
@@ -188,23 +278,25 @@ simple_server <- function(input, output, session, std) {
     div(class = "sp-row", style = "margin-top:0", actionButton("sp_all", if (all_tiles()) "Show fewer" else sprintf("Show all %d", nrow(g)), class = "sp-btn2")) })
   observe({ r <- rows_g(); y <- if (is.null(r)) character() else sort(unique(r$year), decreasing = TRUE); updateSelectInput(session, "sp_year", choices = c("All years", y), selected = "All years") })
   output$sp_map_title <- renderText({ k <- cur(); if (is.null(k)) "Footprints" else paste("Footprints ·", k) })
-  output$sp_map <- plotly::renderPlotly({ r <- rows_g(); req(r, nrow(r)); x <- C(); fp <- x$footprints; y <- input$sp_year %||% "All years"
+  output$sp_map <- plotly::renderPlotly({ r <- rows_g(); req(r, nrow(r) > 0); x <- C(); fp <- x$footprints; y <- input$sp_year %||% "All years"
     if (y != "All years") r <- r[year == y]; z <- fp[flight_id %in% r$flight_id]; validate(need(nrow(z) > 0, "No footprint for these flights (no position or no camera geometry)."))
     sel <- cur_f(); g <- plotly::plot_ly(); lat <- c(); lon <- c()
+    fc <- fp_colours(r, tryCatch(load_configs(CFG)$footprint_colours, error = function(e) fp_colours_default())); fcol <- setNames(fc$col, r$flight_id)   # by drone, sensor and year
+    fc_of <- function(id) { c0 <- unname(fcol[id]); if (length(c0) != 1 || is.na(c0)) PAL$gray else c0 }
     for (i in seq_len(nrow(z))) { p <- do.call(rbind, lapply(strsplit(strsplit(z$line[i], ";", fixed = TRUE)[[1]], " ", fixed = TRUE), as.numeric)); if (!is.matrix(p)) next
       p <- rbind(p, p[1, ]); lat <- c(lat, p[, 1]); lon <- c(lon, p[, 2]); on <- identical(z$flight_id[i], sel)
       g <- plotly::add_trace(g, type = "scattermapbox", mode = "lines", lat = p[, 1], lon = p[, 2], fill = "toself", hoverinfo = "text", showlegend = FALSE,
-        text = r$name[match(z$flight_id[i], r$flight_id)], line = list(width = if (on) 3 else 1.2, color = if (z$kind[i] == "lidar") PAL$blue else if (on) PAL$fg else PAL$gold),
-        fillcolor = col_rgba(if (z$kind[i] == "lidar") PAL$blue else PAL$gold, 0.12)) }
+        text = r$name[match(z$flight_id[i], r$flight_id)], line = list(width = if (on) 3 else 1.2, color = if (on) PAL$fg else fc_of(z$flight_id[i])),
+        fillcolor = col_rgba(fc_of(z$flight_id[i]), 0.12)) }
     plotly::layout(g, mapbox = list(style = "open-street-map", center = list(lat = mean(range(lat)), lon = mean(range(lon))), zoom = max(3, min(15, 13 - log2(max(diff(range(lat)), diff(range(lon)) / 2, 1e-3) * 50)))),
                    margin = list(l = 0, r = 0, t = 0, b = 0), paper_bgcolor = PAL$bg) |> plotly::config(displaylogo = FALSE) })
   output$sp_rows_title <- renderText({ k <- cur(); if (is.null(k)) "" else paste("Flights ·", k) })
   output$sp_rows <- renderUI({ r <- rows_g(); if (is.null(r) || !nrow(r)) return(NULL); k <- cur_f(); ck <- std$fchk(); ch <- checks_html(ck[match(r$flight_id, ck$flight_id)])
-    tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Date"), tags$th("Flight"), tags$th("Sensor"), tags$th("Images"), tags$th("Positioning"), tags$th("GSD"), tags$th("Checks"))),
+    tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Date"), tags$th("Flight"), tags$th("Sensor"), tags$th(class = "sp-n", "Images"), tags$th("Positioning"), tags$th(class = "sp-n", "GSD"), tags$th("Checks"))),
       tags$tbody(lapply(seq_len(min(nrow(r), 200)), function(i) { f <- r[i]
         tags$tr(class = if (identical(f$flight_id, k)) "on", style = "cursor:pointer", onclick = sprintf("Shiny.setInputValue('sp_flight', %s, {priority: 'event'})", jsonlite::toJSON(f$flight_id, auto_unbox = TRUE)),
           tags$td(f$date), tags$td(tags$b(f$name), if (sp_rs_num(f$n_copies) > 1) span(class = "sp-dim", sprintf(" · %d copies", as.integer(f$n_copies)))), tags$td(f$sensor),
-          tags$td(num(sp_rs_num(f$n_images))), tags$td(f$positioning_status), tags$td(f$gsd), tags$td(HTML(ch[i]))) }))) })
+          tags$td(class = "sp-n", num(sp_rs_num(f$n_images))), tags$td(f$positioning_status), tags$td(class = "sp-n", f$gsd), tags$td(HTML(ch[i]))) }))) })
   output$sp_flight_title <- renderText({ k <- cur_f(); f <- F(); if (is.null(k)) "" else { r <- f[flight_id == k]; paste(r$date, "·", r$name) } })
   output$sp_flight <- renderUI({ k <- cur_f(); req(k); f <- F()[flight_id == k]; ck <- std$fchk()[flight_id == k]
     sun <- if (is.finite(sp_rs_num(f$sun_elev_min_deg))) sprintf("%.0f° to %.0f°", sp_rs_num(f$sun_elev_min_deg), sp_rs_num(f$sun_elev_max_deg)) else "—"
@@ -215,7 +307,7 @@ simple_server <- function(input, output, session, std) {
         tags$dt("GSD"), tags$dd(f$gsd), tags$dt("Sun elevation"), tags$dd(sun), tags$dt("Copies"), tags$dd(as.character(f$n_copies %||% 1)),
         tags$dt("Folder"), tags$dd(class = "sp-dim", f$folder)),
       div(if (nrow(ck)) tags$ul(lapply(seq_along(CHECKS), function(j) { l <- ck[[c("chk_images", "chk_clock", "chk_positions", "chk_accuracy", "chk_log")[j]]]
-            tags$li(tags$b(CHECKS[j]), ": ", lv[[l]]) })),
+            tags$li(tags$b(paste0(CHECKS[j], ":")), " ", lv[[l]]) })),   # no space before the colon
           p(class = "sp-dim sp-small", if (nrow(ck)) ck$chk_why),
           p(class = "sp-dim sp-small", "GSD: ground sample distance from the flying height and the camera (McGlone 2013). Sun elevation from the time and place (Spencer 1971)."))) })
 
@@ -242,9 +334,9 @@ simple_server <- function(input, output, session, std) {
     n <- min(nrow(t), 25L)
     div(class = "sp-card", div(class = "sp-h", "Folder names → sites"),
       p(class = "sp-dim sp-small", sprintf("The scan guesses a flight's site from its folder name. Give each name the site it means (it then names every flight in that folder, at the next rebuild). %d camera or backup folder names (DCIM, 100MEDIA, Photos ...) name nothing and are left out.", ng)),
-      tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Folder name"), tags$th("Flights"), tags$th("Example"), tags$th("Site"), tags$th(""))),
+      tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Folder name"), tags$th(class = "sp-n", "Flights"), tags$th("Example"), tags$th("Site"), tags$th(""))),
         tags$tbody(lapply(seq_len(n), function(i) { r <- t[i]
-          tags$tr(tags$td(tags$b(r$found)), tags$td(r$flights), tags$td(class = "sp-dim sp-small", r$example),
+          tags$tr(tags$td(tags$b(r$found)), tags$td(class = "sp-n", r$flights), tags$td(class = "sp-dim sp-small", r$example),
             tags$td(textInput(paste0("sp_fn_", i), NULL, if (nzchar(r$mapped)) r$mapped else "", width = "180px", placeholder = "site")),
             tags$td(if (nzchar(r$suggested) && !identical(r$suggested, r$mapped)) tags$button(type = "button", class = "btn sp-btn2 btn-sm",
                       onclick = sprintf("var e=document.getElementById('sp_fn_%d'); e.value=%s; $(e).trigger('change');", i, jsonlite::toJSON(r$suggested, auto_unbox = TRUE)), sprintf("Use '%s'", r$suggested)))) }))),
@@ -267,7 +359,7 @@ simple_server <- function(input, output, session, std) {
   observeEvent(input$sp_ed_f, { f <- F(); r <- f[flight_id == input$sp_ed_f]; if (!nrow(r)) return(); c0 <- cfg_fl()[flight_id == input$sp_ed_f]
     updateTextInput(session, "sp_ed_name", value = r$display_name); updateTextInput(session, "sp_ed_proj", value = r$project); updateTextInput(session, "sp_ed_notes", value = r$notes)
     updateSelectInput(session, "sp_ed_ex", selected = if (nrow(c0) && tolower(c0$exclude_from_archive) %in% c("yes", "true", "1")) "yes" else "") })
-  observeEvent(input$sp_ed_add, { f <- F(); r <- f[flight_id == input$sp_ed_f]; req(nrow(r)); c0 <- cfg_fl()[flight_id == input$sp_ed_f]; k <- sp_rs_key(r$name, r$flight_id)
+  observeEvent(input$sp_ed_add, { f <- F(); r <- f[flight_id == input$sp_ed_f]; req(nrow(r) > 0); c0 <- cfg_fl()[flight_id == input$sp_ed_f]; k <- sp_rs_key(r$name, r$flight_id)
     now <- list(display_name = r$display_name, project = r$project, notes = r$notes, exclude_from_archive = if (nrow(c0) && tolower(c0$exclude_from_archive) %in% c("yes", "true", "1")) "yes" else "")
     new <- list(display_name = trim(input$sp_ed_name %||% ""), project = trim(input$sp_ed_proj %||% ""), notes = trim(input$sp_ed_notes %||% ""), exclude_from_archive = input$sp_ed_ex %||% "")
     ch <- names(new)[!mapply(identical, new, now)]; if (!length(ch)) return(showNotification("Nothing changed for this flight.", type = "message"))
@@ -290,9 +382,9 @@ simple_server <- function(input, output, session, std) {
     simple_report_doc(paste("Catalogue:", nm),
       meta = c(if (length(d)) paste(min(d), "to", max(d)), paste(nrow(f), "flights"), paste(uniqueN(f$place[nzchar(f$place)]), "sites"), paste("catalogue", format(x$made, "%Y-%m-%d")), if (nzchar(who)) paste("checked by", who)),
       summary = paste0(nrow(f), " flights and photo sets with ", num(sum(sp_rs_num(f$n_images), na.rm = TRUE)), " images; a flight found on several drives is counted once (", sum(sp_rs_num(f$n_copies) > 1, na.rm = TRUE), " have copies). ",
-                       cor, " have corrected positions (RTK or PPK: the images' positions corrected against a base); the rest are standalone GNSS or not known. ",
+                       if (cor == 1) "1 has" else paste(cor, "have"), " corrected positions (RTK or PPK: the images' positions corrected against a base); the rest are standalone GNSS or not known. ",
                        if (off) sprintf("%d sources were not plugged in: their flights come from the last scan. ", off) else "",
-                       sprintf("%s files are not part of a flight (unassigned). %d flights have no site yet.", num(nrow(x$unassigned)), sum(!nzchar(f$place)))),
+                       sprintf("%s files are not part of a flight (unassigned). %s no site yet.", num(nrow(x$unassigned)), if (sum(!nzchar(f$place)) == 1) "1 flight has" else paste(sum(!nzchar(f$place)), "flights have"))),
       figures = c(Flights = as.character(nrow(f)), Images = num(sum(sp_rs_num(f$n_images), na.rm = TRUE)), Corrected = sprintf("%d", cor), `To look at` = as.character(sum(f$look))),
       notes = c(Flights = "copies counted once", Images = "read from the files", Corrected = "RTK or PPK", `To look at` = "a check not ok"),
       table = table_of(f, pr), table_caption = "Sites",

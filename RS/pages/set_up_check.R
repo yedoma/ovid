@@ -5,15 +5,16 @@
   # ---- set-up check and file audit (Ovid/preflight.R, Ovid/file_audit.R) ----
   chk <- reactive({ input$chk_run; C(); live_config(CFG$project_dir); setup_check(CFG) })
   output$chk_sum <- renderUI({ x <- chk(); st <- check_status(x)
-    ovid_status(if (st == "ok") "The set-up looks right" else sprintf("%d thing(s) to look at", sum(x$level != "info")), c(ok = "ok", warning = "warn", error = "error")[[st]]) })
+    ovid_status(if (st == "ok") "The set-up looks right" else { n <- sum(x$level != "info"); if (n == 1) "1 thing to look at" else sprintf("%d things to look at", n) }, c(ok = "ok", warning = "warn", error = "error")[[st]]) })
   output$chk_tbl <- renderDT(ovid_dt(chk()[, .(Level = level, Area = area, Item = item, Problem = problem, Fix = fix)], selection = "none", page = 8,
                                        opts = list(dom = "tp", language = list(emptyTable = "Nothing to fix"))))
   output$fa_dl <- ovid_download("RS", "file audit", "csv", function(file) {
-    f <- file.path(path.expand(CFG$project_dir), "output", "audit", "file_audit.csv"); if (!file.exists(f)) stop("Build the catalogue first"); file.copy(f, file) })
+    f <- file.path(path.expand(CFG$project_dir), "output", "audit", "file_audit.csv"); if (!file.exists(f)) { showNotification("No file audit yet: scan a source first.", type = "warning")   # a file saying so, not a failed download
+      return(fwrite(data.table(note = "No file audit yet: scan a source first."), file)) }; file.copy(f, file) })
   # the problems of the last run (output/audit/problems.csv; none after a clean run), where the status bar's link opens
   run_probs <- reactive({ C(); rv$tick; run_problems_read(CFG$project_dir) })
   output$run_problems_n <- renderText({ n <- nrow(run_probs()); if (n) paste(num(n), if (n == 1) "problem" else "problems", "in the last run") else "No problems in the last run" })
-  output$run_problems <- renderDT(ovid_dt(run_probs(), selection = "none", page = 8,
+  output$run_problems <- renderDT(ovid_dt({ x <- copy(run_probs()); k <- intersect(names(x), c("where", "problem", "detail")); if (length(k)) setnames(x, k, tools::toTitleCase(k)); x }, selection = "none", page = 8,
                                             opts = list(dom = "tp", language = list(emptyTable = "Nothing went wrong in the last run"))))
   # the viewer and the STAC catalogue's title: saved with the project (config/project_settings.json, core projects.R) and in
   # the app's settings, so every rebuild's STAC catalogue uses it too. The Sources page and the Workbench's STAC export tab
@@ -41,4 +42,3 @@
   output$x_dl <- ovid_download("RS", "viewer", "zip", viewer_dl)
   output$wb_x_dl <- ovid_download("RS", "viewer", "zip", viewer_dl)
   for (k in c("x_dl", "wb_x_dl")) outputOptions(output, k, suspendWhenHidden = FALSE)   # hidden links: their address is still set
-  if (is.null(isolate(C()))) showNotification("No catalogue yet: scan a source on the Sources page.", type = "warning", duration = NULL)

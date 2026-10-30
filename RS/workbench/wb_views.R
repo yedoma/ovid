@@ -36,7 +36,7 @@ wb_views_server <- function(input, output, session, ctx) {
     b <- function(id, act, lab, cls = "") tags$button(type = "button", class = paste("wb-btn sm", cls), onclick = sprintf("Shiny.setInputValue('wbn_act', {id: '%s', act: '%s', n: Date.now()}, {priority: 'event'})", id, act), lab)
     sym <- c(bad = "✕", look = "!", note = "i")
     tagList(div(class = "wb-p", style = "color:var(--wb-fg2)", if (n > 200) paste("The first 200 of", n) else paste(n, if (n == 1) "item" else "items")),
-      tags$table(class = "wb-q-tab", tags$thead(tags$tr(tags$th(""), tags$th("flight"), tags$th("date"), tags$th("what"), tags$th("why it matters"), tags$th("suggestion"), tags$th("decide"))),
+      tags$table(class = "wb-q-tab", tags$thead(tags$tr(tags$th(""), tags$th("Flight"), tags$th("Date"), tags$th("What"), tags$th("Why it matters"), tags$th("Suggestion"), tags$th("Decide"))),
         tags$tbody(lapply(seq_len(nrow(x)), function(i) { r <- x[i]
           tags$tr(class = if (!is.na(r$decided)) "done", tags$td(class = "mono", title = r$severity, sym[[r$severity]]), tags$td(r$flight), tags$td(class = "mono", r$date),
             tags$td(r$what), tags$td(class = "why", r$why), tags$td(class = "why", r$todo),

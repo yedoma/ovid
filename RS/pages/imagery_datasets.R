@@ -12,7 +12,7 @@
     if (length(input$d_kind)) d <- d[kind %in% input$d_kind]; if (length(input$d_platform)) d <- d[platform %in% input$d_platform]
     if (length(input$d_year)) d <- d[as.character(year) %in% input$d_year]; d })
   output$d_n <- renderText(sprintf("%s of %s satellite, aerial, LiDAR and raster files", num(nrow(dshown())), num(nrow(dsets()))))
-  output$d_table <- renderDT({ d <- dshown(); if (!nrow(d)) return(ovid_dt(data.table()))
+  output$d_table <- renderDT({ d <- dshown(); if (!nrow(d)) return(ovid_dt(data.table(Kind = character(), File = character()), selection = "none", opts = list(dom = "t", language = list(emptyTable = "No satellite, aerial, LiDAR or raster files here (some may be set aside: Map, Other geodata)."))))
     ovid_dt(d[, .(Kind = kind, Platform = platform, Product = product, Acquired = acquired, `Date from` = date_source, `Footprint from` = geometry_from,
                     `GSD m` = round(gsd_m, 2), `Cloud %` = cloud_pct, Points = n_points, `Points per m2` = if ("point_density" %in% names(d)) point_density else NA, Classes = if ("classes" %in% names(d)) classes else NA, CRS = fifelse(is.na(epsg), crs, paste0("EPSG:", epsg)), File = paste0(source_id, ":", rel))], selection = "none", page = 15) })
   DS_COL <- c(satellite = PAL$blue, aerial = PAL$bone, lidar = PAL$green, raster = PAL$gray)
@@ -23,5 +23,5 @@
   observeEvent(input$d_show, { send_ds(dshown(), fit = TRUE); nav_select("nav", "Map") })
 
   output$g_layers <- renderDT({ x <- C(); g <- if (is.null(x) || is.null(x$gis_layers) || !nrow(x$gis_layers)) data.table() else x$gis_layers
-    if (!nrow(g)) return(ovid_dt(data.table()))
+    if (!nrow(g)) return(ovid_dt(data.table(Kind = character(), File = character()), selection = "none", opts = list(dom = "t", language = list(emptyTable = "No GIS layers in the catalogue (or all set aside: Map, Other geodata)."))))
     ovid_dt(g[, .(Kind = category, Type = geom_type, Features = n_features, CRS = crs, Note = detail, File = paste0(source_id, ":", rel))], selection = "none", page = 10) })

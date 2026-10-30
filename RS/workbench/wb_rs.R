@@ -131,7 +131,7 @@ wb_server <- function(input, output, session, std) {
 
   flights <- reactive({ x <- std$C(); if (is.null(x)) data.table() else x$flights })
   tables <- reactive(wb_tables(flights()))
-  images <- reactive({ std$rv$tick; f <- file.path(CAT(), "images.csv"); if (file.exists(f)) fread(f, colClasses = list(character = c("time_utc", "rel", "flight_id"))) else data.table() })
+  images <- reactive({ std$rv$tick; f <- file.path(CAT(), "images.csv"); if (file.exists(f)) fread(file = f, colClasses = list(character = c("time_utc", "rel", "flight_id"))) else data.table() })
   key <- reactiveVal(NULL)
   observeEvent(tables(), { k <- isolate(key()); s <- tables()
     if (is.null(k) || !k %in% s$key) key(if (is.null(k) && !is.null(q$flight) && q$flight %in% s$key) q$flight else if (nrow(s)) s$key[1] else NULL) })
@@ -139,7 +139,7 @@ wb_server <- function(input, output, session, std) {
   group_by_server("wbgb", reactive({ x <- flights(); if (!nrow(x)) NULL else x[, .(serial = or_blank(aircraft_serial, paste(or_blank(aircraft, "aircraft"), "(no serial)")), file = flight_id, first = or_blank(start_utc, date), last = or_blank(end_utc, date))] }),
     reactive(CFG$project_dir), empty = "No flights yet", open = function(r) { k <- strsplit(r$files, "; ")[[1]][1]; if (k %in% tables()$key) { key(k); set_view("wb-data") } })   # core grouping.R
   observeEvent(key(), std$sel(key()))                           # the Flight page and the map show it too
-  part <- reactive({ k <- key(); req(k); f <- flights()[flight_id == k]; req(nrow(f)); list(fid = k, f = as.list(f[1]), label = paste(f$date[1], f$name[1])) })
+  part <- reactive({ k <- key(); req(k); f <- flights()[flight_id == k]; req(nrow(f) > 0); list(fid = k, f = as.list(f[1]), label = paste(f$date[1], f$name[1])) })
   dat <- reactive({ d <- wb_load(images(), key()); validate(need(!is.null(d) && nrow(d) > 0, "No images of this flight in the catalogue.")); d })
   params_all <- reactive(wb_params(dat()))
   observeEvent(params_all(), { pa <- params_all(); keep <- intersect(isolate(input$wb_params), pa)
@@ -243,7 +243,7 @@ wb_server <- function(input, output, session, std) {
   })
 
   # safe: an output of the last run, only shown
-  wb_import_aside <- function() { m <- tryCatch(fread(file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
+  wb_import_aside <- function() { m <- tryCatch(fread(file = file.path(path.expand(CFG$project_dir), "output", "audit", "run_manifest.csv"), colClasses = "character"), error = function(e) NULL)
     v <- function(k) if (!is.null(m) && nrow(m)) m$value[match(k, m$key)] else NA
     steps <- c(`Set-up` = "sources, flights, sites, links and file rules", Scan = "each source listed; image headers read once per folder, again only where a file changed",
                Gather = "every source's last scan, so an unplugged drive stays in the catalogue", Flights = "images grouped into flights, copies found, logs, geotags, MRK, GNSS and plans linked, positioning worked out",

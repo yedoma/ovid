@@ -1,6 +1,6 @@
 # RS: reading the catalogue (flights, images, links) and the small display helpers. Sourced by app.R.
 # ---- the catalogue -------------------------------------------------------------------------------------------------------
-rd <- function(f, ...) { p <- file.path(CAT(), f); if (file.exists(p)) fread(p, ...) else data.table() }
+rd <- function(f, ...) { p <- file.path(CAT(), f); if (file.exists(p)) fread(file = p, ...) else data.table() }
 load_cat <- function(points_per_flight = CFG$points_per_flight) {
   fl <- rd("flights.csv", colClasses = list(character = c("date", "start", "display_name", "project", "site", "notes", "status_note", "copies", "qa_flags", "mission", "mission_set", "mission_status", "mission_evidence")))
   if (!nrow(fl)) return(NULL)
@@ -16,7 +16,7 @@ load_cat <- function(points_per_flight = CFG$points_per_flight) {
   pts <- if (nrow(im)) thin_points(im[, primary := as.logical(primary)], points_per_flight) else data.table(flight_id = character(), lat = numeric(), lon = numeric())
   list(flights = fl, links = rd("links.csv"), geometry = rd("geometry.csv", colClasses = list(character = c("flight_id", "ref", "line"))),
        points = pts, sources = rd("sources.csv"), gis_layers = rd("gis_layers.csv"), gis_features = rd("gis_features.csv", colClasses = list(character = c("feature", "line"))),
-       datasets = rd("datasets.csv", colClasses = list(character = c("acquired", "footprint", "crs", "detail", "product", "platform"))), unassigned = rd("unassigned.csv"), logs = rd("logs.csv"),
+       datasets = rd("datasets.csv", colClasses = list(character = c("acquired", "footprint", "crs", "detail", "product", "platform"))), unassigned = rd("unassigned.csv"), logs = rd("logs.csv"), set_aside = rd("set_aside.csv", colClasses = list(character = c("folder", "why"))),   # other geodata set aside (R/geodata.R)
        footprints = { fp <- rd("footprints.csv", colClasses = list(character = c("flight_id", "kind", "line"))); if (nrow(fp)) fp else data.table(flight_id = character(), kind = character(), part = integer(), ring = integer(), line = character()) }, made = file.mtime(file.path(CAT(), "flights.csv")))
 }
 badge <- function(s) span(class = "badge-st", style = sprintf("border-color:%s;color:%s", STATUS_COL[s] %|na|% PAL$gray, STATUS_COL[s] %|na|% PAL$gray), s)
@@ -24,6 +24,6 @@ fact <- function(k, v) if (length(v) && !is.na(v) && nzchar(as.character(v))) di
 # The problems of the last run (output/audit/problems.csv: where, problem); a clean run leaves none.
 run_problems_read <- function(project_dir) {
   p <- file.path(path.expand(project_dir), "output", "audit", "problems.csv")
-  if (file.exists(p)) tryCatch(fread(p, colClasses = "character"), error = function(e) data.table(where = character(), problem = character()))
+  if (file.exists(p)) tryCatch(fread(file = p, colClasses = "character"), error = function(e) data.table(where = character(), problem = character()))
   else data.table(where = character(), problem = character())
 }

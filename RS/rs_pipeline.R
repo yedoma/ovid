@@ -21,10 +21,11 @@ for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else
   if (nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", .l)))) break                               # macOS has no C.UTF-8
 
 RS_VERSION <- "0.6.0"
+plural_n <- function(n, word, words = paste0(word, "s")) paste(num(n), if (isTRUE(n == 1)) word else words)   # "1 flight", "2 flights" in the run log
 
 OVID_APP <- "RS"                                          # its projects go in ~/Projects/Ovid/Projects/RS/ (core util.R)
 CFG <- list(
-  raw_dirs       = c("/Volumes/Drive"),             # sources added on the first run when config/sources.csv is empty; read only
+  raw_dirs       = character(),                 # folders added as sources on the first run when config/sources.csv is empty (RS_RAW_DIRS); read only
   project_dir    = "",       # config/, cache/ and output/ live here (never inside a source)
   flight_gap_min = 10,                           # a pause longer than this between exposures starts a new flight
   points_per_flight = 150)                       # image positions per flight kept in the shareable viewer
@@ -47,33 +48,37 @@ APP_VERSION <- RS_VERSION
 
 CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "core"), file.path(dirname(PIPELINE_DIR), "core"))
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
-  if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
+  if (!length(hit)) stop("The shared ovid core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "standards", "file_audit", "cache", "timezones", "config", "calibration", "table_rules", "manifest", "preflight", "theme"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
-for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "footprints", "export", "gnss", "datasets", "gis", "stac", "preflight"))
+for (.f in c("config", "exif", "readers", "read_emotion", "emotion_catalogue", "catalogue", "footprints", "export", "gnss", "datasets", "gis", "geodata", "stac", "preflight"))
   source(file.path(PIPELINE_DIR, "R", paste0(.f, ".R")), local = TRUE)
 CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "rs_pipeline.R"))   # every file's code (the run manifest)
 # What each cached step depends on (core code_fingerprint()): reading image headers follows the image readers only, so no
 # other edit makes a scan read every image again. STEP_HASH is set at the end of this file.
 CODE_NAMES <- code_names(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "rs_pipeline.R"))
 step_hashes <- function(env = parent.frame()) list(images = code_fingerprint(c("read_image_meta", "read_source_images"), env = env),
+                                                    datasets = code_fingerprint("read_source_datasets", env = env),   # raster, LAS and metadata headers
                                                     emotion = code_fingerprint(c("emotion_log_summary", "emotion_plan_summary"), env = env))   # senseFly logs and missions
 
 # =============================================================================
 #  RUN
 # =============================================================================
 # A source is added to config/sources.csv the first time it is scanned; its id defaults to the folder or volume name.
+# A folder name in plain letters for a source id ("Été site A" -> "Ete site A"), not underscores for each accent.
+ascii_name <- function(x) if (requireNamespace("stringi", quietly = TRUE)) stringi::stri_trans_general(x, "Latin-ASCII") else iconv(x, "UTF-8", "ASCII//TRANSLIT", sub = "_")
 add_source <- function(cfgs, cfg, path, source_id = "") {
   path <- normalizePath(path.expand(path), winslash = "/", mustWork = FALSE)
+  if (!dir.exists(path)) stop("The folder ", path, " was not found (a drive not plugged in?). No source was added.")   # never a source that is not there
   s <- cfgs$sources; want <- path; sid0 <- source_id
   np <- normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE)
   if (any(np == want)) return(cfgs)   # known path (the same real folder): rescan it
-  for (k in which(startsWith(want, paste0(np, "/")))) say("  ", path, " is inside source ", s$source_id[k], ": its files are counted under the new source only")
+  for (k in which(if (length(np)) startsWith(want, paste0(np, "/")) else logical())) say("  ", path, " is inside source ", s$source_id[k], ": its files are counted under the new source only")
   for (k in which(startsWith(np, paste0(want, "/")))) say("  ", path, " contains source ", s$source_id[k], ": that folder's files stay with ", s$source_id[k])
   # a name already used by another folder does not hijack it: the new folder gets name_2, name_3, ...
-  sid <- if (nzchar(source_id)) source_id else safe_name(basename(path)); i <- 1
+  sid <- if (nzchar(source_id)) source_id else safe_name(ascii_name(basename(path))); i <- 1
   base <- sid; while (sid %in% s$source_id) { i <- i + 1; sid <- paste0(base, "_", i) }
   cfgs$sources <- rbind(s, ensure_cols(data.table(source_id = sid, path = path), SOURCE_COLS)[, ..SOURCE_COLS])
   write_cfg(cfgs$sources, cfg$project_dir, "sources"); say("  new source ", sid, " = ", path)
@@ -99,14 +104,14 @@ remove_source <- function(project_dir, source_id) {
   sid <- source_id; cfg <- modifyList(CFG, list(project_dir = project_dir)); s <- load_configs(cfg)$sources
   if (!sid %in% s$source_id) return(invisible(NULL))
   write_cfg(s[s$source_id != sid], project_dir, "sources", who = "Sources page")
-  catd <- file.path(path.expand(project_dir), "output", "catalogue"); rd <- function(f) fread(file.path(catd, f), colClasses = "character")
+  catd <- file.path(path.expand(project_dir), "output", "catalogue"); rd <- function(f) fread(file = file.path(catd, f), colClasses = "character")
   gone <- if (file.exists(file.path(catd, "flights.csv"))) { f <- rd("flights.csv"); if ("source_id" %in% names(f)) f[source_id == sid, flight_id] else character() } else character()
   n <- 0L
   for (f in list.files(catd, "\\.csv$")) { x <- rd(f); drop <- rep(FALSE, nrow(x))
     if ("source_id" %in% names(x)) drop <- drop | x$source_id %in% sid
     if ("flight_id" %in% names(x)) drop <- drop | x$flight_id %in% gone
     if (any(drop)) { n <- n + sum(drop); fwrite(x[!drop], file.path(catd, f)) } }
-  say("Source ", sid, " removed: ", length(gone), " flight(s), ", num(n), " catalogue rows; no file was touched")
+  say("Source ", sid, " removed: ", plural_n(length(gone), "flight"), ", ", plural_n(n, "catalogue row"), "; no file was touched")
   invisible(list(flights = length(gone), rows = n))
 }
 
@@ -122,25 +127,26 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
 
   say("[1/5] Reading the set-up", col = "accent")
   cfgs <- load_configs(cfg); cfgs$flights <- ensure_cols(cfgs$flights, FLIGHT_COLS)
-  if (!nrow(cfgs$sources) && is.null(scan)) scan <- cfg$raw_dirs
+  if (!nrow(cfgs$sources) && is.null(scan) && length(cfg$raw_dirs)) scan <- cfg$raw_dirs[dir.exists(path.expand(cfg$raw_dirs))]   # one not plugged in is never a source
   for (p in scan) cfgs <- add_source(cfgs, cfg, p, if (length(scan) == 1) source_id else "")
   sc <- setup_check(cfg); fwrite(sc, file.path(od, "audit", "setup_check.csv"))
-  if (any(sc$level == "error")) problem("set-up check", paste(sum(sc$level == "error"), "problem(s) in the set-up; see output/audit/setup_check.csv"))
+  if (any(sc$level == "error")) problem("set-up check", paste(plural_n(sum(sc$level == "error"), "problem"), "in the set-up; see output/audit/setup_check.csv"))
   pd <- paste0(normalizePath(path.expand(cfg$project_dir), winslash = "/", mustWork = FALSE), "/")
-  if (any(startsWith(pd, paste0(normalizePath(path.expand(cfgs$sources$path), winslash = "/", mustWork = FALSE), "/"))))
+  if (nrow(cfgs$sources) && any(startsWith(pd, paste0(normalizePath(path.expand(cfgs$sources$path), winslash = "/", mustWork = FALSE), "/"))))   # none: paste0() would give "/"
     stop("The project folder must not be inside a source.")
 
   say("[2/5] Scanning sources", col = "accent")
   todo <- if (is.null(scan)) cfgs$sources[dir.exists(path.expand(path))]
           else cfgs$sources[normalizePath(path.expand(path), winslash = "/", mustWork = FALSE) %in% normalizePath(path.expand(scan), winslash = "/", mustWork = FALSE)]
   inner <- inner_sources(cfgs$sources)                       # a source inside another: its files are scanned once, under the inner one
-  for (i in seq_len(nrow(todo))) scan_source(todo[i], cfg, rbind(cfgs$file_rules, inner_rules(inner[[todo$source_id[i]]]), fill = TRUE))
+  for (i in seq_len(nrow(todo))) { if (nrow(todo) > 1) say("  Folder ", i, " of ", nrow(todo), ": ", todo$source_id[i])
+    scan_source(todo[i], cfg, rbind(cfgs$file_rules, inner_rules(inner[[todo$source_id[i]]]), fill = TRUE)) }
   if (!nrow(todo)) say("  nothing plugged in to scan; rebuilding from earlier scans")
 
   say("[3/5] Gathering every source's scan", col = "accent")
   A <- load_sources(cfgs$sources, cfg)
-  if (is.null(A)) stop("No source could be read: ", paste(if (length(cfg$raw_dirs)) cfg$raw_dirs else "no source folder is set", collapse = ", "),
-                       ". Check that the drive is plugged in, or choose the folder that holds the flights on 1 Project (Sources), then run again. Nothing was changed.")
+  if (is.null(A)) stop(if (!nrow(cfgs$sources)) "No source yet: add a drive or folder (Import in Simple, Sources in Standard) and scan it."
+                       else "No source could be read. Check that the drive is plugged in, or add the folder that holds the flights (Import in Simple, Sources in Standard). Nothing was changed.")
   A <- apply_file_rules(A, cfgs$file_rules)                   # an ignore rule added since a source was scanned applies without a rescan
   A <- drop_inner(A, inner)                                   # and a source added inside one scanned before it
   # drone photos only (config/drone_cameras.csv, readers.R drone_why): other photos, and raw photos whose camera is not a drone's,
@@ -154,14 +160,14 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
     if (nrow(op)) A$files[paste(source_id, rel) %in% paste(op$source_id, op$rel), status := "other photo"] }
   fwrite(op, file.path(catd, "other_photos.csv"))
   if (nrow(op)) say("  ", num(nrow(op)), " other photos left out: no drone tag and a camera not in drone_cameras.csv (catalogue/other_photos.csv)")
-  say("  ", nrow(A$scanned), " source(s): ", num(nrow(A$files)), " files, ", num(nrow(A$images)), " drone photos")
-  A$images <- apply_timezones(A$images, cfgs$timezones)       # cameras with a local clock: the time-zone table gives their UTC time
+  say("  ", plural_n(nrow(A$scanned), "source"), ": ", num(nrow(A$files)), " files, ", num(nrow(A$images)), " drone photos")
+  A$images <- camera_fill(apply_timezones(A$images, cfgs$timezones))   # cameras with a local clock (time-zone table); sizes the files do not give (CAMERA_SPECS)
 
   ds <- if (is.null(A$datasets) || !nrow(A$datasets)) ensure_cols(data.table(), c("source_id", DATASET_COLS, "year"))[0] else A$datasets
   setcolorder(ds, intersect(c("source_id", DATASET_COLS, "year"), names(ds)))
   if (nrow(ds)) ds[, `:=`(frame = frame_of_crs(epsg, crs), crs_status = crs_status(epsg, crs))] else ds[, `:=`(frame = character(), crs_status = character())]
   fwrite(ds, file.path(catd, "datasets.csv"))
-  if (nrow(ds) && any(ds$crs_status == "datum unknown")) say("  ", sum(ds$crs_status == "datum unknown"), " dataset(s) state no coordinate system: datum unknown (catalogue/datasets.csv)", col = "yellow")
+  if (nrow(ds) && any(ds$crs_status == "datum unknown")) say("  ", plural_n(sum(ds$crs_status == "datum unknown"), "dataset"), " state no coordinate system: datum unknown (catalogue/datasets.csv)", col = "yellow")
   gl <- A$gis_layers %||% data.table(); gf <- A$gis_features %||% data.table()
   for (g in list(list(gl, "gis_layers.csv"), list(gf, "gis_features.csv")))   # no GIS files: no file (the app reads a missing one as empty)
     if (ncol(g[[1]])) fwrite(g[[1]], file.path(catd, g[[2]])) else unlink(file.path(catd, g[[2]]))
@@ -194,11 +200,22 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   # the ground each flight covered (R/footprints.R): its photos' footprints, or its LiDAR strip; catalogue/footprints.csv
   fpb <- footprints_build(b$images, fl, A$records$emotion %||% list(), links, A$records$rinex, cfgs$gnss_bases)
   fl <- merge(fl, fpb$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
+  # other geodata that belongs with the flights; the rest set aside with the reason (R/geodata.R; catalogue/set_aside.csv)
+  rv <- review_read(review_path(cfg$project_dir)); on <- c(gis = lim("geodata_gis_layers", 1) != 0, imagery = lim("geodata_imagery", 1) != 0)
+  gr <- geodata_review(ds, gl, fl, unique(b$images[, .(source_id, folder)]), kept = rv$id[rv$decision == "kept"], on = on,
+                       max_km = lim("spatial_max_km", 5), max_extent_km = lim("spatial_max_extent_km", 200))
+  sa <- gr$files[keep == FALSE]; fwrite(sa[, .(source_id, rel, kind, folder, why, km)], file.path(catd, "set_aside.csv"))
+  if (nrow(sa)) { k <- paste(sa$source_id, sa$rel)
+    ds <- ds[!paste(source_id, rel) %in% k]; if (nrow(gl)) gl <- gl[!paste(source_id, rel) %in% k]; if (nrow(gf)) gf <- gf[!paste(source_id, rel) %in% k]
+    fwrite(ds, file.path(catd, "datasets.csv"))
+    for (g in list(list(gl, "gis_layers.csv"), list(gf, "gis_features.csv"))) if (ncol(g[[1]])) fwrite(g[[1]], file.path(catd, g[[2]]))
+    say("  ", num(nrow(sa)), " other geodata files set aside (", paste(gr$folders[keep == FALSE, .N, by = .(w = sub("^covers.*", "basemap-sized", sub("^[0-9.]+ km from the nearest flight", "far from the flights", why)))][, paste0(N, " folders ", w)], collapse = "; "),
+        "); catalogue/set_aside.csv; Keep on the Map's Other geodata tab brings a folder back") }
   say("  ", nrow(fl), " flights (", sum(fl$n_copies > 0), " also found as copies; ", sum(fl$placed_from == "photo geotags"), " placed from photo geotags, ", sum(fl$placed_from == "flight log"), " from a flight log); ", paste(fl[, .N, by = positioning_found][, paste(N, positioning_found)], collapse = ", "))
 
   say("[5/5] Writing the catalogue", col = "accent")
   new <- setdiff(fl$flight_id, cfgs$flights$flight_id)
-  fp <- cfg_path(cfg$project_dir, "flights"); old_cols <- if (file.exists(fp)) names(fread(fp, nrows = 0L)) else character()
+  fp <- cfg_path(cfg$project_dir, "flights"); old_cols <- if (file.exists(fp)) names(fread(file = fp, nrows = 0L)) else character()
   if (length(new) || !all(FLIGHT_COLS %in% old_cols)) {                  # new flights, or columns added since the file was made (kind)
     if (length(new)) cfgs$flights <- rbind(cfgs$flights, ensure_cols(data.table(flight_id = new), FLIGHT_COLS)[, ..FLIGHT_COLS])
     write_cfg(cfgs$flights[, ..FLIGHT_COLS], cfg$project_dir, "flights") }
@@ -245,11 +262,11 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   fa <- rs_file_audit(A$files, b$images, links, ds, gl); fwrite(fa, file.path(od, "audit", "file_audit.csv"))
   pr <- products_table(cfgs$products, ds, out); fwrite(pr, file.path(catd, "products.csv"))
   fwrite(coverage(out, ds), file.path(catd, "coverage.csv"))
-  st <- tryCatch(stac_export(file.path(od, "stac"), out, ds, pr, cfg$viewer_title %||% "Ovid RS archive"), error = function(e) { problem("STAC catalogue", conditionMessage(e)); NULL })
-  if (!is.null(st)) say("  STAC catalogue: ", st$collections, " collection(s), ", st$items, " item(s) (output/stac/catalog.json)")
+  st <- tryCatch(stac_export(file.path(od, "stac"), out, ds, pr, cfg$viewer_title %||% "ovid RS archive"), error = function(e) { problem("STAC catalogue", conditionMessage(e)); NULL })
+  if (!is.null(st)) say("  STAC catalogue: ", plural_n(st$collections, "collection"), ", ", plural_n(st$items, "item"), " (output/stac/catalog.json)")
   viewer <- NULL
   if (isTRUE(export)) { say("  writing the viewer", col = "accent")
-    viewer <- export_viewer(out, links, b$images, A$scanned, geo, file.path(od, "viewer", "Ovid_RS_viewer"), cfg$viewer_title %||% "Ovid RS archive", datasets = ds, gis = gf) }
+    viewer <- export_viewer(out, links, b$images, A$scanned, geo, file.path(od, "viewer", "Ovid_RS_viewer"), cfg$viewer_title %||% "ovid RS archive", datasets = ds, gis = gf, fp_tab = cfgs$footprint_colours) }
   probs <- rbindlist(AUDIT$problems); pf <- file.path(od, "audit", "problems.csv")
   if (nrow(probs)) fwrite(probs, pf) else unlink(pf)          # a clean run leaves no problems from an earlier one
   write_run_manifest(cfg, t0, list(sources = nrow(A$scanned), files = nrow(A$files), images = nrow(A$images), flights = nrow(fl), links = nrow(links)),
