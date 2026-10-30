@@ -64,9 +64,32 @@ document.addEventListener('keydown', function(e){
   if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '5') { e.preventDefault(); Shiny.setInputValue('open_n', {n: +e.key, t: Date.now()}); return; }
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); Shiny.setInputValue('move', {d: e.key === 'ArrowDown' ? 1 : -1, t: Date.now()}); }
-  if (e.key === 'Enter' && !(e.target.closest && e.target.closest('button,a,summary'))) { e.preventDefault(); Shiny.setInputValue('open_sel', Date.now()); }
+  if (e.key === 'Enter' && !(e.target.closest && e.target.closest('button,a,summary'))) { e.preventDefault(); var s = document.querySelector('.row.sel'); if (s) ovidTab(s.dataset.k); Shiny.setInputValue('open_sel', Date.now()); }
 });
-Shiny.addCustomMessageHandler('ovid-open', function(m){ window.open(m.url, 'ovid_' + m.key); });
+// A browser lets a page open a tab only during the click (or key press) itself; the app takes a few seconds to start, so the
+// tab is opened now with a waiting page, and sent to the app when it answers. A tab already showing the app is only brought forward.
+var ovidTabs = {};
+function ovidPage(w, k, msg, err) {
+  var cs = getComputedStyle(document.documentElement), v = function(n){ return cs.getPropertyValue('--' + n).trim(); };
+  w.document.open(); w.document.write('<!doctype html><title>' + k + ' \\u00b7 ovid</title><body style=\"margin:0;height:100vh;display:grid;place-items:center;background:' + v('main') +
+    ';color:' + v('fg') + ';font:15px/1.5 Inter,-apple-system,Segoe UI,Helvetica,Arial,sans-serif\"><div style=\"max-width:460px;padding:24px\"><div style=\"font-size:22px;font-weight:600;color:' +
+    v(k.toLowerCase()) + '\">' + k + '</div><p style=\"color:' + v(err ? 'err' : 'text2') + '\"></p></div>'); w.document.close();
+  w.document.querySelector('p').textContent = msg;
+}
+function ovidOurs(w) { try { return !!(w && !w.closed && w.document); } catch (e) { return false; } }   // blank or our waiting page, not yet the app
+function ovidTab(k) {
+  if (!k || document.querySelector('.row[disabled]')) return;
+  var w = window.open('', 'ovid_' + k); if (!w) return; ovidTabs[k] = w;
+  if (ovidOurs(w)) ovidPage(w, k, 'Starting ' + k + '\\u2026 this tab shows it as soon as it is up.', false); else w.focus();   // already on the app: leave it as it is
+}
+document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-open]'); if (b) ovidTab(b.dataset.open); }, true);
+document.addEventListener('dblclick', function(e){ var b = e.target.closest && e.target.closest('.row[data-k]'); if (b) ovidTab(b.dataset.k); }, true);
+document.addEventListener('keydown', function(e){ if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '5') { var r = document.querySelectorAll('.row[data-k]')[+e.key - 1]; if (r) ovidTab(r.dataset.k); } }, true);
+Shiny.addCustomMessageHandler('ovid-open', function(m){ var w = ovidTabs[m.key];
+  if (w && !w.closed) { if (ovidOurs(w)) w.location.replace(m.url); w.focus(); }
+  else { w = window.open(m.url, 'ovid_' + m.key); if (w) ovidTabs[m.key] = w; } });   // blocked: the launcher shows a link
+Shiny.addCustomMessageHandler('ovid-fail', function(m){ var w = ovidTabs[m.key];
+  if (ovidOurs(w)) ovidPage(w, m.key, m.msg, true); });
 "
 
 ui <- fluidPage(theme = NULL, title = "ovid",
@@ -99,7 +122,9 @@ server <- function(input, output, session) {
     t0 <- Sys.time()
     wait <- observe({ invalidateLater(500); lr_poll(ST); r <- ST$rec[[k]]
       if (r$state == "running") { session$sendCustomMessage("ovid-open", list(url = r$url, key = k)); wait$destroy() }
-      else if (r$state == "failed" || difftime(Sys.time(), t0, units = "secs") > 60) wait$destroy() })
+      else if (r$state == "failed" || difftime(Sys.time(), t0, units = "secs") > 60) {
+        session$sendCustomMessage("ovid-fail", list(key = k, msg = paste(k, if (r$state == "failed") paste("didn't start.", r$error) else "is taking too long to start: see the launcher.")))
+        wait$destroy() } })
   }
   observeEvent(input$pick, rv$sel <- input$pick$k)
   observeEvent(input$open, { rv$sel <- input$open$k; open_app(input$open$k) })
@@ -129,14 +154,16 @@ server <- function(input, output, session) {
       div(class = "grow"),
       div(class = "acts",
         if (fail) tags$button(class = "btn", style = sprintf("background:var(--%s);color:var(--onacc)", tolower(k)), onclick = "Shiny.setInputValue('retry', Date.now())", "Try again")
-        else tags$button(class = "btn", style = sprintf("background:var(--%s);color:var(--onacc)", tolower(k)),
+        else tags$button(class = "btn", style = sprintf("background:var(--%s);color:var(--onacc)", tolower(k)), `data-open` = k,
                          onclick = sprintf("Shiny.setInputValue('open', {k: '%s', t: Date.now()})", k),
                          if (r$state == "running") paste("Show", k) else if (r$state == "starting") paste("Starting", k, "…") else paste("Open", k)),
-        if (fail) downloadButton("zip", "Troubleshooting zip", class = "btn2", icon = NULL) else span(class = "hint", "opens in your browser"))) })
+        if (fail) downloadButton("zip", "Troubleshooting zip", class = "btn2", icon = NULL)
+        else if (r$state == "running") tags$a(class = "hint", href = r$url, target = paste0("ovid_", k), paste0("Open ", k, " at ", sub("^http://(.*)/$", "\\1", r$url)))   # if the browser blocked the tab
+        else span(class = "hint", "opens in your browser"))) })
 
   output$side <- renderUI({ rv$tick; dis <- first()
     rows <- lapply(seq_len(nrow(ST$apps)), function(i) { k <- ST$apps$key[i]; r <- ST$rec[[k]]; run <- r$state %in% c("starting", "running")
-      tags$button(type = "button", class = paste("row", if (k == rv$sel && !dis) "sel"), disabled = if (dis) NA,
+      tags$button(type = "button", class = paste("row", if (k == rv$sel && !dis) "sel"), disabled = if (dis) NA, `data-k` = k,
         style = if (k == rv$sel && !dis) sprintf("box-shadow:inset 3px 0 0 var(--%s)", tolower(k)),
         onclick = sprintf("Shiny.setInputValue('pick', {k: '%s', t: Date.now()})", k), ondblclick = sprintf("Shiny.setInputValue('open', {k: '%s', t: Date.now()})", k),
         tags$img(src = icon_src(k), alt = "", width = 32, height = 32),
