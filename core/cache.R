@@ -6,10 +6,9 @@
 # apply to it, the settings it uses, and the app's code (code_hash), so editing a reader or a rule redoes the work.
 # A run lists the cache files it used; cache_prune() then removes the rest, so the cache never outgrows the data.
 
-# Short hash of any R value.
+# Short hash of any R value (the bytes from util.R hash_bytes).
 hash_of <- function(x, n = 16L) {
-  f <- tempfile(); on.exit(unlink(f))
-  saveRDS(x, f, version = 2, compress = FALSE)
+  f <- tempfile(); on.exit(unlink(f)); writeBin(hash_bytes(x), f)
   substr(unname(tools::md5sum(f)), 1, n)
 }
 

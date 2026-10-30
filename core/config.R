@@ -259,7 +259,7 @@ review_ts <- function(x) {
   out
 }
 review_hash <- function(x) vapply(x, function(s) substr(if (requireNamespace("digest", quietly = TRUE))   # the same as core cache.R hash_of(s), faster
-  digest::digest(serialize(s, NULL, version = 2), "md5", serialize = FALSE) else hash_of(s), 1, 16), "", USE.NAMES = FALSE)
+  digest::digest(hash_bytes(s), "md5", serialize = FALSE) else hash_of(s), 1, 16), "", USE.NAMES = FALSE)
 wb_queue_id <- function(where, parameter, start, end, check) review_hash(paste(where, parameter, review_ts(start), review_ts(end), check, sep = "|"))
 review_read <- function(path) { if (length(path) != 1 || !file.exists(path)) return(empty_cfg(REVIEW_COLS))
   tryCatch(ensure_cols(read_cfg(path), REVIEW_COLS), error = function(e) empty_cfg(REVIEW_COLS)) }

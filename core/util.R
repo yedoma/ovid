@@ -249,6 +249,10 @@ run_check_cancel <- function() {
     options(ovid.cancelled = TRUE); invokeRestart("ovid_cancel") }
   invisible(FALSE)
 }
+# An R value as bytes for hashing: what saveRDS(version = 2, compress = FALSE) writes, except the version of R that wrote
+# them (bytes 7-10), which is set to 4.6.1 (00 04 06 01, the version flight ids and review decisions were made with), so
+# a new R release (4.6.2 moved every flight id) never changes a hash.
+hash_bytes <- function(x) { b <- serialize(x, NULL, version = 2); b[7:10] <- as.raw(c(0x00, 0x04, 0x06, 0x01)); b }
 # Item i of n in the current stage (a file, a logger, a station), for the progress bar.
 # ---- reading files in parallel ----------------------------------------------------------------------------------------------
 # FUN over X in `workers` R processes at once (forked, so on macOS and Linux; one at a time on Windows or with one worker). FUN
