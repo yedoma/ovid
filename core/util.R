@@ -160,7 +160,9 @@ parse_date_cell <- function(x, end = FALSE) {
 
 # The step between records, in seconds (the most common difference).
 step_of <- function(t) { d <- diff(sort(as.numeric(unique(t)))); if (!length(d)) return(NA_real_)
-  as.numeric(names(sort(table(d), decreasing = TRUE))[1]) }
+  v <- sort(unique(d)); n <- tabulate(match(d, v), length(v)); lab <- as.character(v)                      # counted as table() counts them,
+  if (anyDuplicated(lab)) { u <- unique(lab); n <- vapply(u, function(l) sum(n[lab == l]), 0); lab <- u }   # values that print alike together,
+  as.numeric(lab[which.max(n)]) }                                                                          # without making a factor of every one
 
 fmt_step <- function(s) ifelse(is.na(s), "", ifelse(s < 60, paste(s, "s"), ifelse(s < 3600, paste(round(s / 60, 1), "min"),
                         ifelse(s < 86400, paste(round(s / 3600, 1), "h"), paste(round(s / 86400, 1), "d")))))
