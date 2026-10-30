@@ -567,13 +567,34 @@ run_pipeline_steps <- function(cfg = CFG) {
         pc <- sub("\\.rds$", ".png", pc)
         if (inc && file.exists(pc)) { file.copy(pc, pf, overwrite = TRUE); p_hit <<- p_hit + 1L }
         else { g <- plot_logger(d, pp, title = paste(dep$site, dep$year), subtitle = paste("serial", s), visits = vis$visit_time[!is.na(vis$visit_time)], tape = chk, max_points = cfg$plot_max_points)
-          if (!is.null(g)) { nord_save(g, pf, 11, 2 + 2.2 * length(pp)); if (inc && file.exists(pf)) file.copy(pf, pc, overwrite = TRUE) } }
+          if (!is.null(g)) { if (plot_par) R$draw[[length(R$draw) + 1L]] <- list(g = g, pf = pf, h = 2 + 2.2 * length(pp), pc = pc, dep = dep$deployment)   # drawn in parallel (plot_flush)
+                             else { nord_save(g, pf, 11, 2 + 2.2 * length(pp)); if (inc && file.exists(pf)) file.copy(pf, pc, overwrite = TRUE) } } }
         if (inc) { p_used <<- c(p_used, pc); if (file.exists(pc)) X$plot <- basename(pc) }
       }
       R$deps[[dep$deployment]] <- X
     }
     R$recon <- list(kept_final = kept + (baro_kept[[s]] %||% 0L), outside = nout)
     R
+  }
+  # Plots of a full or partly reused run are drawn in parallel (core util.R par_map; one at a time on Windows), a few loggers at
+  # a time: water_one() queues them, and a logger's cache is written once its plots are drawn, as it was when each was drawn
+  # in its turn. A plot that fails is a problem line, as before (recorded when its batch is drawn).
+  plot_par <- isTRUE(cfg$make_plots) && run_workers() > 1L; plot_jobs <- list(); plot_pend <- list(); plot_warm <- FALSE
+  plot_flush <- function() {
+    if (length(plot_jobs)) {
+      # macOS stops a forked process that looks fonts up first, so one small plot is drawn here before the workers start
+      if (!plot_warm) { nord_save(ggplot() + labs(title = "ovid"), tempfile(fileext = ".png"), 1, 1); plot_warm <<- TRUE }
+      got <- par_map(plot_jobs, function(j) { np <- length(AUDIT$problems); on.exit(AUDIT$problems <- AUDIT$problems[seq_len(np)])   # recorded below, in the main process
+        utils::capture.output(ok <- nord_save(j$g, j$pf, 11, j$h)); list(ok = ok, problems = AUDIT$problems[seq_along(AUDIT$problems) > np]) }, what = "drawing plots")
+      for (k in seq_along(plot_jobs)) { j <- plot_jobs[[k]]; r <- got[[k]]; np <- length(AUDIT$problems)
+        if (!is.list(r) || inherits(r, "error") || is.null(r$ok)) nord_save(j$g, j$pf, 11, j$h)           # not drawn by its worker: drawn here, as before
+        else for (p in r$problems) problem(p$where, p$problem)
+        i <- which(vapply(plot_pend, `[[`, "", "s") == j$s)
+        if (length(i)) for (p in AUDIT$problems[seq_along(AUDIT$problems) > np]) plot_pend[[i]]$problems[[length(plot_pend[[i]]$problems) + 1L]] <<- p   # in the logger's cache too
+        if (inc && file.exists(j$pf)) file.copy(j$pf, j$pc, overwrite = TRUE)
+        if (inc && length(i) && file.exists(j$pc)) plot_pend[[i]]$x$deps[[j$dep]]$plot <<- basename(j$pc) } }
+    for (pe in plot_pend) cache_write(file.path(cdir, "logger"), pe$s, pe$k6, c(pe$x, pe[c("log", "flags", "problems")]))
+    plot_jobs <<- list(); plot_pend <<- list(); invisible()
   }
   for (s in water) {
     run_tick(match(s, water), length(water), s)
@@ -598,11 +619,13 @@ run_pipeline_steps <- function(cfg = CFG) {
                                 p_hit <- p_hit + 1L; p_used <- c(p_used, pc) } }
     } else {
       n0 <- length(AUDIT$log); f0 <- length(FLAGS$list); p0 <- length(AUDIT$problems)
-      x <- water_one(s, dt, ds, owner)
+      x <- water_one(s, dt, ds, owner); jobs <- x$draw; x$draw <- NULL
       x$fills <- vapply(stats::setNames(x$fills, x$fills), bh_all, "")
       if (inc) { for (dep in names(x$deps)) file.copy(site_file(dep), cf(dep), overwrite = TRUE)
-        cache_write(file.path(cdir, "logger"), s, k6, c(x, list(log = AUDIT$log[seq_along(AUDIT$log) > n0], flags = FLAGS$list[seq_along(FLAGS$list) > f0],
-                                                                problems = AUDIT$problems[seq_along(AUDIT$problems) > p0]))) }
+        pend <- list(s = s, k6 = k6, x = x, log = AUDIT$log[seq_along(AUDIT$log) > n0], flags = FLAGS$list[seq_along(FLAGS$list) > f0], problems = AUDIT$problems[seq_along(AUDIT$problems) > p0])
+        if (length(jobs)) plot_pend[[length(plot_pend) + 1L]] <- pend                   # its cache once its plots are drawn
+        else cache_write(file.path(cdir, "logger"), s, k6, c(x, pend[c("log", "flags", "problems")])) }
+      if (length(jobs)) { plot_jobs <- c(plot_jobs, lapply(jobs, function(j) c(j, list(s = s)))); if (length(plot_jobs) >= 4L * run_workers()) plot_flush() }
     }
     if (inc) c_used <- c(c_used, cache_file(file.path(cdir, "logger"), s, k6), vapply(names(x$deps), cf, ""))
     recon[[s]]$kept_final <- x$recon$kept_final; recon[[s]]$outside <- x$recon$outside
@@ -618,6 +641,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       if (!is.null(X$meas)) meas_cmp[[dep]] <- X$meas }
     audit_flush(paste0("logger_", s))
   }
+  plot_flush()
   if (n6_hit) say(sprintf("  %d of %d water loggers unchanged, reused", n6_hit, n6), col = "fg4")
 
   # ---- 7. outputs and reconciliation -------------------------------------------------------------------------------

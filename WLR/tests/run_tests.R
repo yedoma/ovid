@@ -812,5 +812,17 @@ local({                                                               # the run 
   d <- load_deployment(s$deployment[1], gp); f1 <- read_out(gp, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))
   check("export_table() with the flags passed in gives what it gives reading flags.csv itself, and accepted flags matter there",
         nrow(fl) > 0 && identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, fl = f1)) && !identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, hide_accepted = FALSE))) })
+local({                                                               # plots drawn in parallel: the same files and cache as one at a time
+  run_w <- function(w) { gp <- tempfile(paste0("wlr_plots_w", w)); dir.create(file.path(gp, "config"), recursive = TRUE)
+    file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))
+    ow <- options(ovid.workers = w); on.exit(options(ow))
+    c1 <- modifyList(CFG, list(raw_dirs = file.path(here, "tests", "golden", "raw"), metadata_dir = "", dgps_dir = "", project_dir = gp, unzoned_offset_h = -7, make_plots = TRUE, incremental = TRUE))
+    invisible(capture.output(run_pipeline(c1))); f <- list.files(file.path(gp, "output", "plots"), full.names = TRUE)
+    p1 <- stats::setNames(tools::md5sum(f), basename(f)); invisible(capture.output(run_pipeline(c1)))
+    m <- fread(file.path(gp, "output", "audit", "run_manifest.csv"), colClasses = "character")
+    list(png = p1, again = identical(stats::setNames(tools::md5sum(f), basename(f)), p1), reused = as.integer(m[key == "plots_reused", value])) }
+  a <- run_w(1L); b <- run_w(2L)
+  check("plots drawn in parallel are the same files as drawn one at a time, and a second run reuses every one",
+        length(a$png) > 0 && identical(a$png, b$png) && a$again && b$again && identical(b$reused, length(b$png)) && identical(a$reused, b$reused)) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)
