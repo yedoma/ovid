@@ -7,6 +7,7 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 **Changed (speed, 2026-10-30)**
 - Building site records: the between-site flags find each sensor's temperature rows once, not by scanning every row for every flagged period (between_site_mark, R/qc.R); a test compares it with the old code. **Output changes:** none.
+- Stitching and site records: a reading's place among those of its channel and time, and the first value there, come from one pass over rows already sorted, not from grouping them again (run_starts, run_rank in R/stitch.R); a site's values and flags are cast to its wide file at once, not cast apart and merged (site_wide in R/export.R). Tests compare both with the old code. **Output changes:** none.
 - Reading and stitching loggers reads the raw files of loggers that are not reused in parallel (core par_map, as in WLR), a few loggers at a time; problems are recorded in the same order as before. On Windows it reads one file at a time as before. **Output changes:** none.
 
 **Changed (names, 2026-10-29)**

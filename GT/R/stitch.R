@@ -77,6 +77,13 @@ clock_checks <- function(d, cfg, logger_id) {
 }
 
 
+# Rows sorted by the given columns: TRUE where a run of equal values (NA equal to NA) starts. With it, a row's place in its
+# run and the run's first value are worked out in one pass over rows already sorted, not by grouping them again.
+run_starts <- function(...) { v <- list(...); n <- length(v[[1]]); if (!n) return(logical())
+  same <- function(x) { x <- unclass(x); x1 <- x[-1L]; x0 <- x[-n]; (!is.na(x1) & !is.na(x0) & x1 == x0) | (is.na(x1) & is.na(x0)) }
+  s <- rep(TRUE, n - 1L); for (x in v) s <- s & same(x); c(TRUE, !s) }
+run_rank <- function(st) { g <- cumsum(st); seq_along(st) - which(st)[g] + 1L }       # seq_len(.N) by run
+
 # All files of one logger into one record. Values the logger marked as errors leave first (audited with the logger's
 # own reason); then repeated readings across downloads are kept once (newest download wins where they disagree).
 stitch_logger <- function(parts, logger_id) {
@@ -87,9 +94,9 @@ stitch_logger <- function(parts, logger_id) {
   if (length(e)) for (msg in unique(d$err[e])) d <- remove_rows(d, which(d$err %in% msg), "read", "sensor_error", msg)
   d <- remove_rows(d, which(is.na(d$value)), "read", "missing_value", "the file has no value here (blank or NaN)")
   setorder(d, channel, TIMESTAMP, -file_rank, ord)
-  d[, k := seq_len(.N), by = .(channel, TIMESTAMP)]
+  st <- run_starts(d$channel, d$TIMESTAMP); set(d, j = "k", value = run_rank(st))             # as seq_len(.N) by channel and time
   if (any(d$k > 1L)) {
-    d[, first := value[1L], by = .(channel, TIMESTAMP)]
+    set(d, j = "first", value = d$value[which(st)][cumsum(st)])                                  # as value[1L] by channel and time
     dup <- which(d$k > 1L & abs(d$value - d$first) < 1e-6); con <- which(d$k > 1L & !(abs(d$value - d$first) < 1e-6))
     rm_dup <- dup; rm_con <- con
     if (length(rm_con)) { d[, conflict := FALSE]; d[rm_con, conflict := TRUE] }

@@ -1,6 +1,14 @@
 # R/export.R  --  The export zip: site records with flag columns in any time zone, summaries, metadata, the audit trail and a readme.
 # Part of Ovid Core // GT. Sourced by gt_pipeline.R; not meant to be run on its own.
 
+# A site's temperatures wide, as in sites/<site>.csv: a row per time, and per depth T_<depth>m with T_<depth>m_flag after it.
+# Values and flags are cast at once (it cast each and merged them).
+site_wide <- function(tmp) {
+  w <- dcast(tmp, TIMESTAMP ~ depth_m, value.var = c("value", "flag"), sep = "|")
+  z <- sub("^value\\|", "", grep("^value\\|", names(w), value = TRUE)); v <- paste0("T_", z, "m"); f <- paste0(v, "_flag")
+  setnames(w, c("TIMESTAMP", v, f)); setcolorder(w, c("TIMESTAMP", as.vector(rbind(v, f))))
+}
+
 # Depth columns of an exported table in the project's convention (sgn from depth_sign(); GT's own is down positive).
 export_depths <- function(x, sgn = 1) {
   if (sgn == 1 || !NROW(x)) return(x)

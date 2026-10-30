@@ -533,6 +533,23 @@ local({                                                               # depths, 
                      start = t0 + 86400 * c(1, 3, 10, 0, 0, 0), end = t0 + 86400 * c(5, 20, 30, 60, 60, 60))       # overlapping, missing keys, no records
     check("between-site flags: finding each sensor's rows once gives what scanning every row per period gave (overlaps, missing keys, missing times)",
           identical(between_site_mark(copy(z), pz), old(copy(z), pz)) && any(between_site_mark(copy(z), pz)$flag == "differs_from_other_sites;differs_from_other_sites")) })
+  local({ set.seed(8); n <- 50000                                                 # one pass over sorted rows, and one cast, as the by-group steps gave
+    d <- data.table(channel = sample(c("T1", "T2", NA), n, TRUE), TIMESTAMP = t0 + sample(c(0:3000 * 1800, NA), n, TRUE), depth_m = sample(c(0.1, 0.5, NA), n, TRUE),
+                    file_rank = sample(1:3, n, TRUE), ord = sample(n), value = round(stats::runif(n), 1))
+    setorder(d, channel, TIMESTAMP, -file_rank, ord); a <- copy(d); b <- copy(d)
+    a[, k := seq_len(.N), by = .(channel, TIMESTAMP)]; a[, first := value[1L], by = .(channel, TIMESTAMP)]
+    st <- run_starts(b$channel, b$TIMESTAMP); set(b, j = "k", value = run_rank(st)); set(b, j = "first", value = b$value[which(st)][cumsum(st)])
+    d3 <- setorder(copy(d), channel, depth_m, TIMESTAMP, -file_rank)                             # sorted by the run's columns, as the site step sorts
+    a3 <- copy(d3)[, k := seq_len(.N), by = .(channel, depth_m, TIMESTAMP)]; b3 <- copy(d3); set(b3, j = "k", value = run_rank(run_starts(b3$channel, b3$depth_m, b3$TIMESTAMP)))
+    old_wide <- function(tmp) { w <- dcast(tmp, TIMESTAMP ~ depth_m, value.var = "value"); setnames(w, c("TIMESTAMP", paste0("T_", names(w)[-1], "m")))   # before 2026-10-30
+      fl <- dcast(tmp, TIMESTAMP ~ depth_m, value.var = "flag"); setnames(fl, c("TIMESTAMP", paste0("T_", names(fl)[-1], "m_flag")))
+      w <- merge(w, fl, by = "TIMESTAMP"); setcolorder(w, c("TIMESTAMP", as.vector(rbind(names(w)[2:((ncol(w) + 1) / 2)], names(fl)[-1])))) }
+    tmp <- data.table(TIMESTAMP = t0 + rep(0:500 * 3600, each = 3), depth_m = rep(c(0.05, 0.5, 10), 501), value = stats::runif(1503), flag = sample(c("", "spike", NA), 1503, TRUE))[-c(7, 50:60)]
+    setorder(tmp, depth_m, TIMESTAMP); same_csv <- function(x) { f1 <- tempfile(); f2 <- tempfile(); fwrite(old_wide(x), f1); fwrite(site_wide(x), f2); identical(readLines(f1), readLines(f2)) }
+    check("stitching: a reading's place and the first value per channel and time, from one pass over sorted rows, are what grouping gave (missing times and channels too)",
+          identical(a, b) && identical(a3, b3) && any(a$k > 1L) && length(run_starts(character(), numeric())) == 0L)
+    check("site files: values and flags cast at once give the same CSV as casting each and merging (gaps, blank and missing flags, one depth)",
+          same_csv(tmp) && same_csv(tmp[depth_m == 0.5])) })
   check("between-site key: empty with no flags for the site, set with some", identical(between_site_key(per, "B"), "") && nzchar(between_site_key(per, "A")) &&
         identical(between_site_key(NULL, "A"), ""))
   check("summary-only settings and Run anyway are left out of the cache key", all(c("water_year_start", "permafrost_years", "run_anyway", "fill_min_depth") %in% SUMMARY_KEYS) &&

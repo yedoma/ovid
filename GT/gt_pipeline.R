@@ -370,7 +370,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     x[is.na(flag), flag := ""]
     # loggers that replaced each other at a site: where two cover the same depth and time, the later deployment wins
     setorder(x, variable, depth_m, TIMESTAMP, -dep_start, -file_rank)
-    x[, k := seq_len(.N), by = .(variable, depth_m, TIMESTAMP)]
+    set(x, j = "k", value = run_rank(run_starts(x$variable, x$depth_m, x$TIMESTAMP)))     # as seq_len(.N) by variable, depth and time (R/stitch.R)
     AUDIT$log <- list(); ns0 <- length(AUDIT$stash)
     x <- remove_rows(x, which(x$k > 1L), "site", "site_overlap", "two loggers of this site cover the same depth and time; the later deployment is kept", detail = "summary")
     x[, k := NULL]; l6 <- AUDIT$log; st6 <- AUDIT$stash[seq_along(AUDIT$stash) > ns0]; log6 <- c(log6, l6); parts[[sg]] <- x
@@ -399,9 +399,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     if (!is.na(s)) {
       tmp <- x[variable == "temp", .(TIMESTAMP, depth_m, value, flag, serial, sensor, depth_source, logger_type, logger_id)]
       if (nrow(tmp)) { setorder(tmp, depth_m, TIMESTAMP); saveRDS(tmp, file.path(od, "sites", paste0(safe_name(s), ".rds")))
-        w <- dcast(tmp, TIMESTAMP ~ depth_m, value.var = "value"); setnames(w, c("TIMESTAMP", paste0("T_", names(w)[-1], "m")))
-        fl <- dcast(tmp, TIMESTAMP ~ depth_m, value.var = "flag"); setnames(fl, c("TIMESTAMP", paste0("T_", names(fl)[-1], "m_flag")))
-        w <- merge(w, fl, by = "TIMESTAMP"); setcolorder(w, c("TIMESTAMP", as.vector(rbind(names(w)[2:((ncol(w) + 1) / 2)], names(fl)[-1]))))
+        w <- site_wide(tmp)                                                                       # R/export.R
         w[, TIMESTAMP := fmt_ts(TIMESTAMP)]; setnames(w, "TIMESTAMP", "timestamp_utc-07"); fwrite(w, file.path(od, "sites", paste0(safe_name(s), ".csv")))
         o <- c(o, file.path("sites", paste0(safe_name(s), c(".rds", ".csv")))) }
       soil <- x[variable %in% c("vwc", "ec"), .(TIMESTAMP, variable, depth_m, value, flag, serial, sensor, depth_source)]
