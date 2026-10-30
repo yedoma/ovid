@@ -811,7 +811,8 @@ local({                                                               # the run 
   s <- read_out(gp, "summary.csv"); ff <- out_dir(gp, "audit", "flags.csv"); fl <- fread(ff, colClasses = "character"); fl[, accepted := "TRUE"]; fwrite(fl, ff)
   d <- load_deployment(s$deployment[1], gp); f1 <- read_out(gp, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))
   check("export_table() with the flags passed in gives what it gives reading flags.csv itself, and accepted flags matter there",
-        nrow(fl) > 0 && identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, fl = f1)) && !identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, hide_accepted = FALSE))) })
+        nrow(fl) > 0 && identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, fl = f1)) &&
+        identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, fl = setattr(copy(f1), "accepted", flag_accepted(f1)))) && !identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, hide_accepted = FALSE))) })
 local({                                                               # plots drawn in parallel: the same files and cache as one at a time
   run_w <- function(w) { gp <- tempfile(paste0("wlr_plots_w", w)); dir.create(file.path(gp, "config"), recursive = TRUE)
     file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))

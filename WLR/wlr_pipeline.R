@@ -713,7 +713,8 @@ run_pipeline_steps <- function(cfg = CFG) {
   # (a site whose loggers were all reused, with the same quality-rule parameters, is copied from cache/corrected)
   dir.create(file.path(out, "corrected"), showWarnings = FALSE); unlink(list.files(file.path(out, "corrected"), full.names = TRUE))
   sm <- rbindlist(summ, fill = TRUE); n7_hit <- 0L
-  fl7 <- NULL; flags7 <- function() { if (is.null(fl7)) fl7 <<- read_out(cfg$project_dir, "flags.csv", colClasses = list(character = c("logger_id", "start", "end"))); fl7 }   # read once, as export_table() would
+  fl7 <- NULL; flags7 <- function() { if (is.null(fl7)) { fl7 <<- read_out(cfg$project_dir, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))   # read once, as export_table() would,
+    setattr(fl7, "accepted", flag_accepted(fl7)) }; fl7 }                                                                                         # and which are accepted worked out once
   tested <- { qr <- cfg_path(cfg$project_dir, "qc"); rules <- if (file.exists(qr)) fread(qr, colClasses = "character", na.strings = "") else data.table(); has <- function(x) !is.na(x) & nzchar(x)
     if (nrow(rules)) sort(unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter])) else character() }      # as export_table() reads them
   for (st in unique(sm$site)) { r <- sm[site == st][order(start)]; f <- file.path(out, "corrected", paste0(safe_name(st), ".csv"))

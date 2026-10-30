@@ -78,7 +78,7 @@ export_table <- function(d, serial, project_dir, versions = "both", hide_accepte
   vals <- intersect(c(EXPORT_VALUES, corr), names(d))
   out <- d[, c("TIMESTAMP", "site", "logger_id", "year", intersect("baro_serial", names(d)), vals, intersect("drift_offset_m", names(d))), with = FALSE]
   rm <- removed_values(serial, project_dir)
-  if (hide_accepted && nrow(fl) && "site" %in% names(d)) d <- review_unmark(copy(d), fl[flag_accepted(fl) & site == d$site[1] & logger_id %in% c(as.character(serial), as.character(d$logger_id[1]))])   # flags decided not a problem leave the flag columns (core config.R)
+  if (hide_accepted && nrow(fl) && "site" %in% names(d)) d <- review_unmark(copy(d), fl[(attr(fl, "accepted", exact = TRUE) %||% flag_accepted(fl)) & site == d$site[1] & logger_id %in% c(as.character(serial), as.character(d$logger_id[1]))])   # flags decided not a problem leave the flag columns (core config.R)
   qr <- file.path(path.expand(project_dir), "config", "qc_rules.csv"); rules <- if (file.exists(qr)) fread(qr, colClasses = "character", na.strings = "") else data.table()
   has <- function(x) !is.na(x) & nzchar(x)
   tested <- if (nrow(rules)) unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter]) else character()
