@@ -177,6 +177,81 @@ fp_base_ground <- function(links, rinex, bases = NULL) {
 }
 
 # ---- one footprint per flight ------------------------------------------------------------------------------------------
+# ---- footprint colours by drone, sensor and year (config/footprint_colours.csv, R/config.R) -------------------------------
+FP_SENSOR_LABEL <- c(optical = "Optical", lidar = "LiDAR", nir = "NIR", thermal = "Thermal")
+# The kind of sensor of each flight: LiDAR from its footprint kind; thermal and NIR / multispectral from its camera.
+fp_sensor_class <- function(fl) { s <- paste(fl$sensor %||% "", fl$aircraft %||% "")
+  ms <- if ("multispectral" %in% names(fl)) fl$multispectral %in% c(TRUE, "TRUE") else FALSE
+  lid <- if ("fpk" %in% names(fl)) fl$fpk %in% "lidar" else (if ("fp_kind" %in% names(fl)) fl$fp_kind %in% "lidar" else FALSE) | (if ("has_lidar_raw" %in% names(fl)) fl$has_lidar_raw %in% c(TRUE, "TRUE") else FALSE)
+  fifelse(lid, "lidar", fifelse(grepl("thermo|thermal|Duet T|H20T|Zenmuse XT", s, ignore.case = TRUE), "thermal",
+          fifelse(ms | grepl("NIR|multispec|Sequoia|RedEdge|Altum", s, ignore.case = TRUE), "nir", "optical"))) }
+# A colour cell: a palette name, two joined by + (their mix), or a #hex; NA when blank or unknown.
+fp_col_value <- function(x, pal = PAL) { x <- trim(as.character(x %||% "")); if (!nzchar(x)) return(NA_character_)
+  if (grepl("^#[0-9A-Fa-f]{6}$", x)) return(x)
+  k <- unlist(pal[trim(strsplit(x, "+", fixed = TRUE)[[1]])]); if (!length(k)) NA_character_ else if (length(k) == 1L) k[[1]] else mix_col(k[[1]], k[[2]], 0.5) }
+# The shades of one drone and sensor, one per year in view (newest first), in CIELAB: the base hue turned at most two steps
+# of step_deg each way, lighter or darker and more or less vivid, picked in turn so every shade is at least min_de (CIE76 dE)
+# from all those before it and, when avoid is given (the optical shades of the same drone), from the shade of the same year
+# there; lightness stays where it reads on the dark map. Up to n shades; more years reuse them in turn.
+fp_year_shades <- function(base, n = 8, step_deg = 16, min_de = 15, pal = PAL, avoid = NULL) {
+  tolab <- function(h) grDevices::convertColor(t(grDevices::col2rgb(h)) / 255, "sRGB", "Lab")[1, ]
+  lab <- tolab(base); L0 <- lab[[1]]; C0 <- max(35, sqrt(lab[[2]]^2 + lab[[3]]^2)); h0 <- atan2(lab[[3]], lab[[2]])
+  g <- expand.grid(dh = c(0, 1, -1, 2, -2), dL = c(0, 14, -14, 26, -26), dC = c(0, -18, 14))
+  g <- g[order(abs(g$dh) + abs(g$dL) / 14 + abs(g$dC) / 14, -g$dL), ]                      # nearest the base first, lighter before darker
+  to_hex <- function(L, C, h) { rgb <- pmin(1, pmax(0, grDevices::convertColor(matrix(c(L, C * cos(h), C * sin(h)), 1), "Lab", "sRGB"))); grDevices::rgb(rgb[1], rgb[2], rgb[3]) }
+  cand <- unique(vapply(seq_len(nrow(g)), function(r) legible_col(to_hex(min(90, max(50, L0 + g$dL[r])), max(18, C0 + g$dC[r]), h0 + g$dh[r] * step_deg * pi / 180), pal$bg, 3), ""))
+  cl <- t(vapply(cand, tolab, numeric(3))); out <- character(); got <- integer()
+  al <- if (length(avoid)) t(vapply(avoid, tolab, numeric(3))) else NULL
+  for (r in seq_along(cand)) { if (length(got) && min(sqrt(colSums((t(cl[got, , drop = FALSE]) - cl[r, ])^2))) < min_de) next
+    k <- length(out) + 1L; if (!is.null(al) && k <= nrow(al) && sqrt(sum((al[k, ] - cl[r, ])^2)) < min_de) next
+    out <- c(out, cand[r]); got <- c(got, r); if (length(out) >= n) break }
+  out }
+
+# Each flight's family, sensor, colour and legend label. tab: footprint_colours.csv; ymax: the newest year in view (full colour).
+fp_colours <- function(fl, tab = fp_colours_default(), pal = PAL, ymax = NULL) {
+  if (is.null(fl) || !nrow(fl)) return(data.table(family = character(), cls = character(), col = character(), label = character()))
+  tab <- as.data.table(tab); if (!nrow(tab)) tab <- fp_colours_default()
+  txt <- paste(fl$aircraft %||% "", fl$sensor %||% "", if ("make" %in% names(fl)) fl$make else "")
+  fam <- rep(NA_character_, nrow(fl)); row <- rep(NA_integer_, nrow(fl))
+  for (i in seq_len(nrow(tab))) { m <- trim(tab$match[i] %||% ""); hit <- is.na(row) & (if (nzchar(m)) grepl(m, txt, ignore.case = TRUE) else TRUE)
+    row[hit] <- i; fam[hit] <- tab$family[i] }
+  row[is.na(row)] <- nrow(tab); fam[is.na(fam)] <- "Other"
+  cls <- fp_sensor_class(fl); yr <- suppressWarnings(as.integer(fl$year)); if (is.null(ymax)) ymax <- suppressWarnings(max(yr, na.rm = TRUE))
+  base <- vapply(seq_len(nrow(fl)), function(j) { r <- tab[row[j]]
+    c0 <- switch(cls[j], optical = fp_col_value(r$optical_col, pal), thermal = fcoalesce(fp_col_value(r$thermal_col, pal), fp_col_value(r$other_col, pal)), fp_col_value(r$other_col, pal))
+    if (is.na(c0)) pal$gray else c0 }, "")
+  base <- vapply(base, function(c0) legible_col(mix_col(c0, pal$gray, 0.2), pal$bg, 3), "", USE.NAMES = FALSE)   # muted, still legible on the dark map
+  # each year its own shade within the drone's hue (fp_year_shades): years are ranked among those in view, newest first, so a
+  # gap between years does not make them look alike; year_step_deg (footprint_colours.csv) sets the size of a hue step
+  st <- if ("year_step_deg" %in% names(tab)) suppressWarnings(as.numeric(tab$year_step_deg[row])) else rep(NA_real_, nrow(fl)); st[!is.finite(st)] <- 16
+  k <- integer(nrow(fl)); g <- paste(fam, cls); col <- base
+  opt <- list()                                                       # each family's optical shades: its other sensors keep apart from them year by year
+  for (q in unique(g[order(cls != "optical")])) { i <- which(g == q); u <- sort(unique(yr[i][!is.na(yr[i])]), decreasing = TRUE); k[i] <- fcoalesce(match(yr[i], u) - 1L, 0L)
+    f0 <- fam[i[1]]; sh <- fp_year_shades(base[i[1]], 8, st[i[1]], pal = pal, avoid = if (cls[i[1]] != "optical") opt[[f0]])
+    if (cls[i[1]] == "optical") opt[[f0]] <- sh; col[i] <- sh[(k[i] %% length(sh)) + 1L] }
+  data.table(family = fam, cls = cls, col = col, label = paste(fam, "\u00b7", FP_SENSOR_LABEL[cls], "\u00b7", fifelse(is.na(yr), "undated", as.character(yr)))) }
+# The legend: one row per family, sensor and year shown, newest year first.
+fp_colour_key <- function(fc, fl) { if (!nrow(fc)) return(list()); k <- unique(data.table(fc, y = suppressWarnings(as.integer(fl$year)))[, .(family, cls, y, label, col)])
+  k <- k[order(match(family, unique(fc$family)), match(cls, names(FP_SENSOR_LABEL)), -y)]; lapply(seq_len(nrow(k)), function(i) list(k$label[i], k$col[i])) }
+
+# Cameras whose files do not give their sensor size or pixel count (senseFly thermoMAP TIFFs carry neither): filled from the
+# maker's figures when the catalogue is built (the header cache stays valid). gsd_per_m: the ground resolution per metre of
+# height (m/px/m), so sensor width = gsd_per_m * px_x * focal length. Sources: _hub/Derived_values_references.md 14.x.
+CAMERA_SPECS <- data.table(model = c("thermoMAP", "FC3411"), px_x = c(640, NA), px_y = c(512, NA), gsd_per_m = c(0.14 / 75, NA), sensor_w_mm = c(NA, 13.2),
+                           source = c("senseFly eBee RTK brochure (thermoMAP: 640 x 512 px, 14 cm/px at 75 m)", "DJI Air 2S specs (1-inch CMOS, 5472 x 3648, 2.4 um pixels)"))
+camera_fill <- function(im) {
+  if (is.null(im) || !nrow(im) || !all(c("model", "focal_mm") %in% names(im))) return(im)
+  for (k in c("px_x", "px_y", "sensor_w_mm", "sensor_w_source")) if (!k %in% names(im)) set(im, j = k, value = if (k == "sensor_w_source") NA_character_ else NA_real_)
+  for (i in seq_len(nrow(CAMERA_SPECS))) { c0 <- CAMERA_SPECS[i]; k <- which(im$model %in% c0$model)
+    if (!length(k)) next
+    f <- suppressWarnings(as.numeric(im$focal_mm[k]))
+    set(im, i = k, j = "px_x", value = fcoalesce(suppressWarnings(as.numeric(im$px_x[k])), as.numeric(c0$px_x)))
+    set(im, i = k, j = "px_y", value = fcoalesce(suppressWarnings(as.numeric(im$px_y[k])), as.numeric(c0$px_y)))
+    w <- suppressWarnings(as.numeric(im$sensor_w_mm[k])); nw <- is.na(w) & is.finite(f)
+    set(im, i = k[nw], j = "sensor_w_mm", value = if (is.finite(c0$sensor_w_mm)) c0$sensor_w_mm else round(c0$gsd_per_m * c0$px_x * f[nw], 3))
+    set(im, i = k[nw], j = "sensor_w_source", value = c0$source) }
+  im }
+
 # img: one flight's images with lat, lon, t (s), height, sensor_w_mm, focal_mm, px_x, px_y, model, file. lidar_fov: the
 # flight's LiDAR field of view (NA for a camera flight). Returns list(outline = part, ring, line; summary row).
 flight_footprint <- function(img, lidar_fov = NA_real_, cell = FOOTPRINT_CELL_M) {

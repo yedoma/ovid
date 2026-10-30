@@ -4,7 +4,7 @@
 (function () {
   let map, base, lay = {}, sel = null, fitted = false, boxes = {}, last = null, legend;
   // ---- styles people can change: colour and size per layer, colour-by for flights, fill opacity; kept in this browser ----
-  const DEF = { by: 'status', op: 0.15, col: {}, sz: {} }, KEY = 'ovidrs.mapstyle';
+  const DEF = { by: 'drone', op: 0.15, col: {}, sz: {} }, KEY = 'ovidrs.mapstyle';   // by drone, sensor and year unless chosen otherwise
   let S = (() => { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { ...DEF }; } })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
   const items = {};                              // layer name -> [{m, col, w, r, fill}] as drawn, so restyling needs no redraw
@@ -41,7 +41,7 @@
       const d = L.DomUtil.create('div', 'map-style leaflet-bar'); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
       const rowsH = FL.concat([YF], DSL).map(g => `<div class="ms-row" data-g="${g}"><span>${tip(g)}</span><input type="color"><input type="range" min="0.5" max="3" step="0.25"></div>`).join('');
       d.innerHTML = `<a href="#" class="ms-btn" title="Colours and sizes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Style</a><div class="ms-body" hidden>
-        <label>Colour flights by <select class="ms-by">${['status|Positioning', 'year|Year', 'sensor|Sensor', 'aircraft|Aircraft', 'site|Site', 'single|One colour'].map(o => { const [v, t] = o.split('|'); return `<option value="${v}">${t}</option>`; }).join('')}</select></label>
+        <label>Colour flights by <select class="ms-by">${['drone|Drone, sensor and year', 'status|Positioning', 'year|Year', 'sensor|Sensor', 'aircraft|Aircraft', 'site|Site', 'single|One colour'].map(o => { const [v, t] = o.split('|'); return `<option value="${v}">${t}</option>`; }).join('')}</select></label>
         <label>Fill <input type="range" class="ms-op" min="0" max="0.6" step="0.05"></label>
         <div class="ms-head"><span>Layer</span><span>Colour</span><span>Size</span></div>${rowsH}
         <a href="#" class="ms-reset">Reset to defaults</a></div>`;
@@ -104,8 +104,9 @@
   function pick(id) { Shiny.setInputValue('map_pick', id, { priority: 'event' }); }
   // flight colour: positioning state from the server, or a palette over year / sensor / aircraft / site, or one colour
   let fcol = {}, fkey = [], yearKey = [];
-  function flightColours(fs, pal) {
+  function flightColours(fs, pal, dkey) {
     fcol = {}; fkey = [];
+    if (S.by === 'drone') { fs.forEach(f => fcol[f.id] = f.dcol || f.col); fkey = (dkey || []).slice(0, 18); if ((dkey || []).length > 18) fkey.push([`+ ${dkey.length - 18} more`, '']); return; }   // config/footprint_colours.csv
     if (S.by === 'status') { const m = {}; fs.forEach(f => { fcol[f.id] = f.col; m[f.status || 'unknown'] = f.col; }); fkey = Object.entries(m); return; }
     if (S.by === 'single') { const c = S.col[FP] || '#e5c07b'; fs.forEach(f => fcol[f.id] = c); fkey = [['All flights', c]]; return; }
     const v = [...new Set(fs.map(f => String(f[S.by] || 'unknown')))].sort(), m = {};
@@ -116,7 +117,7 @@
     if (typeof L === 'undefined') { document.getElementById('rsmap').innerHTML = '<p class="muted p-3">The map library could not be loaded: the map needs an internet connection (Leaflet and map tiles).</p>'; return; }
     if (!map) init(); last = d;
     FL.forEach(clear); clear(YF); boxes = {}; const all = [], fs = rows(d.flights), fp = d.fp || {};
-    flightColours(fs, d.pal || ['#e5c07b']);
+    flightColours(fs, d.pal || ['#e5c07b'], d.dkey);
     // one footprint per year: the joined outlines only (each kind its own, drawn on top of each other), flights not drawn
     (d.years || []).forEach(y => {
       const parts = y.parts.map(p => p.map(pts)); parts.forEach(p => p.forEach(r => all.push(...r)));
@@ -152,7 +153,7 @@
   function drawLegend() {
     if (!legend || !legend.getContainer()) return; const sw = (c, st) => `<i style="border-color:${c || 'transparent'}${st ? ';border-top-style:' + st : ''}"></i>`;
     let h = yearKey.length ? '<div class="lg-t">One footprint per year</div>' + yearKey.map(([k, c]) => `<div>${sw(c, 'dotted')}${tip(k)}</div>`).join('') : '';
-    h += fkey.length && (items[FP] || []).length ? `<div class="lg-t">Flights by ${{ status: 'positioning', single: 'colour' }[S.by] || S.by}</div>` + fkey.map(([k, c]) => `<div>${sw(c)}${tip(k)}</div>`).join('') : '';
+    h += fkey.length && (items[FP] || []).length ? `<div class="lg-t">Flights by ${{ status: 'positioning', single: 'colour', drone: 'drone, sensor and year' }[S.by] || S.by}</div>` + fkey.map(([k, c]) => `<div>${sw(c)}${tip(k)}</div>`).join('') : '';
     const on = DSL.filter(g => (items[g] || []).length && map.hasLayer(lay[g]));
     if (on.length) h += '<div class="lg-t">Layers</div>' + on.map(g => `<div>${sw(colOf(g, items[g][0].col))}${tip(g)} <span class="mt-sub">${items[g].length}</span></div>`).join('');
     if (h) h += '<div class="lg-k">' + [['dashed', 'planned'], ['solid', 'observed'], ['dotted', 'derived']].map(([st, t]) => `<span><i style="border-top-style:${st}"></i>${t}</span>`).join('') + '</div>';

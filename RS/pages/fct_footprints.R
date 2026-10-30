@@ -30,23 +30,27 @@ fp_rings_json <- function(fp, f) {
 # One footprint per year and kind for the flights in view (photo sets left out): list of year, kind, ids (the flights of
 # that year and kind), with (those with a footprint) and u (footprint_union). memo: an environment, so the same set is
 # joined once.
-year_footprints <- function(f, fp, kinds, memo) {
+# One per year, kind, drone family and sensor (config/footprint_colours.csv, R/footprints.R fp_colours), in its colour.
+year_footprints <- function(f, fp, kinds, memo, tab = fp_colours_default()) {
   if (!nrow(f)) return(list())
-  f <- f[kind != "photo set" & !year %in% c("undated", "")]
+  f <- f[kind != "photo set" & !year %in% c("undated", "")]; if (!nrow(f)) return(list())
+  fc <- fp_colours(f, tab); f <- cbind(f, fc_fam = fc$family, fc_cls = fc$cls, fc_col = fc$col)
   out <- list()
-  for (y in sort(unique(f$year))) for (k in kinds) {
-    ids <- f[year == y & fpk == k, flight_id]; if (!length(ids)) next
-    with <- intersect(ids, fp$flight_id[fp$kind == k])
-    key <- paste(k, paste(sort(with), collapse = ","))
-    if (is.null(memo[[key]])) memo[[key]] <- footprint_union(fp[flight_id %in% with & kind == k])
-    out[[length(out) + 1L]] <- list(year = y, kind = k, ids = ids, with = with, u = memo[[key]])
-  }
+  for (y in sort(unique(f$year))) for (k in kinds) { g0 <- f[year == y & fpk == k]
+    for (grp in unique(paste(g0$fc_fam, g0$fc_cls, sep = "|"))) { g <- g0[paste(fc_fam, fc_cls, sep = "|") == grp]
+      ids <- g$flight_id; if (!length(ids)) next
+      with <- intersect(ids, fp$flight_id[fp$kind == k])
+      key <- paste(k, paste(sort(with), collapse = ","))
+      if (is.null(memo[[key]])) memo[[key]] <- footprint_union(fp[flight_id %in% with & kind == k])
+      out[[length(out) + 1L]] <- list(year = y, kind = k, ids = ids, with = with, u = memo[[key]], col = g$fc_col[1],
+                                      label = paste(g$fc_fam[1], "\u00b7", FP_SENSOR_LABEL[[g$fc_cls[1]]]))
+    } }
   out
 }
 
 # For the map: each year outline as parts of ring lines, with its tooltip numbers and its kind's colour.
-year_layers <- function(yf) lapply(yf, function(x) { r <- x$u$rings; more <- sum(x$u$by_n[n > 1, m2])
-  list(year = x$year, label = FP_KIND_LABEL[[x$kind]], col = fp_kind_cols()[[x$kind]], n = length(x$with), n_parts = x$u$parts,
+year_layers <- function(yf) lapply(Filter(function(x) nrow(x$u$rings %||% data.table()) > 0, yf), function(x) { r <- x$u$rings; more <- sum(x$u$by_n[n > 1, m2])   # a year with no footprint has no outline to draw
+  list(year = x$year, label = x$label %||% FP_KIND_LABEL[[x$kind]], col = x$col %||% fp_kind_cols()[[x$kind]], n = length(x$with), n_parts = x$u$parts,
        area_km2 = round(x$u$area_m2 / 1e6, 3), more_km2 = round(more / 1e6, 3),
        parts = if (nrow(r)) unname(lapply(split(r$line, r$part), as.list)) else list()) })
 

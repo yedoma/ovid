@@ -14,13 +14,14 @@ thin_points <- function(images, per_flight = 150L) {
   p[i %in% unique(round(seq(1, n[1], length.out = min(n[1], per_flight)))), .(flight_id, lat, lon), by = n][, n := NULL][]
 }
 
-export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid RS archive", datasets = NULL, gis = NULL) {
+export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid RS archive", datasets = NULL, gis = NULL, fp_tab = fp_colours_default()) {
   unlink(dir, TRUE); dir.create(dir, recursive = TRUE)
   fl <- out[is.na(exclude_from_archive) | !tolower(exclude_from_archive) %in% c("true", "yes", "1", "x")]
   keep <- c("flight_id", "display_name", "year", "date", "start", "duration_min", "project", "site", "family", "aircraft", "sensor", "flight_no",
             "n_images", "n_georef", "size_gb", "positioning_status", "positioning_evidence", "has_log", "has_geotags", "has_mrk", "has_rpt",
             "has_gnss_obs", "has_lidar_raw", "has_mission", "source_id", "folder", "copies", "qa_flags", "notes", "lat_min", "lat_max", "lon_min", "lon_max")
-  fl <- fl[, intersect(keep, names(fl)), with = FALSE]
+  fc <- fp_colours(fl, fp_tab)                                     # by drone, sensor and year, as in the app (R/footprints.R)
+  fl <- fl[, intersect(keep, names(fl)), with = FALSE][, dcol := fc$col]
   lk <- links[flight_id %in% fl$flight_id & state != "suggested", .(flight_id, file, role, state, evidence)]
   pts <- thin_points(images[flight_id %in% fl$flight_id])
   fwrite(fl, file.path(dir, "flights.csv")); fwrite(lk, file.path(dir, "links.csv")); fwrite(scanned, file.path(dir, "sources.csv")); fwrite(geo, file.path(dir, "geometry.csv"))
@@ -35,8 +36,8 @@ export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid R
   if (nrow(gs)) { fwrite(gs, file.path(dir, "gis_features.csv"))
     gs <- gs[, .(group = category, line, source = TRUE, col = unname(gcol[category]), type, label = paste0(category, " \u00b7 ", fifelse(is.na(feature), "", feature), " \u00b7 ", rel))] }
   extra <- rbind(ds, gs, fill = TRUE)
-  data <- jsonlite::toJSON(list(title = title, extra = extra, made = format(Sys.time(), "%Y-%m-%d %H:%M"), app = paste(APP_NAME, APP_VERSION),
-                                sources = scanned, flights = fl, links = lk, points = pts, colours = as.list(STATUS_COL), geometry = geo[is.na(flight_id) | flight_id %in% fl$flight_id & kind != "derived"], states = POSITIONING),
+  data <- jsonlite::toJSON(list(title = title, extra = extra, made = format(Sys.time(), "%Y-%m-%d %H:%M"), app = paste("ovid RS", RS_VERSION),
+                                sources = scanned, flights = fl, links = lk, points = pts, colours = as.list(STATUS_COL), dkey = fp_colour_key(fc, fl), geometry = geo[is.na(flight_id) | flight_id %in% fl$flight_id & kind != "derived"], states = POSITIONING),
                            dataframe = "rows", na = "null", auto_unbox = TRUE, digits = NA)
   page <- sub("__DATA__", gsub("</", "<\\\\/", data), VIEWER_HTML, fixed = TRUE)
   tools <- Filter(file.exists, file.path(c(get0("APP_DIR", ifnotfound = "."), get0("PIPELINE_DIR", ifnotfound = ".")), "www", "map_tools.js"))   # Legend on/off, 250 ppi PNG
@@ -71,7 +72,7 @@ th{position:sticky;top:0;background:var(--panel);cursor:pointer}tr.sel{backgroun
 <header><h1 id="t"></h1><span class="muted" id="sub"></span></header>
 <div id="bar"><select id="fy"><option value="">All years</option></select><select id="fs"><option value="">All sites</option></select>
 <select id="fa"><option value="">All sensors</option></select><select id="fp"><option value="">All positioning</option></select><input id="q" placeholder="Search"></div>
-<div id="cards"></div><div class="muted" style="padding:0 16px 6px">Map: dashed = planned &middot; solid = observed (flown track, image positions, receivers) &middot; dotted = derived by Ovid</div>
+<div id="cards"></div><div class="muted" style="padding:0 16px 6px">Map: dashed = planned &middot; solid = observed (flown track, image positions, receivers) &middot; dotted = derived by ovid</div>
 <main><div id="map"></div><div id="tbl"><table><thead><tr id="hd"></tr></thead><tbody id="bd"></tbody></table><div id="detail" class="muted">Select a flight for its files and evidence.</div></div></main>
 <script id="data" type="application/json">__DATA__</script>
 <script>__MAPTOOLS__</script>
@@ -79,7 +80,7 @@ th{position:sticky;top:0;background:var(--panel);cursor:pointer}tr.sel{backgroun
 const D=JSON.parse(document.getElementById('data').textContent),F=D.flights;
 const COL=D.colours;
 document.getElementById('t').textContent=D.title;
-document.getElementById('sub').textContent=`${F.length} flights from ${D.sources.length} source(s) \u00b7 made ${D.made} with ${D.app}`;
+document.getElementById('sub').textContent=`${F.length} ${F.length===1?'flight':'flights'} from ${D.sources.length} ${D.sources.length===1?'source':'sources'} \u00b7 made ${D.made} with ${D.app}`;
 const uniq=k=>[...new Set(F.map(f=>f[k]).filter(v=>v!==null&&v!==''))].sort();
 [['fy','year'],['fs','site'],['fa','sensor'],['fp','positioning_status']].forEach(([id,k])=>uniq(k).forEach(v=>{const o=document.createElement('option');o.textContent=v;document.getElementById(id).append(o)}));
 const cols=[['date','Date'],['site','Site'],['aircraft','Aircraft'],['sensor','Sensor'],['n_images','Images'],['size_gb','GB'],['positioning_status','Positioning'],['qa_flags','QA']];
@@ -96,7 +97,7 @@ if(Object.keys(X).length)L.control.layers(null,X,{collapsed:true}).addTo(map);
 // legend: positioning colours, then each switchable layer that is on; Legend button hides it, PNG saves the view at 250 ppi
 const XC={};(D.extra||[]).forEach(x=>XC[x.group]=XC[x.group]||x.col);const leg=L.control({position:'bottomright'});leg.onAdd=()=>L.DomUtil.create('div','map-legend');leg.addTo(map);
 function legend(){const e=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),st=[...new Set(F.map(f=>f.positioning_status))].filter(k=>COL[k]),on=Object.keys(X).filter(g=>map.hasLayer(X[g]));
- leg.getContainer().innerHTML='<div class="lg-t">Flights by positioning</div>'+st.map(k=>`<div><i style="border-color:${COL[k]}"></i>${e(k)}</div>`).join('')+(on.length?'<div class="lg-t">Layers</div>'+on.map(g=>`<div><i style="border-color:${XC[g]}"></i>${e(g)}</div>`).join(''):'')+'<div class="lg-n">dashed planned \u00b7 solid observed \u00b7 dotted derived</div>'}
+ leg.getContainer().innerHTML='<div class="lg-t">Flights by drone, sensor and year</div>'+(D.dkey||[]).map(([k,c])=>`<div><i style="border-color:${c}"></i>${e(k)}</div>`).join('')+(on.length?'<div class="lg-t">Layers</div>'+on.map(g=>`<div><i style="border-color:${XC[g]}"></i>${e(g)}</div>`).join(''):'')+'<div class="lg-n">dashed planned \u00b7 solid observed \u00b7 dotted derived</div>'}
 legend();map.on('overlayadd overlayremove',legend);if(window.OvidMapTools)OvidMapTools(map,{legend:()=>leg.getContainer(),name:'viewer_map',key:'viewer'});D.points.forEach(p=>(P[p.flight_id]=P[p.flight_id]||[]).push([p.lat,p.lon]));
 (D.geometry||[]).forEach(g=>(G[g.flight_id||'']=G[g.flight_id||'']||[]).push(g));
 // planned: dashed line; observed: solid line or marker; derived: dotted outline
@@ -112,7 +113,7 @@ function draw(){const r=shown().sort((a,b)=>{const x=a[sortK],y=b[sortK];return 
  document.getElementById('bd').innerHTML=r.map(f=>`<tr data-id="${f.flight_id}" class="${f.flight_id===sel?'sel':''}">`+cols.map(([k])=>`<td>${k==='positioning_status'?`<span class="dot" style="background:${COL[f[k]]}"></span>`:''}${f[k]??''}</td>`).join('')+'</tr>').join('');
  document.querySelectorAll('#bd tr').forEach(tr=>tr.onclick=()=>pick(tr.dataset.id,true));
  lay.clearLayers();const b=[];
- r.forEach(f=>{const c=COL[f.positioning_status],pts=P[f.flight_id];
+ r.forEach(f=>{const c=f.dcol||COL[f.positioning_status],pts=P[f.flight_id];
   if(f.lat_min!==null){const bb=[[f.lat_min,f.lon_min],[f.lat_max,f.lon_max]];b.push(...bb);
    L.rectangle(bb,{color:c,weight:f.flight_id===sel?2.5:1,fill:false,dashArray:'1 4'}).bindTooltip(`${f.date} ${f.site||''} \u00b7 ${f.sensor||''} \u00b7 derived extent`).on('click',()=>pick(f.flight_id,false)).addTo(lay)}
   (pts||[]).forEach(p=>L.circleMarker(p,{radius:2,color:c,weight:1,fillOpacity:.9}).bindTooltip('observed image position').addTo(lay));

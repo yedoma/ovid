@@ -1,0 +1,4 @@
+family,match,optical_col,other_col,thermal_col,year_step_deg,note
+DJI,DJI|Zenmuse|Phantom|Matrice|Mavic|Inspire|^FC[0-9],red,gold,"",16,DJI drones and Zenmuse cameras
+eBee,senseFly|eBee|S[.]O[.]D[.]A|thermoMAP|Duet|Aeria|Sequoia|S110,blue,purple,purple+red,16,senseFly eBee and its cameras
+Other,"",green,teal,"",16,every other drone
