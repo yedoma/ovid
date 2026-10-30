@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (stage times, 2026-10-30)**
+- Every run log (output/logs/*.log) ends with "Time per stage:": the seconds and share of the run of each "[k/N]" step, in every app, in the app and from the command line (util.R stage_mark, stage_times; manifest.R; runner.R).
+- **Output changes:** none; the run log has these lines more.
+
 **Fixed (hashes and the R version, 2026-10-30)**
 - hash_of and review_hash (cache keys, flight ids, review ids) no longer depend on the R version: R 4.6.2 writes its version into serialize()'s bytes, which had moved them (util.R hash_bytes).
 - **Output changes:** none; every hash is the one R 4.6.1 gave.

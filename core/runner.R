@@ -27,7 +27,7 @@ RUNNER <- new.env()                                  # job: the run going on now
   do.call(Sys.setenv, stats::setNames(list("1"), no_run))
   options(ovid.cancel_file = cancel_file, warn = 1)
   setwd(app_dir); suppressPackageStartupMessages(source(pipeline, chdir = TRUE))
-  assign("say", function(..., col = "fg") { run_check_cancel(); cat(paste0(...), "\n", sep = ""); flush(stdout()) }, envir = globalenv())
+  assign("say", function(..., col = "fg") { run_check_cancel(); msg <- paste0(...); stage_mark(msg); cat(msg, "\n", sep = ""); flush(stdout()) }, envir = globalenv())
   withRestarts(
     tryCatch(list(status = "finished", value = do.call(run_pipeline, c(list(cfg), args))),
       error = function(e) if (length(intersect(class(e), ask))) list(status = "asked", message = conditionMessage(e), condition = e)

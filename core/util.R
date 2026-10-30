@@ -18,6 +18,7 @@ say <- function(..., col = "fg", log = get0("LOG", ifnotfound = NULL),
   tty <- isatty(stdout()) || nzchar(Sys.getenv("RSTUDIO"))
   msg <- paste0(...)
   if (is.environment(log)) log$lines <- c(log$lines, msg)
+  stage_mark(msg)
   say_progress(msg, steps)
   if (tty) { pal <- get0("PAL", ifnotfound = list()); hex <- pal[[col]]; if (is.null(hex)) hex <- pal$fg
     if (!is.null(hex)) msg <- paste0(.ansi(hex), msg, "\033[0m") }
@@ -34,6 +35,14 @@ say_progress <- function(msg, steps) {
   try(suppressWarnings(shiny::setProgress((k - 0.5) / steps, detail = sub(pat, "", msg))), silent = TRUE)   # no bar open: a warning, not an error
   invisible()
 }
+
+# Stage times for the run log: each "[k/N] what" message starts a stage, which ends when the next one starts or the run
+# ends. run_logged() (core manifest.R) clears them when a run starts and lists them at the end of the log.
+STAGES <- new.env()
+stage_mark <- function(msg) { if (grepl("^\\[[0-9]+/[0-9]+\\]", msg)) STAGES$at <- c(STAGES$at, stats::setNames(as.numeric(Sys.time()), msg)); invisible() }
+stage_times <- function(end = Sys.time()) { a <- STAGES$at; if (!length(a)) return(character())
+  s <- diff(c(unname(a), as.numeric(end))); tot <- max(sum(s), 1e-9)
+  sprintf("  %-*s %7.1f s %4.0f%%", max(nchar(names(a))), names(a), s, 100 * s / tot) }
 
 fmt_ts <- function(x) if (inherits(x, "POSIXct")) format(x, "%Y-%m-%d %H:%M:%S", tz = "UTC") else as.character(x)
 

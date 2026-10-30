@@ -38,7 +38,7 @@ write_run_manifest <- function(cfg, t0, counts, settings = list(), packages = c(
 # ---- Run log ---------------------------------------------------------------------------------------------------------
 # Every run leaves output/logs/<start>_<app>.log, kept after the app closes: what the run printed, each warning and
 # message, and for an error its message and the calls that led to it; a header with the versions and the folders (home
-# shown as ~) and a footer with the time taken and whether it finished. The newest RUN_LOG_KEEP are kept.
+# shown as ~) and a footer with the time each stage took, the total and whether it finished. The newest RUN_LOG_KEEP are kept.
 RUN_LOG_KEEP <- 50L
 tilde <- function(x) { x <- as.character(x); h <- path.expand("~"); ifelse(startsWith(x, h), paste0("~", substring(x, nchar(h) + 1)), x) }
 run_logged <- function(cfg, fun) {
@@ -61,9 +61,11 @@ run_logged <- function(cfg, fun) {
   if (length(cfg$run_anyway)) { w("Run anyway: started although the set-up check found ", length(cfg$run_anyway), " thing(s) that would be ignored or misapplied:")
     for (x in utils::head(cfg$run_anyway, 30)) w("  ", x) }
   w(strrep("-", 80))
-  n0 <- sink.number(); sink(con, split = TRUE); status <- "failed"
+  n0 <- sink.number(); sink(con, split = TRUE); status <- "failed"; if (exists("STAGES")) STAGES$at <- NULL
   on.exit({ while (sink.number() > n0) sink(); if (isTRUE(getOption("ovid.cancelled"))) status <- "cancelled by the user"
-    w(strrep("-", 80)); w("Run ", status, " after ", round(as.numeric(difftime(Sys.time(), t0, units = "secs"))), " s, ", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"))
+    w(strrep("-", 80)); st <- if (exists("stage_times", mode = "function")) stage_times() else character()
+    if (length(st)) { w("Time per stage:"); for (x in st) w(x) }
+    w("Run ", status, " after ", round(as.numeric(difftime(Sys.time(), t0, units = "secs"))), " s, ", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"))
     close(con)
     l <- tryCatch(readLines(f, warn = FALSE), error = function(e) NULL)                        # colours of the console left out
     if (!is.null(l)) writeLines(gsub("\033\\[[0-9;]*m", "", l[!startsWith(l, "@@ ")]), f)            # nor the progress ticks of a background run

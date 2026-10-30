@@ -1017,4 +1017,8 @@ local({ root <- dirname(CORE_DIR); lock <- file.path(root, "build", "renv.lock")
         grepl('file.path(dirname(app_dir), "build", "renv.lock")', la, fixed = TRUE) && !file.exists(file.path(root, "renv.lock")) &&
         (!file.exists(wf) || (grepl('lockfile = "build/renv.lock"', paste(readLines(wf, warn = FALSE), collapse = "\n"), fixed = TRUE)))) })
 
+cat("stage times in the run log\n")
+local({ STAGES$at <- NULL; stage_mark("not a stage"); stage_mark("[1/2] reading"); Sys.sleep(0.05); stage_mark("[2/2] writing"); st <- stage_times(); STAGES$at <- NULL
+  check("each [k/N] message starts a stage and others do not; each is listed with its seconds and share of the run",
+        length(st) == 2 && grepl("^  \\[1/2\\] reading +[0-9.]+ s +[0-9]+%$", st[1]) && grepl("[2/2] writing", st[2], fixed = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)
