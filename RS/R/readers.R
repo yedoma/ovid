@@ -61,15 +61,16 @@ SF_TAGS  <- c(acc_xy = "Camera:GPSXYAccuracy", acc_z = "Camera:GPSZAccuracy", ca
               capture_uuid = "Camera:CaptureUUID", flight_uuid = "Camera:FlightUUID", rig = "Camera:RigName")
 
 # DJI cameras that name their aircraft (older DJI images carry no drone-dji:DroneModel). The Phantom 3 and 4 and 4 Pro
-# have no RTK, so their positions are standalone GNSS; the Phantom 4 RTK writes RTK flags like the M350.
+# have no RTK, nor have the Air 2S and Mavic 2 Pro, so their positions are standalone GNSS; the Phantom 4 RTK writes RTK flags like the M350.
 DJI_CAMERAS <- c(FC300X = "Phantom 3 Professional", FC300S = "Phantom 3 Advanced", FC300C = "Phantom 3 Standard", FC330 = "Phantom 4",
-                 FC6310 = "Phantom 4 Pro", FC6310S = "Phantom 4 Pro V2", FC6310R = "Phantom 4 RTK", FC6360 = "Phantom 4 Multispectral")
+                 FC6310 = "Phantom 4 Pro", FC6310S = "Phantom 4 Pro V2", FC6310R = "Phantom 4 RTK", FC6360 = "Phantom 4 Multispectral",
+                 FC3411 = "Air 2S", `L1D-20c` = "Mavic 2 Pro")   # Air 2S and Mavic 2 Pro (Hasselblad camera): no RTK either
 # Sensor widths (mm) of the cameras in the archive, for images whose EXIF has no focal plane resolution. From the makers'
 # specifications: 1-inch sensors 13.2 mm, 1/2.3-inch 6.17 mm, 1/1.7-inch 7.44 mm, 4/3-inch 17.3 mm (the Zenmuse L2's RGB
 # camera, EXIF model "L2"), full frame 35.9 mm.
 SENSOR_WIDTH_MM <- c(FC300X = 6.17, FC300S = 6.17, FC300C = 6.17, FC330 = 6.17, FC6310 = 13.2, FC6310S = 13.2, FC6310R = 13.2, L2 = 17.3,
                      ZenmuseP1 = 35.9, `S.O.D.A.` = 13.2, `Canon PowerShot S110` = 7.44)
-NO_RTK_AIRCRAFT <- c("Phantom 3 Professional", "Phantom 3 Advanced", "Phantom 3 Standard", "Phantom 4", "Phantom 4 Pro", "Phantom 4 Pro V2")
+NO_RTK_AIRCRAFT <- c("Phantom 3 Professional", "Phantom 3 Advanced", "Phantom 3 Standard", "Phantom 4", "Phantom 4 Pro", "Phantom 4 Pro V2", "Air 2S", "Mavic 2 Pro")
 
 # Several files at once (core par_map, forked; one at a time on Windows): reading a file's head waits on the drive far longer
 # than the parsing takes (26 ms a photo on a USB drive, 7.5 ms with eight at once), so the waits overlap. Rows stay in order.
@@ -284,19 +285,26 @@ folder_flight_no <- function(folder) { u <- unique(folder)                 # wor
     NA_integer_ }, 0L)
   v[match(folder, u)] }
 
-# Site from folder names. DJI: DJI_202001011200_001_LakeA-RGB -> LakeA. Others: the folder with dates, EBEE,
+# Site from folder names (a camera's numbered folder, 00039 or 100MEDIA, is never one). DJI: DJI_202001011200_001_LakeA-RGB -> LakeA. Others: the folder with dates, EBEE,
 # years, sensor words and flight numbers taken out: 2024_EBEE_BogA -> BogA, NIR_BogA_354 -> BogA, 2018-08-28_North Transect -> North Transect.
+MONTH_FOLDER <- "^(0?[1-9]|1[0-2])?[ _-]?(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)$"
 DJI_SUFFIX <- "-(RGB|LiDAR|L2|P1|H30T?|thermal|NIR|copy)$"
-site_of <- function(folder) {
+site_of <- function(folder, named = character()) {   # named: folder names given a site by hand (config/site_names.csv found): always kept
   parts <- strsplit(folder, "/", fixed = TRUE)
   vapply(parts, function(p) {
-    p <- p[!grepl("^(DCIM|img|[0-9]{3}___[0-9]{2}|Drone Logs|Emotion Logs|[0-9]{4}-Drone Flights|Optical-.*|NIR-.*|LiDAR-.*|Processed)$", p)]
+    p <- p[!grepl("^(DCIM|img|[0-9]+|[0-9]{3}[A-Z]*MEDIA|[0-9]{3}___[0-9]{2}|Drone Logs|Emotion Logs|[0-9]{4}-Drone Flights|Optical-.*|NIR-.*|LiDAR-.*|Processed)$", p)]
     if (!length(p)) return("")
     b <- p[length(p)]
     if (grepl("^DJI_[0-9]{12}_[0-9]{3}_", b)) { s <- sub("^DJI_[0-9]{12}_[0-9]{3}_", "", b); for (i in 1:2) s <- sub(DJI_SUFFIX, "", s, ignore.case = TRUE); return(s) }
-    if (grepl("^EP-[0-9]{2}-[0-9]{5}_[0-9]+$", b)) b <- if (length(p) > 1) p[length(p) - 1] else ""
-    s <- gsub("[_-]+", " ", gsub("[0-9]{4}[-_][0-9]{2}[-_][0-9]{2}", " ", b))
-    s <- gsub("\\b(EBEE|RGB|NIR|SODA|S\\.O\\.D\\.A\\.|REDO|Flights?|First|Frist|Drone)\\b|\\b(19|20)[0-9]{2}\\b|\\b[0-9]{3,4}$", " ", s, ignore.case = TRUE)
-    trimws(gsub("\\s+", " ", s))
+    if (grepl("^EP-[0-9]{2}-[0-9]{5}_[0-9]+$", b)) p <- p[-length(p)]
+    clean <- function(b) { s <- gsub("[_-]+", " ", gsub("[0-9]{4}[-_][0-9]{2}[-_][0-9]{2}", " ", b))
+      s <- gsub("\\b(EBEE|RGB|NIR|SODA|S\\.O\\.D\\.A\\.|REDO|Flights?|First|Frist|Drone)\\b|\\b(19|20)[0-9]{2}\\b|\\b[0-9]{3,4}$", " ", s, ignore.case = TRUE)
+      trimws(gsub("\\s+", " ", s)) }
+    # the nearest folder whose name says more than a month, a band or a camera's folder (2018-08-30_Plateau/img/msp -> Plateau)
+    # a folder named for a month (2020-08_August) says when, not where: no site
+    for (b in rev(p)) { s <- clean(b); if (nzchar(s) && tolower(s) %in% tolower(named)) return(s)
+      if (grepl(MONTH_FOLDER, s, ignore.case = TRUE, perl = TRUE)) return("")
+      if (nzchar(s) && !grepl(SIMPLE_GENERIC_FOLDERS, s, ignore.case = TRUE, perl = TRUE)) return(s) }
+    ""
   }, "")
 }

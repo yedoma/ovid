@@ -12,6 +12,15 @@ SP_RS_FOLDER_ITEM <- "site for this folder name"   # the list-of-changes entry t
 # Flights (photo sets left out) whose positions are RTK or PPK corrected: counted over the same rows the check divides by
 # (it said "1 of 0 flights" when a photo set was corrected).
 sp_rs_corrected <- function(f) sum(f[kind != "photo set"]$positioning_status %in% CORRECTED_STATES)
+# "5 flights and 7 photo sets": the one wording of what a catalogue holds, on Import, View and each source (a photo set: a few
+# photos, fewer than photoset_max_images, not a mapping flight). Photo sets are named only when there are some.
+sp_rs_fl_n <- function(kind) { k <- sum(kind == "photo set"); n <- length(kind) - k
+  f <- function(x, w) sp_rs_n(x, w, shown = num(x))
+  if (!k) f(n, "flight") else if (!n) f(k, "photo set") else paste(f(n, "flight"), "and", f(k, "photo set")) }
+# A time as the rest of RS shows it: in the project's base zone (Settings, Time zone), named. t: POSIXct, or text in UTC
+# (a source's last scan, catalogue/sources.csv).
+sp_rs_when <- function(t) { t <- if (inherits(t, "POSIXct")) t else as.POSIXct(as.character(t), tz = "UTC"); if (!length(t) || is.na(t)) return("")
+  paste0(format(t + BASE_OFFSET * 3600, "%Y-%m-%d %H:%M", tz = "UTC"), " (", zone_text(BASE_OFFSET), ")") }
 sp_rs_generic <- function(x) grepl(SIMPLE_GENERIC_FOLDERS, trim(as.character(x)), ignore.case = TRUE, perl = TRUE)   # a camera's or a backup's folder (R/config.R)
 
 sp_rs_n <- function(n, word, words = paste0(word, "s"), shown = n) paste(shown, if (isTRUE(n == 1)) word else words)   # "1 flight", "2 flights"
@@ -191,7 +200,7 @@ simple_server <- function(input, output, session, std) {
   output$sp_sources <- renderUI({ s <- std$src_cfg(); x <- C(); sc <- if (is.null(x)) data.table() else x$sources
     if (!nrow(s)) return(tagList(div(class = "sp-big", "Add the folder or drive that holds your flights"),
       p(class = "sp-dim", "For example a drive's top folder, or one year's folder. Add as many as you like, then scan them together. Read only: nothing on them is changed.")))
-    f <- F(); n <- if (!is.null(f)) f[, .N, by = source_id] else data.table(source_id = character(), N = integer())
+    f <- F(); n <- if (!is.null(f)) f[, .(N = sp_rs_fl_n(kind)), by = source_id] else data.table(source_id = character(), N = character())
     np <- normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE); done <- std$src_scanned(s$source_id)
     rm_js <- function(sid) sprintf("Shiny.setInputValue('sp_rm', %s, {priority: 'event'})", jsonlite::toJSON(sid, auto_unbox = TRUE))
     tagList(div(class = "sp-h", "Sources"),
@@ -203,7 +212,7 @@ simple_server <- function(input, output, session, std) {
                           if (done[i]) tags$b(sid) else tags$input(type = "text", class = "sp-name", value = sid, `aria-label` = "Short name",
                             onchange = sprintf("Shiny.setInputValue('sp_rename', {sid: %s, name: this.value}, {priority: 'event'})", jsonlite::toJSON(sid, auto_unbox = TRUE))),
                           div(class = "sp-dim sp-small", s$path[i], if (!on) " \u00b7 not plugged in", if (length(inside)) paste0(" \u00b7 inside ", inside[1], ": its files count here only"))),
-                  tags$td(if (done[i]) paste0(if (length(when) && !is.na(when)) paste0("scanned ", substr(when, 1, 16), " \u00b7 ") else "", sp_rs_n(fcoalesce(n$N[match(sid, n$source_id)], 0L), "flight")) else span(class = "sp-dim", "waiting to be scanned")),
+                  tags$td(if (done[i]) paste0(if (length(when) && !is.na(when)) paste0("scanned ", sp_rs_when(when), " \u00b7 ") else "", fcoalesce(n$N[match(sid, n$source_id)], "no flights")) else span(class = "sp-dim", "waiting to be scanned")),
                   tags$td(tags$button(type = "button", class = "btn sp-btn2", onclick = rm_js(sid), "Remove"))) })))) })
   output$sp_scan_btns <- renderUI({ q <- nrow(std$queued()); s <- std$src_cfg(); scanned <- nrow(s) - q
     div(class = "sp-row", if (q) actionButton("sp_scan_new", paste("Scan", sp_rs_n(q, "folder", "folders")), class = "sp-btn"),
@@ -223,7 +232,7 @@ simple_server <- function(input, output, session, std) {
         "You can leave this page; the scan keeps going. Cancel keeps what was read so far, and the next scan picks up from there.")) })
   observeEvent(input$sp_run_cancel, run_cancel())
   output$sp_next <- renderUI({ x <- C(); if (nzchar(run_key()) || is.null(x)) return(NULL); f <- F()
-    div(class = "sp-next", span(tags$b(paste0(sp_rs_n(sum(f$kind != "photo set"), "flight"), if (any(f$kind == "photo set")) paste0(" and ", sp_rs_n(sum(f$kind == "photo set"), "photo set")) else "", " in the catalogue.")), " ",
+    div(class = "sp-next", span(tags$b(paste(sp_rs_fl_n(f$kind), "in the catalogue.")), " ",
                                 span(class = "sp-dim", "Next: see them on the map, grouped by folder, year or site.")),
         tags$button(type = "button", class = "btn sp-btn", onclick = go_step("view"), "View the flights \u2192")) })
   output$sp_read <- renderUI({ x <- C(); if (is.null(x)) return(p(class = "sp-dim", "Nothing scanned yet.")); f <- F(); s <- x$sources
@@ -231,8 +240,8 @@ simple_server <- function(input, output, session, std) {
     tags$dl(class = "sp-kv",
       tags$dt("Flights"), tags$dd(sprintf("%s (%s, %s)", num(nrow(f)), sp_rs_n(sum(f$kind != "photo set"), "flight"), sp_rs_n(sum(f$kind == "photo set"), "photo set"))),
       tags$dt("Images"), tags$dd(num(sum(sp_rs_num(f$n_images), na.rm = TRUE))),
-      tags$dt("Sources"), tags$dd(sprintf("%d; %d not plugged in (their flights come from the last scan)", nrow(s), off)),
-      tags$dt("Catalogue"), tags$dd(format(x$made, "%Y-%m-%d %H:%M"))) })
+      tags$dt("Sources"), tags$dd(if (!off) sprintf("%d, all plugged in", nrow(s)) else sprintf("%d; %d not plugged in (%s from the last scan)", nrow(s), off, if (off == 1) "its flights come" else "their flights come")),
+      tags$dt("Catalogue"), tags$dd(sp_rs_when(x$made))) })
   output$sp_checks <- renderUI({ x <- C(); f <- F(); if (is.null(f)) return(NULL); fa <- file.path(CAT(), "files.csv")
     nfiles <- if (file.exists(fa)) max(0L, length(readLines(fa, warn = FALSE)) - 1L) else NA_integer_
     cp <- sum(sp_rs_num(f$n_copies) > 1, na.rm = TRUE); lk <- sum(f$has_log %in% c(TRUE, "TRUE") | f$has_geotags %in% c(TRUE, "TRUE") | f$has_mrk %in% c(TRUE, "TRUE") | f$has_mission %in% c(TRUE, "TRUE"), na.rm = TRUE)
@@ -265,7 +274,7 @@ simple_server <- function(input, output, session, std) {
   output$sp_hero <- renderUI({ f <- F()
     if (is.null(f)) return(simple_hero("off", "Nothing scanned yet", "Add a drive or folder and scan it.", tags$button(type = "button", class = "btn sp-btn", onclick = go_step("import"), "Import")))
     d <- substr(f$date[f$date != "undated"], 1, 10); nl <- sum(f$look)
-    simple_hero(if (nl) "warn" else "ok", paste(sp_rs_n(nrow(f), "flight", shown = num(nrow(f))), "·", sp_rs_n(uniqueN(f$sensor[nzchar(f$sensor)]), "sensor")),
+    simple_hero(if (nl) "warn" else "ok", paste(sp_rs_fl_n(f$kind), "·", sp_rs_n(uniqueN(f$sensor[nzchar(f$sensor)]), "sensor")),
       paste0(if (length(d)) paste0(min(d), " to ", max(d), ". ") else "", if (nl) sprintf("%s a check to look at (clock, positions, accuracy or log).", if (nl == 1) "1 has" else paste(nl, "have")) else "Every check is fine.")) })
   output$sp_tiles <- renderUI({ g <- groups(); if (is.null(g) || !nrow(g)) return(p(class = "sp-dim", "No flight matches.")); k <- cur()
     if (!all_tiles()) g <- utils::head(g, SP_RS_TILES)
@@ -299,7 +308,7 @@ simple_server <- function(input, output, session, std) {
           tags$td(class = "sp-n", num(sp_rs_num(f$n_images))), tags$td(f$positioning_status), tags$td(class = "sp-n", f$gsd), tags$td(HTML(ch[i]))) }))) })
   output$sp_flight_title <- renderText({ k <- cur_f(); f <- F(); if (is.null(k)) "" else { r <- f[flight_id == k]; paste(r$date, "·", r$name) } })
   output$sp_flight <- renderUI({ k <- cur_f(); req(k); f <- F()[flight_id == k]; ck <- std$fchk()[flight_id == k]
-    sun <- if (is.finite(sp_rs_num(f$sun_elev_min_deg))) sprintf("%.0f° to %.0f°", sp_rs_num(f$sun_elev_min_deg), sp_rs_num(f$sun_elev_max_deg)) else "—"
+    sun <- if (is.finite(sp_rs_num(f$sun_elev_min_deg))) { a <- round(sp_rs_num(f$sun_elev_min_deg)); b <- round(sp_rs_num(f$sun_elev_max_deg)); if (a == b) sprintf("%.0f°", a) else sprintf("%.0f° to %.0f°", a, b) } else "—"
     lv <- c(ok = "✓ ok", look = "! look", bad = "✕ bad")
     div(class = "sp-cols",
       tags$dl(class = "sp-kv", tags$dt("Sensor"), tags$dd(paste(f$aircraft, f$sensor)), tags$dt("Images"), tags$dd(num(sp_rs_num(f$n_images))),
@@ -309,7 +318,7 @@ simple_server <- function(input, output, session, std) {
       div(if (nrow(ck)) tags$ul(lapply(seq_along(CHECKS), function(j) { l <- ck[[c("chk_images", "chk_clock", "chk_positions", "chk_accuracy", "chk_log")[j]]]
             tags$li(tags$b(paste0(CHECKS[j], ":")), " ", lv[[l]]) })),   # no space before the colon
           p(class = "sp-dim sp-small", if (nrow(ck)) ck$chk_why),
-          p(class = "sp-dim sp-small", "GSD: ground sample distance from the flying height and the camera (McGlone 2013). Sun elevation from the time and place (Spencer 1971)."))) })
+          p(class = "sp-dim sp-small", "GSD: ground sample distance from the flying height and the camera (McGlone 2013). Sun elevation from the time and place (NOAA solar position equations; Meeus 1991)."))) })
 
   # ---- Edit
   rows <- reactive({ f <- F(); if (is.null(f)) return(NULL); st <- sites_tab()
@@ -333,7 +342,7 @@ simple_server <- function(input, output, session, std) {
   output$sp_folders <- renderUI({ t <- fold(); if (is.null(t) || !nrow(t)) return(NULL); f <- F(); ng <- f[generic == TRUE & nzchar(folder_guess), uniqueN(folder_guess)]
     n <- min(nrow(t), 25L)
     div(class = "sp-card", div(class = "sp-h", "Folder names → sites"),
-      p(class = "sp-dim sp-small", sprintf("The scan guesses a flight's site from its folder name. Give each name the site it means (it then names every flight in that folder, at the next rebuild). %d camera or backup folder names (DCIM, 100MEDIA, Photos ...) name nothing and are left out.", ng)),
+      p(class = "sp-dim sp-small", sprintf("The scan guesses a flight's site from its folder name. Give each name the site it means (it then names every flight in that folder, at the next rebuild).%s", if (ng) sprintf(" %s (DCIM, 100MEDIA, Photos ...) %s nothing and %s left out.", sp_rs_n(ng, "camera or backup folder name"), if (ng == 1) "names" else "name", if (ng == 1) "is" else "are") else "")),
       tags$table(class = "sp-table", tags$thead(tags$tr(tags$th("Folder name"), tags$th(class = "sp-n", "Flights"), tags$th("Example"), tags$th("Site"), tags$th(""))),
         tags$tbody(lapply(seq_len(n), function(i) { r <- t[i]
           tags$tr(tags$td(tags$b(r$found)), tags$td(class = "sp-n", r$flights), tags$td(class = "sp-dim sp-small", r$example),
@@ -432,7 +441,8 @@ sp_rs_apply <- function(pd, ops, who) {
     } else if (q$type == "field" && q$item %in% c("display_name", "project", "notes", "exclude_from_archive")) {
       x <- fl_row(sp_rs_cfg(pd, "flights", FLIGHT_COLS), sp_rs_id(q$group)); set(x$cf, x$i, q$item, q$to); wr("flights", x$cf, paste(q$item, "(Simple view)")) } }
   n <- nrow(ops)
-  list(ok = TRUE, message = sprintf("Saved %d change%s. Folder names reach their flights at the next rebuild (Import, Scan).", n, if (n > 1) "s" else ""),
+  fold_n <- sum(ops$type == "field" & ops$item %in% SP_RS_FOLDER_ITEM)   # only folder names wait for a rebuild; a flight's edits show at once
+  list(ok = TRUE, message = paste0(sprintf("Saved %d change%s.", n, if (n > 1) "s" else ""), if (fold_n) " Folder names reach their flights at the next scan (Import)." else ""),
        undo = function() for (f in names(before)) { fp <- file.path(pd, "config", f); b <- before[[f]]
          if (identical(b, NA)) { if (file.exists(fp)) { e <- read_cfg(fp)[0]; backup_cfg(fp, e, who, "undo (Simple view)"); fwrite_safe(e, fp) } }
          else { backup_cfg(fp, b, who, "undo (Simple view)"); fwrite_safe(b, fp) } })

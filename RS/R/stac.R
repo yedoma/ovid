@@ -56,10 +56,12 @@ if_else_chr <- function(cond, yes, no) ifelse(cond, yes, no)
 # LiDAR list. A site with flights in one year and none in another is where a comparison is missing.
 coverage <- function(flights, ds = NULL) {
   a <- if (!is.null(flights) && nrow(flights)) {
-    f <- copy(flights)
+    f <- copy(flights); if ("kind" %in% names(f)) f <- f[!kind %in% "photo set"]   # mapping flights only (a photo set is a few photos, not coverage)
+    gs <- if ("fp_gsd_cm" %in% names(f)) fifelse(is.finite(f$fp_gsd_cm), f$fp_gsd_cm, f$gsd_cm_median) else f$gsd_cm_median   # eBee: the log's height, as the Flight page
+    f[, gsd_best := gs]
     f[, sensor_class := fifelse(multispectral %in% TRUE, "multispectral", fifelse(has_lidar_raw %in% TRUE | grepl("L1|L2|Zenmuse L|lidar", paste(sensor, aircraft), ignore.case = TRUE), "LiDAR", "RGB"))]
     f[, corrected := positioning_status %in% c("RTK corrected", "PPK corrected", "partly RTK corrected")]
-    f[, .(scope = "flights", count = .N, images = sum(n_images, na.rm = TRUE), finest_gsd_cm = if ("gsd_cm_median" %in% names(f) && any(is.finite(gsd_cm_median))) round(min(gsd_cm_median, na.rm = TRUE), 2) else NA_real_,
+    if (!nrow(f)) NULL else f[, .(scope = "flights", count = .N, images = sum(n_images, na.rm = TRUE), finest_gsd_cm = if (any(is.finite(gsd_best))) round(min(gsd_best, na.rm = TRUE), 2) else NA_real_,
           corrected_pct = round(100 * mean(corrected), 0), first = min(date), last = max(date)),
       by = .(site = fifelse(is.na(site) | !nzchar(site), "(no site)", site), year, kind = sensor_class)] } else NULL
   b <- if (!is.null(ds) && nrow(ds)) {
@@ -67,8 +69,9 @@ coverage <- function(flights, ds = NULL) {
     d[, .(scope = "datasets", count = .N, images = NA_integer_, finest_gsd_cm = if (any(is.finite(gsd_m))) round(100 * min(gsd_m, na.rm = TRUE), 2) else NA_real_,
           corrected_pct = NA_real_, first = suppressWarnings(min(acquired, na.rm = TRUE)), last = suppressWarnings(max(acquired, na.rm = TRUE))),
       by = .(year, kind = fifelse(is.na(platform), kind, platform))][, site := "(any)"] } else NULL
-  out <- rbind(a, b, fill = TRUE)
-  if (is.null(out) || !nrow(out)) return(data.table(scope = character(), site = character(), year = integer(), kind = character(), count = integer()))
+  out <- rbindlist(list(a, b), fill = TRUE)   # rbind(NULL, NULL, fill = TRUE) is a one-cell matrix
+  if (is.null(out) || !nrow(out)) return(data.table(scope = character(), site = character(), year = integer(), kind = character(), count = integer(),
+                                                     images = integer(), finest_gsd_cm = numeric(), corrected_pct = numeric(), first = character(), last = character()))
   setcolorder(out, c("scope", "site", "year", "kind"))[order(scope, site, year, kind)]
 }
 

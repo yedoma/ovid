@@ -10,11 +10,14 @@
   output$flight_quality <- renderUI({ f <- cur(); if (is.null(f) || !nrow(f) || !"gsd_cm_median" %in% names(f)) return(NULL)
     v <- function(k, unit = "", d = 2) { x <- f[[k]][1]; if (is.null(x) || is.na(x)) "not known" else paste0(format(round(x, d), big.mark = ","), unit) }
     layout_columns(fill = FALSE, col_widths = c(2, 2, 2, 2, 2, 2),
-      value_box("Ground sample distance", v("gsd_cm_median", " cm"), p(class = "muted", "median, from height above take-off"), theme = VB()),
+      # the photos' own height above take-off first, else the flight log's height (the footprint's, as on the Map and in Simple)
+      if (is.na(f$gsd_cm_median[1]) && "fp_gsd_cm" %in% names(f) && is.finite(suppressWarnings(as.numeric(f$fp_gsd_cm[1]))))
+        value_box("Ground sample distance", v("fp_gsd_cm", " cm"), p(class = "muted", paste0("from the flight's height, ", v("fp_height_m", " m", 0), " (", f$fp_height_from[1] %||% "log", ")")), theme = VB())
+      else value_box("Ground sample distance", v("gsd_cm_median", " cm"), p(class = "muted", "median, from height above take-off"), theme = VB()),
       value_box("Forward overlap", v("fwd_overlap_pct_median", " %", 0), theme = VB()), value_box("Side overlap", v("side_overlap_pct_median", " %", 0), theme = VB()),
       value_box("Speed", v("speed_ms_median", " m/s", 1), p(class = "muted", paste("exposure", v("exposure_s_median", " s", 4))), theme = VB()),
       value_box("Motion blur", v("blur_px_median", " px"), p(class = "muted", paste(v("blur_over_limit_pct", " %", 0), "of images above", v("blur_limit_px", " px"))), theme = VB()),
-      value_box("Sun elevation", paste(v("sun_elev_min_deg", "", 0), "to", v("sun_elev_max_deg", " deg", 0)), theme = VB())) })
+      value_box("Sun elevation", if (is.na(f$sun_elev_min_deg[1])) "not known" else if (round(f$sun_elev_min_deg[1]) == round(f$sun_elev_max_deg[1])) v("sun_elev_min_deg", "\u00b0", 0) else paste(v("sun_elev_min_deg", "\u00b0", 0), "to", v("sun_elev_max_deg", "\u00b0", 0)), theme = VB())) })
   output$flight_title <- renderUI({ f <- cur(); if (is.null(f) || !nrow(f)) p(class = "muted", "Pick a flight on the Map page first.") else h3(paste(f$date, f$name, "\u00b7", f$sensor)) })
   e_shown <- reactiveVal(NULL)                                   # the flight's saved row as the form last showed it
   observeEvent(list(cur(), live_stamp(cfg_path(CFG$project_dir, "flights"))), { f <- cur(); if (is.null(f) || !nrow(f)) return()   # a change saved on any page shows here
@@ -40,7 +43,9 @@
     else show_edit(id, flight_row(id))
     ok }
   # a flight's edits shown at once (here and in the Workbench); the next rebuild writes them into the catalogue
-  show_edit <- function(id, v) { x <- isolate(C()); if (is.null(x)) return(invisible()); x$flights <- copy(x$flights); r <- x$flights$flight_id == id
+  show_edit <- function(id, v) { x <- isolate(C()); if (is.null(x)) return(invisible()); r <- x$flights$flight_id %in% id
+    if (!any(r)) return(invisible())        # a row for a flight this catalogue has not got yet (a scan added it): shown after the reload
+    x$flights <- copy(x$flights)
     for (k in intersect(c("display_name", "project", "notes", "status_note", "exclude_from_archive"), names(v))) set(x$flights, which(r), k, trim(v[[k]] %||% ""))
     set(x$flights, which(r), "site", trim(v$site %||% "") %|na|% x$flights$site_found[r])
     set(x$flights, which(r), "positioning_status", trim(v$positioning_status %||% "") %|na|% x$flights$positioning_found[r])

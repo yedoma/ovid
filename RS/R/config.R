@@ -55,7 +55,7 @@ GNSS_BASE_COLS <- c("file", "base", "method", "post_processed", "service", "note
 # (phones, compact cameras, trail cameras, screenshots) are left out of the flights and listed in catalogue/other_photos.csv.
 DRONE_CAMERA_COLS <- c("make", "model", "drone", "note")
 drone_cameras_default <- function() rbind(
-  data.table(make = "DJI", model = names(DJI_CAMERAS), drone = "yes", note = unname(DJI_CAMERAS)),        # readers.R: older DJI cameras with no drone tag
+  data.table(make = fifelse(names(DJI_CAMERAS) == "L1D-20c", "Hasselblad", "DJI"), model = names(DJI_CAMERAS), drone = "yes", note = unname(DJI_CAMERAS)),        # readers.R: older DJI cameras with no drone tag
   data.table(make = c("DJI", "DJI", "DJI", "senseFly", "Parrot", "MicaSense", "Canon"), model = c("ZenmuseP1", "L2", "M3M", "", "Sequoia", "", "Canon PowerShot S110"), drone = "yes",
              note = c("Zenmuse P1", "Zenmuse L2 RGB camera", "Mavic 3 Multispectral", "S.O.D.A., thermoMAP, Aeria and other eBee cameras", "Parrot Sequoia multispectral",
                       "RedEdge, Altum", "eBee RGB and NIR camera (a compact camera: handheld S110 photos match too)")),
@@ -125,7 +125,7 @@ CONFIG_FILES <- list(
 # the name is not a site. Names with no row are kept as found.
 # The Simple view: folder names that are a camera's, a card's or a backup's, never a site (Edit offers no site for them, View
 # marks their groups "camera folder"). A regular expression, any case.
-SIMPLE_GENERIC_FOLDERS <- "^(dcim|\\d{3}media|\\d{3}_?[a-z]*|camera|cameras|photos?|pictures?|images?|img|backup|backups|raw|data|sd ?card|card ?\\d*|new folder|untitled|misc|other|unsorted)$"
+SIMPLE_GENERIC_FOLDERS <- "^(dcim|\\d{3}media|\\d{3}_?[a-z]*|camera|cameras|photos?|pictures?|images?|img|backup|backups|raw|data|sd ?card|card ?\\d*|new folder|untitled|misc|other|unsorted|(0?[1-9]|1[0-2])?[ _-]?(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)|msp|nir|rgb|reg|tir|thermal|multispectral|ndvi)$"   # also a month (08 August) or a band folder (msp, NIR)
 # Renaming a site (core rename.R): the sites table, and the tables that name a site.
 RENAMES <- list(site = list(label = "Site", main = c("sites.csv", "site"), cols = list(c("flights.csv", "site"), c("site_names.csv", "site")), lists = list()))
 site_apply_names <- function(found, names) {

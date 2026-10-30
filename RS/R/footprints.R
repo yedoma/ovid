@@ -237,11 +237,15 @@ fp_colour_key <- function(fc, fl) { if (!nrow(fc)) return(list()); k <- unique(d
 # Cameras whose files do not give their sensor size or pixel count (senseFly thermoMAP TIFFs carry neither): filled from the
 # maker's figures when the catalogue is built (the header cache stays valid). gsd_per_m: the ground resolution per metre of
 # height (m/px/m), so sensor width = gsd_per_m * px_x * focal length. Sources: _hub/Derived_values_references.md 14.x.
-CAMERA_SPECS <- data.table(model = c("thermoMAP", "FC3411"), px_x = c(640, NA), px_y = c(512, NA), gsd_per_m = c(0.14 / 75, NA), sensor_w_mm = c(NA, 13.2),
-                           source = c("senseFly eBee RTK brochure (thermoMAP: 640 x 512 px, 14 cm/px at 75 m)", "DJI Air 2S specs (1-inch CMOS, 5472 x 3648, 2.4 um pixels)"))
+CAMERA_SPECS <- data.table(model = c("thermoMAP", "FC3411", "L1D-20c"), px_x = c(640, NA, NA), px_y = c(512, NA, NA), gsd_per_m = c(0.14 / 75, NA, NA), sensor_w_mm = c(NA, 13.2, 13.2),
+                           source = c("senseFly eBee RTK brochure (thermoMAP: 640 x 512 px, 14 cm/px at 75 m)", "DJI Air 2S specs (1-inch CMOS, 5472 x 3648, 2.4 um pixels)",
+                                      "DJI Mavic 2 Pro specs (Hasselblad L1D-20c, 1-inch CMOS 13.2 x 8.8 mm, 5472 x 3648)"))
 camera_fill <- function(im) {
   if (is.null(im) || !nrow(im) || !all(c("model", "focal_mm") %in% names(im))) return(im)
   for (k in c("px_x", "px_y", "sensor_w_mm", "sensor_w_source")) if (!k %in% names(im)) set(im, j = k, value = if (k == "sensor_w_source") NA_character_ else NA_real_)
+  # the aircraft of a DJI camera that names none (DJI_CAMERAS, R/readers.R), also for photos read before a camera was added
+  if ("drone_model" %in% names(im)) { k <- which((is.na(im$drone_model) | !nzchar(im$drone_model)) & im$model %in% names(DJI_CAMERAS))
+    if (length(k)) set(im, i = k, j = "drone_model", value = unname(DJI_CAMERAS[im$model[k]])) }
   for (i in seq_len(nrow(CAMERA_SPECS))) { c0 <- CAMERA_SPECS[i]; k <- which(im$model %in% c0$model)
     if (!length(k)) next
     f <- suppressWarnings(as.numeric(im$focal_mm[k]))
@@ -311,7 +315,7 @@ footprints_build <- function(img, fl, emo = NULL, links = NULL, rinex = NULL, ba
   sm <- merge(sm, hz$from[, .(flight_id, fp_height_from = from)], by = "flight_id", all.x = TRUE)
   out <- rbindlist(lapply(r, `[[`, "o"), fill = TRUE)
   if (!nrow(out)) out <- data.table(flight_id = character(), kind = character(), part = integer(), ring = integer(), line = character())
-  list(outlines = out[, .(flight_id, kind, part, ring, line)], flights = sm)
+  list(outlines = out[, .(flight_id, kind, part, ring, line)], flights = sm, heights = img[is.finite(height), .(source_id, rel, flight_id, height)])
 }
 
 # ---- one footprint per year (the app) ----------------------------------------------------------------------------------

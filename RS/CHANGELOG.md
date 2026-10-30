@@ -5,6 +5,24 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (accuracy audit against the raw files, 2026-10-30)**
+- A camera clock with no zone (DJI's consumer drones write the phone's local time) was read as UTC: times, dates and sun were 6-7 h off (P4 Pro snowmelt flights showed 05:00-07:00 with the sun at 3°). It is now taken as the project's zone, said in the clock note, and the clock check is "look" until a time-zone row confirms it. Flight ids unchanged.
+- Sun elevation by NOAA's solar position equations (was Cooper's declination without the equation of time, up to 4° off).
+- Air 2S and Mavic 2 Pro (Hasselblad L1D-20c): aircraft named, standalone GNSS (were "unknown"), Mavic 2 Pro GSD from its 13.2 mm sensor.
+- eBee flights: motion blur and overlap from the log's height (were "not known"). Speed of cameras taking several frames a second (thermoMAP 2.2 -> 12 m/s). Hovering steps under 0.5 m are not overlap pairs.
+- Coverage counts mapping flights only, with the eBee GSD from the log; an empty coverage table keeps its columns.
+- **Output changes:** times, dates and sun of local-clock cameras; sun everywhere (to 0.01°); new flights.csv column clock_zone; blur, overlap and speed where they were missing or wrong; coverage.csv without photo sets; two drone cameras added to the default table.
+
+**Fixed (use-case click-through, 2026-10-30)**
+- A resumed scan failed ("Length of 'no' is 0") when flights.csv held a flight the open catalogue had not got yet.
+- Confirm or Reject link kept showing "auto" (data.table read the argument state as the column); the reason box clears after each decision.
+- Other geodata: Remove on a source's top folder wrote the rule ^[^/]+$, ignoring every top-level file of every source; Remove now ignores exactly the set-aside files and their side files. Keep on one row then Remove on another removed both (the first pick stayed selected).
+- Site guess: a camera's numbered folder (DCIM/00039, 100MEDIA) or a band folder (msp) gives its parent's name, a month folder (2020-08_August) none, unless Site names gives that name a site.
+- Flight page: GSD from the flight log's height when the photos carry none (it said "not known" while the Map showed 2.86 cm); sun elevation in degrees.
+- Footprint colours are a Set-up table.
+- Wording: one count of flights and photo sets on Import, View and each source; Simple's times in the project's zone, named; "6, all plugged in"; the save message mentions folder names only when they were saved; zero-flight source removal; report and coverage card name the drone in each block ("2019 · eBee · Optical"), counts in brackets, "Covered by 1 flight"; Needs you filters "Accuracy, QA, Flight log, Site".
+- **Output changes:** catalogue sites for numbered, band and month folders change on the next rebuild; nothing else.
+
 **Changed (text and formatting review, 2026-10-30)**
 - Wording: "ovid" in lower case (calibration notes, the viewer's title and "made with" line, STAC descriptions, "worked out by ovid"); plurals written out (1 flight, 1 source, 1 thing to look at; the run log's flight(s), source(s), problem(s) ...); help texts name tables in plain words (the flights table, Set-up tables) instead of config file names; the Needs you explanation of accuracy covers positions not known as well as standalone GNSS.
 - Tables: plain headings instead of column names (coverage on the Timeline; files not matched, datasets and products on QA; the last run's problems; Needs you in sentence case); empty tables say so (GIS layers, satellite and raster files, GNSS quality, QA tables).

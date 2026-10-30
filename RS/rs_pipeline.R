@@ -200,6 +200,13 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   # the ground each flight covered (R/footprints.R): its photos' footprints, or its LiDAR strip; catalogue/footprints.csv
   fpb <- footprints_build(b$images, fl, A$records$emotion %||% list(), links, A$records$rinex, cfgs$gnss_bases)
   fl <- merge(fl, fpb$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
+  # photos with no height of their own (eBee: the log gives it): blur and overlap from the footprint's height, as the GSD is
+  hz <- fpb$heights %||% data.table()
+  if (nrow(hz) && "alt_rel" %in% names(b$images)) { im2 <- copy(b$images)[hz, on = .(source_id, rel, flight_id), h_fp := i.height]
+    im2[!(is.finite(alt_rel) & alt_rel > 0) & is.finite(h_fp), alt_rel := h_fp]
+    fm <- flight_metrics(im2, lim("blur_limit_px", 1))
+    for (k in intersect(c("blur_px_median", "blur_over_limit_pct", "fwd_overlap_pct_median", "side_overlap_pct_median"), intersect(names(fm), names(fl))))
+      fl[fm, on = "flight_id", (k) := fifelse(is.na(get(k)), get(paste0("i.", k)), get(k))] }
   # other geodata that belongs with the flights; the rest set aside with the reason (R/geodata.R; catalogue/set_aside.csv)
   rv <- review_read(review_path(cfg$project_dir)); on <- c(gis = lim("geodata_gis_layers", 1) != 0, imagery = lim("geodata_imagery", 1) != 0)
   gr <- geodata_review(ds, gl, fl, unique(b$images[, .(source_id, folder)]), kept = rv$id[rv$decision == "kept"], on = on,
@@ -221,7 +228,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
     write_cfg(cfgs$flights[, ..FLIGHT_COLS], cfg$project_dir, "flights") }
   base <- to_base(fl$start_utc, 0)                           # the project's base zone (Settings), as the other apps
   fl[, `:=`(year = as.integer(format(base, "%Y")), date = format(base, "%Y-%m-%d"), start = fmt_ts(base),
-            duration_min = round(as.numeric(difftime(end_utc, start_utc, units = "mins")), 1), site_folder = site_of(folder))]
+            duration_min = round(as.numeric(difftime(end_utc, start_utc, units = "mins")), 1), site_folder = site_of(folder, cfgs$site_names$found))]
   fl[, site_found := site_apply_names(site_folder, cfgs$site_names)]   # names found in folders, mapped to known sites (config/site_names.csv)
   out <- merge(fl, cfgs$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
   out[, site := fifelse(!is.na(site) & nzchar(site), site, site_found)]

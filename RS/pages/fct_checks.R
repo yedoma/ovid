@@ -28,12 +28,14 @@ flight_checks <- function(fl, cal = NULL) {
   # a decoded flight log is a real clock (the drone's GNSS time), so a time from it is as good as a checked camera clock;
   # a flown track (KML) has times too, but is matched to the flight by area and name, so it is worth a look
   log_time <- grepl("flight log", ts, fixed = TRUE)
-  c_clock <- ifelse(yes("clock_ok") | log_time, "ok", ifelse(grepl("KML", ts, fixed = TRUE), "look", "bad"))
+  cz <- if ("clock_zone" %in% names(fl)) as.character(fl$clock_zone) else rep("", nrow(fl)); cz[is.na(cz)] <- ""
+  zone_guess <- startsWith(cz, TZ_ASSUMED) & !log_time        # a local clock with no zone row: the project's zone was assumed
+  c_clock <- ifelse((yes("clock_ok") | log_time) & !zone_guess, "ok", ifelse(grepl("KML", ts, fixed = TRUE) | zone_guess, "look", "bad"))
   c_pos <- ifelse(is.na(pct), "bad", ifelse(pct >= ok_pct, "ok", ifelse(pct >= look_pct, "look", "bad")))
   c_acc <- ifelse(st %in% CORRECTED_STATES, "ok", ifelse(st %in% c("partly RTK corrected", "correction data available, not confirmed"), "look",
            ifelse(st == "standalone GNSS / uncorrected", ifelse(is.finite(acc) & acc > sa_max, "bad", "look"), "bad")))
   c_log <- ifelse(yes("has_log") | yes("has_mission") | yes("has_mrk") | yes("has_rpt") | yes("has_geotags"), "ok", "look")
-  why <- paste0("Images: ", num_or(n), " read. Clock: ", ifelse(yes("clock_ok"), "checked", ifelse(log_time, "time from the flight log (GNSS time)", ifelse(nzchar(ts), paste("unusable; time from", ts), "unusable"))),
+  why <- paste0("Images: ", num_or(n), " read. Clock: ", ifelse(zone_guess, paste0("a local clock with no zone; ", sub("^no time-zone row: ", "", cz), ". Add a row in the time zones table if the phone was in another zone (daylight time is one hour more)"), ifelse(yes("clock_ok"), "checked", ifelse(log_time, "time from the flight log (GNSS time)", ifelse(nzchar(ts), paste("unusable; time from", ts), "unusable")))),
                 ifelse(is.finite(num0("utc_offset_h")), paste0(" (UTC offset ", num0("utc_offset_h"), " h)"), ""),
                 ". Positions: ", num_or(placed), " of ", num_or(n), " placed, from ", from, " (ok at ", ok_pct, " %, look at ", look_pct, " %)",
                 ". Accuracy: ", st, ifelse(is.finite(acc), paste0(", ", acc, " m"), ""), " (corrected = RTK or PPK; standalone worse than ", sa_max, " m is bad)",

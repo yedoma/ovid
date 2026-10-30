@@ -161,7 +161,19 @@ apply_file_rules <- function(A, rules) {
 # Most cameras keep local time with no zone (DJI and senseFly give UTC). config/timezones.csv (Ovid/timezones.R) says which
 # zone a camera's clock was in, by serial (camera_serial), model (sensor), folder or file (file_pattern, on source_id:rel)
 # and date; a matching row gives those images a UTC time. A time the camera states as UTC is never changed.
-apply_timezones <- function(img, tz) {
+# A local clock no row covers (DJI's consumer drones write the phone's local time: Phantom 3 and 4 Pro, Mavic 2 Pro, Air 2S)
+# is taken as the project's zone (Settings, Time zone), said in tz_rule and flagged on the clock check; it was read as UTC,
+# 6 or 7 hours off at Scotty Creek. A row with the zone the phone was in (daylight time: one hour more) makes it exact.
+apply_timezones <- function(img, tz, base_h = get0("BASE_OFFSET", ifnotfound = 0)) {
+  img <- apply_tz_rows(img, tz)
+  if (!nrow(img) || !all(c("time_utc", "time_exif", "clock_ok") %in% names(img))) return(img)
+  k <- img[is.na(time_utc) & clock_ok %in% TRUE & !is.na(time_exif), which = TRUE]
+  if (length(k)) { set(img, k, "time_utc", img$time_exif[k] - base_h * 3600)
+    set(img, k, "tz_rule", paste0(TZ_ASSUMED, " (", zone_text(base_h), ")")) }
+  img
+}
+TZ_ASSUMED <- "no time-zone row: camera clock taken as the project's zone"
+apply_tz_rows <- function(img, tz) {
   if (!nrow(img)) return(img)                                  # := on a table with no columns would add a row
   img[, tz_rule := NA_character_]
   if (is.null(tz) || !nrow(tz)) return(img)
@@ -236,6 +248,8 @@ build_flights <- function(img, gap_min = 10, files = NULL, blur_limit_px = 1) {
   # A DJI exposure counts at the GPS time the camera wrote (time_utc plus the leap seconds), so flight ids made before the
   # leap seconds were taken off (2026-10-19) stay the same, and with them every edit saved against them.
   d[, t_id := fifelse(make %in% "DJI" & !is.na(time_utc) & clock_ok, t + (as.numeric(t) - as.numeric(gps_to_utc(t))), t)]
+  # a local clock taken as the project's zone (TZ_ASSUMED, 2026-10-30) keeps the id it had when it was read as UTC
+  if ("tz_rule" %in% names(d)) d[!is.na(tz_rule) & startsWith(tz_rule, TZ_ASSUMED) & clock_ok, t_id := time_exif]
   d[, flight_id := { t0 <- suppressWarnings(min(t_id, na.rm = TRUE))
       k <- if (is.finite(t0)) list(cam[1], fmt_ts(t0)) else list(cam[1], fno[1], file[1], .N)
       paste0("UAV-", substr(hash_of(k), 1, 10)) }, by = .(key, seg)][, t_id := NULL]
@@ -264,6 +278,7 @@ build_flights <- function(img, gap_min = 10, files = NULL, blur_limit_px = 1) {
               aircraft_serial = fifelse(!is.na(fserial[1]), fserial[1], mode_of(drone_serial)),
               flight_no = fno[1], start_utc = suppressWarnings(min(t, na.rm = TRUE)), end_utc = suppressWarnings(max(t, na.rm = TRUE)), clock_ok = all(clock_ok),
               utc_offset_h = { o <- round(as.numeric(difftime(time_exif, time_utc, units = "hours")) * 2) / 2; as.numeric(mode_of(o)) },
+              clock_zone = if ("tz_rule" %in% names(.SD)) { z <- tz_rule[!is.na(tz_rule)]; if (length(z)) as.character(mode_of(z)) else "" } else "",
               n_images = .N, n_captures = uniqueN(fifelse(is.na(capture_uuid), file, capture_uuid)), n_georef = sum(is.finite(lat) & is.finite(lon) & !(lat == 0 & lon == 0)), size_gb = round(sum(size) / 1e9, 2),
               lat_min = rng(lat, min), lat_max = rng(lat, max), lon_min = rng(lon, min), lon_max = rng(lon, max),
               alt_rel_median_m = round(rng(alt_rel, stats::median), 1),
@@ -425,13 +440,14 @@ positioning <- function(fl, links, recs, corrected_m = CORRECTED_M) {
   fl[!is.finite(lat_min) & is.finite(geo_lat_min), `:=`(lat_min = geo_lat_min, lat_max = geo_lat_max, lon_min = geo_lon_min, lon_max = geo_lon_max)]
   fl[, acc_processed_m := fifelse(is.finite(geo_acc_xy_median_m), geo_acc_xy_median_m, acc_output_m)]
   P <- POSITIONING; C <- corrected_m
-  fl[, positioning_found := fifelse(family == "dji",
+  dji <- fl$family == "dji" | fl$aircraft %in% NO_RTK_AIRCRAFT   # a DJI aircraft with another maker's camera (Mavic 2 Pro: Hasselblad)
+  fl[, positioning_found := fifelse(dji,
        fifelse(is.na(rtk_fixed_pct), fifelse(has_gnss_obs, P[5], fifelse(aircraft %in% NO_RTK_AIRCRAFT, P[4], P[6])),
                fifelse(rtk_fixed_pct >= 95, P[1], fifelse(rtk_fixed_pct > 0, P[2], fifelse(has_gnss_obs, P[5], P[4])))),
        fifelse(is.finite(acc_capture_m) & acc_capture_m <= C, P[1],
        fifelse(is.finite(acc_processed_m) & acc_processed_m <= C, P[3],
        fifelse(is.finite(acc_capture_m) | is.finite(acc_processed_m), fifelse(has_gnss_obs, P[5], P[4]), fifelse(has_gnss_obs, P[5], P[6])))))]
-  fl[, positioning_evidence := fifelse(family == "dji",
+  fl[, positioning_evidence := fifelse(dji,
        fifelse(is.na(rtk_fixed_pct), fifelse(aircraft %in% NO_RTK_AIRCRAFT, paste(aircraft, "has no RTK; image positions from its own GNSS"), "no RTK flag in the image metadata"),
                paste0(rtk_fixed_pct, "% of images RTK fixed (image XMP)", fifelse(is.na(rpt_fixed), "", paste0("; RPT: ", rpt_fixed, " of ", rpt_captures, " fixed")),
                       fifelse(has_gnss_obs & rtk_fixed_pct < 95, "; onboard GNSS observations kept (PPK possible, not confirmed)", ""))),
@@ -534,11 +550,20 @@ group_missions <- function(fl, links = NULL) {
 #                  exposures instead; fwd_overlap_source says which.
 #   side_overlap_pct (per flight) between neighbouring parallel lines: 1 - line spacing / footprint across the track. Lines
 #                  start where the heading turns by more than 45 degrees or the images are more than 30 s apart.
-#   sun_elev_deg   the sun's elevation at the exposure (within about 4°: Cooper 1969 declination, no equation of time), from the position and the UTC time.
+#   sun_elev_deg   the sun's elevation at the exposure, from the position and the UTC time: NOAA's solar position equations
+#                  (Meeus 1991, Astronomical Algorithms; NOAA GML Solar Calculator), with the equation of time, about 0.01° (no
+#                  refraction). It was Cooper's (1969) declination without the equation of time, up to about 4° off.
 sun_elevation_deg <- function(t, lat, lon) {
-  u <- as.numeric(t); doy <- as.POSIXlt(u, origin = "1970-01-01", tz = "UTC")$yday + 1
-  dec <- 23.44 * pi / 180 * sin(2 * pi * (284 + doy) / 365); h <- ((u %% 86400) / 3600 + lon / 15 - 12) * 15 * pi / 180; la <- lat * pi / 180
-  asin(sin(la) * sin(dec) + cos(la) * cos(dec) * cos(h)) * 180 / pi
+  u <- as.numeric(t); rad <- pi / 180; jc <- (u / 86400 + 2440587.5 - 2451545) / 36525          # Julian centuries since J2000
+  L0 <- (280.46646 + jc * (36000.76983 + jc * 0.0003032)) %% 360; M <- 357.52911 + jc * (35999.05029 - 0.0001537 * jc)
+  e <- 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc)
+  C <- sin(M * rad) * (1.914602 - jc * (0.004817 + 0.000014 * jc)) + sin(2 * M * rad) * (0.019993 - 0.000101 * jc) + sin(3 * M * rad) * 0.000289
+  om <- 125.04 - 1934.136 * jc; lam <- L0 + C - 0.00569 - 0.00478 * sin(om * rad)                 # apparent longitude
+  eps <- 23 + (26 + (21.448 - jc * (46.815 + jc * (0.00059 - jc * 0.001813))) / 60) / 60 + 0.00256 * cos(om * rad)
+  dec <- asin(sin(eps * rad) * sin(lam * rad)); y <- tan(eps / 2 * rad)^2
+  eqt <- 4 / rad * (y * sin(2 * L0 * rad) - 2 * e * sin(M * rad) + 4 * e * y * sin(M * rad) * cos(2 * L0 * rad) - 0.5 * y^2 * sin(4 * L0 * rad) - 1.25 * e^2 * sin(2 * M * rad))
+  ha <- ((u %% 86400) / 60 + eqt + 4 * lon) / 4 - 180                                               # hour angle, degrees
+  90 - acos(pmin(1, pmax(-1, sin(lat * rad) * sin(dec) + cos(lat * rad) * cos(dec) * cos(ha * rad)))) / rad
 }
 
 flight_metrics <- function(d, blur_limit_px = 1) {
@@ -552,9 +577,14 @@ flight_metrics <- function(d, blur_limit_px = 1) {
   R <- 6371000
   x[, `:=`(X = lon * pi / 180 * R * cos(stats::median(lat[ok], na.rm = TRUE) * pi / 180), Y = lat * pi / 180 * R), by = f]
   x[, `:=`(dX = X - shift(X), dY = Y - shift(Y), dt = t - shift(t)), by = .(f, g)]
-  x[, dist := sqrt(dX^2 + dY^2)][, near := ok & shift(ok, fill = FALSE) & is.finite(dt) & dt > 0 & dt <= 30, by = .(f, g)]
+  # frames in the same second count too (a thermoMAP takes about 4 a second; EXIF times are whole seconds): the next frame
+  # is the next photo, so overlap and heading use it; speed is taken between seconds, below
+  x[, dist := sqrt(dX^2 + dY^2)][, near := ok & shift(ok, fill = FALSE) & is.finite(dt) & dt >= 0 & dt <= 30 & dist > 0.5, by = .(f, g)]   # under 0.5 m: hovering (GNSS jitter), not a step along the line
+  sec <- x[ok & is.finite(t), .(cx = mean(X), cy = mean(Y)), by = .(f, g, t)]; setorder(sec, f, g, t)
+  sec[, v := { d <- sqrt((cx - shift(cx))^2 + (cy - shift(cy))^2); s <- t - shift(t); fifelse(is.finite(s) & s > 0 & s <= 30, d / s, NA_real_) }, by = .(f, g)]
+  x[sec, on = .(f, g, t), v_sec := i.v]
   x[, head := fifelse(near & dist > 0, (atan2(dX, dY) * 180 / pi) %% 360, NA_real_)]
-  x[, speed := fifelse(is.finite(sx) & is.finite(sy), sqrt(sx^2 + sy^2), fifelse(near, dist / dt, NA_real_))]
+  x[, speed := fifelse(is.finite(sx) & is.finite(sy), sqrt(sx^2 + sy^2), v_sec)]   # was the gap to the previous frame over its time: 2.2 m/s for an 11 m/s thermal flight
   x[, turn := { h <- head; dh <- abs(((h - shift(h)) + 180) %% 360 - 180); !near | (!is.na(dh) & dh > 45) }, by = .(f, g)]
   x[, line := cumsum(turn %in% TRUE), by = .(f, g)]
   x[, fwd := fifelse(near & !turn & is.finite(gsd) & is.finite(py) & py > 0, 100 * (1 - dist / (gsd / 100 * py)), NA_real_)]

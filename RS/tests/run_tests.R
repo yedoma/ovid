@@ -294,6 +294,9 @@ fq3 <- copy(fq)[, `:=`(speed_x = 6, speed_y = 8)][!(k %in% c(0, 5)), `:=`(lat = 
 fm3 <- flight_metrics(fq3)
 check(fm3$fwd_overlap_source == "speed x interval" && abs(fm3$fwd_overlap_pct_median - 80) < 1 && is.na(fm3$side_overlap_pct_median), "with sampled headers, forward overlap from speed x interval and no side overlap")
 check(abs(fm$speed_ms_median - 10) < 0.05 && abs(fm$blur_px_median - 0.36) < 0.02 && fm$blur_over_limit_pct == 0 && fm$blur_limit_px == 1 && is.finite(fm$sun_elev_max_deg), "speed from positions, motion blur in pixels, sun elevation")
+fq4 <- data.table(k = 0:39)[, `:=`(flight_id = "T", source_id = "s", folder = "f", primary = TRUE, t = t0f + k %/% 4, lat = lat0 + k * 3 * mlat, lon = -120,
+                                   alt_rel = 100, focal_mm = 9, px_x = 640, px_y = 512, sensor_w_mm = 10.75, exposure_s = 0.001)]
+check(abs(flight_metrics(fq4)$speed_ms_median - 12) < 0.5, "speed of a camera taking 4 frames a second with whole-second times: 12 m/s (it read 3 m/s, the gap to the previous frame)")
 fq2 <- copy(fq)[, `:=`(speed_x = 3, speed_y = 4)]; check(abs(flight_metrics(fq2)$speed_ms_median - 5) < 1e-6, "DJI's own flight speed wins over positions")
 check(unname(SENSOR_WIDTH_MM["FC6310"]) == 13.2 && unname(SENSOR_WIDTH_MM["FC330"]) == 6.17, "sensor widths for cameras whose EXIF has none")
 # GNSS quality fields
@@ -383,7 +386,7 @@ prd <- products_table(data.table(product_id = "ortho-2024", kind = "Orthomosaic"
                                  epsg = "3157", frame = "", epoch = "", level = "", made = "2024-08-01"), ds, r4$flights)
 check(prd$level == "L2" && prd$flights_found == "1 of 2" && !prd$file_found && grepl("NAD83\\(CSRS\\)", prd$crs_status), "products: level from the kind, flights checked, frame from the EPSG code")
 cv <- fread(file.path(proj, "output", "catalogue", "coverage.csv"))
-check(nrow(cv[scope == "flights"]) > 0 && sum(cv[scope == "flights", count]) == nrow(r4$flights) && nrow(cv[scope == "datasets"]) > 0, "coverage counts every flight by site, year and sensor, and the datasets by year")
+check(sum(cv[scope == "flights", count]) == nrow(r4$flights[!kind %in% "photo set"]) && nrow(cv[scope == "datasets"]) > 0, "coverage counts every mapping flight by site, year and sensor (photo sets left out), and the datasets by year")
 sx <- stac_export(file.path(tmp, "stac"), r4$flights, ds, prd); cat0 <- jsonlite::fromJSON(file.path(tmp, "stac", "catalog.json"), simplifyVector = FALSE)
 kids <- vapply(Filter(function(l) l$rel == "child", cat0$links), `[[`, "", "href")
 it1 <- list.files(file.path(tmp, "stac"), "\\.json$", recursive = TRUE); it1 <- it1[!basename(it1) %in% c("catalog.json", "collection.json")]
@@ -456,7 +459,7 @@ local({                                                               # the Need
         "RS Needs you: missing metadata counted per kind, a column the catalogue lacks counting none")
   k <- flight_checks(f); acc <- x[flight_id == "sa" & kind == "accuracy"]
   kd <- checks_decided(f, k, data.table(id = acc$id, decision = "accepted as is", note = "archive only", author = "MD", at = ""))
-  check(kd[flight_id == "sa"]$chk_accuracy == "ok" && k[flight_id == "sa"]$chk_accuracy == "bad" && grepl("Accepted as is: accuracy", kd[flight_id == "sa"]$chk_why) &&
+  check(kd[flight_id == "sa"]$chk_accuracy == "ok" && k[flight_id == "sa"]$chk_accuracy == "bad" && grepl("Accepted as is: Accuracy", kd[flight_id == "sa"]$chk_why) &&
         checks_summary(f, kd)$to_look == checks_summary(f, k)$to_look - 1L && identical(checks_decided(f, k, NULL), k),
         "RS Needs you: a check accepted as is counts as ok in the summary and the Map's Checks column")
   h <- copy(f)[, `:=`(clock_ok = c(FALSE, TRUE, TRUE), qa_flags = c("flight log not decoded: no .bb3 key in this project yet (scan its eMotion mission with the .bb3 logs)", "", ""))]
@@ -529,6 +532,30 @@ local({                                                               # the .bb3
 local({                                                               # found in the stress test (30 Oct 2026)
   srcs <- paste(readLines(file.path(here, "pages", "sources.R"), warn = FALSE), collapse = "\n"); sim <- paste(readLines(file.path(here, "simple", "simple_rs.R"), warn = FALSE), collapse = "\n")
   check(identical(safe_name(ascii_name("Été site A")), "Ete_site_A"), "a folder with accents gets a source id in plain letters (Ete_site_A, not _t_site_A)")
+  check(identical(site_of(c("2022-03-29_EBEE_ThermoMAP_Fen/DCIM/00039", "Lind/00280", "Lake/100MEDIA", "Site 12/img")), c("ThermoMAP Fen", "Lind", "Lake", "Site 12")),
+        "a camera's numbered folder (DCIM/00039, 100MEDIA) is never taken as the site; its parent is (the thermal flights read as site 00039)")
+  check(all(abs(sun_elevation_deg(as.POSIXct(c("2020-06-20 12:00:00", "2024-09-21 18:15:27"), tz = "UTC"), c(51.4769, 61.304231), c(0, -121.300187)) - c(61.96, 25.94)) < 0.02),
+        "sun elevation by NOAA's equations: 61.96° at Greenwich at the June solstice noon (it was Cooper's declination with no equation of time, 1.3° low at Scotty Creek)")
+  cv <- coverage(data.table(site = "A", year = 2023L, kind = c("flight", "photo set"), multispectral = FALSE, has_lidar_raw = FALSE, sensor = "S.O.D.A.", aircraft = "eBee",
+                            positioning_status = "standalone GNSS / uncorrected", n_images = c(200L, 3L), gsd_cm_median = c(NA, 0.06), fp_gsd_cm = c(2.6, NA), date = "2023-09-22"))
+  check(nrow(cv) == 1 && cv$count == 1 && cv$finest_gsd_cm == 2.6, "coverage by site and year counts mapping flights only, with the GSD from the log's height (photo sets counted as flights, a 2 m-high photo set gave 0.06 cm)")
+  tz0 <- apply_timezones(data.table(time_utc = as.POSIXct(c(NA, "2019-03-27 20:14:18"), tz = "UTC"), time_exif = as.POSIXct(c("2019-03-27 14:14:18", "2019-03-27 14:14:18"), tz = "UTC"),
+                                    clock_ok = TRUE, camera_serial = "x", sensor = "DJI FC6310", source_id = "s", rel = "a/b.jpg"), NULL, base_h = -7)
+  check(identical(format(tz0$time_utc, "%H:%M"), c("21:14", "20:14")) && startsWith(tz0$tz_rule[1], TZ_ASSUMED) && is.na(tz0$tz_rule[2]),
+        "a local camera clock with no time-zone row is taken as the project's zone and said so (P4 Pro clocks were read as UTC: flights at 07:14 with the sun at 3 degrees instead of 14:14)")
+  cf <- camera_fill(data.table(model = c("L1D-20c", "FC3411"), focal_mm = c(10.26, 8.38), drone_model = c("", NA), sensor_w_mm = NA_real_))
+  check(identical(cf$drone_model, c("Mavic 2 Pro", "Air 2S")) && all(cf$sensor_w_mm == 13.2) && all(c("Mavic 2 Pro", "Air 2S") %in% NO_RTK_AIRCRAFT) &&
+        any(grepl('dji <- fl$family == "dji" | fl$aircraft %in% NO_RTK_AIRCRAFT', readLines(file.path(here, "R", "catalogue.R")), fixed = TRUE)),
+        "Mavic 2 Pro (Hasselblad L1D-20c) and Air 2S photos: their aircraft, a 13.2 mm sensor for GSD, standalone GNSS positions (they read 'unknown', with no GSD)")
+  check(identical(site_of(c("Sequoia/2018-08-30_Plateau/img/msp", "By_Month/2020-08_August", "2018-08-28_Mason_Plateau/img")), c("Plateau", "", "Mason Plateau")) &&
+          identical(site_of("By_Month/2020-08_August", named = "08 August"), "08 August"),
+        "a band folder (msp) gives its parent's site and a month folder (2020-08_August) none (they read as sites 'msp' and '08 August'), unless Site names gives that name a site")
+  check(any(grepl("if (!any(r)) return(invisible())", readLines(file.path(here, "pages", "flight.R")), fixed = TRUE)),
+        "a flights.csv row for a flight the open catalogue has not got yet is skipped (a resumed scan failed: 'Length of no is 0')")
+  check(!any(grepl("`:=`(state = state", readLines(file.path(here, "pages", "missions.R")), fixed = TRUE)),
+        "a confirmed or rejected link shows its new state at once (inside x$links[...] the name state was the column: it stayed 'auto')")
+  check(any(grepl('"footprint_colours"))', readLines(file.path(here, "pages", "utils_setup.R")), fixed = TRUE)),
+        "the footprint colours are a Set-up table (it was only a file)")
   td <- tempfile("rs_ds"); dir.create(td); file.copy(file.path(here, "tests", "samples", "raster__gsddsm.tif"), file.path(td, "dsm.tif")); sd <- tempfile("rs_dsc"); dir.create(sd)
   fs <- list_source(td, data.table(pattern = character(), action = character(), reason = character())); d1 <- read_source_datasets(fs, sd); d2 <- read_source_datasets(fs, sd)
   check(nrow(d1) == 1 && file.exists(file.path(sd, "datasets.rds")) && isTRUE(all.equal(d1, d2)), "raster headers are kept in the source's cache: a rescan gives the same rows without reading the file again")
@@ -550,7 +577,9 @@ local({                                                               # found in
         "senseFly thermoMAP frames (THM_*.tif, with EXIF and GPS) are drone photos, not rasters: T7 2022's two thermal flights were missing")
   check(grepl("!identical(t, session$userData$run_seen) && is.null(RUNNER$job)", srcs, fixed = TRUE) && grepl('if ("last_scanned" %in% names(sc))', sim, fixed = TRUE),
         "a page reloaded during a scan reads the catalogue when the scan ends (it showed Nothing scanned yet), and the Simple sources list draws without a scan date")
-  check(grepl('fcoalesce(n$N[match(sid, n$source_id)], 0L)', sim, fixed = TRUE), "a source with no flights says 0 flights, not NA flights")
+  fe <- new.env(); for (k in parse(file.path(here, "simple", "simple_rs.R"))) if (grepl("^sp_rs_(n|fl_n) <-", deparse(k)[1])) eval(k, fe)
+  check(grepl('fcoalesce(n$N[match(sid, n$source_id)], "no flights")', sim, fixed = TRUE) && identical(fe$sp_rs_fl_n(character()), "0 flights") &&
+        identical(fe$sp_rs_fl_n(c("flight", "photo set", "photo set")), "1 flight and 2 photo sets"), "a source with no flights says so, not NA flights; flights and photo sets counted in one wording")
   check(grepl('if (cor == 1) "1 has" else paste(cor, "have"), " corrected positions', sim, fixed = TRUE), "the Simple report says 1 has corrected positions (it said 1 have)")
   le <- paste(readLines(file.path(here, "pages", "list_edits.R"), warn = FALSE), collapse = "\n")
   check(!grepl("_rows_selected\\]", le) && identical(names(data.table(found = "a")[NULL %||% integer()]), "found"),
@@ -636,7 +665,8 @@ local({                                                               # editing 
   gd <- geodata_folders(data.table(source_id = "S", folder = c("CT", "CT", "Sat"), kind = "raster", lat_min = c(NA, NA, 61), lat_max = c(NA, NA, 61.1), lon_min = c(NA, NA, -121), lon_max = c(NA, NA, -120.9)),
                         data.table(source_id = "S", folder = "far", lat_min = 10, lat_max = 11, lon_min = 10, lon_max = 11), fl)
   check(gd[folder == "CT"]$files == 2 && gd[folder == "CT"]$suggest == "remove" && gd[folder == "Sat"]$suggest == "keep" && gd[folder == "far"]$where == "far from the flights" &&
-        grepl("CT/", geodata_rule("CT")$pattern), "other geodata by folder: no position or far from the flights suggested for removal, as an ignore rule")
+        identical(geodata_rule(c("CT/a.shp", "CT/b.img", "top.shp"))$pattern, c("^CT/a\\.[^/]+$", "^CT/b\\.[^/]+$", "^top\\.[^/]+$")),
+        "other geodata by folder: no position or far from the flights suggested for removal; Remove ignores those files and their side files only (a source's top folder was ^[^/]+$, every top-level file of every source)")
 })
 local({ source(file.path(CORE_DIR, "testkit.R"), local = TRUE); source(file.path(here, "tests", "samples.R"), local = TRUE)   # the reader samples (core testkit.R)
   r <- check_reader_samples(file.path(here, "tests", "samples"), SAMPLE_READ); new <- r[is.na(matches_expected), file]

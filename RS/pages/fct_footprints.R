@@ -63,7 +63,7 @@ year_facts <- function(f, u, kind, with = f$flight_id) {
   mr <- function(x, unit = "", d = 1) { x <- x[is.finite(x)]; if (!length(x)) return(NA_character_)
     r <- function(z) formatC(z, format = "f", digits = d, big.mark = ",")
     if (length(x) == 1L || min(x) == max(x)) paste0(r(stats::median(x)), unit) else sprintf("%s%s (%s to %s)", r(stats::median(x)), unit, r(min(x)), r(max(x))) }
-  cnt <- function(x) { x <- x[!is.na(x) & nzchar(x)]; if (!length(x)) return(NA_character_); t <- sort(table(x), decreasing = TRUE); paste(sprintf("%s %d", names(t), as.integer(t)), collapse = "; ") }
+  cnt <- function(x) { x <- x[!is.na(x) & nzchar(x)]; if (!length(x)) return(NA_character_); t <- sort(table(x), decreasing = TRUE); paste(sprintf("%s (%d)", names(t), as.integer(t)), collapse = "; ") }   # "DJI height above take-off (21)"
   more <- sum(u$by_n[n > 1, m2]); lidar <- kind == "lidar"
   gsd <- fifelse(is.finite(v("fp_gsd_cm")), v("fp_gsd_cm"), v("gsd_cm_median"))
   sun <- c(v("sun_elev_min_deg"), v("sun_elev_max_deg")); sun <- sun[is.finite(sun)]
@@ -82,7 +82,7 @@ year_facts <- function(f, u, kind, with = f$flight_id) {
     list("Acquisition", "Forward overlap, median of flights", mr(v("fwd_overlap_pct_median"), " %", 0)),
     if (!lidar) list("Acquisition", "Side overlap, median of flights", mr(v("side_overlap_pct_median"), " %", 0)),
     list("Acquisition", "Ground speed", mr(v("speed_ms_median"), " m/s")),
-    list("Acquisition", "Sun elevation", if (length(sun)) sprintf("%.1f\u00b0 to %.1f\u00b0", min(sun), max(sun)) else NA_character_),
+    list("Acquisition", "Sun elevation", if (length(sun)) { if (round(min(sun), 1) == round(max(sun), 1)) sprintf("%.1f\u00b0", min(sun)) else sprintf("%.1f\u00b0 to %.1f\u00b0", min(sun), max(sun)) } else NA_character_),
     list("Acquisition", "RTK fixed share, median of flights", mr(v("rtk_fixed_pct"), " %", 0)),
     list("Flights", "Dates", if (length(dates)) paste(unique(range(dates)), collapse = " to ") else NA_character_),
     list("Flights", "Days flown", as.character(length(dates))),
@@ -95,7 +95,7 @@ year_facts <- function(f, u, kind, with = f$flight_id) {
 }
 # Area under 1, 2, 3 to 5, 6 to 10 and 11 or more flights (m2).
 year_by_n <- function(u) { b <- u$by_n; s <- function(a, z) sum(b[n >= a & n <= z, m2])
-  data.table(under = c("1 flight", "2 flights", "3 to 5", "6 to 10", "11 or more"), m2 = c(s(1, 1), s(2, 2), s(3, 5), s(6, 10), s(11, Inf))) }
+  data.table(under = c("1 flight", "2 flights", "3 to 5 flights", "6 to 10 flights", "11 or more flights"), m2 = c(s(1, 1), s(2, 2), s(3, 5), s(6, 10), s(11, Inf))) }
 
 # One row of the card: the median on the line, its range under it; long labels and height sources shortened (the full
 # wording stays in the report and in the row's hover tip).
@@ -113,7 +113,7 @@ card_fact <- function(k, v) {
 year_card <- function(yf, f) {
   if (!length(yf)) return(p(class = "muted", "No flight in view has a footprint. Rebuild the catalogue (Sources) to work them out."))
   tagList(lapply(yf, function(x) { g <- f[flight_id %in% x$ids]; fa <- year_facts(g, x$u, x$kind, x$with); b <- year_by_n(x$u); mx <- max(b$m2, 1)
-    tagList(h3(class = "rs-fp-h", sprintf("%s \u00b7 %s", x$year, FP_KIND_LABEL[[x$kind]]), span(class = "rs-fp-key", style = sprintf("border-color:%s", fp_kind_cols()[[x$kind]]))),
+    tagList(h3(class = "rs-fp-h", sprintf("%s \u00b7 %s", x$year, x$label %||% FP_KIND_LABEL[[x$kind]]), span(class = "rs-fp-key", style = sprintf("border-color:%s", fp_kind_cols()[[x$kind]]))),
       lapply(split(fa, factor(fa$section, unique(fa$section))), function(s) tagList(div(class = "rs-fp-sec", s$section[1]), lapply(seq_len(nrow(s)), function(i) card_fact(s$label[i], s$value[i])),
         if (s$section[1] == "Coverage") div(class = "rs-fp-bars", div(class = "muted", "Area by number of flights over it (km\u00b2)"),
           lapply(seq_len(nrow(b)), function(i) div(class = "rs-fp-bar", span(b$under[i]), div(class = "tr", div(style = sprintf("width:%.1f%%;background:%s", 100 * b$m2[i] / mx, fp_kind_cols()[[x$kind]]))),
@@ -141,8 +141,8 @@ report_html <- function(view, fig, caption, blocks, flights, made) {
   e <- htmltools::htmlEscape
   tbl <- function(d) paste0("<table>", paste0("<tr><td>", e(d$label), "</td><td class=\"n\">", e(d$value), "</td></tr>", collapse = ""), "</table>")
   bl <- vapply(blocks, function(x) { fa <- x$facts; b <- year_by_n(x$u)
-    paste0("<h2>", e(sprintf("%s \u00b7 %s", x$year, FP_KIND_LABEL[[x$kind]])), "</h2><div class=\"two\"><div><h3>Coverage</h3>", tbl(fa[section == "Coverage"]),
-           tbl(data.table(label = paste("under", b$under), value = sprintf("%.3f km\u00b2", b$m2 / 1e6))),
+    paste0("<h2>", e(sprintf("%s \u00b7 %s", x$year, x$label %||% FP_KIND_LABEL[[x$kind]])), "</h2><div class=\"two\"><div><h3>Coverage</h3>", tbl(fa[section == "Coverage"]),
+           tbl(data.table(label = paste("Covered by", b$under), value = sprintf("%.3f km\u00b2", b$m2 / 1e6))),
            "</div><div><h3>Acquisition</h3>", tbl(fa[section == "Acquisition"]), "<h3>Flights</h3>", tbl(fa[section == "Flights"]), "</div></div>") }, "")
   ft <- if (nrow(flights)) paste0("<h2>Flights (", nrow(flights), ")</h2><table class=\"fl\"><tr>", paste0("<th>", e(names(flights)), "</th>", collapse = ""), "</tr>",
                                   paste0("<tr>", apply(flights, 1, function(r) paste0("<td>", e(ifelse(is.na(r), "", r)), "</td>", collapse = "")), "</tr>", collapse = ""), "</table>") else ""
