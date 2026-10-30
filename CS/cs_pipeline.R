@@ -226,6 +226,17 @@ run_pipeline_steps <- function(cfg = CFG) {
   pieces_of <- function(kk) vapply(pieces[[kk]], function(p) { if (!file.exists(p$file)) { gs <- group_src[[p$group]]
       lg <- AUDIT$log; make_pieces(setDT(cache_load(gs$dfile)), p$group); AUDIT$log <- lg }   # its removals are already logged
     p$file }, "")
+  # the files of logger tables that are read, not reused, are read ahead in parallel a few tables at a time (R/stitch.R);
+  # which those are is worked out first, quietly (what it notes is noted again in the table's turn)
+  pre <- new.env(); groups <- list(); todo <- character()
+  if (run_workers() > 1L) for (i in seq_len(nrow(keys))) {
+    g <- ok[logger_id == keys$logger_id[i] & table == keys$table[i] & src_station == keys$src_station[i] & src_stream == keys$src_stream[i]]; groups[[as.character(i)]] <- g
+    k <- paste(c(keys$logger_id[i], keys$table[i], if (nzchar(keys$src_station[i])) keys$src_station[i]), collapse = "__")
+    np0 <- length(AUDIT$problems); lg <- get0("LOG", ifnotfound = NULL); nl0 <- if (is.environment(lg)) length(lg$lines) else 0L
+    utils::capture.output(miss <- tryCatch({ tcr <- rbind(cfgs$time[logger_id == keys$logger_id[i] & (table == "" | table == keys$table[i])], zone_corrections(g, cfgs$timezones, cfgs$stations, cfgs$sites), fill = TRUE)
+      cf <- cache_file(cache_dir, k, cache_key(g, tcr, cfg)); !(isTRUE(cfg$incremental) && file.exists(cf) && file.exists(sub("\\.rds$", ".data.rds", cf))) }, error = function(e) FALSE))
+    AUDIT$problems <- AUDIT$problems[seq_len(np0)]; if (is.environment(lg)) lg$lines <- lg$lines[seq_len(nl0)]
+    if (miss) todo <- c(todo, as.character(i)) }
   for (i in seq_len(nrow(keys))) {
     run_tick(i, nrow(keys), paste(keys$logger_id[i], keys$table[i]))
     g <- ok[logger_id == keys$logger_id[i] & table == keys$table[i] & src_station == keys$src_station[i] & src_stream == keys$src_stream[i]]
@@ -244,8 +255,9 @@ run_pipeline_steps <- function(cfg = CFG) {
           for (pp in cc$problems) problem(pp$where, pp$problem)
           hit <- TRUE; n_hit <- n_hit + 1L }
       }
-      if (!hit) { np0 <- length(AUDIT$problems)
-        res <- stitch_group(g, cfg, tcr)
+      if (!hit) { np0 <- length(AUDIT$problems); ki <- as.character(i)
+        if (ki %in% todo && !exists(ki, envir = pre, inherits = FALSE)) read_ahead(todo[match(ki, todo):length(todo)], groups, pre)
+        res <- stitch_group(g, cfg, tcr, get0(ki, envir = pre, inherits = FALSE)); if (exists(ki, envir = pre, inherits = FALSE)) rm(list = ki, envir = pre)
         if (!is.null(res$data)) res$info <- list(n = nrow(res$data), first = min(res$data$TIMESTAMP), last = max(res$data$TIMESTAMP), cols = names(res$data))
         if (isTRUE(cfg$incremental)) {
           tryCatch({ saveRDS_safe(res$data, dfile, compress = FALSE)

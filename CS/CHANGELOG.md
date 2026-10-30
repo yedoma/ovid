@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (speed, 2026-10-30)**
+- Stitching reads the TOA5 and TOB3 files of logger tables that are not reused in parallel (core par_map, as in GT and WLR), a few tables at a time; problems are recorded in the same order as before, and a file that fails in a worker is read again as before. On Windows it reads one file at a time as before. A test compares 1 and 2 workers. **Output changes:** none.
+
 **Docs (figures, 2026-10-29)**
 - docs/guide_shots.R retakes the reference guide's three figures and how-to task 9 (removing a stretch, in the Workbench) on a guide project from tests/golden; captions and task 9 updated. **Output changes:** none.
 

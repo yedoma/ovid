@@ -58,6 +58,13 @@ out <- capture.output(r2 <- { cfg <- CFG; cfg$raw_dirs <- raw; cfg$project_dir <
 check("a second run gives byte-identical station files", identical(unname(before), unname(tools::md5sum(list.files(file.path(proj, "output", "stations"), full.names = TRUE)))))
 check("the second run added a row to the run history", nrow(fread(file.path(ad, "run_history.csv"))) == 2)
 check("unchanged logger tables were reused", fread(file.path(ad, "run_manifest.csv"))[key == "tables_reused", as.integer(value)] == nrow(r2$registry))
+local({                                                               # files read ahead in parallel: the same outputs and problems as one at a time
+  run_w <- function(w) { p <- file.path(root, paste0("workers", w)); dir.create(p, showWarnings = FALSE); file.copy(file.path(proj, "config"), p, recursive = TRUE)
+    ow <- options(ovid.workers = w); on.exit(options(ow))
+    invisible(capture.output(r <- run_pipeline(modifyList(CFG, list(raw_dirs = raw, project_dir = p, make_plots = FALSE, write_stitched = FALSE, incremental = FALSE)))))
+    f <- list.files(file.path(p, "output", "stations"), full.names = TRUE); list(st = stats::setNames(tools::md5sum(f), basename(f)), pr = r$problems) }
+  w1 <- run_w(1L); w2 <- run_w(2L)
+  check("files read ahead in parallel give the same station files and the same problems in the same order as one at a time", length(w1$st) > 0 && identical(w1$st, w2$st) && identical(w1$pr, w2$pr)) })
 check("unchanged stations were reused", fread(file.path(ad, "run_manifest.csv"))[key == "stations_reused", as.integer(value)] == nrow(r2$stations))
 st_files <- function(p) { f <- list.files(file.path(p, "output", "stations"), full.names = TRUE); setNames(unname(tools::md5sum(f)), basename(f)) }
 raw3 <- file.path(root, "raw3"); dir.create(raw3); p3 <- file.path(root, "p3"); p3f <- file.path(root, "p3_full")

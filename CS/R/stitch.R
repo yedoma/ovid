@@ -201,13 +201,39 @@ detect_clock_shift <- function(pre, step, lid, tb) {
 
 # Corrupt timestamps among good records: stray_records() in the core (Ovid/timestamps.R).
 
-stitch_group <- function(g, cfg, tc = NULL) {
-  parts <- lapply(seq_len(nrow(g)), function(i) tryCatch(
+# Reading ahead in parallel (core util.R par_map), as GT does. read_quiet() reads one TOA5 or TOB3 file and keeps what the
+# reader would have recorded (problems, warnings) instead of recording it; its console text is dropped. read_pre() records
+# that in the main process in the file's turn, so problems come in the order of a run one file at a time.
+read_one <- function(g, i) if (g$format[i] %in% "TOB3") read_tob3(g$path[i], g$mtime[i]) else read_toa5(g$path[i], g$columns[[i]], g$mtime[i], g$sep[i])
+read_quiet <- function(g, i) {
+  np0 <- length(AUDIT$problems); lg <- get0("LOG", ifnotfound = NULL); nl0 <- if (is.environment(lg)) length(lg$lines) else 0L; w <- list()
+  on.exit({ AUDIT$problems <- AUDIT$problems[seq_len(np0)]; if (is.environment(lg)) lg$lines <- lg$lines[seq_len(nl0)] })   # also when par_map reads a small batch here
+  utils::capture.output(r <- withCallingHandlers(read_one(g, i), warning = function(e) { w[[length(w) + 1L]] <<- e; invokeRestart("muffleWarning") }))
+  list(r = r, problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], warnings = w)
+}
+read_pre <- function(x) {
+  if (is.null(x) || inherits(x, "error")) return(NULL)                    # not read ahead, or failed there: read in its turn
+  for (p in x$problems) problem(p$where, p$problem)
+  for (w in x$warnings) warning(w)
+  x
+}
+# The files of the next logger tables to read, at least four per worker but whole tables, so memory stays bounded; into
+# pre[[table key]], by path. A mixed-array file is read in its turn (its reader takes it from a temporary file).
+read_ahead <- function(ks, groups, pre) {
+  n <- cumsum(vapply(groups[ks], nrow, 0L)); k <- which(n >= 4L * run_workers())[1]; ks <- ks[seq_len(if (is.na(k)) length(ks) else k)]
+  job <- rbindlist(lapply(ks, function(x) { g <- groups[[x]]; i <- which(!g$format %in% "mixed-array"); data.table(tab = rep(x, length(i)), i = i) }))
+  got <- par_map(seq_len(nrow(job)), function(j) read_quiet(groups[[job$tab[j]]], job$i[j]), what = "reading files")
+  for (x in ks) { j <- which(job$tab == x); assign(x, stats::setNames(got[j], groups[[x]]$path[job$i[j]]), envir = pre) }
+}
+
+stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
+  parts <- lapply(seq_len(nrow(g)), function(i) { x <- read_pre(pre[[g$path[i]]]); if (!is.null(x)) return(x$r)      # read ahead (read_ahead)
+    tryCatch(
     if (g$format[i] %in% "mixed-array") { f <- get0(g$src[i], envir = ARRAY_CACHE, inherits = FALSE)
       if (is.null(f) || !file.exists(f)) NULL else { d <- readRDS(f); unlink(f); d } }
     else if (g$format[i] %in% "TOB3") read_tob3(g$path[i], g$mtime[i])
     else read_toa5(g$path[i], g$columns[[i]], g$mtime[i], g$sep[i]),
-    error = function(e) { problem(basename(g$path[i]), paste("could not be read and was left out:", conditionMessage(e))); NULL }))
+    error = function(e) { problem(basename(g$path[i]), paste("could not be read and was left out:", conditionMessage(e))); NULL }) })
   empty <- vapply(parts, is.null, logical(1))
   dt <- rbindlist(parts, use.names = TRUE, fill = TRUE)
   if (!nrow(dt)) return(list(data = NULL, empty = g$path[empty]))
