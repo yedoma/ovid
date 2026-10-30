@@ -62,6 +62,11 @@ ch2 <- list(list(series = ref, role = "primary", name = "P"), list(series = data
 cc2 <- compensate_chain(ft, ch2, cfg, ref = ref)
 check("a fill-in station is shifted onto the primary's level", near(cc2$baro_kpa[90], 100) && cc2$baro_source[90] == "fill" && near(cc2$baro_shift[90], 0.5))
 check("season year turns over after mid-September", season_year(as.POSIXct("2024-09-20", tz = "UTC")) == 2025 && season_year(as.POSIXct("2024-09-10", tz = "UTC")) == 2024)
+local({ old <- function(t) { y <- as.integer(format(t, "%Y")); y + (t > as.POSIXct(paste0(y, "-09-15 12:00:00"), tz = "UTC")) }   # before 2026-10-30
+  t <- as.POSIXct("2015-01-01", tz = "UTC") + c(sort(stats::runif(5000, 0, 12 * 365 * 86400)), 0); t <- c(t, as.POSIXct(c("2020-09-15 12:00:00", "2020-09-15 12:00:01"), tz = "UTC"))
+  f <- function(g, x) suppressWarnings(tryCatch(g(x), error = function(e) conditionMessage(e)))
+  check("season year: parsing each year's 15 September once gives what parsing it for every record gave (times, none, a missing one, a Date)",
+        all(vapply(list(t, t[0], c(t[1:5], NA), as.Date("2021-10-01")), function(x) identical(f(old, x), f(season_year, x)), NA))) })
 check("water year runs 1 October to 30 September by default", water_year_of(as.Date("2024-09-30")) == 2024 && water_year_of(as.Date("2024-10-01")) == 2025 &&
   water_year_of(as.POSIXct("2024-10-01 00:00:00", tz = "UTC")) == 2025 && water_year_first_day(2025) == as.POSIXct("2024-10-01", tz = "UTC"))
 check("water year start can be set; a bad one falls back to 1 October", water_year_of(as.Date("2024-09-20"), "09-15") == 2025 &&
@@ -799,5 +804,13 @@ local({                                                                         
     { m <- tw[kind %in% c("dep", "site")]; n <- m[kind == "dep", .N, by = group]
       setequal(m[kind == "site", group], n[N > 1, group]) && all(m[, kind[1] == "site" || .N == 1, by = group]$V1) })
 })
+local({                                                               # the run reads flags.csv once and hands it to export_table()
+  gp <- tempfile("wlr_golden_fl"); dir.create(file.path(gp, "config"), recursive = TRUE)
+  file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))
+  invisible(capture.output(run_pipeline(modifyList(CFG, list(raw_dirs = file.path(here, "tests", "golden", "raw"), metadata_dir = "", dgps_dir = "", project_dir = gp, unzoned_offset_h = -7, make_plots = FALSE)))))
+  s <- read_out(gp, "summary.csv"); ff <- out_dir(gp, "audit", "flags.csv"); fl <- fread(ff, colClasses = "character"); fl[, accepted := "TRUE"]; fwrite(fl, ff)
+  d <- load_deployment(s$deployment[1], gp); f1 <- read_out(gp, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))
+  check("export_table() with the flags passed in gives what it gives reading flags.csv itself, and accepted flags matter there",
+        nrow(fl) > 0 && identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, fl = f1)) && !identical(export_table(d, s$serial[1], gp), export_table(d, s$serial[1], gp, hide_accepted = FALSE))) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

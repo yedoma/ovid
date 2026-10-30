@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (speed, 2026-10-30)**
+- Writing the corrected data reads flags.csv once, not once per deployment (export_table() takes it); season_year() parses each year's 15 September once, not once per record. A full run is about a third faster, and a run with everything reused takes about a third of the time (stage 6 from 33 s to 4 s on the Scotty Creek project). Tests compare both with the old code. **Output changes:** none.
+
 **Changed (Run, 2026-10-29)**
 - The top bar's Run pipeline button reads Run, as in CS; guides and figures retaken. Reference guide: hydroperiod, gradient and recharge (12b), as in the hub. **Output changes:** none.
 

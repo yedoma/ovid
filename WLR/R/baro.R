@@ -184,7 +184,9 @@ read_external_baro <- function(tab) {
 }
 
 # The processing year a time belongs to: a year's sheet runs from the previous mid-September download sweep to its own.
-season_year <- function(t) { y <- as.integer(format(t, "%Y")); y + (t > as.POSIXct(paste0(y, "-09-15 12:00:00"), tz = "UTC")) }
+season_year <- function(t) { y <- as.integer(format(t, "%Y")); u <- unique(y)
+  if (anyNA(u)) return(y + (t > as.POSIXct(paste0(y, "-09-15 12:00:00"), tz = "UTC")))              # a missing time: as it always was
+  y + (t > as.POSIXct(paste0(u, "-09-15 12:00:00"), tz = "UTC")[match(y, u)]) }                     # each year's 15 September parsed once, not once a record
 
 # The water (hydrological) year a time belongs to, for summaries, hydroperiod, recharge and the season plots: from `start`
 # ("MM-DD") to the day before it, named for the year it ends in. Default 1 October to 30 September (USGS; AMS Glossary of

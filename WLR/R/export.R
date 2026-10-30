@@ -72,13 +72,13 @@ wmo_codes <- function(d, v, rm, tested) {
   code
 }
 
-export_table <- function(d, serial, project_dir, versions = "both", hide_accepted = TRUE) {
+export_table <- function(d, serial, project_dir, versions = "both", hide_accepted = TRUE,
+                         fl = read_out(project_dir, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))) {   # flags.csv: a run passes it, read once
   corr <- intersect(c("depth_m_corr", "elev_m_corr", "dtw_m_corr"), names(d))                      # drift-corrected values, present only when a correction was applied (R/drift.R)
   vals <- intersect(c(EXPORT_VALUES, corr), names(d))
   out <- d[, c("TIMESTAMP", "site", "logger_id", "year", intersect("baro_serial", names(d)), vals, intersect("drift_offset_m", names(d))), with = FALSE]
   rm <- removed_values(serial, project_dir)
-  fl <- read_out(project_dir, "flags.csv", colClasses = list(character = c("logger_id", "start", "end")))     # flags decided not a problem leave the flag columns (core config.R)
-  if (hide_accepted && nrow(fl) && "site" %in% names(d)) d <- review_unmark(copy(d), fl[flag_accepted(fl) & site == d$site[1] & logger_id %in% c(as.character(serial), as.character(d$logger_id[1]))])
+  if (hide_accepted && nrow(fl) && "site" %in% names(d)) d <- review_unmark(copy(d), fl[flag_accepted(fl) & site == d$site[1] & logger_id %in% c(as.character(serial), as.character(d$logger_id[1]))])   # flags decided not a problem leave the flag columns (core config.R)
   qr <- file.path(path.expand(project_dir), "config", "qc_rules.csv"); rules <- if (file.exists(qr)) fread(qr, colClasses = "character", na.strings = "") else data.table()
   has <- function(x) !is.na(x) & nzchar(x)
   tested <- if (nrow(rules)) unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter]) else character()
