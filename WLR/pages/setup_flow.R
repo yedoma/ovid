@@ -112,7 +112,7 @@
       if (length(tv) && any(!is.na(tv))) { j <- max(which(!is.na(tv))); ovid_kpi("Water temperature", formatC(tv[j], format = "f", digits = 1), "\u00b0C",
           sprintf("range %s to %s", formatC(min(tv, na.rm = TRUE), format = "f", digits = 1), formatC(max(tv, na.rm = TRUE), format = "f", digits = 1))) },
       ovid_kpi("Manual vs logger", if (nrow(ms)) sub("^-", "\u2212", sprintf("%+.3f", stats::median(ms$difference))) else "\u2014", if (nrow(ms)) "m",
-        if (nrow(ms)) sprintf("median, logger \u2212 manual; n = %d, %s", nrow(ms), if (all(abs(ms$difference) <= tape_lim())) paste("all within", tape_cm()) else sprintf("%d beyond %s", sum(abs(ms$difference) > tape_lim()), tape_cm())) else "no manual levels yet",
+        if (nrow(ms)) sprintf("median, logger minus tape; n = %d, %s", nrow(ms), if (all(abs(ms$difference) <= tape_lim())) paste("all within", tape_cm()) else sprintf("%d beyond %s", sum(abs(ms$difference) > tape_lim()), tape_cm())) else "no manual levels yet",
         level = if (nrow(ms) && any(abs(ms$difference) > tape_lim())) "warn"),   # tape_lim(): Settings tape_warn_m (home.R)
       ovid_kpi("Problems", if (nrow(fl)) num(nrow(fl)) else "none", NULL,
         if (nrow(fl)) tagList(paste(fl[, .(w = paste0(if ("detail" %in% names(fl)) detail[1] else gsub("_", " ", check[1]), ", ", format(as.Date(substr(min(start), 1, 10)), "%d %b"), " to ", format(as.Date(substr(max(end), 1, 10)), "%d %b"))), by = check]$w, collapse = "; "), tags$br(), tags$a(href = "#", `data-ovid-go` = "Needs", "Decide on Needs you \u203a")) else "nothing flagged",

@@ -832,5 +832,17 @@ local({                                                               # every fi
   sf <- paste(readLines(file.path(here, "pages", "setup_flow.R"), warn = FALSE), collapse = "\n"); au <- paste(readLines(file.path(here, "pages", "audit.R"), warn = FALSE), collapse = "\n")
   check("Site, Data and Audit, Export file audit download a note when there is nothing yet (they failed: '..keep' not found, fwrite of NULL)",
         grepl("if (is.null(d) || !NROW(d))", sf, fixed = TRUE) && grepl("if (is.null(fa))", au, fixed = TRUE)) })
+local({                                                               # one way of writing things across WLR (Plot_table_standards A4, B WLR)
+  fs <- list.files(here, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests|docs)/", fs)]
+  src <- unlist(lapply(fs, readLines, warn = FALSE))
+  ylab <- unlist(regmatches(src, gregexpr('labs\\([^)]*?\\b[xy] = (paste0?\\()?"[^"]+"', src, perl = TRUE)))
+  check("chart axis titles start with a capital (quantity, then the unit in brackets)", length(ylab) >= 5 && !any(grepl('"[a-z%]', ylab)))
+  check("tape differences are in cm on every chart", !any(grepl("tape \\(m\\)", src)))
+  check("tape checks are logger minus tape everywhere (Simple showed tape minus logger)", !any(grepl("Tape (−|-|minus) logger|-100 [*] as.numeric", src)))
+  css <- paste(readLines(file.path(here, "www", "nord.css"), warn = FALSE), collapse = "\n")
+  check("Barometric group headings use the heading colour, not the accent", !grepl(".grp h3{color:var(--acc)}", css, fixed = TRUE))
+  check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
+  sc <- unlist(lapply(file.path(here, c("pages/set_up_check.R", "R/preflight.R")), readLines, warn = FALSE))
+  check("no '(s)' plurals on the Set-up check", !any(grepl('\\b(warning|thing|row)[(]s[)]', sc, perl = TRUE))) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

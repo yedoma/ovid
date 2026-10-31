@@ -101,7 +101,7 @@ baro_check_report <- function(target_name, ref_name, res, method, applied, alt_t
     ggplot2::geom_hline(yintercept = 0, colour = NORD$gray) + ggplot2::geom_line(data = fit, ggplot2::aes(date, f), colour = NORD$red, linewidth = 1) +
     ggplot2::labs(x = NULL, y = paste(target_name, "minus", ref_name, "(kPa, daily median)"), title = "Difference over time, with the Theil-Sen fit") + theme_nord()
   p2 <- ggplot2::ggplot(dd, ggplot2::aes(d)) + ggplot2::geom_histogram(bins = 60, fill = NORD$frost) +
-    ggplot2::geom_vline(xintercept = e$offset_kpa, colour = NORD$red) + ggplot2::labs(x = "daily median difference (kPa)", y = "days", title = "Distribution of the daily differences") + theme_nord()
+    ggplot2::geom_vline(xintercept = e$offset_kpa, colour = NORD$red) + ggplot2::labs(x = "Daily median difference (kPa)", y = "Days", title = "Distribution of the daily differences") + theme_nord()
   yr <- dd[, .(days = .N, median_kpa = round(median(d), 3), iqr_kpa = round(stats::IQR(d), 3)), by = .(year = as.integer(format(date, "%Y")))]
   mo <- dd[, .(days = .N, median_kpa = round(median(d), 3)), by = .(month = as.integer(format(date, "%m")))][order(month)]
   decision <- c(

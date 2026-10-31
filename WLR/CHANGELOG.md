@@ -1,9 +1,20 @@
-# Ovid WLR changelog
+# ovid WLR changelog
 
 Newest first. Each entry gives the date, what was added, changed and fixed, and **Output changes**: whether results a user already
 has would come out differently, and why. Entries before October 2026 are taken from the git history and are shorter.
 
 ## Unreleased
+
+**Changed (one way of writing things across WLR, 2026-10-30; Plot_table_standards A4, B WLR)**
+- Tape checks are in cm on every chart (the manual-check plot was in m, the report in cm).
+- Tape checks are logger minus tape everywhere: the Simple view showed tape minus logger (the opposite sign).
+- Barometric: group headings in the page's heading colour like every other heading (were the accent colour); "1 site".
+- Chart axes and legends in sentence case: "Daily median difference (kPa)", "Days", legend "Barologger"; the Simple
+  report's figure names its quantity ("Depth to water (m)") instead of "m".
+- Dates and times as 2024-04-04 and 2024-04-04 12:09 in the run status and the Simple view.
+- Set-up check and Preflight say "1 warning", "5 warnings", "1 model row has" (were "warning(s)", "row(s)").
+- Simple downloads "(ZIP)"; help text uses "…".
+- **Output changes:** the manual-check plot's axis (cm); data files unchanged.
 
 **Fixed (found by the click-through test, 2026-10-30)**
 - Site, Data and Audit, Export file audit failed the download when there was nothing yet ('..keep' not found; fwrite of nothing): they now download a note and say so.

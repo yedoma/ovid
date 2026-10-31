@@ -77,7 +77,7 @@ setup_check <- function(cfg) {
   }
   o <- cf$offsets; ov <- suppressWarnings(as.numeric(o$offset_m))
   if (nrow(o) && all(ov %in% 0)) add("info", "Logger offsets", "logger_offsets.csv", "every logger offset is 0: the sensor is taken to be at the tip of the logger", "Enter the distances on the Datum and dGPS page.")
-  else if (nrow(o) && any(is.na(ov))) add("info", "Logger offsets", "logger_offsets.csv", sprintf("%d model row(s) have no tip-to-sensor distance yet (%s): those loggers get 0", sum(is.na(ov)), paste(o$model[is.na(ov)], collapse = "; ")),
+  else if (nrow(o) && any(is.na(ov))) add("info", "Logger offsets", "logger_offsets.csv", sprintf("%d model %s no tip-to-sensor distance yet (%s): those loggers get 0", sum(is.na(ov)), if (sum(is.na(ov)) == 1) "row has" else "rows have", paste(o$model[is.na(ov)], collapse = "; ")),
                                           "Measure the tip to the sensor mark once and enter it on Datum and dGPS > Logger offsets, or delete rows for models you do not use.")
   r <- with_declared(chk$result(), cfg$project_dir); r[order(match(level, c("error", "warning", "info")))]   # with every table's declared rules (core table_rules.R)
 }

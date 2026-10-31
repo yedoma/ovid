@@ -54,7 +54,7 @@ sp_wlr_facts <- function(o, pd) {
     span <- as.integer(as.Date(max(x$end)) - as.Date(min(x$start))) + 1L
     days <- if (is.null(d) || is.null(lc)) NA_integer_ else sum(is.finite(d[[lc]]))
     c1 <- if (nrow(ck)) ck[site == k][order(visit_time)] else data.table()
-    tape <- if (nrow(c1)) -100 * as.numeric(utils::tail(c1$difference_m, 1)) else NA_real_           # tape minus logger (difference_m is logger minus tape)
+    tape <- if (nrow(c1)) 100 * as.numeric(utils::tail(c1$difference_m, 1)) else NA_real_            # logger minus tape, as on every WLR page and plot
     u <- if (nrow(un) && "deployment" %in% names(un)) un[deployment == utils::tail(x$deployment, 1)] else data.table()
     sig <- if (nrow(u)) { v <- c(if (identical(lc, "depth_m")) u$depth_sigma_m else u$dtw_sigma_m, u$depth_sigma_m); v <- suppressWarnings(as.numeric(v)); v <- v[is.finite(v)]; if (length(v)) v[1] else NA_real_ } else NA_real_
     baro <- as.character(utils::tail(x$primary, 1)); if (is.na(baro)) baro <- ""
@@ -66,9 +66,9 @@ sp_wlr_facts <- function(o, pd) {
   f[(!is.na(behind) & behind > SP_WLR_STOPPED_DAYS) | !nzchar(baro), state := "error"]
   f[is.na(records) | records == 0, state := "off"]
   f[, note := fifelse(!nzchar(baro), "No barologger: the water level cannot be worked out. Choose one in Standard, Barometric compensation.",
-              fifelse(state == "error", paste0("No data after ", format(last, "%d %b %Y"), "."),
+              fifelse(state == "error", paste0("No data after ", format(last, "%Y-%m-%d"), "."),
               fifelse(state == "warn" & !is.na(tape_cm) & abs(tape_cm) > 100 * lim,
-                      sprintf("Tape and logger differ by %+.1f cm at the last visit (more than %g cm).", tape_cm, 100 * lim),
+                      sprintf("Logger and tape differ by %+.1f cm at the last visit (more than %g cm).", tape_cm, 100 * lim),
               fifelse(state == "warn", sprintf("Days with a daily mean cover %.0f %% of the period.", 100 * days / span), ""))))]
   list(f = f[order(match(state, c("error", "warn", "ok", "off")), site)], daily = daily, newest = newest)
 }
@@ -108,7 +108,7 @@ sp_wlr_export_ui <- function() div(class = "sp-cols",
     div(class = "sp-row", downloadButton("sp_rpt", "Download the report (HTML)", class = "sp-btn", icon = NULL))),
   div(class = "sp-card", div(class = "sp-h", "Daily water levels and plots"),
     p("One CSV per site with a value per day (date, depth to water, elevation, temperature and the flags of that day), with a README of the methods, their sources and the run's record."),
-    div(class = "sp-row", downloadButton("sp_csv", "Daily water levels (.zip)", class = "sp-btn2", icon = NULL), downloadButton("sp_png", "Plots (.zip)", class = "sp-btn2", icon = NULL)),
+    div(class = "sp-row", downloadButton("sp_csv", "Daily water levels (ZIP)", class = "sp-btn2", icon = NULL), downloadButton("sp_png", "Plots (ZIP)", class = "sp-btn2", icon = NULL)),
     p(class = "sp-dim sp-small", "Every reading, any period, NetCDF or the full report: ", tags$a(href = simple_std_href("Export"), "Standard, Report"), ".")))
 
 # The Import checklist (WLR's own: one row per thing a water level needs), in the Simple view's colours (core simple.css).
@@ -189,16 +189,16 @@ simple_server <- function(input, output, session, std) {
     f <- x$f; r <- last_run(); bad <- f[state %in% c("error", "warn")]
     lv <- if (any(f$state == "error")) "error" else if (nrow(bad)) "warn" else "ok"
     head <- paste0(nrow(f), " sites · ", if (!any(f$state == "error")) "all reporting" else paste(sum(f$state == "error"), "need a look first"))
-    sub <- paste0("Newest record ", format(x$newest, "%d %b %Y %H:%M"), ". ", if (nrow(bad)) paste0(bad$site[1], ": ", bad$note[1], if (nrow(bad) > 1) paste0(" And ", nrow(bad) - 1, " more below.")) else "Nothing to look at.")
+    sub <- paste0("Newest record ", format(x$newest, "%Y-%m-%d %H:%M"), ". ", if (nrow(bad)) paste0(bad$site[1], ": ", bad$note[1], if (nrow(bad) > 1) paste0(" And ", nrow(bad) - 1, " more below.")) else "Nothing to look at.")
     simple_hero(lv, head, sub, if (!VIEWER) tags$button(type = "button", class = "btn sp-btn2", onclick = "document.getElementById('run').click()", "Read again")) })
   output$sp_tiles <- renderUI({ x <- facts(); req(x); f <- x$f; k <- cur()
     lapply(seq_len(nrow(f)), function(i) { r <- f[i]; d <- x$daily[[r$site]]; lc <- if (nzchar(r$level_col)) r$level_col else NULL
       lab <- if (is.null(lc)) "Water level" else SP_WLR_LEVEL[[lc]]$lab
       lvl <- if (is.na(r$level)) "—" else if (identical(lc, "wt_ground_m")) sprintf("%.2f m %s", abs(r$level), if (r$level <= 0) "below" else "above") else sprintf("%.2f m", r$level)
       simple_tile(r$site, r$state, spark = if (!is.null(lc)) simple_spark(utils::tail(d[[lc]], 365), level = r$state),
-        facts = stats::setNames(list(format(r$last, "%d %b %Y %H:%M"), lvl, if (nzchar(r$baro)) r$baro else "none",
+        facts = stats::setNames(list(format(r$last, "%Y-%m-%d %H:%M"), lvl, if (nzchar(r$baro)) r$baro else "none",
                                      if (is.na(r$tape_cm)) "no tape reading" else sprintf("%+.1f cm", r$tape_cm)),
-                                c("Last record", lab, "Barologger", "Tape − logger")),
+                                c("Last record", lab, "Barologger", "Logger minus tape")),
         note = if (nzchar(r$note)) r$note, on = identical(r$site, k),
         link = if (!nzchar(r$baro)) list(label = "Open in Standard: Barometric compensation", page = "Baro", site = r$site)
                else if (r$state == "error") list(label = "Open in Standard: Needs you", page = "Needs", site = r$site)
@@ -269,19 +269,19 @@ simple_server <- function(input, output, session, std) {
   table_of <- function() { x <- facts(); f <- x$f[state != "off"]; need <- CFG$min_complete %||% 0.8
     st <- function(k, fn) { d <- x$daily[[k]]; lc <- if (!is.null(d) && "dtw_m" %in% names(d) && any(is.finite(d$dtw_m))) "dtw_m" else NULL; if (is.null(lc)) NA_real_ else round(fn(d[[lc]], na.rm = TRUE), 2) }
     f[, .(Site = site, Days = span, `Complete %` = round(100 * days / span), `Min DTW (m)` = vapply(site, st, 0, fn = min), `Mean DTW (m)` = vapply(site, st, 0, fn = mean),
-          `Max DTW (m)` = vapply(site, st, 0, fn = max), `Tape − logger (cm)` = round(tape_cm, 1), Baro = fifelse(nzchar(baro), baro, "none"), `± m` = round(sigma, 3))] }
+          `Max DTW (m)` = vapply(site, st, 0, fn = max), `Logger minus tape (cm)` = round(tape_cm, 1), Baro = fifelse(nzchar(baro), baro, "none"), `± m` = round(sigma, 3))] }
   doc <- function() { x <- facts(); o <- outs(); f <- x$f[state != "off"]; r <- last_run(); nm <- basename(pd()); if (identical(nm, "project")) nm <- basename(dirname(pd()))
     need <- round(100 * (CFG$min_complete %||% 0.8)); fl <- if (nrow(o$flags)) o$flags[site %in% f$site, .N, by = check][order(-N)] else data.table()
     bad <- f[state %in% c("error", "warn")]
     lvl <- rbindlist(lapply(f$site, function(k) { d <- x$daily[[k]]; lc <- sp_wlr_level_col(d); if (is.null(lc)) NULL else data.table(site = k, date = d$date, v = as.numeric(d[[lc]]), what = lc) }))
     plot <- if (nrow(lvl)) ggplot2::ggplot(lvl[!is.na(v)], ggplot2::aes(date, v, colour = site)) + ggplot2::geom_line(linewidth = 0.35) +
-      ggplot2::scale_colour_viridis_d(end = 0.85) + ggplot2::labs(x = NULL, y = "m", colour = NULL) + ggplot2::theme_minimal(base_size = 9) +
+      ggplot2::scale_colour_viridis_d(end = 0.85) + ggplot2::labs(x = NULL, y = if (uniqueN(lvl$what) == 1) paste(SP_WLR_LEVEL[[lvl$what[1]]]$plot, "(m)") else "Water level (m)", colour = NULL) + ggplot2::theme_minimal(base_size = 9) +
       ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank()) else NULL
     who <- trim(input$sp_rpt_who %||% "")
     simple_report_doc(paste("Field check:", nm),
-      meta = c(paste(format(min(f$first), "%d %b %Y"), "to", format(max(f$last), "%d %b %Y")), paste(nrow(f), "sites"), paste(sum(o$loggers$kind != "baro"), "water loggers,", sum(o$loggers$kind == "baro"), "barologgers"),
+      meta = c(paste(format(min(f$first), "%Y-%m-%d"), "to", format(max(f$last), "%Y-%m-%d")), paste(nrow(f), "sites"), paste(sum(o$loggers$kind != "baro"), "water loggers,", sum(o$loggers$kind == "baro"), "barologgers"),
                if (!is.null(r)) paste("run", substr(r$started, 1, 10)), if (nzchar(who)) paste("checked by", who)),
-      summary = paste0(nrow(f) - sum(f$state == "error"), " of ", nrow(f), " sites were recording up to the newest record (", format(x$newest, "%d %b %Y"), "). ",
+      summary = paste0(nrow(f) - sum(f$state == "error"), " of ", nrow(f), " sites were recording up to the newest record (", format(x$newest, "%Y-%m-%d"), "). ",
                        if (nrow(bad)) paste0("To look at: ", paste0(bad$site, " (", sub("\\.$", "", bad$note), ")", collapse = "; "), ". ") else "Nothing to look at. ",
                        if (nrow(fl)) paste0("Flags (values kept): ", paste0(fl$N, " ", gsub("_", " ", fl$check), collapse = ", "), ".") else ""),
       figures = c(Sites = as.character(nrow(f)), `Complete` = sprintf("%.0f %%", 100 * sum(f$days, na.rm = TRUE) / sum(f$span[!is.na(f$days)])),
@@ -291,7 +291,7 @@ simple_server <- function(input, output, session, std) {
       table = table_of(), table_caption = "Sites",
       methods = c(paste0("Water pressure minus barometric pressure from the site's barologger (its baro group), as metres of water: h = ΔP·1000/(ρg), g = 9.80665 m/s², ρ from the logger's temperature: Tanaka, M., et al. (2001) Metrologia 38, 301-309; Freeman, L. A., et al. (2004) USGS TWRI 8-A3 (ovid WLR pipeline ", APP_VERSION, ")."),
                   "Depth to water and elevation from the hang length, the logger offset and the survey of the reference point: Cunningham, W. L., Schalk, C. W. (2011) USGS Techniques and Methods 1-A1 (GWPD 1, 16); Freeman et al. (2004).",
-                  "Tape − logger: the water level from the tape at a visit minus the logger's at that time: Freeman et al. (2004).",
+                  "Logger minus tape: the logger's water level at a visit minus the level from the tape at that time: Freeman et al. (2004).",
                   paste0("Complete %: days with a daily mean (at least ", need, " % of the day's records) over the days from first to last record: WMO (2017) WMO-No. 1203; WMO (2018) WMO-No. 100."),
                   "± m: the deployment's standard uncertainty (1σ), its components (logger, barometric, density, tape, survey) added in quadrature: JCGM 100:2008 (GUM); logger accuracy from the Onset and Solinst specification sheets.",
                   "Quality rules, removals and out-of-water periods as the project sets them; flagged values (service visits, logger in the air or out of the water) are kept."),

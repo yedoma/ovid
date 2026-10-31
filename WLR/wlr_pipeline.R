@@ -101,7 +101,7 @@ PIPELINE_DIR <- local({ f <- NULL
   if (is.null(f)) { a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) f <- sub("^--file=", "", a[1]) }
   if (is.null(f)) getwd() else dirname(normalizePath(f)) })
 if (!dir.exists(file.path(PIPELINE_DIR, "R"))) stop("The R/ folder that belongs beside wlr_pipeline.R was not found in ", PIPELINE_DIR)
-APP_NAME <- "Ovid Core // WLR"
+APP_NAME <- "ovid // WLR"
 APP_VERSION <- PIPELINE_VERSION <- "0.12.0"          # bump when a change alters the output
 
 # The shared Ovid Core files (audit trail, helpers, set-up tables, run manifest, set-up check): from OVID_CORE if
@@ -109,7 +109,7 @@ APP_VERSION <- PIPELINE_VERSION <- "0.12.0"          # bump when a change alters
 # They are sourced first; R/ holds what is WLR's own.
 CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "core"), file.path(dirname(PIPELINE_DIR), "core"))
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
-  if (!length(hit)) stop("The shared Ovid Core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
+  if (!length(hit)) stop("The shared ovid core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
 for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "hobo", "cache", "timezones", "timestamps", "time_corrections", "config", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
@@ -179,7 +179,7 @@ run_pipeline_steps <- function(cfg = CFG) {
   c_used <- character(); series_hash <- new.env()
   if (inc) for (d in c("stitch", "logger", "corrected", "agree")) dir.create(file.path(cdir, d), showWarnings = FALSE)
 
-  say("Ovid Core // WLR  run ", AUDIT$run_id, col = "frost")
+  say("ovid // WLR  run ", AUDIT$run_id, col = "frost")
 
   # ---- 1. files ---------------------------------------------------------------------------------------------
   say("[1/7] scanning files", col = "aqua")

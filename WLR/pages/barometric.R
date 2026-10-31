@@ -28,7 +28,7 @@
     sc <- outs()$sugg; ch <- c("(none)" = "", lab)
     lapply(seq_len(nrow(g)), function(i) { gm <- if (!is.null(mem)) mem$site[mem$year == y & mem$group == g$group[i]] else character()
       best <- if (nrow(sc)) sc[as.character(year) == y & group == g$group[i]][order(-score)] else data.table()
-      div(class = "grp", h3(g$group[i]), div(class = "members", length(gm), " site(s): ", paste(gm, collapse = ", ")),
+      div(class = "grp", h3(g$group[i]), div(class = "members", length(gm), if (length(gm) == 1) " site: " else " sites: ", paste(gm, collapse = ", ")),
           fluidRow(column(4, selectInput(paste0("bo_p_", i), "Primary barologger", ch, selected = g$primary[i], width = "100%")),
                    column(4, selectInput(paste0("bo_s_", i), "Secondary (fills gaps)", ch, selected = g$secondary[i], width = "100%")),
                    column(4, p(class = "dim", style = "margin-top:26px", if (nrow(best)) sprintf("Suggested: %s (%.0f%% coverage), then %s", best$serial[1], 100 * best$coverage[1], if (nrow(best) > 1) best$serial[2] else "none") else g$notes[i])))) }) })

@@ -123,9 +123,9 @@ plot_files <- function(m) {
 
 plot_manual_check <- function(chk) {
   if (is.null(chk) || !nrow(chk[!is.na(difference_m)])) return(NULL)
-  ggplot(chk[!is.na(difference_m)], aes(visit_time, difference_m, colour = site)) + geom_hline(yintercept = 0, colour = NORD$bg3) +
+  ggplot(chk[!is.na(difference_m)], aes(visit_time, 100 * difference_m, colour = site)) + geom_hline(yintercept = 0, colour = NORD$bg3) +
     geom_point(size = 2.4) + geom_line(aes(group = serial), linewidth = 0.3, alpha = 0.6) + scale_colour_manual(values = rep(NORD_PAL, 50), name = NULL) +
-    labs(x = NULL, y = "Logger minus tape (m)", title = "Logger depth against the tape at each visit")
+    labs(x = NULL, y = "Logger minus tape (cm)", title = "Logger depth against the tape at each visit")
 }
 
 # ---- comparisons ------------------------------------------------------------------------------------------------------
@@ -185,5 +185,5 @@ plot_baro_station <- function(st, name) {
   if (is.null(st) || !nrow(st)) return(NULL)
   x <- thin(copy(st), 30000)[, seg := seg_id(TIMESTAMP)]
   ggplot(x, aes(TIMESTAMP, baro_kpa, colour = as.character(baro_serial), group = interaction(baro_serial, seg))) + geom_line(linewidth = 0.35) +
-    scale_colour_nord(name = "serial") + labs(x = NULL, y = "Barometric pressure (kPa)", title = paste("Baro station", name), subtitle = "one series stitched from every barologger that was there")
+    scale_colour_nord(name = "Barologger") + labs(x = NULL, y = "Barometric pressure (kPa)", title = paste("Baro station", name), subtitle = "one series stitched from every barologger that was there")
 }

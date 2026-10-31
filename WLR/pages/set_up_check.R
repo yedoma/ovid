@@ -5,8 +5,8 @@
   # ---- Set-up check -------------------------------------------------------------------------------------------------------------------
   pf_data <- reactive({ rv$pf; input$pf_again; live_config(pd()); tryCatch(setup_check(current_cfg()), error = function(e) data.table(level = "error", area = "Set-up check", item = "", problem = conditionMessage(e), fix = "")) })
   output$pf_banner <- renderUI({ p <- pf_data(); ne <- sum(p$level == "error"); nw <- sum(p$level == "warning")
-    if (ne) ovid_notice("error", paste(ne, "thing(s) would be ignored or misapplied"), paste(nw, "warning(s) as well"))
-    else if (nw) ovid_notice("warn", paste(nw, "warning(s)"), "The run will work; some values will be blank.")
+    if (ne) ovid_notice("error", paste(ne, if (ne == 1) "thing would be ignored or misapplied" else "things would be ignored or misapplied"), paste(nw, if (nw == 1) "warning as well" else "warnings as well"))
+    else if (nw) ovid_notice("warn", paste(nw, if (nw == 1) "warning" else "warnings"), "The run will work; some values will be blank.")
     else ovid_notice("ok", "Nothing to fix", "The set-up is consistent.") })
   output$pf_tbl <- renderDT(ovid_dt(pf_data(), page = 10) %>% formatStyle("level", fontWeight = 600, color = styleEqual(c("error", "warning", "info"), c(NORD$red, NORD$yellow, NORD$frost))))
   tst_rows <- reactive({ o <- outs(); rv$pf; md <- if (!is.null(o)) o$md else NULL; if (is.null(md) || !nrow(md)) return(data.table())

@@ -4,7 +4,7 @@
 if (dir.exists(file.path(APP_DIR, "docs"))) addResourcePath("docs", file.path(APP_DIR, "docs"))
 # The folders (Home in the Standard interface, Import data in the Workbench).
 std_folders <- function() fluidRow(column(7, div(class = "panel-x", h3("Folders"),
-          textAreaInput("raw_dirs", "Data folders, one per line (each holds 2025/, 2024/ ... and baro/2025/ ...)", paste(SETTINGS$raw_dirs, collapse = "\n"), rows = 2, width = "100%"),
+          textAreaInput("raw_dirs", "Data folders, one per line (each holds 2025/, 2024/ \u2026 and baro/2025/ \u2026)", paste(SETTINGS$raw_dirs, collapse = "\n"), rows = 2, width = "100%"),
           ovid_browse_button("raw_dirs"), uiOutput("raw_check"),
           textInput("metadata_dir", "Metadata folder, optional (the newest .xlsx in it is the WL_Metadata workbook; or use the deployment sheet)", SETTINGS$metadata_dir, width = "100%"), ovid_browse_button("metadata_dir"), uiOutput("meta_check"),
           textInput("dgps_dir", "dGPS folder (survey exports, .csv)", SETTINGS$dgps_dir, width = "100%"), ovid_browse_button("dgps_dir"),
@@ -147,7 +147,7 @@ std_pages <- function(sources = TRUE) list(
                      div(class = "btnrow", actionButton("gh_exclude", "Leave out the selected surveys", class = "btn-danger"))),
                  h4("Surveys left out"), editUI("gex")),
         tabPanel("Survey points", DTOutput("dt_gps")),
-        tabPanel("Elevations typed by hand", p(class = "dim", "For sites surveyed another way. ", code("code"), " T, TOC or GS; ", code("elevation_m"), " in metres; ", code("date"), " of the survey. Optional: ", code("height_type"), " ellipsoidal for an ellipsoidal height h, with ", code("geoid_N_m"), " to turn it into an elevation H = h \u2212 N (else it is not mixed with elevations); ", code("frame"), " (NAD83(CSRS) v8 ...), ", code("epoch"), " and ", code("geoid_model"), " (CGG2013a ...) are kept with the value."), editUI("datm")),
+        tabPanel("Elevations typed by hand", p(class = "dim", "For sites surveyed another way. ", code("code"), " T, TOC or GS; ", code("elevation_m"), " in metres; ", code("date"), " of the survey. Optional: ", code("height_type"), " ellipsoidal for an ellipsoidal height h, with ", code("geoid_N_m"), " to turn it into an elevation H = h \u2212 N (else it is not mixed with elevations); ", code("frame"), " (NAD83(CSRS) v8 \u2026), ", code("epoch"), " and ", code("geoid_model"), " (CGG2013a \u2026) are kept with the value."), editUI("datm")),
         tabPanel("Logger offsets", p(class = "dim", "Distance from the logger tip up to the pressure sensor, in metres. Matched on ", code("serial"), " first, then on ", code("model"),
           ", a pattern tried against the model name in the files (first row first; | separates alternatives). A blank ", code("offset_m"), " is skipped. ",
           "It is added only where the hang length was measured to the tip (", code("measured_to"), " on Deployment history, or Settings); set it to 0 to leave it out. ",

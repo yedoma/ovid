@@ -110,7 +110,7 @@ make_export_zip <- function(project_dir, zipfile, deployments = NULL, reports = 
   sm <- out_dir(project_dir, "summaries", c("monthly.csv", "water_year.csv", "hydroperiod.csv", "gradients.csv", "recharge.csv")); sm <- sm[file.exists(sm)]
   if (length(sm)) { dir.create(file.path(tmp, "summaries")); file.copy(sm, file.path(tmp, "summaries")) }
   if (length(reports)) write_wlr_reports(project_dir, file.path(tmp, "reports"), unique(s$site), reports, progress = progress, opts = report_opts)
-  writeLines(c("Ovid Core // WLR export", paste("Generated", format(Sys.time(), "%Y-%m-%d %H:%M")),
+  writeLines(c("ovid // WLR export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M")),
                sprintf("Time stamps are UTC%+d with no daylight saving.", BASE_OFFSET),
                "depth_m: water above the pressure sensor (m). elev_m: water elevation from the dGPS datum (m). dtw_m: depth to water below the T-coupler or casing (m).",
                "wt_ground_m: the water table above (+) or below (-) the ground surface (m), from the T-coupler to vegetation height or a ground survey.",
@@ -185,7 +185,7 @@ corrected_data_zip <- function(project_dir, sites, zipfile, values = c("depth_m"
   if (!length(wrote)) stop("Nothing to export for this choice.")
   if (length(all)) fwrite(rbindlist(all, fill = TRUE), file.path(tmp, "all_sites.csv"))
   applied_export(project_dir, tmp)                  # every correction applied in the run (core applied.R)
-  writeLines(c("Ovid Core // WLR bulk export", paste("Generated", format(Sys.time(), "%Y-%m-%d %H:%M")), sprintf("Time stamps are UTC%+d with no daylight saving.", BASE_OFFSET), "",
+  writeLines(c("ovid // WLR bulk export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M")), sprintf("Time stamps are UTC%+d with no daylight saving.", BASE_OFFSET), "",
                paste0("sites/: one CSV per site (", length(wrote), " sites). ", if (length(all)) "all_sites.csv: the same rows for every site in one file." else "Wide layout: one file per site only."),
                paste0("Time step: ", c(raw = "every reading", hour = "hourly mean", day = "daily mean")[[res]], ". Layout: ", layout, ". Values: ", paste(values, collapse = ", "), "."),
                "depth_m: water above the pressure sensor (m). elev_m: water elevation from the dGPS datum (m). dtw_m: depth to water below the reference point (m).",
