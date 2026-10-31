@@ -93,7 +93,9 @@ group_level_jumps <- function(files, level, jump_min = 0, unit = "", splits = NU
     d <- data.table(t = as.numeric(d$t), v = as.numeric(d$v))[is.finite(t) & is.finite(v)][order(t)]; if (nrow(d) < 20) next
     sc <- stats::median(abs(diff(d$v)), na.rm = TRUE); thr <- max(jump_min, 8 * sc)
     for (tb in sort(unique(as.numeric(f[serial == s]$first)))[-1]) {
-      b4 <- d[t < tb & t >= tb - 2 * 86400]$v; af <- d[t >= tb & t < tb + 2 * 86400]$v; if (length(b4) < 6 || length(af) < 6) next
+      a <- findInterval(tb - 2 * 86400, d$t, left.open = TRUE) + 1L; m <- findInterval(tb, d$t, left.open = TRUE); z <- findInterval(tb + 2 * 86400, d$t, left.open = TRUE)
+      b4 <- d$v[seq_len(max(0L, m - a + 1L)) + a - 1L]; af <- d$v[seq_len(max(0L, z - m)) + m]   # the two days before and after, by position in the sorted record
+      if (length(b4) < 6 || length(af) < 6) next
       st <- stats::median(af) - stats::median(b4); if (!is.finite(st) || abs(st) <= thr) next
       at <- as.POSIXct(tb, origin = "1970-01-01", tz = "UTC")
       res[[length(res) + 1]] <- data.table(serial = s, at = format(at, "%Y-%m-%d %H:%M", tz = "UTC"), from = format(at, "%Y-%m-%d", tz = "UTC"), to = format(at, "%Y-%m-%d", tz = "UTC"),

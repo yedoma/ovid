@@ -1164,4 +1164,9 @@ if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(
   it <- review_flag_items(fl, "where"); q <- wb_queue_id(fl$where, fl$parameter, fl$start, fl$end, fl$check)
   check("Needs you items carry the same flag ids, start and end as before, worked out once for all flags",
         nrow(it) == 2 && setequal(unlist(strsplit(it$qids, " ")), q) && identical(it[where == "B", start], "2020-02-01 00:00:00")) })
+local({ source(file.path(CORE_DIR, "grouping.R"), local = TRUE)        # level jumps: the two days either side found by position (31 Oct)
+  t0 <- as.numeric(as.POSIXct("2020-01-01", tz = "UTC")); tt <- t0 + seq(0, by = 1800, length.out = 2000); v <- rep(0, 2000); v[1001:2000] <- 0.5
+  fl <- data.table(serial = "S1", first = format(as.POSIXct(tt[c(1, 1001)], origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S"))
+  j <- group_level_jumps(fl, function(s) data.table(t = as.POSIXct(tt, origin = "1970-01-01", tz = "UTC"), v = v), 0.05, "m")
+  check("a step in level where a new file starts is suggested as a move, with the two days either side found by position in the record", nrow(j) == 1 && grepl("rose by 0.5 m", j$what)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster (Needs you moves, 2026-10-31).** group_level_jumps() finds the two days either side of a file start by position
+in the sorted record instead of scanning it for each start; same suggestions. **Output changes:** none.
+
 **Faster (Needs you, 2026-10-31).** review_flag_items() works out the flag ids once for all flags and formats the times
 once: 49,125 flags (23,078 items) 7.6 -> 2.5 s each time an app opens; items identical. **Output changes:** none.
 
