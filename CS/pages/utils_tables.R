@@ -41,8 +41,12 @@ unrecognised_format|Not a Campbell data file|file|The file ends in .dat but is n
 empty_file|Empty files|file|The file has no content.|Nothing to do.|
 truncated_header|Files with an incomplete header|file|The header lines are cut off.|Download the file again.|
 unreadable|Files that could not be opened|file|The file could not be opened (permissions, or a broken link).|Check the file on disk.|
-no_data_rows|Files with a header but no records|file|The download contained no data.|Nothing to do.|
+no_data_rows|Files with a header but no records|file|A header only (TOA5), or frames that are empty or left from an earlier use of the card (TOB3).|Nothing to do.|
+utf16_text|Files saved as UTF-16|file|A TOA5 or other text file saved as UTF-16, for example from Excel.|Save it again as UTF-8, or collect it again from LoggerNet.|
+ert_file|Resistivity files|file|A Res2DInv resistivity file, not a logger file.|Open it in GS.|
+binary_unknown|Binary files CS cannot read|file|A binary file in no Campbell format CS reads (not TOB3).|Convert it with LoggerNet or CardConvert if it is logger data.|
 excluded_by_user|Files left out by a rule|file|Left out on the Raw files page.|Undo there.|Raw files
+outside_clock_bounds|Records outside the accepted dates|row|Stamped before the earliest accepted date of the logger or after its latest: a reset clock, a file with a broken clock, or dates set in Accepted dates.|See Clock checks: keep them, move them, or change the dates.|Clock checks
 stray_record|Records with corrupt timestamps|row|A failing memory or clock stamped these at random times among good records (off the time grid and out of written order).|See Clock checks.|Clock checks
 set_aside|Files of loggers set aside|file|The logger was set aside on the Stations page, so its files were not read.|Bring it back there.|Stations
 group_failed|Logger tables that could not be stitched|file|An error stopped this logger table; the rest of the run carried on.|See Loggers and files, Problems.|Metadata

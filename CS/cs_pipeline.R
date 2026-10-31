@@ -47,6 +47,7 @@ CFG <- list(
   # Logger clocks have no time zone in the file. Timestamps are kept exactly
   # as logged (stored as UTC so R never applies daylight-saving shifts).
   min_year    = 1995,                 # timestamps outside min_year..now+2d are bad
+  auto_clock_bounds = TRUE,           # a reset clock's early block (see R/stitch.R clock_bound_suggest) is left out; dates set by hand in clock_bounds.csv always apply
   hide_accepted_flags = TRUE,         # flags decided not a problem leave the exported flag columns (flags.csv keeps them, marked accepted)
   drop_stray_records = TRUE,          # leave out records with corrupt timestamps among good ones (off the time grid and out of order); each is audited
   sentinels   = c(-7999, 7999, -6999, 6999),   # Campbell out-of-range codes
@@ -153,6 +154,8 @@ run_pipeline_steps <- function(cfg = CFG) {
            cr10x_import_off = "mixed-array file marked import = no in cr10x.csv",
            no_usable_arrays = "mixed-array file with no array that could be timestamped (see malformed_row entries)",
            unrecognised_format = "not a Campbell TOA5 file", empty_file = "empty file", truncated_header = "header incomplete",
+           utf16_text = "text saved as UTF-16 (for example from Excel): save it again as UTF-8, or collect it again from LoggerNet",
+           ert_file = "a Res2DInv resistivity file: GS reads it", binary_unknown = "binary file in no format CS reads",
            unreadable = "file could not be opened")
   sk <- man[status != "ok"]
   if (nrow(sk)) audit_add("discover", sk$status, "file", NA, logger_id = sk$logger_id, stream = sk$table,
@@ -233,6 +236,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     g <- ok[logger_id == keys$logger_id[i] & table == keys$table[i] & src_station == keys$src_station[i] & src_stream == keys$src_stream[i]]; groups[[as.character(i)]] <- g
     k <- paste(c(keys$logger_id[i], keys$table[i], if (nzchar(keys$src_station[i])) keys$src_station[i]), collapse = "__")
     np0 <- length(AUDIT$problems); lg <- get0("LOG", ifnotfound = NULL); nl0 <- if (is.environment(lg)) length(lg$lines) else 0L
+    cfg$bound <- bound_row(cfgs$bounds, keys$logger_id[i], keys$table[i])
     utils::capture.output(miss <- tryCatch({ tcr <- rbind(cfgs$time[logger_id == keys$logger_id[i] & (table == "" | table == keys$table[i])], zone_corrections(g, cfgs$timezones, cfgs$stations, cfgs$sites), fill = TRUE)
       cf <- cache_file(cache_dir, k, cache_key(g, tcr, cfg)); !(isTRUE(cfg$incremental) && file.exists(cf) && file.exists(sub("\\.rds$", ".data.rds", cf))) }, error = function(e) FALSE))
     AUDIT$problems <- AUDIT$problems[seq_len(np0)]; if (is.environment(lg)) lg$lines <- lg$lines[seq_len(nl0)]
@@ -241,6 +245,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     run_tick(i, nrow(keys), paste(keys$logger_id[i], keys$table[i]))
     g <- ok[logger_id == keys$logger_id[i] & table == keys$table[i] & src_station == keys$src_station[i] & src_stream == keys$src_stream[i]]
     k <- paste(c(keys$logger_id[i], keys$table[i], if (nzchar(keys$src_station[i])) keys$src_station[i]), collapse = "__")
+    cfg$bound <- bound_row(cfgs$bounds, keys$logger_id[i], keys$table[i])           # its accepted dates (clock_bounds.csv), if set
     done <- tryCatch({
       tcr <- cfgs$time[logger_id == keys$logger_id[i] & (table == "" | table == keys$table[i])]
       tcr <- rbind(tcr, zone_corrections(g, cfgs$timezones, cfgs$stations, cfgs$sites), fill = TRUE)   # the time-zone table
@@ -269,7 +274,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       if (length(res$empty)) {
         man[path %in% res$empty, status := "no_data_rows"]
         audit_add("discover", "no_data_rows", "file", 0L, logger_id = g$logger_id[1], stream = g$table[1],
-                  column = "<file>", reason = "header only, no records", source_file = res$empty)
+                  column = "<file>", reason = "no records: a header only (TOA5), or frames that are empty or left from an earlier use of the card (TOB3)", source_file = res$empty)
       }
       if (!is.null(res$info)) {
         a <- audit_table(); a <- a[stage == "stitch" & level == "row"]

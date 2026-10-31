@@ -713,7 +713,7 @@ local({
   check("the Simple view builds: four steps, its own Import with the folder inputs, and no input twice", grepl('data-step="export"', h, fixed = TRUE) &&
         grepl('id="raw_dirs"', h, fixed = TRUE) && grepl('id="run"', h, fixed = TRUE) && !anyDuplicated(ids))
   check("values are edited by hand only in the Workbench: quality rules, clock corrections and corrections over a period",
-        setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "timecorr", "period")))
+        setequal(app$SETUP_TABLES[wb_only == TRUE]$id, c("qc", "timecorr", "bounds", "period")))
   st <- vapply(Filter(function(x) inherits(x, "ovid_stage"), app$cs_flow_pages()), `[[`, "", "title")
   check("the Standard view is grouped Set up, Assess, Decide, Report", identical(st, c("Set up", "Assess", "Decide", "Report")))
   ps <- file.path(root, "p16s"); dir.create(ps); invisible(file.copy(list.files(p16, full.names = TRUE), ps, recursive = TRUE))
@@ -914,4 +914,45 @@ local({                                                               # one way 
   check("table downloads are all 'Export table (CSV)', no bare 'Export CSV' or 'Export'", !any(grepl('downloadButton\\("[^"]+", "Export( CSV)?"', src)))
   check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
   check("the logger's 'deg C' is shown as °C in Explore", grepl('sub("^[Dd]eg ?C$", "\\u00b0C"', paste(readLines(file.path(.app, "pages", "explore_one_station.R"), warn = FALSE), collapse = "\n"), fixed = TRUE)) })
+local({                                                               # files from the raw archive that CS misread or could not name (31 Oct)
+  d <- tempfile("hdr"); dir.create(d); f <- function(n) file.path(d, n)
+  writeBin(c(as.raw(c(0xFF, 0xFE)), iconv('"TOA5","CR3010_15134","CR300","15134"\r\n', "UTF-8", "UTF-16LE", toRaw = TRUE)[[1]]), f("u16.dat"))
+  writeLines(c("LineN.bin", "  2.00", "11", "1", "Type of measurement (0=app. resistivity,1=resistance)"), f("ert.dat"))
+  writeBin(as.raw(c(0x00, 0x01, 0x3e, 0x02, rep(c(0x00, 0x7f, 0x05, 0x11), 40))), f("bin.dat"))
+  writeLines(c('"130,2005,248,1132,452.64,65.675"', '"130,2005,248,1134,455.54,66.963"', '"130,2005,248,1136,457.16,66.642"'), f("q.dat"))
+  check("a TOA5 file saved as UTF-16 (Excel) is named as such, with what to do", identical(read_header(f("u16.dat"))$status, "utf16_text"))
+  check("a Res2DInv resistivity .dat is named as one (GS reads it)", identical(read_header(f("ert.dat"))$status, "ert_file"))
+  check("a binary .dat in no format CS reads is named as binary", identical(read_header(f("bin.dat"))$status, "binary_unknown"))
+  check("a mixed-array file written with each line in quotes is found and its lines read without the quotes",
+        identical(read_header(f("q.dat"))$format, "mixed-array") && identical(read_array_lines(f("q.dat"))[1], "130,2005,248,1132,452.64,65.675")) })
+local({                                                               # CR10X downloads of one station are one logger (Scotty Creek archive: 601 files had become 265 loggers)
+  r <- file.path(tempdir(), "arch"); f <- function(...) file.path(r, ...)
+  check("CR10X downloads filed under one station folder (past year and 'undated' folders) are guessed as one logger",
+        identical(unique(c(guess_cr10x_id(f("MET_LFS_1998", "1998", "Lf198i01.dat"), r), guess_cr10x_id(f("MET_LFS_1998", "1999", "Lf199c01.dat"), r),
+                           guess_cr10x_id(f("MET_LFS_1998", "Multi_Year_or_Undated", "LF100F01.dat"), r))), "CR10X_MET_LFS_1998"))
+  check("a serial in the file name wins; a file at the top of a raw folder is named from its file name",
+        identical(guess_cr10x_id(f("MET_X", "CR10X_16454_NA100.dat"), r), "CR10X_16454") && identical(guess_cr10x_id(f("CR10X_site_final_storage_1.dat"), r), "CR10X_SITE")) })
+local({ h <- paste(readLines(file.path(.app, "home.R"), warn = FALSE), collapse = "\n")       # Home's daily table failed on some stations (archive stress test, 31 Oct)
+  fl <- data.table(start = as.POSIXct(c("2017-11-20", "2018-01-10", "2018-01-10"), tz = "UTC"), end = as.POSIXct(c("2017-11-22", "2018-01-10", "2018-01-12"), tz = "UTC"))
+  fd <- fl[, { a <- as.numeric(as.Date(substr(start, 1, 10))); z <- as.numeric(as.Date(substr(end, 1, 10)))
+    .(day = as.Date(if (is.na(a) || is.na(z)) numeric() else seq(a, max(a, z), by = 1))) }, by = seq_len(nrow(fl))]
+  check("Home expands flagged stretches into days for every station (seq() of Dates gave integer days in some groups and the table failed)",
+        nrow(fd) == 7 && grepl("seq(a, max(a, z), by = 1)", h, fixed = TRUE)) })
+local({                                                               # accepted dates per logger (M, 31 Oct): a reset clock's early block left out and shown
+  good <- seq(as.POSIXct("2024-06-01", tz = "UTC"), by = 1800, length.out = 2000); bad <- seq(as.POSIXct("1995-07-10", tz = "UTC"), by = 1800, length.out = 40)
+  t <- c(good[1:1000], bad, good[1001:2000]); f <- rep("a.dat", length(t)); w <- seq_along(t)          # the old dates written in the middle of a download
+  s <- clock_bound_suggest(t, f, w)
+  check("a small block stamped years before the rest, written after later records in the same file, sets the earliest accepted date where the record starts",
+        identical(as.numeric(s), as.numeric(good[1])))
+  t2 <- c(bad, good); f2 <- c(rep("old.dat", 40), rep("new.dat", 2000))
+  check("an early deployment in files of its own is not taken for a reset clock (nothing suggested)", is.na(clock_bound_suggest(t2, f2, ave(seq_along(t2), f2, FUN = seq_along))))
+  b <- data.table(logger_id = "1", table = "", earliest = "1995-01-01", latest = "", note = "", author = "")
+  cb <- clock_bounds_for(b, t, f, w)
+  check("a date set by hand in Accepted dates wins over the suggestion, and says so", identical(cb$earliest, as.POSIXct("1995-01-01", tz = "UTC")) && grepl("by hand", cb$source))
+  check("with the automatic correction off, only dates set by hand apply", is.null(clock_bounds_for(NULL, t, f, w, auto = FALSE)))
+  set.seed(4); junk <- as.POSIXct(runif(200, as.numeric(as.POSIXct("1923-01-01", tz = "UTC")), as.numeric(as.POSIXct("2058-01-01", tz = "UTC"))), origin = "1970-01-01", tz = "UTC")
+  cc <- corrupt_clock_files(c(good[1:300], junk), c(rep("ok.dat", 300), rep("bad.dat", 200)), c(1:300, 1:200), c("ok.dat", "bad.dat"))
+  check("a file whose dates jump about (more than 20 jumps of a month or more) is found as a corrupt clock; a file written in time order is not",
+        identical(names(cc), "bad.dat") && cc[["bad.dat"]] > 20)
+  check("a table's own row of Accepted dates wins over the logger's", identical(bound_row(rbind(b, data.table(logger_id = "1", table = "T1", earliest = "2020-01-01", latest = "", note = "", author = "")), "1", "T1")$earliest, "2020-01-01")) })
 cat(sprintf("\n%d passed, %d failed\n", RES$pass, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

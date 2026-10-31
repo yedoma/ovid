@@ -12,6 +12,7 @@ WB_OPEN <- list(
   qc        = list(go = "Quality rules", tab = "Automatic limits"),
   cr10x     = list(go = "CR10X files"),
   timecorr  = list(go = "Clock checks", details = "Corrections already set"),
+  bounds    = list(go = "Clock checks", details = "Accepted dates"),
   pinfo     = list(go = "Parameter guide", details = "Edit the guide"),
   gauges    = list(go = "Precipitation", tab = "Gauge set-up"),
   sites     = list(go = "Sites and field log", tab = "Station details"),

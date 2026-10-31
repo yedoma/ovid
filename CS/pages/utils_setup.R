@@ -9,14 +9,14 @@ log_change <- function(path, new, who = "", what = "") backup_cfg(path, new, who
 # Every set-up table the interfaces edit: module id, file, columns that cannot be edited, and whether a saved change
 # needs a run to apply (the run state then says so). Both interfaces build their editors from this list.
 SETUP_TABLES <- data.table(
-  id     = c("stations", "aliases", "qc", "cr10x", "groups", "timecorr", "pinfo", "gauges", "sites", "fieldlog", "filerules", "depsheet", "calib", "period", "timezones"),
-  file   = c("stations.csv", "aliases.csv", "qc_rules.csv", "cr10x.csv", "groups.csv", "time_corrections.csv",
+  id     = c("stations", "aliases", "qc", "cr10x", "groups", "timecorr", "bounds", "pinfo", "gauges", "sites", "fieldlog", "filerules", "depsheet", "calib", "period", "timezones"),
+  file   = c("stations.csv", "aliases.csv", "qc_rules.csv", "cr10x.csv", "groups.csv", "time_corrections.csv", "clock_bounds.csv",
              "parameter_info.csv", "precip_gauges.csv", "station_info.csv", "field_log.csv", "file_rules.csv", "deployment_sheet.csv", "calibration_options.csv", PERIOD_FILE, "timezones.csv"),
-  label  = c("Stations", "Column aliases", "Quality rules", "CR10X files", "Parameter groups", "Clock corrections",
+  label  = c("Stations", "Column aliases", "Quality rules", "CR10X files", "Parameter groups", "Clock corrections", "Accepted dates",
              "Parameter guide", "Precipitation gauges", "Station details", "Field log", "File rules", "Deployment sheet", "Calibration options", "Corrections over a period", "Time zones"),
-  locked = c("logger_id|seen_as", "", "", "file", "", "", "", "", "station", "", "", "", "", "", ""),
-  run    = c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE))
-SETUP_TABLES[, wb_only := id %in% c("qc", "timecorr", "period")]   # these change data values: edited by hand only in the Workbench (M 28 Oct)
+  locked = c("logger_id|seen_as", "", "", "file", "", "", "", "", "", "station", "", "", "", "", "", ""),
+  run    = c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE))
+SETUP_TABLES[, wb_only := id %in% c("qc", "timecorr", "bounds", "period")]   # these change data values: edited by hand only in the Workbench (M 28 Oct)
 setup_editors <- function(cfg_path, tick, mark) setNames(lapply(seq_len(nrow(SETUP_TABLES)), function(i) { s <- SETUP_TABLES[i]
   editServer(s$id, cfg_path(s$file), tick, locked = if (nzchar(s$locked)) strsplit(s$locked, "|", fixed = TRUE)[[1]] else character(),
              on_change = if (s$run) mark else function() NULL, wb_only = s$wb_only) }), SETUP_TABLES$id)

@@ -124,7 +124,9 @@ cs_home_server <- function(input, output, session, outs, pd, cur, st_shown, E, s
                  if ("r" %in% names(x)) list(r_mean = s(r, mean, 0)), if ("w" %in% names(x)) list(w_mean = s(w, mean, 1)),
                  if ("n" %in% names(x)) list(n_mj = round(s(n, mean, 3) * 0.0864, 2))), by = Day]    # mean W/m2 x 86400 s / 1e6 = MJ/m2 per day
     fl <- outs()$flags; fl <- if (nrow(fl)) fl[station == k$station & stream == k$stream] else data.table()
-    fd <- if (nrow(fl)) fl[, .(day = seq(as.Date(substr(start, 1, 10)), as.Date(substr(end, 1, 10)), by = "day")), by = seq_len(nrow(fl))][, .N, by = day] else data.table(day = as.Date(character()), N = integer())
+    fd <- if (nrow(fl)) fl[, { a <- as.numeric(as.Date(substr(start, 1, 10))); z <- as.numeric(as.Date(substr(end, 1, 10)))   # days as doubles: seq() of Dates gave
+        .(day = as.Date(if (is.na(a) || is.na(z)) numeric() else seq(a, max(a, z), by = 1))) }, by = seq_len(nrow(fl))][, .N, by = day]   # integer days in some groups (Home failed)
+      else data.table(day = as.Date(character()), N = integer())
     out[, `QA/QC` := { n <- fd$N[match(Day, fd$day)]; ifelse(is.na(n), "ok", paste(n, "flagged")) }]
     setnames(out, c("a_mean", "a_min", "a_max", "r_mean", "w_mean", "n_mj"), c("Mean \u00b0C", "Min \u00b0C", "Max \u00b0C", "RH %", "Wind m/s", "Rn MJ/m\u00b2"), skip_absent = TRUE)
     out[order(-Day)] })

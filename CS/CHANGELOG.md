@@ -5,6 +5,32 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (accepted dates per logger, 2026-10-31; M).** A new set-up table, Accepted dates (config/clock_bounds.csv:
+logger_id, table, earliest, latest, note, author), sets the dates a logger's (or one table's) records may carry; records
+outside are left out (audit rule outside_clock_bounds). With no date set by hand, a reset clock is found on its own: a block
+of records stamped more than a year before the rest, holding at most 5 % of them and written after later-stamped records in
+the same file, and the earliest date is set where the record really starts (switch: Automatic corrections, "auto_clock_bounds").
+A file whose clock is broken through and through (its dates jump by a month or more more than 20 times between records
+written one after the other; 40 to 700 times in the archive's failed-clock files, at most 14 in good ones) is left out whole.
+Every case shows on Clock checks ("Outside the accepted dates", with what was left out, the dates and whether they were set
+by hand or suggested), with "Keep these records" and "Keep <date> as the earliest date"; Explore's time plot marks the start
+of the accepted record ("Clock"); the Needs you list counts it with the clock findings. Edited by hand in the Workbench, like
+clock corrections. **Output changes:** records of a reset clock are left out of station files (on the archive, logger
+52471's 823 records stamped 1995 to 2023 among its 2024 to 2026 record).
+
+**Fixed (stress test on the raw archive, 2026-10-31).** Home's daily table failed ("Column 1 ... is type 'integer' but expecting
+type 'double'") on stations whose flagged stretches gave integer-typed days. **Output changes:** none.
+
+**Fixed (the Scotty Creek raw archive, 2026-10-31).** Run on all 3,303 .dat files of ~/Scotty_Creek_Raw_Only_Archive:
+a CR10X mixed-array file written with each line in quotes is now read (it was "not a Campbell file"); a TOA5 file saved
+as UTF-16 (from Excel), a Res2DInv resistivity file and a binary file in no format CS reads are named as such, with what
+to do, instead of "not a Campbell TOA5 file"; a TOB3 file with no records says why (frames empty or left from an earlier
+use of the card; 14 such files in the archive, up to 261 MB). A CR10X file's logger is guessed from the station folder it
+is filed in (past year, date and "undated" folders), so a station's downloads stitch into one record: the archive's 601
+CR10X files were 265 loggers, one per download name (Lf198i01, Lf199c01, ...), and are now 15. A serial in the file name
+still wins; guesses already in cr10x.csv are kept. **Output changes:** file statuses and audit reasons for those files;
+CR10X files new to a project are stitched by station folder (fewer, longer station records).
+
 **Fixed (narrow windows, 2026-10-31).** Home's station pop-up stays inside a narrow window. **Output changes:** none.
 
 **Changed (one way of writing things across CS, 2026-10-30; Plot_table_standards A4, A8)**

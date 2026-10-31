@@ -138,7 +138,10 @@
     # events (plot standards A11): where a new source file starts and each field-log entry; sources: the logger and file of each stretch
     fu <- ex_files(); lg <- ex_log(); f0 <- if (nrow(fu)) parse_time(fu$`First record used`)
     ev <- rbindlist(list(if (nrow(fu) > 1) data.table(t = as.numeric(f0[-1]), label = "New file", note = fu$File[-1]),
-                         if (nrow(lg)) data.table(t = as.numeric(lg$t), label = "Field log", note = trim(paste(lg$type %||% "", lg$note %||% "")))), fill = TRUE)
+                         if (nrow(lg)) data.table(t = as.numeric(lg$t), label = "Field log", note = trim(paste(lg$type %||% "", lg$note %||% ""))),
+                         { ck <- outs()$checks                                         # records left out for a wrong clock: marked where the accepted record starts
+                           if (NROW(ck) && all(c("bound", "station") %in% names(ck))) { ck <- ck[check == "outside_bounds" & station == k[1] & !is.na(bound) & nzchar(bound)]
+                             if (nrow(ck)) data.table(t = as.numeric(parse_time(ck$bound)), label = "Clock", note = ck$detail) } }), fill = TRUE)
     src <- if (nrow(fu)) data.table(from = as.numeric(f0), label = paste0(fu$Logger, " \u00b7 ", fu$File))
     session$onFlushed(function() { ts_view_send(session, "ex_tsv", d$TIMESTAMP, series, zone = "logger time", issues = if (nrow(iss)) iss,
                                                 wb = list(key = "station", value = k, params = p), focus = focus, events = if (nrow(ev)) ev[!is.na(t)][seq_len(min(.N, 300))],

@@ -228,6 +228,9 @@ LOG_COLS <- c("station", "stream", "date", "type", "parameter", "note", "author"
 LOG_TYPES <- c("site visit", "gauge serviced", "sensor replaced", "sensor moved", "sensor cleaned", "program changed", "data downloaded", "note")
 
 TIME_COLS <- c("logger_id", "table", "source_file", "start", "end", "action", "shift_minutes", "reason", "author")
+# Accepted dates (clock_bounds.csv): records of a logger (or of one of its tables) stamped before earliest or after latest
+# are left out as a wrong clock. A row set by hand wins over the run's own suggestion (R/stitch.R clock_bound_suggest).
+BOUND_COLS <- c("logger_id", "table", "earliest", "latest", "note", "author")
 
 INFO_COLS <- c("pattern", "topic", "unit", "typical_min", "typical_max", "sensor_min", "sensor_max", "sensors", "about", "reasonable", "watch_for", "source")
 
@@ -299,7 +302,7 @@ cs_load_configs <- function(cfg, loggers) {
   config_migrate(cfg$project_dir, "pipeline")                                          # calibrations and manual removals into the corrections over a period (core config.R)
   f <- list(stations = file.path(cdir, "stations.csv"), aliases = file.path(cdir, "aliases.csv"),
             qc = file.path(cdir, "qc_rules.csv"),
-            groups = file.path(cdir, "groups.csv"), time = file.path(cdir, "time_corrections.csv"),
+            groups = file.path(cdir, "groups.csv"), time = file.path(cdir, "time_corrections.csv"), bounds = file.path(cdir, "clock_bounds.csv"),
             info = file.path(cdir, "parameter_info.csv"), gauges = file.path(cdir, "precip_gauges.csv"),
             sites = file.path(cdir, "station_info.csv"), log = file.path(cdir, "field_log.csv"), files = file.path(cdir, "file_rules.csv"),
             timezones = file.path(cdir, "timezones.csv"), composites = file.path(cdir, "composites.csv"), calib = file.path(cdir, "calibration_options.csv"),
@@ -320,6 +323,7 @@ cs_load_configs <- function(cfg, loggers) {
       backup_cfg(f$qc, q0[, QC_COLS, with = FALSE], "pipeline"); fwrite_safe(q0[, QC_COLS, with = FALSE], f$qc); say("  qc_rules.csv: added the max_flat_hours and action columns", col = "yellow") } }
   if (!file.exists(f$gauges)) fwrite(as.data.table(setNames(rep(list(character()), length(PRECIP_COLS)), PRECIP_COLS)), f$gauges)
   if (!file.exists(f$time)) fwrite(as.data.table(setNames(rep(list(character()), length(TIME_COLS)), TIME_COLS)), f$time)
+  if (!file.exists(f$bounds)) fwrite(empty(BOUND_COLS), f$bounds)
   if (!file.exists(f$info)) { fwrite(default_parameter_info(), f$info); say("  created ", f$info, col = "yellow") }
   if (!file.exists(f$groups)) { fwrite(default_groups(), f$groups); say("  created ", f$groups, col = "yellow") }
   if (!file.exists(f$aliases)) { fwrite(default_aliases(), f$aliases); say("  created ", f$aliases, col = "yellow") }
@@ -337,7 +341,7 @@ cs_load_configs <- function(cfg, loggers) {
     bad <- nzchar(st[[v]]) & is.na(parse_time(st[[v]]))
     for (b in which(bad)) problem("stations.csv", paste0("'", st[[v]][b], "' is not a date (use YYYY-MM-DD); that ", v, " date was ignored"))
   }
-  list(stations = st, calib = ensure_cols(read_cfg(f$calib), CALIBRATION_COLS),
+  list(stations = st, calib = ensure_cols(read_cfg(f$calib), CALIBRATION_COLS), bounds = ensure_cols(read_cfg(f$bounds), BOUND_COLS),
        aliases = valid_patterns(ensure_cols(read_cfg(f$aliases), c("pattern", "parameter", "logger_id", "notes")), "aliases.csv"),
        qc      = valid_patterns(qc_read_rules(f$qc, QC_COLS, "Q"), "qc_rules.csv"),     # each row gets a lasting rule_id (core/qc.R)
        file_rules = ensure_cols(read_cfg(f$files), FILE_COLS),
@@ -556,6 +560,7 @@ CONFIG_FILES <- list(
   qc         = list(file = "qc_rules.csv",         cols = function() QC_COLS, label = "Automatic limits"),
   time       = list(file = "time_corrections.csv", cols = function() TIME_COLS, label = "Clock corrections",
                     rules = list(known = list(logger_id = known_from("config/stations.csv", "logger_id")))),
+  bounds     = list(file = "clock_bounds.csv",     cols = function() BOUND_COLS, label = "Accepted dates"),
   timezones  = list(file = "timezones.csv",        cols = function() TZ_COLS, label = "Time zones"),
   files      = list(file = "file_rules.csv",       cols = function() FILE_COLS, label = "File rules"),
   cr10x      = list(file = "cr10x.csv",            cols = c("file", "import", "logger_id", "fsl", "start_year", "notes"), label = "CR10X files"),
@@ -573,6 +578,8 @@ CORRECTIONS <- list(
        what = "Records with corrupt time stamps among good ones (off the time grid and out of the order the file was written in) are left out; each is in the audit trail."),
   list(id = "bad_clock", rules = "bad_timestamp", does = "removes", setting = "drop_bad_clock", panel = TRUE,
        what = "Records stamped before the first year (min_year) or more than two days in the future are left out as a reset clock (off: kept at the time they carry; records with no time are always left out)."),
+  list(id = "clock_bounds", rules = "outside_clock_bounds", does = "removes", setting = "auto_clock_bounds", panel = TRUE,
+       what = "A small block of records stamped long before the rest of a logger's record, and written after later records in the same file, is left out as a reset clock: the logger's earliest accepted date is set where its record really starts (off: only the dates set by hand in Accepted dates apply). Each is in the audit trail and on Clock checks."),
   list(id = "error_codes", rules = "sentinel", does = "removes", setting = "remove_error_codes", panel = TRUE,
        what = "Campbell out-of-range codes (-7999, 7999, -6999, 6999) are removed (off: kept as values). Infinite values are always removed."),
   list(id = "overlaps", rules = c("overlap_conflict", "station_overlap"), does = "changes", setting = "prefer", panel = TRUE, choices = c("The newest file's" = "newest", "The oldest file's" = "oldest"),

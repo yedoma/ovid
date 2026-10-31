@@ -38,8 +38,22 @@ resolve_fsl <- function(fsl, cfg) {
   say("  FSL not found: ", fsl, " (using position labels)", col = "orange"); ""
 }
 
-guess_cr10x_id <- function(path) {
-  s <- tools::file_path_sans_ext(fix_enc(basename(path)))
+# A CR10X writes no serial into its files, so which logger a file came from is guessed (cr10x.csv keeps the guess for the
+# user to correct): a serial in the file name (CR10X_16454_...); else the folder the downloads were filed in, climbing past
+# folders that only sort them (years, dates, "undated", "backup"; CR10X_SORT_FOLDERS), so the downloads of one station
+# (Lf198i01.dat, Lf199c01.dat, ...) are one logger and stitch into one record; else, for a file at the top of a raw folder,
+# its file name.
+CR10X_SORT_FOLDERS <- "^((19|20)[0-9]{2}([-_ .][0-9]{1,2}){0,2}|undated|multi[-_ ]?years?.*|.*_or_undated|misc.*|unsorted|backup.*|downloads?|data|raw|final[-_ ]?storage|cr10x)$"
+guess_cr10x_id <- function(path, roots = character()) {
+  b <- fix_enc(basename(path))
+  ser <- regmatches(b, regexpr("CR10X[_ ]+[0-9]{4,6}", b, ignore.case = TRUE))
+  if (length(ser)) return(paste0("CR10X_", sub("^CR10X[_ ]+", "", ser, ignore.case = TRUE)))
+  if (length(roots)) {
+    top <- normalizePath(path.expand(roots), mustWork = FALSE); d <- normalizePath(dirname(path), mustWork = FALSE)
+    while (!d %in% top && dirname(d) != d && grepl(CR10X_SORT_FOLDERS, basename(d), ignore.case = TRUE, perl = TRUE)) d <- dirname(d)
+    if (!d %in% top && dirname(d) != d) return(paste0("CR10X_", toupper(gsub("^_+|_+$", "", gsub("[^A-Za-z0-9]+", "_", fix_enc(basename(d)))))))
+  }
+  s <- tools::file_path_sans_ext(b)
   s <- gsub("_final_storage_[0-9]+|FSArea[0-9]*|\\([0-9]+\\)|[0-9]{4,}.*$|^CR10X", "", s, ignore.case = TRUE)
   s <- toupper(gsub("^_+|_+$", "", gsub("[^A-Za-z0-9]+", "_", s)))
   paste0("CR10X_", if (nzchar(s)) s else "UNKNOWN")
@@ -61,7 +75,7 @@ sync_cr10x <- function(cfg, files) {
   }
   new <- setdiff(files, cx$file)
   if (length(new)) {
-    cx <- rbind(cx, data.table(file = new, import = "yes", logger_id = vapply(new, guess_cr10x_id, ""),
+    cx <- rbind(cx, data.table(file = new, import = "yes", logger_id = vapply(new, guess_cr10x_id, "", roots = cfg$raw_dirs),
                                fsl = "", start_year = "", notes = ""), fill = TRUE)
     for (v in names(cx)) set(cx, which(is.na(cx[[v]])), v, "")
     backup_cfg(f, cx, "pipeline")
@@ -80,7 +94,7 @@ cr10x_enable <- function(man, cfg) {
   i <- arr[use]; k <- k[use]
   man[i, `:=`(status = "ok", table = "ARRAY", model = "CR10X", id_source = "cr10x.csv",
               station_name = tools::file_path_sans_ext(fix_enc(basename(path))),
-              logger_id = fifelse(nzchar(cx$logger_id[k]), cx$logger_id[k], vapply(path, guess_cr10x_id, "")))]
+              logger_id = fifelse(nzchar(cx$logger_id[k]), cx$logger_id[k], vapply(path, guess_cr10x_id, "", roots = cfg$raw_dirs)))]
   man[arr[!use], status := "cr10x_import_off"]
   man
 }
@@ -89,6 +103,7 @@ cr10x_enable <- function(man, cfg) {
 # (01+0101.  02+2012.  03+0311. ...), which is rewritten as comma-separated.
 read_array_lines <- function(path) {
   lines <- fix_enc(suppressWarnings(readLines(path, warn = FALSE, skipNul = TRUE, encoding = "latin1")))
+  lines <- sub('^"(.*)"$', "\\1", trim(lines))                                   # a line written in quotes ("130,2005,248,...")
   lines <- sub("[,\t ]+$", "", lines); lines <- lines[nzchar(trim(lines))]
   if (length(lines) && grepl("^\\s*01[+-][0-9.]+\\s+02[+-][0-9.]+", lines[1])) {
     all <- paste(lines, collapse = " ")

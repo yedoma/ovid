@@ -30,8 +30,8 @@
   rf_sel <- reactive({ m <- rf_view(); s <- input$rf_tbl_rows_selected; s <- s[s <= nrow(m)]; if (!length(s)) NULL else m[s] })
   rf_why <- c(duplicate_file = "A byte-for-byte copy of another file; read once.", skipped_table = "Its table is on the list of tables to leave out (Project step).",
               unsupported_binary_TOB = "A TOB1 or TOB2 binary file (or a TOB3 file with an unreadable header). Convert it to TOA5 with LoggerNet or CardConvert.", excluded_by_user = "Left out by a rule on this page.", set_aside = "Its logger is set aside on the Stations page.",
-              no_data_rows = "Header only, no records.", error = "Could not be read in the last run; see Loggers and files, Problems.", cr10x_import_off = "CR10X file marked not to import.",
-              no_usable_arrays = "CR10X file with no array that could be given a timestamp.", unrecognised_format = "Not a Campbell TOA5 or mixed-array file.", empty_file = "Empty file.",
+              no_data_rows = "No records: a header only (TOA5), or frames that are empty or left from an earlier use of the card (TOB3).", error = "Could not be read in the last run; see Loggers and files, Problems.", cr10x_import_off = "CR10X file marked not to import.",
+              no_usable_arrays = "CR10X file with no array that could be given a timestamp.", unrecognised_format = "Not a Campbell TOA5 or mixed-array file.", utf16_text = "Text saved as UTF-16 (for example from Excel): save it again as UTF-8, or collect it again from LoggerNet.", ert_file = "A Res2DInv resistivity file: open it in GS.", binary_unknown = "A binary file in no format CS reads.", empty_file = "Empty file.",
               truncated_header = "The header is incomplete.", unreadable = "The file could not be opened.")
   rf_rule_text <- c(duplicate_record = "records identical to a copy in another file (dropped, nothing lost)", overlap_conflict_merged = "records sharing a timestamp with another file, merged into the kept record",
                     overlap_conflict = "values that disagreed with the kept record at the same timestamp (logged with the value)", bad_timestamp = "records with an unreadable or impossible date",

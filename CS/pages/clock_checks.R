@@ -3,12 +3,13 @@
 # variables (input, output, session, pd, outs, E, rv, ...). Keep the order in app.R: later pages may use earlier ones.
 
   # ---- Clock checks -------------------------------------------------------
-  ck_names <- c(clock_went_backwards = "Clock went backwards", logger_restarted = "Logger restarted", impossible_date = "Impossible dates",
+  ck_names <- c(clock_went_backwards = "Clock went backwards", logger_restarted = "Logger restarted", impossible_date = "Impossible dates", outside_bounds = "Outside the accepted dates",
                 off_the_time_grid = "Off the time grid", stray_records = "Corrupt timestamps left out", clock_differs_between_files = "Files shifted against each other", files_disagree = "Files disagree")
   ck_explain <- c(
     clock_went_backwards = "The logger's clock jumped back in time, which usually follows a power loss or someone setting the clock. Records written after the jump can sit on top of earlier ones. If that later block is wrong, remove it, or move it by the size of the jump.",
     logger_restarted = "The record counter started again. That happens when the logger loses power or is sent a new program. The data are usually fine, but look at the records just before and after for a gap or for corrupted values.",
     impossible_date = "These records are dated before the earliest plausible year or in the future, so they were left out of the cleaned data. After a power loss many loggers restart at a default date and keep counting from there. If you know when they were really recorded, move them back with a shift.",
+    outside_bounds = "These records carry dates outside the logger's accepted dates, so they were left out of the cleaned data and are listed in the audit trail. A suggested start comes from a reset clock: a small block of records stamped long before the rest, written after later records in the same file. If they are real, keep them; if you know when they were really taken, move them below; or set the accepted dates by hand (Workbench, Accepted dates).",
     stray_records = "A failing logger memory or clock writes records stamped at random times among good ones. These were off the time grid and out of the order the file was written in, so they were left out and listed in the audit trail. To keep them, switch off this correction under Automatic corrections (6 Automatic corrections).",
     off_the_time_grid = "These records do not fall on the table's normal interval. They are typically written while the clock is being set or is drifting. They are kept; remove them if they repeat neighbouring records.",
     clock_differs_between_files = "Two downloads of the same logger disagree at the same timestamps, but agree once one of them is moved in time. One was collected with the clock off, often a daylight-saving or time-zone setting on the laptop. Shift the file named here to line the two up.",
@@ -39,6 +40,10 @@
       h3(r$kind, span(class = "dim", style = "font-weight:400", paste0("  logger ", r$logger_id, ", ", r$table))),
       div(class = "explain", unname(ck_explain[r$check]) %||% ""),
       p(r$detail),
+      if (identical(r$check, "outside_bounds")) div(class = "btnrow",                  # decisions on the run's finding (no value is typed)
+        actionButton("ckb_keep", paste0("Keep these records (accept from ", substr(r$from, 1, 10), ")")),
+        if (grepl("^suggested", r$bound_source %||% "")) actionButton("ckb_set", paste0("Keep ", substr(r$bound %||% "", 1, 10), " as the earliest date")),
+        span(class = "dim", "Saved in Accepted dates; applied the next time the pipeline runs.")),
       div(class = "editor-only",
         fluidRow(
           column(3, radioButtons("ckf_action", "Correction", c("Move the timestamps" = "shift", "Remove the records" = "remove"),
@@ -53,6 +58,11 @@
         div(class = "btnrow d-hide-std", actionButton("ckf_add", "Add this correction", class = "btn-primary"),
             span(class = "dim", "It is applied the next time the pipeline runs, and recorded in the audit trail."))))
   })
+  ck_bound <- function(r, earliest, note_txt) {                                     # a row of Accepted dates for this logger table
+    ok <- E$bounds$append(data.frame(logger_id = r$logger_id, table = r$table, earliest = earliest, latest = "", note = note_txt, author = who()))
+    if (ok) note(paste0("Accepted dates for ", r$logger_id, " ", r$table, ": from ", earliest, ". Run the pipeline to apply it.")) }
+  observeEvent(input$ckb_keep, { r <- ck_sel(); req(r); ck_bound(r, substr(r$from, 1, 10), "kept: records before the suggested start are real") })
+  observeEvent(input$ckb_set, { r <- ck_sel(); req(r); ck_bound(r, substr(r$bound, 1, 10), "the suggested start, accepted") })
   observeEvent(input$ckf_add, {
     r <- ck_sel(); req(r); if (!wb_made(m_tc)) return()
     if (!nzchar(trim(input$ckf_reason))) return(note("Give a reason for the correction.", type = "warning"))

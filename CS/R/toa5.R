@@ -18,16 +18,22 @@ read_header <- function(path) {
               table = NA_character_, columns = list(character()), units = list(character()),
               process = list(character()), sep = NA_character_, status = "unrecognised_format")
   if (file.size(path) == 0) { out$status <- "empty_file"; return(out) }
-  sig <- readBin(path, "raw", 6L); sig <- rawToChar(sig[sig != as.raw(0)])
+  b0 <- readBin(path, "raw", 512L)
+  # a text file saved as UTF-16 (Excel's "Unicode text"): its bytes alternate with zeros
+  if ((length(b0) >= 2 && (identical(b0[1:2], as.raw(c(0xFF, 0xFE))) || identical(b0[1:2], as.raw(c(0xFE, 0xFF))))) ||
+      (length(b0) >= 16 && all(b0[seq(2, 16, 2)] == as.raw(0)) && all(b0[seq(1, 15, 2)] >= as.raw(32) & b0[seq(1, 15, 2)] < as.raw(127)))) { out$status <- "utf16_text"; return(out) }
+  sig <- b0[seq_len(min(6L, length(b0)))]; sig <- rawToChar(sig[sig != as.raw(0)])
   if (grepl("^\"TOB3\"", sig, useBytes = TRUE)) return(tob3_manifest_row(out, path))
   if (grepl("^\"TOB[12]\"", sig, useBytes = TRUE)) { out$format <- substr(sig, 2, 5); out$status <- "unsupported_binary_TOB" ; return(out) }
   th <- toa5_head(path)                                         # core logger_files.R
   if (th$status == "not_toa5") {
     top <- fix_enc(suppressWarnings(readLines(path, n = 12L, warn = FALSE, skipNul = TRUE, encoding = "latin1")))
     top <- top[nzchar(trim(top))]
-    if (length(top) && (mean(grepl("^[0-9]{1,3}[,\t][0-9]{1,4}[,\t][0-9]{1,4}([,\t]|$)", top)) >= 0.5 ||
+    if (length(top) && (mean(grepl("^\"?[0-9]{1,3}[,\t][0-9]{1,4}[,\t][0-9]{1,4}([,\t]|\"?$)", top)) >= 0.5 ||   # lines may be quoted
                         grepl("^\\s*01[+-][0-9.]+\\s+02[+-][0-9.]+", top[1]))) {
       out$format <- "mixed-array"; out$status <- "unsupported_mixed_array" }
+    else if (any(grepl("Type of measurement \\(0=app\\. resist", top))) out$status <- "ert_file"                # a Res2DInv resistivity file (GS reads it)
+    else if (mean(b0 < as.raw(9) | (b0 > as.raw(13) & b0 < as.raw(32))) > 0.1) out$status <- "binary_unknown"   # not text: no Campbell format CS reads
     return(out)
   }
   if (is.null(th$env)) { out$status <- th$status; return(out) }

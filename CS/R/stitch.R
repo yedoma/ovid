@@ -245,8 +245,11 @@ stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
   # --- timestamps ---------------------------------------------------------
   raw_ts <- fix_enc(dt$TIMESTAMP)
   set(dt, j = ".raw_ts", value = raw_ts)
+  dt[, .wrow := seq_len(.N), by = source_file]                 # the order each file was written in (for a reset clock below)
   set(dt, j = "TIMESTAMP", value = as.POSIXct(raw_ts, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS"))
   dt <- apply_time_corrections(dt, tc)                 # your fixes first, so a logger that woke up in 1990 can be moved back
+  # a file whose clock is broken through and through (dates scattered from 1923 to 2058 in one download) is left out whole
+  corrupt <- if (isFALSE(cfg$auto_clock_bounds)) character() else corrupt_clock_files(dt$TIMESTAMP, dt$source_file, dt$.wrow, g$path[g$format %in% c("TOA5", "TOB3")])
   yr <- as.integer(format(dt$TIMESTAMP, "%Y", tz = "UTC"))
   bad <- is.na(dt$TIMESTAMP) | (!isFALSE(cfg$drop_bad_clock) & (yr < cfg$min_year | dt$TIMESTAMP > Sys.time() + 2 * 86400))   # switch: Automatic corrections
   if (any(bad)) {
@@ -264,6 +267,29 @@ stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
     dt <- dt[!bad]
   }
   dt[, .raw_ts := NULL]
+  # --- accepted dates: set by hand (clock_bounds.csv) or, when none is set, where a reset clock's early block ends ---
+  if (length(corrupt) && any(cf <- dt$source_file %in% names(corrupt))) {
+    ob <- dt[cf, .(n = .N, a = min(TIMESTAMP), z = max(TIMESTAMP)), by = source_file]
+    checks[[7]] <- data.table(logger_id = lid, table = tb, check = "outside_bounds", source_file = ob$source_file, from = fmt_ts(ob$a), to = fmt_ts(ob$z),
+      records = ob$n, suggest_shift_min = NA_real_, bound = NA_character_, bound_latest = NA_character_, bound_source = "a corrupt clock in this file",
+      detail = sprintf("%s records of this file were left out: its dates jump by a month or more %s times between records written one after the other, so none of them can be trusted (they run from %s to %s)",
+                       format(ob$n, big.mark = ","), corrupt[ob$source_file], substr(fmt_ts(ob$a), 1, 10), substr(fmt_ts(ob$z), 1, 10)))
+    dt <- remove_rows(dt, cf, "stitch", "outside_clock_bounds", "its file's clock is corrupt: its dates jump about", detail = "summary")
+  }
+  cb <- clock_bounds_for(cfg$bound, dt$TIMESTAMP, dt$source_file, dt$.wrow, auto = !isFALSE(cfg$auto_clock_bounds))
+  if (!is.null(cb)) {
+    out <- (!is.na(cb$earliest) & dt$TIMESTAMP < cb$earliest) | (!is.na(cb$latest) & dt$TIMESTAMP > cb$latest)
+    if (any(out)) {
+      ob <- dt[out, .(n = .N, a = min(TIMESTAMP), z = max(TIMESTAMP)), by = source_file]
+      checks[[6]] <- data.table(logger_id = lid, table = tb, check = "outside_bounds", source_file = ob$source_file, from = fmt_ts(ob$a), to = fmt_ts(ob$z),
+        records = ob$n, suggest_shift_min = NA_real_, bound = fmt_ts(cb$earliest), bound_latest = fmt_ts(cb$latest), bound_source = cb$source,
+        detail = sprintf("%s records are stamped %s to %s, outside the accepted dates (%s to %s, %s); they were left out", format(ob$n, big.mark = ","),
+                         substr(fmt_ts(ob$a), 1, 16), substr(fmt_ts(ob$z), 1, 16), if (is.na(cb$earliest)) "any" else substr(fmt_ts(cb$earliest), 1, 10),
+                         if (is.na(cb$latest)) "today" else substr(fmt_ts(cb$latest), 1, 10), cb$source))
+      dt <- remove_rows(dt, out, "stitch", "outside_clock_bounds", paste0("stamped outside the logger's accepted dates (", cb$source, ")"), detail = "summary")
+    }
+  }
+  dt[, .wrow := NULL]
   if (!nrow(dt)) return(list(data = NULL, empty = g$path[empty], checks = rbindlist(checks, fill = TRUE), read_by_file = read_by_file))
 
   n_nan <- to_numeric_columns(dt, cfg, "stitch")
@@ -322,11 +348,49 @@ stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
 # STEP_HASH$stitch (cs_pipeline.R) changes whenever the code that stitches does, so a cached result is never older than it.
 CACHE_VERSION <- 4L
 
+# Files (of the given formats, written in time order by the logger) whose clock is broken through and through: more than
+# max_jumps times the date jumps by back_days or more between two records written one after the other. In the Scotty Creek
+# archive the files of a failed clock jump 40 to 700 times (blocks of a day stamped anywhere from 1923 to 2058); good files
+# 0 to 14 times (a reset or a re-set clock). A named vector of the number of jumps, for the files that pass.
+corrupt_clock_files <- function(t, file, wrow, files, back_days = 30, max_jumps = 20) {
+  k <- file %in% files; if (!any(k)) return(setNames(numeric(), character()))
+  d <- data.table(t = as.numeric(t[k]), f = file[k], w = wrow[k])[!is.na(t)][order(f, w)]
+  s <- d[, .(j = sum(abs(diff(t)) >= back_days * 86400)), by = f][j > max_jumps]
+  setNames(s$j, s$f)
+}
+# The row of clock_bounds.csv for a logger table: one naming the table wins over one for the whole logger (table blank).
+bound_row <- function(b, lid, tb) { if (!NROW(b)) return(NULL); r <- b[trim(logger_id) == lid & trim(table) %in% c(tb, "")]
+  if (!nrow(r)) NULL else r[order(trim(table) != tb)][1] }
+# The accepted dates of one logger table: its row of clock_bounds.csv (bound; earliest and latest, either may be blank) or,
+# when no row sets an earliest date and auto is on, clock_bound_suggest(). NULL when nothing bounds it.
+clock_bounds_for <- function(bound, t, file, wrow, auto = TRUE) {
+  e <- if (NROW(bound) && nzchar(bound$earliest[1] %||% "")) parse_time(bound$earliest[1]) else NA
+  l <- if (NROW(bound) && nzchar(bound$latest[1] %||% "")) parse_time(bound$latest[1]) + if (nchar(trim(bound$latest[1])) <= 10) 86399 else 0 else NA
+  if (!is.na(e) || !is.na(l)) return(list(earliest = as.POSIXct(e, tz = "UTC"), latest = as.POSIXct(l, tz = "UTC"), source = "set by hand in Accepted dates"))
+  if (!auto) return(NULL)
+  s <- clock_bound_suggest(t, file, wrow)
+  if (is.na(s)) NULL else list(earliest = s, latest = as.POSIXct(NA, tz = "UTC"), source = "suggested: a reset clock")
+}
+# Where a logger's record really starts, when its clock was reset: a block of records stamped more than gap_days before the
+# rest, holding at most share of them, and written after later-stamped records in the same file (a clock that lost its date
+# writes old dates into a running download; a genuine early deployment sits in files of its own). NA when there is none.
+clock_bound_suggest <- function(t, file, wrow, gap_days = 365, share = 0.05) {
+  ok <- !is.na(t); if (sum(ok) < 20) return(as.POSIXct(NA, tz = "UTC"))
+  ts <- sort(as.numeric(t[ok])); n <- length(ts); g <- diff(ts) / 86400
+  cand <- which(g > gap_days & seq_along(g) / n <= share); if (!length(cand)) return(as.POSIXct(NA, tz = "UTC"))
+  cut <- ts[max(cand) + 1L]; early <- ok & as.numeric(t) < cut
+  reset <- any(vapply(split(seq_along(t), file), function(k) { e <- early[k]; l <- ok[k] & !e
+    any(e) && any(l) && max(wrow[k][e]) > min(wrow[k][l]) }, logical(1)))
+  if (reset) as.POSIXct(cut, origin = "1970-01-01", tz = "UTC") else as.POSIXct(NA, tz = "UTC")
+}
+
 cache_key <- function(g, tc, cfg) {
   f <- tempfile(); on.exit(unlink(f))
   saveRDS(list(CACHE_VERSION, STEP_HASH$stitch, as.list(g[, intersect(c("path", "size", "mtime", "logger_id", "table", "station_name", "src_station", "src_stream", "format", "sep", "status"), names(g)), with = FALSE]),
                g$columns, as.list(tc), cfg[c("min_year", "sentinels", "prefer", "numeric_min")],
-               if (isFALSE(cfg$drop_bad_clock)) list(drop_bad_clock = FALSE)), f, version = 2)   # a switch turned off counts; left on, keys stay as they were
+               if (isFALSE(cfg$drop_bad_clock)) list(drop_bad_clock = FALSE),
+               if (NROW(cfg$bound)) as.list(cfg$bound[, intersect(c("earliest", "latest"), names(cfg$bound)), with = FALSE]),   # accepted dates set by hand
+               if (isFALSE(cfg$auto_clock_bounds)) list(auto_clock_bounds = FALSE)), f, version = 2)   # a switch turned off counts; left on, keys stay as they were
   substr(unname(tools::md5sum(f)), 1, 16)
 }
 
