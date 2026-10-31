@@ -358,6 +358,12 @@ one <- im0[!is.na(flight_id) & primary %in% TRUE & source_id == "T7" & !is.na(ti
  n0 <- fl0[flight_id == fid, n_images]
 fwrite(data.table(pattern = paste0("^", gsub("([.|()\\\\^{}+$*?\\[\\]])", "\\\\\\1", one$rel, perl = TRUE), "$"), action = "ignore", reason = "test"), file.path(proj, "config", "file_rules.csv"))
 r6 <- run_pipeline(list(project_dir = proj), scan = character())
+local({                                                              # the file audit is made again only when its inputs change
+  faf <- file.path(proj, "output", "audit", "file_audit.csv"); m0 <- file.mtime(faf); a0 <- readLines(faf)
+  Sys.sleep(1.1); run_pipeline(list(project_dir = proj), scan = character()); m1 <- file.mtime(faf)
+  writeLines("changed", paste0(faf, ".key")); Sys.sleep(1.1); run_pipeline(list(project_dir = proj), scan = character()); m2 <- file.mtime(faf)
+  check(identical(m0, m1) && m2 > m1 && identical(readLines(faf), a0), "a rebuild with nothing changed keeps the file audit as it is; with its key changed it is made again, the same")
+})
 fa6 <- fread(file.path(proj, "output", "audit", "file_audit.csv"))
 if (!(!one$rel %in% r6$images[source_id == one$source_id, rel] && r6$flights[flight_id == fid, n_images] == n0 - 1L))   # what it found, when the check below fails
   say("  ignore rule: ", one$rel, " still listed ", one$rel %in% r6$images[source_id == one$source_id, rel], ", images ", n0, " -> ", paste(r6$flights[flight_id == fid, n_images], collapse = " "),

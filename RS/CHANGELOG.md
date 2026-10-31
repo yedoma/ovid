@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster, round 2 (2026-10-30; outputs identical)**
+- A rebuild with nothing changed keeps the file audit as it is (it is made again only when the files, flight membership, links, datasets, GIS layers or its code change): 24.5 -> 17.5 s on a 297-flight catalogue.
+- STAC catalogue written compact (3.2 -> 2.6 MB) and only the files whose content changed; files of flights gone are removed.
+- The app's name in run manifests and the launcher's message are lower case ("ovid // RS", "ovid core").
+- Test: the drone photos test counts photo reads where photos are now read (read_image_raw).
+- **Output changes:** none to the catalogue; STAC JSON is compact (same content); run manifests name the app "ovid // RS".
+
 **Faster (2026-10-30; outputs byte-identical, checked on a copy of a 297-flight catalogue)**
 - The photo cache keeps the raw tags read from each file and works the fields out on every scan: a change to how fields are derived (camera tables, clocks) no longer re-reads the drive; only a change to reading the files does. A cache of an earlier version is kept as it is (no forced re-read).
 - Each flight's footprint is cached (keyed on its photos, heights, LiDAR angle and the footprint code): a rebuild traces only flights whose inputs changed.

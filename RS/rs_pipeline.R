@@ -266,7 +266,14 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   fwrite(b$images[, .(source_id, rel, flight_id, primary, time_utc = fmt_ts(time_utc), lat, lon, alt, alt_rel, rtk_flag, acc_xy, sensor, camera_serial, size, focal_mm, exposure_s, gsd_cm, speed_ms, blur_px, fwd_overlap_pct, sun_elev_deg)], file.path(catd, "images.csv"))
   un <- A$files[role %in% LINK_ROLES & status == "" & !paste0(source_id, ":", rel) %in% links[state != "suggested"]$file, .(source_id, rel, role)]
   fwrite(un, file.path(catd, "unassigned.csv"))
-  fa <- rs_file_audit(A$files, b$images, links, ds, gl); fwrite(fa, file.path(od, "audit", "file_audit.csv"))
+  # the file audit (a row per file, 300 MB for a large archive) is made again only when what it is made from changed: the
+  # files, which images are in a flight, the links, datasets and GIS layers, or its code (FILE_AUDIT_KEY); else the last one stays
+  faf <- file.path(od, "audit", "file_audit.csv"); fak_f <- paste0(faf, ".key")
+  col <- function(d, k) if (!is.null(d) && nrow(d) && all(k %in% names(d))) lapply(k, function(v) d[[v]])   # the columns themselves, no copy
+  fak <- digest::digest(list(FILE_AUDIT_KEY, col(A$files, c("source_id", "rel", "format", "role", "status", "size")), col(b$images, c("source_id", "rel", "flight_id")),
+                             col(links, c("file", "state")), col(ds, c("source_id", "rel")), col(gl, c("source_id", "rel"))), algo = "xxhash64")
+  if (!(file.exists(faf) && file.exists(fak_f) && identical(readLines(fak_f, warn = FALSE), fak))) {
+    fa <- rs_file_audit(A$files, b$images, links, ds, gl); fwrite(fa, faf); writeLines(fak, fak_f) }
   pr <- products_table(cfgs$products, ds, out); fwrite(pr, file.path(catd, "products.csv"))
   fwrite(coverage(out, ds), file.path(catd, "coverage.csv"))
   st <- tryCatch(stac_export(file.path(od, "stac"), out, ds, pr, cfg$viewer_title %||% "ovid RS archive"), error = function(e) { problem("STAC catalogue", conditionMessage(e)); NULL })
@@ -288,6 +295,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
 #        rs_pipeline.R build                 rebuild from earlier scans only
 #        rs_pipeline.R export                rebuild and write the shareable viewer (output/viewer/Ovid_RS_viewer.zip)
 run_pipeline <- function(cfg = CFG, ...) { cfg$project_dir <- ovid_project_dir(cfg$project_dir); run_project(cfg, function() run_pipeline_steps(cfg, ...), need_raw = FALSE) }   # folders checked, project locked, run logged (core manifest.R)   # every run leaves output/logs/<start>.log (core manifest.R)
+FILE_AUDIT_KEY <- code_fingerprint("rs_file_audit", env = environment())   # the file audit is made again only when its inputs or code change
 FOOTPRINT_KEY <- code_fingerprint("flight_footprint", env = environment())   # each flight's footprint is cached (R/footprints.R)
 IMAGE_RAW_KEY <- code_fingerprint("read_image_raw", env = environment())   # the photo cache: only reading the files counts (R/catalogue.R)
 STEP_HASH <- step_hashes(environment())          # after every function is defined

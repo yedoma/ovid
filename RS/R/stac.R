@@ -99,10 +99,15 @@ stac_time <- function(t) {
 # A year alone (inferred from a folder or file name) is a span: the whole year, as STAC start and end times.
 stac_year_span <- function(t) { t <- trim(as.character(t %||% NA)[1]); if (is.na(t) || !grepl("^\\d{4}$", t)) NULL else list(start = paste0(t, "-01-01T00:00:00Z"), end = paste0(t, "-12-31T23:59:59Z")) }
 stac_id <- function(x) gsub("[^A-Za-z0-9_.-]+", "-", x)
-write_stac_json <- function(x, f) { dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE); jsonlite::write_json(x, f, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA) }
+# Compact JSON, written only when it differs from the file there (a rebuild rewrote about 1,400 files); returns the path.
+write_stac_json <- function(x, f) { txt <- paste0(jsonlite::toJSON(x, auto_unbox = TRUE, pretty = FALSE, null = "null", digits = NA), "\n")
+  b <- charToRaw(enc2utf8(txt))
+  if (!(file.exists(f) && file.size(f) == length(b) && identical(readBin(f, "raw", length(b)), b))) {
+    dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE); writeBin(b, f) }
+  f }
 
 stac_export <- function(dir, flights, ds = NULL, products = NULL, title = "ovid RS archive") {
-  unlink(dir, recursive = TRUE); dir.create(dir, recursive = TRUE)
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE); written <- character()   # files left as they are when unchanged
   cols <- list(); n_items <- 0L
   add_item <- function(coll, it) { cols[[coll$id]]$items[[length(cols[[coll$id]]$items) + 1]] <<- it }
   coll_of <- function(id, ttl, desc) { if (is.null(cols[[id]])) cols[[id]] <<- list(id = id, title = ttl, description = desc, items = list()); cols[[id]] }
@@ -149,19 +154,22 @@ stac_export <- function(dir, flights, ds = NULL, products = NULL, title = "ovid 
   root <- list(type = "Catalog", stac_version = "1.0.0", id = "ovid-rs", title = title, description = "Drone flights, imagery, LiDAR and products catalogued by ovid RS.",
                links = c(list(list(rel = "root", href = "./catalog.json", type = "application/json"), list(rel = "self", href = "./catalog.json", type = "application/json")),
                          lapply(names(cols), function(k) list(rel = "child", href = paste0("./", k, "/collection.json"), type = "application/json"))))
-  write_stac_json(root, file.path(dir, "catalog.json"))
+  written <- c(written, write_stac_json(root, file.path(dir, "catalog.json")))
   for (k in names(cols)) { cl <- cols[[k]]; its <- cl$items
     bb <- do.call(rbind, lapply(its, function(it) it$bbox)); tt <- sort(vapply(its, function(it) it$properties$datetime, ""))
-    write_stac_json(list(type = "Collection", stac_version = "1.0.0", id = k, title = cl$title, description = cl$description, license = "proprietary",
+    written <- c(written, write_stac_json(list(type = "Collection", stac_version = "1.0.0", id = k, title = cl$title, description = cl$description, license = "proprietary",
                          extent = list(spatial = list(bbox = list(if (!is.null(bb)) c(min(bb[, 1]), min(bb[, 2]), max(bb[, 3]), max(bb[, 4])) else c(-180, -90, 180, 90))),
                                        temporal = list(interval = list(c(tt[1], tt[length(tt)])))),
                          links = c(list(list(rel = "root", href = "../catalog.json", type = "application/json"), list(rel = "parent", href = "../catalog.json", type = "application/json"),
                                         list(rel = "self", href = "./collection.json", type = "application/json")),
                                    lapply(its, function(it) list(rel = "item", href = paste0("./", it$id, "/", it$id, ".json"), type = "application/geo+json")))),
-                    file.path(dir, k, "collection.json"))
+                    file.path(dir, k, "collection.json")))
     for (it in its) { it$collection <- k
       it$links <- list(list(rel = "root", href = "../../catalog.json", type = "application/json"), list(rel = "parent", href = "../collection.json", type = "application/json"),
                        list(rel = "collection", href = "../collection.json", type = "application/json"), list(rel = "self", href = paste0("./", it$id, ".json"), type = "application/geo+json"))
-      write_stac_json(it, file.path(dir, k, it$id, paste0(it$id, ".json"))); n_items <- n_items + 1L } }
+      written <- c(written, write_stac_json(it, file.path(dir, k, it$id, paste0(it$id, ".json")))); n_items <- n_items + 1L } }
+  # what an earlier run wrote and this one did not (a flight or product gone): removed, with folders left empty
+  old <- list.files(dir, recursive = TRUE, full.names = TRUE); unlink(setdiff(normalizePath(old, mustWork = FALSE), normalizePath(written, mustWork = FALSE)))
+  for (d in rev(list.dirs(dir, recursive = TRUE)[-1])) if (!length(list.files(d, all.files = TRUE, no.. = TRUE))) unlink(d, recursive = TRUE)
   invisible(list(dir = dir, collections = length(cols), items = n_items))
 }
