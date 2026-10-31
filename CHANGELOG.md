@@ -4,6 +4,11 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Changed (one look and one name, 2026-10-30; approved by M).** Core: one table style, numbers right-aligned, button and
+input sizes, legends at the top; CS, WLR, GT and GS: the name written "ovid" wherever a user reads it ("ovid // CS" in run
+logs and export READMEs, the GS catalogue, the core-not-found message). RS keeps "Ovid Core // RS" until its thread's
+work is in. See each CHANGELOG.
+
 **Changed (text sizes and contrast, 2026-10-30).** All five apps: tables, rail labels, row numbers, value-box numbers and Simple's steps on one type scale (11 / 12.5 / 13.5 / 14 / 26 px); muted and subtle text at 4.5:1 or more in every colour scheme (core shell.R tokens). Screens only; no output changes.
 
 **Fixed (tests on GitHub, 2026-10-29).** The Linux tests run R as build/renv.lock pins it (4.6.1), not the latest release: when "release" moved to R 4.6.2, two RS checks (the ignore-rule rebuild and the golden project) failed there with no change to ovid. RS under R 4.6.2 is checked when the lockfile moves to it.

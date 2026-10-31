@@ -1116,4 +1116,27 @@ if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(
   pals <- c(list(nord_palette()), lapply(names(OVID_ALT_SCHEMES), function(n) scheme_palette(n, nord_palette(), "blue")))
   low <- unlist(lapply(pals, function(p) { t <- ovid_tokens(p); vapply(c(t$fg4, t$fg3), function(c) min(vapply(c(t$bg, t$bgh, t$bg1), function(b) contrast_ratio(c, b), 0)), 0) }))
   check(sprintf("muted (fg4) and subtle (fg3) text reach 4.5:1 on the page, top bar and panels in all %d schemes", length(pals)), all(low >= 4.5 - 1e-6)) })
+local({                                                               # one look in every app (approved by M in the project chat, 30 Oct)
+  css <- function(f) paste(readLines(file.path(CORE_DIR, "www", f), warn = FALSE), collapse = "\n")
+  sh <- css("shell.css"); tv <- css("tsview.css"); rf <- css("reference.css")
+  check("one table style: grid, plain and Reference tables at 13.5 px, headers semibold, cells padded 6/10 px",
+        grepl("font-weight:600 !important;font-size:13.5px", sh, fixed = TRUE) && grepl(".table{color:var(--fg);font-size:13.5px}", sh, fixed = TRUE) &&
+        grepl(".ref-body table{font-size:13.5px}", rf, fixed = TRUE) && grepl("padding:6px 10px;text-align:left", rf, fixed = TRUE))
+  te <- new.env(); sys.source(file.path(CORE_DIR, "table.R"), envir = te)
+  w <- te$ovid_dt(data.frame(name = c("a", "b"), n = c(1, 2), serial = c("10143", "1,200"), when = c("2024-01-01", "2024-02-01")))
+  cd <- w$x$options$columnDefs; rt <- unlist(lapply(cd, function(z) if (identical(z$className, "dt-right")) unlist(z$targets)))
+  check("number columns, and text columns holding only numbers, are right-aligned; names and dates are not", identical(sort(unique(as.integer(rt))), c(1L, 2L)) && is.null(names(cd[[2]]$targets)))
+  check("long tables right-align their numbers too, and plain tables are marked cell by cell (shell.js, d-num in shell.css and simple.css)",
+        identical(unlist(te$ovid_right_defs(data.frame(a = "x", k = "94%"))[[1]]$targets), 1L) &&
+        grepl("td.d-num{text-align:right", css("simple.css"), fixed = TRUE) && grepl("td.d-num{text-align:right", sh, fixed = TRUE) && grepl("classList.add('d-num')", css("shell.js"), fixed = TRUE))
+  check("small buttons differ from regular ones only in height (same 13.5 px text)", grepl(".btn-sm{min-height:28px;padding:3px 10px;font-size:13.5px}", sh, fixed = TRUE))
+  check("date inputs are as large as the other inputs", grepl(".shiny-date-input input{font-size:13.5px;height:34px}", sh, fixed = TRUE))
+  check("the plot's controls use the type scale (no 12 or 13 px text)", !grepl("font-size:(12|13)px", tv))
+  th <- paste(readLines(file.path(CORE_DIR, "theme.R"), warn = FALSE), collapse = "\n")
+  check("legends sit at the top of a chart by default (Plot_table_standards A8)", grepl('legend = "top", strip_size', th, fixed = TRUE))
+  ms <- paste(readLines(file.path(CORE_DIR, "metasheet_ui.R"), warn = FALSE), collapse = "\n")
+  check("'1 deployment found', never 'deployment(s)'", !grepl("deployment(s)", ms, fixed = TRUE))
+  apps <- file.path(dirname(CORE_DIR), c("CS", "WLR", "GT", "GS"))
+  src <- unlist(lapply(unlist(lapply(apps, list.files, pattern = "[.]R$", recursive = TRUE, full.names = TRUE)), function(f) if (grepl("/tests/", f)) character() else readLines(f, warn = FALSE)))
+  check("the name is written ovid (lower case) wherever a user reads it in CS, WLR, GT and GS", !any(grepl('"Ovid Core //|Ovid Core folder|Ovid GS catalogue', src))) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

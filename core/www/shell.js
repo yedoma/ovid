@@ -165,3 +165,15 @@
   });
 })();
 
+
+// Numbers are right-aligned in every table (Plot_table_standards A9). DataTables do it by column (table.R ovid_right_defs);
+// plain tables (Simple view, renderTable, report blocks) are marked here, cell by cell, whenever Shiny draws something.
+(function () {
+  var NUM = /^[-+−]?[0-9][0-9,]*(\.[0-9]+)?( ?%)?$/;
+  function mark(root) {
+    (root || document).querySelectorAll('table:not(.dataTable) td:not(.d-num)').forEach(function (td) {
+      if (NUM.test(td.textContent.trim())) td.classList.add('d-num'); });
+  }
+  if (window.jQuery) jQuery(document).on('shiny:value shiny:visualchange', function () { setTimeout(function () { mark(); }, 0); });
+  document.addEventListener('DOMContentLoaded', function () { mark(); });
+})();

@@ -12,6 +12,7 @@ OVID_ROW_PX <- 28L
 ovid_long_table <- function(d, ..., height = "60vh", dom = "fti", options = list()) {
   w <- DT::datatable(d, rownames = FALSE, extensions = "Scroller", class = "compact stripe d-long", ...,
                      options = utils::modifyList(list(dom = dom, scrollX = TRUE, scrollY = height, scrollCollapse = TRUE, deferRender = TRUE,
+                                                      columnDefs = (if (exists("ovid_right_defs", mode = "function")) ovid_right_defs(d)) %||% list(),   # numbers right-aligned (table.R)
                                                       scroller = list(rowHeight = OVID_ROW_PX, displayBuffer = 6), pageLength = 50,
                                                       language = list(info = "Rows _START_ to _END_ of _TOTAL_", infoFiltered = "(found in _MAX_)")), options))
   htmlwidgets::prependContent(w, htmltools::tags$style(htmltools::HTML(sprintf(

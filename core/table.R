@@ -21,6 +21,15 @@ OVID_DT_INIT <- DT::JS("function(settings){var api=this.api();var id=api.table()
 # editable, ...). selection "single" or "multiple" keeps DataTables' row selection for pages that pick a record; otherwise
 # (the default, or "none") values, blocks and rows are selected the ovid way and the selection is sent to Shiny as
 # input$<outputId>_ovid_sel (rows and a count).
+# Numbers are right-aligned (Plot_table_standards A9): number columns, and text columns that hold only numbers (a count,
+# "1,200", "94 %"); names, dates and codes keep to the left. A DataTables columnDefs entry, or NULL. Also used by longtable.R.
+ovid_right_defs <- function(d) {
+  numlike <- function(v) { if (is.numeric(v)) return(TRUE); if (inherits(v, c("POSIXct", "Date"))) return(FALSE)
+    x <- trimws(as.character(v)); x <- x[!is.na(x) & nzchar(x) & x != "\u2014"]
+    length(x) > 0 && all(grepl("^[-+\u2212]?[0-9][0-9,]*([.][0-9]+)?( ?%)?$", x)) }
+  right <- which(vapply(as.list(d), numlike, NA)) - 1L
+  if (length(right)) list(list(targets = as.list(unname(right)), className = "dt-right"))
+}
 ovid_dt <- function(d, ..., page = 15, opts = list(), wrap = 48, limits = NULL) {
   d <- as.data.frame(d, stringsAsFactors = FALSE, check.names = FALSE)
   types <- vapply(d, function(v) if (inherits(v, c("POSIXct", "Date"))) "time" else if (is.numeric(v)) "num" else "chr", "")
@@ -36,10 +45,12 @@ ovid_dt <- function(d, ..., page = 15, opts = list(), wrap = 48, limits = NULL) 
   cells <- is.null(sel) || identical(sel, "none") || (is.list(sel) && identical(sel$mode, "none"))
   if (cells) a$selection <- "none"
   lim <- if (length(limits)) lapply(limits[intersect(names(limits), names(d))], function(l) as.list(l)) else NULL
+  rdef <- ovid_right_defs(d)
+  if (length(opts$columnDefs)) opts$columnDefs <- c(opts$columnDefs, rdef)
   base <- list(pageLength = page, scrollX = TRUE, dom = "frtip", lengthChange = FALSE, autoWidth = FALSE, language = list(search = "Filter:"),
                initComplete = OVID_DT_INIT,
-               columnDefs = list(list(targets = "_all", render = DT::JS(sprintf(
-                 "function(d,t){if(t==='display'&&d===null)return '—';return (t==='display'&&typeof d==='string'&&d.length>%d)?'<span class=\"wrapcell\">'+d+'</span>':d;}", as.integer(wrap))))),
+               columnDefs = c(list(list(targets = "_all", render = DT::JS(sprintf(
+                 "function(d,t){if(t==='display'&&d===null)return '—';return (t==='display'&&typeof d==='string'&&d.length>%d)?'<span class=\"wrapcell\">'+d+'</span>':d;}", as.integer(wrap))))), rdef),
                ovid = list(names = as.list(names(d)), types = as.list(unname(types)), levels = levels, limits = lim, cells = cells))
   if (nrow(d) > 8) base <- c(base, list(scrollY = paste0(36 * min(page, 14) + 4, "px"), scrollCollapse = FALSE))
   do.call(DT::datatable, c(list(d, rownames = FALSE, class = paste("hover d-tbl", if (cells) "d-cells")), a, list(options = utils::modifyList(base, opts))))

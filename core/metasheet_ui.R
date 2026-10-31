@@ -199,7 +199,7 @@ deploy_check_ui <- function(id) { ns <- NS(id)
 deploy_check_server <- function(id, project_dir, scan, tick = reactive(0), on_change = function() NULL) moduleServer(id, function(input, output, session) {
   ck <- reactive({ tick(); live_config(project_dir()); tryCatch(dep_check(project_dir(), scan), error = function(e) NULL) })   # the sheet saved on any page
   output$summary <- renderUI({ x <- ck(); if (is.null(x)) return(p(class = "dim", "Run the app once: the check needs the list of files it read."))
-    if (is.null(x$rows)) return(p(class = "dim", "No rows with a serial yet. ", nrow(x$unclaimed), " deployment(s) found in the files."))
+    if (is.null(x$rows)) return(p(class = "dim", "No rows with a serial yet. ", nrow(x$unclaimed), if (nrow(x$unclaimed) == 1) " deployment found in the files." else " deployments found in the files."))
     k <- x$counts; lab <- c(dates = "by dates", year = "by year", month = "by month", name = "by name", only = "the serial's only one", choose = "to choose", `no data` = "no data yet", `no data in period` = "no data in its dates")
     p(paste(paste(as.integer(k), ifelse(is.na(lab[names(k)]), names(k), lab[names(k)])), collapse = ", "), "; ", nrow(x$unclaimed), " found in no row",
       if (nrow(x$unassigned)) paste0("; ", nrow(x$unassigned), " file(s) with no serial") else "") })

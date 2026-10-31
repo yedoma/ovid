@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed (one look in every app, 2026-10-30; approved by M).** One table style (grid, plain and Reference tables at
+13.5 px, semibold headers, 6/10 px cells); numbers right-aligned in every ovid_dt table; small buttons have the regular
+13.5 px text; the plot's controls and time-step switch on the type scale; date inputs as large as the other inputs; muted
+text in two sizes (14 and 12.5 px); legends at the top of a chart by default (theme_ovid); "1 deployment found" (was
+"deployment(s)"). **Output changes:** saved ggplot figures with a legend have it at the top; data files unchanged.
+
 **Changed (shared text sizes and contrast, 2026-10-30; all five apps)**
 - Tokens (shell.R): muted text (fg4) and a new subtle-text token (fg3, the scheme's grey lifted) reach 4.5:1 on the page, top bar and panels in every scheme (legible_col); gray stays for lines and disabled controls. Test: all 19 schemes.
 - Sizes onto the type scale (11 / 12.5 / 13.5 / 14 / 26): tables 13 -> 13.5 px, rail section labels 10.5 -> 11 px, table row numbers 12 -> 12.5 px, value-box numbers 26 px, Simple step titles 15.5 -> 14 px and numbers 13 -> 12.5 px, project-list paths 11.5 -> 11 px.

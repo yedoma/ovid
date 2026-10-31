@@ -134,3 +134,5 @@ html.sp-root, html.sp-root body { background: var(--sp-bg); }
   .sp-edit-cols, .sp-cols { grid-template-columns: 1fr; }
   .sp-move { grid-template-columns: 1fr; }
 }
+
+td.d-num{text-align:right !important;font-variant-numeric:tabular-nums}   /* numbers right-aligned in plain tables (shell.js) */

@@ -82,7 +82,7 @@ body.d-has-focus{overflow:hidden}
 .selectize-control.multi .selectize-input>div{background:var(--bg2);color:var(--fg);border-radius:3px}
 .selectize-control.single .selectize-input:after{border-color:var(--fg4) transparent transparent transparent}
 .btn{display:inline-flex;align-items:center;gap:6px;min-height:var(--d-ctl);padding:4px 12px;font-size:13.5px;border-radius:var(--d-r);border:1px solid var(--bg3);background:var(--bg2);color:var(--fg);box-shadow:none !important;text-shadow:none;line-height:1.3}
-.btn-sm{min-height:28px;padding:3px 10px;font-size:13px} .btn.w-100{justify-content:center}
+.btn-sm{min-height:28px;padding:3px 10px;font-size:13.5px}   /* small (tables, toolbars) differs from regular only in height */ .btn.w-100{justify-content:center}
 .btn:hover,.btn:focus,.btn:active,.btn-default:active:focus{background:var(--bg3);color:var(--fg);border-color:var(--gray)}
 .btn-primary,.btn-primary:focus{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:600}
 .btn-primary:hover,.btn-primary:active,.btn-primary:active:focus{background:var(--acc2);border-color:var(--acc2);color:var(--onacc)}
@@ -117,11 +117,11 @@ code{background:var(--bg2);color:var(--fg);padding:1px 5px;border-radius:3px;fon
 .datepicker,.dropdown-menu{background:var(--bg1);color:var(--fg);border:1px solid var(--bg3)}
 .datepicker table tr td.day:hover,.datepicker table tr td span:hover,.datepicker .datepicker-switch:hover,.datepicker .prev:hover,.datepicker .next:hover{background:var(--bg3) !important}
 .datepicker table tr td.active,.datepicker table tr td.active:hover,.datepicker table tr td span.active{background:var(--acc) !important;color:var(--bgh) !important;text-shadow:none}
-.datepicker table tr td.old,.datepicker table tr td.new{color:var(--gray)} .input-daterange .input-group-addon{color:var(--fg4) !important}
+.datepicker table tr td.old,.datepicker table tr td.new{color:var(--gray)} .input-daterange .input-group-addon{color:var(--fg4) !important} .shiny-date-range-input .input-daterange input,.shiny-date-input input{font-size:13.5px;height:34px}   /* date inputs as tall and as large as the other inputs */
 
 /* tables (DT) */
 table.dataTable{color:var(--fg);border-collapse:collapse !important;font-size:13.5px} .bslib-value-box .value-box-value{font-size:26px}
-table.dataTable thead th,table.dataTable thead td{background:var(--bg1);color:var(--fg4);border-bottom:1px solid var(--bg2) !important;font-weight:600;white-space:nowrap}
+table.dataTable thead th,table.dataTable thead td{background:var(--bg1);color:var(--fg4);border-bottom:1px solid var(--bg2) !important;font-weight:600 !important;font-size:13.5px;white-space:nowrap}
 table.dataTable tbody tr{background:var(--bg) !important}
 table.dataTable tbody td{white-space:nowrap;border-top:1px solid var(--bg1) !important;box-shadow:none !important;font-variant-numeric:tabular-nums;padding:6px 10px !important}
 table.dataTable.hover tbody tr:hover,table.dataTable.hover tbody tr:hover>td{background-color:var(--bgh) !important}
@@ -134,7 +134,7 @@ table.dataTable tbody td input{background:var(--bgh);color:var(--fg);border:1px 
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover{background:var(--bg2) !important;color:var(--fg) !important}
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover{background:var(--bg2) !important;color:var(--acc) !important}
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled{color:var(--gray) !important}
-.table>tbody>tr>td,.table>thead>tr>th{border-color:var(--bg2);font-variant-numeric:tabular-nums} .table{color:var(--fg);font-size:13px} .table>thead>tr>th{color:var(--fg4);font-weight:600}
+.table>tbody>tr>td,.table>thead>tr>th{border-color:var(--bg2);font-variant-numeric:tabular-nums} .table{color:var(--fg);font-size:13.5px} .table>thead>tr>th{color:var(--fg4);font-weight:600} .table>tbody>tr>td,.table>thead>tr>th{padding:6px 10px}   /* one table style: grid, plain and Reference tables */
 
 /* overview cards and tiles (overview pages only) */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--bg2);border-radius:8px;overflow:hidden;margin-bottom:16px}
@@ -163,4 +163,4 @@ table.dataTable tbody td input{background:var(--bgh);color:var(--fg);border:1px 
 .d-review{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
 
 @media (max-width:900px){body{padding-left:var(--d-rail-min)} .d-rail{width:var(--d-rail-min)} .d-rail-label{display:none} .d-rail-sec{font-size:0;padding:8px 0 4px} .d-rail-link{justify-content:center;padding:0} .d-context{display:none}}
-
+td.d-num{text-align:right !important;font-variant-numeric:tabular-nums}   /* numbers right-aligned in plain tables (shell.js) */

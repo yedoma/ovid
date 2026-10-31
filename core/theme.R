@@ -104,7 +104,7 @@ mix_col <- function(a, b, t) {
 
 # The ggplot theme for every plot. pal needs bg, bg1, bg2, fg, fg4 and gray; the rest only change details.
 theme_ovid <- function(pal, base_size = 13, title = pal$fg, subtitle = pal$fg4, border = pal$bg2,
-                         legend = "bottom", strip_size = 0.92) {
+                         legend = "top", strip_size = 0.92) {   # legends at the top (Plot_table_standards A8)
   theme_minimal(base_size = base_size) %+replace% theme(
     plot.background   = element_rect(fill = pal$bg, colour = NA),
     panel.background  = element_rect(fill = pal$bg, colour = NA),
