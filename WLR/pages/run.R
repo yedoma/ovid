@@ -46,8 +46,16 @@
   wl_deps <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$summary)) NULL else o$summary[, .(serial = as.character(serial), from = fmt_ts(start), to = fmt_ts(end), name = site)] })
   wl_level <- function(serial) { f <- list.files(file.path(pd(), "output", "sites"), paste0("^", rx_escape(serial), "__.*\\.csv$"), full.names = TRUE)   # water above the sensor, for moves
     # safe: a file that cannot be read adds nothing to this preview
-    if (!length(f)) return(NULL); d <- rbindlist(lapply(f, function(x) tryCatch(fread(file = x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)), fill = TRUE)
-    if (!nrow(d)) NULL else d[, .(t = parse_dt(TIMESTAMP), v = depth_m)] }
+    if (!length(f)) return(NULL)
+    # each site file's level kept in cache/levels while the file is unchanged (reading every site file at each open took 8 s on 800 deployments)
+    cdir <- file.path(pd(), "cache", "levels"); dir.create(cdir, recursive = TRUE, showWarnings = FALSE)
+    one <- function(x) { cf <- file.path(cdir, paste0(safe_name(basename(x)), "__", substr(hash_of(c(file.size(x), as.numeric(file.mtime(x)))), 1, 12), ".rds"))
+      if (file.exists(cf)) return(tryCatch(readRDS(cf), error = function(e) NULL))
+      v <- tryCatch(fread(file = x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)
+      if (!is.null(v)) { old <- list.files(cdir, paste0("^", rx_escape(safe_name(basename(x))), "__"), full.names = TRUE); unlink(old); saveRDS(v, cf, compress = FALSE) }
+      v }
+    d <- rbindlist(lapply(f, one), fill = TRUE)
+    if (!nrow(d)) NULL else d[, .(t = if (inherits(TIMESTAMP, "POSIXct")) TIMESTAMP else parse_dt(TIMESTAMP), v = depth_m)] }   # fread reads the times already (parse_dt again took 90 s on 822 deployments)
   gb <- group_by_server("gb", wl_files, pd, wl_deps, level = wl_level, jump_min = 0.05, unit = "m", open = function(r) { s <- wl_deps(); s <- if (!is.null(s)) s[serial == r$serial] else NULL
     if (!is.null(s) && nrow(s)) { site_cur(s$name[1]); go("Site") } else showNotification(paste(r$serial, "has no site yet: give it one on Loggers and deployments."), type = "message") })
   output$has_out <- reactive(!is.null(outs())); outputOptions(output, "has_out", suspendWhenHidden = FALSE)

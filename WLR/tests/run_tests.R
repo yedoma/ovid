@@ -844,5 +844,18 @@ local({                                                               # one way 
   check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
   sc <- unlist(lapply(file.path(here, c("pages/set_up_check.R", "R/preflight.R")), readLines, warn = FALSE))
   check("no '(s)' plurals on the Set-up check", !any(grepl('\\b(warning|thing|row)[(]s[)]', sc, perl = TRUE))) })
+local({                                                               # the Scotty Creek raw archive (31 Oct): barologgers, sites from folders, a run with no barologger, speed
+  check("a barologger folder is found by its name (WL_CAMP_BARO, WL_SCIENCETENTBARO, baro), not by a file name or a word like barometric",
+        all(grepl(BARO_FOLDER, c("baro", "wl_camp_baro", "wl_sciencetentbaro", "barologgers"), perl = TRUE)) && !any(grepl(BARO_FOLDER, c("barometric", "wl_bog_100", "2025"), perl = TRUE)))
+  r <- file.path(tempdir(), "arch"); f <- function(...) file.path(r, ...)
+  check("an unlisted logger's site is the folder its files are filed in (past year folders); none when they sit in several, in the raw folder or in a baro folder",
+        identical(site_from_folder(c(f("WL", "WL_BOG_201", "2018", "a.hobo"), f("WL", "WL_BOG_201", "Multi_Year_or_Undated", "b.csv")), r), "WL_BOG_201") &&
+        is.null(site_from_folder(c(f("WL", "WL_BOG_201", "2018", "a.hobo"), f("WL", "WL_BOG_202", "2019", "b.hobo")), r)) && is.null(site_from_folder(f("2018", "a.hobo"), r)) &&
+        is.null(site_from_folder(f("WL_CAMP_BARO", "2018", "a.xle"), r)))
+  b <- suggest_baro(2024, data.table(site = "A", serial = "1", start = Sys.time(), end = Sys.time()), list(), data.table())
+  check("baro groups with no barologger have their columns (a run with none failed: 'site' not found)", all(c("site", "group") %in% names(b$members)) && !nrow(b$members))
+  t <- as.POSIXct(c("2024-09-15 12:00:00", "2024-09-15 12:00:01", "2023-12-31 23:59:59", "2025-10-01 00:00:00"), tz = "UTC")
+  check("season and water year from the day number give what format() gave", identical(season_year(t), as.integer(format(t, "%Y")) + (t > as.POSIXct(paste0(format(t, "%Y"), "-09-15 12:00:00"), tz = "UTC"))) &&
+        identical(water_year_of(t), as.integer(format(t, "%Y")) + (t >= as.POSIXct(paste0(format(t, "%Y"), "-10-01 00:00:00"), tz = "UTC")))) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

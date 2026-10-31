@@ -56,13 +56,26 @@ year_of_path <- function(rel) { p <- strsplit(rel, "[/\\\\]")[[1]]; y <- rev(p[g
 RAW_PATTERN <- "\\.(csv|txt|xle|hobo)$"
 raw_files_found <- function(dirs) raw_file_list(dirs, RAW_PATTERN)   # path, rel, ...: the same count on Home, the Site page and the Workbench
 
+# A folder of barologgers: "baro", or a name ending in or holding the word (WL_CAMP_BARO, WL_SCIENCETENTBARO, Barologgers).
+BARO_FOLDER <- "^baro$|baro(loggers?|meters?|s)?($|[^a-z])"
+# The site a logger's files name by where they are filed: the one folder they share, climbing past folders that only sort
+# them (years, dates, "undated"), when that folder lies below a raw folder. NULL when the files sit in several, or in the raw
+# folder itself (a layout of year folders only), or in a barologger folder.
+SORT_FOLDER <- "^((19|20)[0-9]{2}([-_ .][0-9]{1,2}){0,2}|undated|multi[-_ ]?years?.*|.*_or_undated|misc.*|unsorted|backup.*|downloads?|data|raw)$"
+site_from_folder <- function(paths, roots) {
+  if (!length(paths)) return(NULL); top <- normalizePath(path.expand(roots), mustWork = FALSE)
+  f <- unique(vapply(paths, function(p) { d <- normalizePath(dirname(p), mustWork = FALSE)
+    while (!d %in% top && dirname(d) != d && grepl(SORT_FOLDER, basename(d), ignore.case = TRUE, perl = TRUE)) d <- dirname(d)
+    if (d %in% top || dirname(d) == d || grepl(BARO_FOLDER, tolower(basename(d)), perl = TRUE)) "" else basename(d) }, ""))
+  if (length(f) == 1 && nzchar(f)) f else NULL
+}
 discover_files <- function(cfg) {
   for (root in path.expand(cfg$raw_dirs)) if (!dir.exists(root)) problem("raw folder", paste(root, "does not exist"))
   m <- raw_file_list(cfg$raw_dirs, RAW_PATTERN)                                         # core logger_files.R
   if (!nrow(m)) stop("No .csv, .xle or .hobo files were found in the raw folders.")
   m[, c("file", "size", "mtime") := NULL]                                             # set again below, in the order files.csv has always had
   m[, `:=`(name = basename(path), ext = tolower(tools::file_ext(path)), size = file.info(path)$size,
-           kind = ifelse(vapply(strsplit(tolower(rel), "[/\\\\]"), function(p) "baro" %in% p, logical(1)), "baro", "water"),
+           kind = ifelse(vapply(strsplit(tolower(rel), "[/\\\\]"), function(p) any(grepl(BARO_FOLDER, utils::head(p, -1), perl = TRUE)), logical(1)), "baro", "water"),
            year = vapply(rel, year_of_path, 1L))]
   m[, md5 := raw_md5(path)]
   m[, format := vapply(path, sniff_format, "")]
@@ -94,6 +107,7 @@ discover_files <- function(cfg) {
     if (!nzchar(m$serial[i] %||% "") || is.na(m$serial[i])) set(m, i, "status", if (m$status[i] == "ok") "no_serial" else m$status[i])
   }
   READ_CACHE$pre <- NULL
+  m[!is.na(model) & grepl("barologger", model, ignore.case = TRUE), kind := "baro"]       # a Solinst Barologger is one wherever it is filed
   # a HOBO CSV with temperature but no pressure or conductivity channel is a ground-temperature logger: GT reads it, not WLR
   m[status == "ok" & format == "hobo_csv" & is.na(unit_pres) & is.na(unit_ec) & !is.na(unit_temp), status := "temperature_logger"]
   pair_files(m)

@@ -41,12 +41,17 @@ load_baro_stations <- function(project_dir) {              # stitched series of 
 }
 
 # Values removed by the quality rules for one deployment (from the audit detail), for plotting as red ticks.
+REMOVED_CACHE <- new.env()                                  # a logger's removed values, read once while its audit file is unchanged
 removed_values <- function(serial, project_dir, from = NULL, to = NULL) {
   f <- out_dir(project_dir, "audit", "detail", paste0(safe_name(paste0("logger_", serial)), ".csv"))
   if (!file.exists(f)) return(data.table())
-  a <- fread(file = f, colClasses = "character", na.strings = "")[level == "cell"]
+  key <- paste(f, file.size(f), as.numeric(file.mtime(f)))
+  a <- REMOVED_CACHE[[key]]
+  if (is.null(a)) { a <- fread(file = f, colClasses = "character", na.strings = "")[level == "cell"]
+    a <- if (!nrow(a)) data.table() else a[, .(TIMESTAMP = as_ts(timestamp), parameter = column, rule, reason, old_value = suppressWarnings(as.numeric(old_value)))]
+    rm(list = ls(REMOVED_CACHE), envir = REMOVED_CACHE); assign(key, a, envir = REMOVED_CACHE) }   # one logger kept: a run exports its deployments logger by logger
   if (!nrow(a)) return(data.table())
-  a <- a[, .(TIMESTAMP = as_ts(timestamp), parameter = column, rule, reason, old_value = suppressWarnings(as.numeric(old_value)))]
+  a <- copy(a)                                                # the caller's own copy: the cached one stays as read
   if (!is.null(from)) a <- a[TIMESTAMP >= from]; if (!is.null(to)) a <- a[TIMESTAMP <= to]
   a
 }
@@ -61,14 +66,14 @@ qc_wmo_register(c(in_air = 3L, out_of_water = 3L, out_of_water_manual = 3L, belo
                   no_baro = 2L, baro_secondary = 0L, baro_fill = 6L))
 
 # One WMO code per value of a deployment table. `tested` names the parameters that have a quality rule; any other is "not checked".
-wmo_codes <- function(d, v, rm, tested) {
+wmo_codes <- function(d, v, rm, tested, dk = trunc(as.numeric(d$TIMESTAMP))) {   # dk: the times in whole seconds, as fmt_ts() writes them
   code <- rep(if (v %in% tested) 0L else 4L, nrow(d)); code[is.na(d[[v]])] <- 7L
   fc <- paste0("flag_", v)
   if (fc %in% names(d)) { s <- d[[fc]]; u <- unique(s[!is.na(s) & nzchar(s)])
     for (z in u) { cls <- qc_wmo_class(strsplit(z, ";", fixed = TRUE)[[1]]); k <- which(s == z)
       code[k] <- qc_wmo_combine(code[k], Reduce(qc_wmo_combine, cls)) } }
   if (nrow(rm)) { r <- rm[parameter == v | (v %in% c("depth_m", "elev_m", "dtw_m", "wt_ground_m") & parameter == "pres_kpa")]
-    if (nrow(r)) { m <- match(fmt_ts(d$TIMESTAMP), fmt_ts(r$TIMESTAMP)); hit <- which(!is.na(m)); code[hit] <- qc_wmo_combine(code[hit], qc_wmo_class(r$rule[m[hit]])) } }
+    if (nrow(r)) { m <- match(dk, trunc(as.numeric(r$TIMESTAMP))); hit <- which(!is.na(m)); code[hit] <- qc_wmo_combine(code[hit], qc_wmo_class(r$rule[m[hit]])) } }
   code
 }
 
@@ -82,10 +87,10 @@ export_table <- function(d, serial, project_dir, versions = "both", hide_accepte
   qr <- file.path(path.expand(project_dir), "config", "qc_rules.csv"); rules <- if (file.exists(qr)) fread(file = qr, colClasses = "character", na.strings = "") else data.table()
   has <- function(x) !is.na(x) & nzchar(x)
   tested <- if (nrow(rules)) unique(rules[has(min) | has(max) | has(max_spike) | has(max_flat_hours), parameter]) else character()
-  wc <- list()
+  wc <- list(); dk <- trunc(as.numeric(d$TIMESTAMP))                                # the times in whole seconds, once (fmt_ts() per value column took 60 s on 800 deployments)
   for (v in vals) { ov <- sub("_corr$", "", v); fc <- paste0("flag_", ov); f <- if (fc %in% names(d)) ifelse(nzchar(d[[fc]] %||% "") & !is.na(d[[fc]]), "S", "") else rep("", nrow(d))
-    if (nrow(rm)) { k <- fmt_ts(d$TIMESTAMP) %in% fmt_ts(rm[parameter == ov | (ov %in% c("depth_m", "elev_m", "dtw_m", "wt_ground_m") & parameter == "pres_kpa"), TIMESTAMP]); f[k] <- "R" }
-    f[f == "" & is.na(d[[v]])] <- "M"; set(out, j = paste0(v, "_flag"), value = f); if (!v %in% corr) wc[[v]] <- wmo_codes(d, v, rm, tested) }
+    if (nrow(rm)) { k <- dk %in% trunc(as.numeric(rm[parameter == ov | (ov %in% c("depth_m", "elev_m", "dtw_m", "wt_ground_m") & parameter == "pres_kpa"), TIMESTAMP])); f[k] <- "R" }
+    f[f == "" & is.na(d[[v]])] <- "M"; set(out, j = paste0(v, "_flag"), value = f); if (!v %in% corr) wc[[v]] <- wmo_codes(d, v, rm, tested, dk) }
   for (v in intersect(c("depth_m", "elev_m", "dtw_m"), vals)) if ("pres_kpa" %in% vals) wc[[v]] <- qc_wmo_combine(wc[[v]], wc$pres_kpa)   # computed from the pressure, so it inherits its flags
   for (v in intersect(c("elev_m", "dtw_m", "wt_ground_m"), vals)) if ("depth_m" %in% vals) wc[[v]] <- qc_wmo_combine(wc[[v]], wc$depth_m)
   for (v in corr) { ov <- sub("_corr$", "", v); ch <- !is.na(d$drift_offset_m) & d$drift_offset_m != 0                  # a corrected value that differs from the logger's is "has been changed" (WMO 5)

@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed and faster (the Scotty Creek raw archive, 2026-10-31).** Run on ~/Scotty_Creek_Raw_Only_Archive (about 1,450 water-level
+files): a run with no barologger stopped ("Object 'site' not found"); it now carries on and says so. Barologger folders are
+found by name (WL_CAMP_BARO, WL_SCIENCETENTBARO; was only a folder named exactly "baro") and a Solinst Barologger by its
+model. A logger missing from the workbook and the deployment sheet takes its site from the folder its files are filed in
+(past year folders; 200 sites named, was "Unlisted <serial>" for all), and one deployment per season of its records (first to last record in it), not
+per year folder a download was filed in (31 deployments with no records inside their dates are gone). Opening the app on 822 deployments: 97 -> 7 s (the move check re-parsed times
+already read, and each site file's level is now kept in cache/levels while unchanged). A full run 339 -> 175 s, a run with
+nothing changed 39 s: export flags and WMO codes match times once, a logger's removed values are read once, season and
+water year without parsing each record. **Output changes:** sites and seasons of loggers not in the workbook or the sheet;
+every other output identical (1,981 files compared).
+
 **Changed (one way of writing things across WLR, 2026-10-30; Plot_table_standards A4, B WLR)**
 - Tape checks are in cm on every chart (the manual-check plot was in m, the report in cm).
 - Tape checks are logger minus tape everywhere: the Simple view showed tape minus logger (the opposite sign).

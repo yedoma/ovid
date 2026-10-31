@@ -371,14 +371,24 @@ run_pipeline_steps <- function(cfg = CFG) {
   deps <- build_deployments(md, cfgs$deployments)
   water <- setdiff(names(recs), baro_serials)
   if (nrow(deps)) deps <- deps[!serial %in% baro_serials & !(serial %in% switching & type == "Baro")]
-  # loggers with records but no deployment in the workbook: one deployment per folder year, site unknown until set by hand
+  # loggers with records but no deployment in the workbook: one deployment per season of its records, from its first to last record in it
+  # (its site: the folder its files of that year are filed in, when it is one folder below the raw folders and not a year,
+  #  date or "baro" folder; else "Unlisted <serial>". A deployment sheet row always wins.)
   for (s in setdiff(water, deps$serial)) {
-    yrs <- sort(unique(use[serial == s, year])); yrs <- yrs[!is.na(yrs)]; if (!length(yrs)) yrs <- as.integer(format(max(recs[[s]]$TIMESTAMP), "%Y"))
+    tt <- recs[[s]]$TIMESTAMP; sy <- season_year(tt)
+    yrs <- sort(unique(sy[!is.na(sy)]))                                                # the seasons its records fall in, not the folder a download was filed in
+    if (!length(yrs)) { yrs <- sort(unique(use[serial == s, year])); yrs <- yrs[!is.na(yrs)] }
+    if (!length(yrs)) yrs <- as.integer(format(max(tt), "%Y"))
+    win <- vapply(yrs, function(y) { k <- which(sy == y); if (length(k)) range(as.numeric(tt[k])) else c(NA_real_, NA_real_) }, numeric(2))   # each season's first and last record
     ttl <- use[serial == s & !is.na(title), title][1] %||% ""
-    if (has_meta) problem(paste("logger", s), sprintf("not in the metadata workbook or the deployment sheet; processed as '%s' until a site is given (Loggers and metadata > Deployment sheet)", paste("Unlisted", s)))
-    deps <- rbind(deps, data.table(serial = s, site = paste("Unlisted", s), year = yrs, type = "WLR", visits = 0L, tst_from_toc = FALSE,
+    fs <- use[serial == s]; one <- site_from_folder(fs$path, cfg$raw_dirs)
+    st <- vapply(yrs, function(y) { k <- fs[!is.na(first_ts) & season_year(first_ts) <= y & season_year(last_ts) >= y, path]; if (!length(k)) k <- fs[year %in% y, path]
+      (if (length(k)) site_from_folder(k, cfg$raw_dirs)) %||% one %||% paste("Unlisted", s) }, "")
+    if (has_meta) problem(paste("logger", s), sprintf("not in the metadata workbook or the deployment sheet; processed as '%s' until a site is given (Loggers and metadata > Deployment sheet)", paste(unique(st), collapse = "', '")))
+    deps <- rbind(deps, data.table(serial = s, site = st, year = yrs, type = "WLR", visits = 0L, tst_from_toc = FALSE,
                                    start_source = "first record", end_source = "last record", T_ST_source = "", alias = ttl,
-                                   deployment = paste(s, safe_name(paste("Unlisted", s)), yrs, sep = "__"), added_by_hand = FALSE), fill = TRUE)
+                                   deployment = paste(s, safe_name(st), yrs, sep = "__"), added_by_hand = FALSE,
+                                   start = as.POSIXct(win[1, ], origin = "1970-01-01", tz = "UTC"), end = as.POSIXct(win[2, ], origin = "1970-01-01", tz = "UTC")), fill = TRUE)
   }
   if (!nrow(deps)) stop(if (length(water)) "No deployments: the workbook lists none of the loggers found." else
     paste0("No water logger in the raw folders holds readings (", paste(man[kind == "water", paste0(rel, ": ", fifelse(status == "ok", "no readings", gsub("_", " ", status)))], collapse = "; "), "); nothing to compensate"))

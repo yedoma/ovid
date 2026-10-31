@@ -37,7 +37,8 @@ baro_coverage <- function(bt, a, b, step_s) {
 #   baros: list serial -> data.table(TIMESTAMP, baro_kpa); bmeta: data.table(serial, site, easting, northing)
 #   agreement: baro_agreement(), or a copy of it that remembers its answers (the pipeline's, kept between runs)
 suggest_baro <- function(year, deps, baros, bmeta, agreement = baro_agreement) {
-  if (!length(baros) || !nrow(deps)) return(list(groups = data.table(), members = data.table(), scores = data.table()))
+  none <- function(cols) as.data.table(setNames(rep(list(character()), length(cols)), cols))   # empty, with its columns (a run with no barologger failed: 'site' not found)
+  if (!length(baros) || !nrow(deps)) return(list(groups = none(BARO_GROUP_COLS), members = none(BARO_MEMBER_COLS), scores = data.table()))
   bs <- names(baros)
   bm <- merge(data.table(serial = bs), bmeta, by = "serial", all.x = TRUE)
   bm[is.na(site) | !nzchar(site), site := paste("Baro", serial)]
@@ -184,7 +185,10 @@ read_external_baro <- function(tab) {
 }
 
 # The processing year a time belongs to: a year's sheet runs from the previous mid-September download sweep to its own.
-season_year <- function(t) { y <- as.integer(format(t, "%Y")); u <- unique(y)
+# The year of each time: from the day number when the times are UTC (format() took seconds on large records), else format().
+utc_year <- function(t) if (inherits(t, "POSIXct") && isTRUE(attr(t, "tzone") %in% c("UTC", "GMT"))) data.table::year(data.table::as.IDate(floor(as.numeric(t) / 86400))) else as.integer(format(t, "%Y"))
+season_year <- function(t) { y <- utc_year(t)
+  u <- unique(y)
   if (anyNA(u)) return(y + (t > as.POSIXct(paste0(y, "-09-15 12:00:00"), tz = "UTC")))              # a missing time: as it always was
   y + (t > as.POSIXct(paste0(u, "-09-15 12:00:00"), tz = "UTC")[match(y, u)]) }                     # each year's 15 September parsed once, not once a record
 
@@ -199,7 +203,8 @@ water_year_start_valid <- function(start) { start <- trimws(as.character(start %
 water_year_start_ok <- function(start) if (water_year_start_valid(start)) format(as.Date(paste0("2001-", trimws(start[1]))), "%m-%d") else WATER_YEAR_START
 water_year_of <- function(t, start = WATER_YEAR_START) { start <- water_year_start_ok(start)
   if (inherits(t, "Date")) t <- as.POSIXct(paste(t, "12:00:00"), tz = "UTC")
-  y <- as.integer(format(t, "%Y")); y + (t >= as.POSIXct(paste0(y, "-", start, " 00:00:00"), tz = "UTC")) - (start == "01-01") }
+  y <- utc_year(t); u <- unique(y)   # each year's start parsed once, not once a record
+  y + (t >= as.POSIXct(paste0(u, "-", start, " 00:00:00"), tz = "UTC")[match(y, u)]) - (start == "01-01") }
 water_year_first_day <- function(year, start = WATER_YEAR_START) { start <- water_year_start_ok(start)
   as.POSIXct(paste0(year - (start != "01-01"), "-", start), tz = "UTC") }
 water_year_label <- function(start = WATER_YEAR_START) { d <- as.Date(paste0("2001-", water_year_start_ok(start))); paste(as.integer(format(d, "%d")), format(d, "%B")) }
