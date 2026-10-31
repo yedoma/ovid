@@ -44,7 +44,7 @@ sp_cs_facts <- function(o, pd) {
   need <- CFG$min_complete %||% 0.8
   f[, level := fifelse(records == 0, "off", fifelse(behind > SP_CS_STOPPED_DAYS, "error",
                 fifelse((!is.na(battery) & !is.na(battery_usual) & battery < battery_usual) | (!is.na(days) & days / span < need), "warn", "ok")))]
-  f[, note := fifelse(level == "error", paste0("No data after ", format(last, "%d %b %Y"), "."),
+  f[, note := fifelse(level == "error", paste0("No data after ", format(last, "%Y-%m-%d"), "."),
               fifelse(level == "warn" & !is.na(battery) & !is.na(battery_usual) & battery < battery_usual,
                       sprintf("Battery fell to %.1f V; the project's guide gives %.1f V as the usual lowest.", battery, battery_usual),
               fifelse(level == "warn", sprintf("Days with data cover %.0f %% of the period.", 100 * days / span), "")))]
@@ -85,7 +85,7 @@ sp_cs_export_ui <- function() div(class = "sp-cols",
     div(class = "sp-row", downloadButton("sp_rpt", "Download the report", class = "sp-btn", icon = NULL))),
   div(class = "sp-card", div(class = "sp-h", "Daily values"),
     p("One CSV per station with a value per day (means, and totals for rain and snow), and a README with the methods, their sources and the run's record."),
-    div(class = "sp-row", downloadButton("sp_csv", "Download the daily values (.zip)", class = "sp-btn2", icon = NULL)),
+    div(class = "sp-row", downloadButton("sp_csv", "Download the daily values (ZIP)", class = "sp-btn2", icon = NULL)),
     p(class = "sp-dim sp-small", "Any period, the raw records or the full report: the Standard view, Reports and export.")))
 
 simple_ui <- function(req) {
@@ -131,13 +131,13 @@ simple_server <- function(input, output, session, std) {
     lv <- if (any(f$level == "error")) "error" else if (nrow(bad)) "warn" else "ok"
     head <- paste0(if (!is.null(r)) paste(num(as.integer(r$files_read)), "files read · ") else "", nrow(f), " stations · ",
                    if (!any(f$level == "error")) "all reporting" else paste(sum(f$level == "error"), "stopped"))
-    sub <- paste0("Newest record ", format(x$newest, "%d %b %Y %H:%M"), ". ",
+    sub <- paste0("Newest record ", format(x$newest, "%Y-%m-%d %H:%M"), ". ",
                   if (nrow(bad)) paste0(nrow(bad), if (nrow(bad) == 1) " station has" else " stations have", " something to look at.") else "Nothing to look at.")
     simple_hero(lv, head, sub, if (!VIEWER) tags$button(type = "button", class = "btn sp-btn2", onclick = "document.getElementById('run').click()", "Read again")) })
   output$sp_tiles <- renderUI({ x <- facts(); f <- x$f; k <- cur()
     lapply(seq_len(nrow(f)), function(i) { r <- f[i]; d <- x$daily[[r$station]]; a <- sp_cs_col(d, "Air temperature")
       simple_tile(r$station, r$level, spark = if (!is.null(a)) simple_spark(utils::tail(d[[a]], 365), level = r$level),
-        facts = list(`Last record` = format(r$last, "%d %b %Y %H:%M"),
+        facts = list(`Last record` = format(r$last, "%Y-%m-%d %H:%M"),
                      `Days with data` = if (is.na(r$days)) "—" else sprintf("%s / %s", num(r$days), num(r$span)),
                      `Battery, lowest` = if (is.na(r$battery)) "—" else sprintf("%.1f V", r$battery)),
         note = if (nzchar(r$note)) r$note, on = identical(r$station, k)) }) })
@@ -200,12 +200,12 @@ simple_server <- function(input, output, session, std) {
       d[, .(start = min(Date), end = max(Date) + 1), by = .(g = g)][, .(name = k, start, end)] }))
     need <- round(100 * (CFG$min_complete %||% 0.8)); ok <- sum(f$level == "ok"); cov <- sum(f$days, na.rm = TRUE) / sum(f$span[!is.na(f$days)])
     plot <- if (nrow(air)) ggplot2::ggplot(air[!is.na(v)], ggplot2::aes(Date, v, colour = station)) + ggplot2::geom_line(linewidth = 0.35) +
-      ggplot2::scale_colour_viridis_d(end = 0.85) + ggplot2::labs(x = NULL, y = "°C", colour = NULL) + ggplot2::theme_minimal(base_size = 9) +
+      ggplot2::scale_colour_viridis_d(end = 0.85) + ggplot2::labs(x = NULL, y = "Air temperature (°C)", colour = NULL) + ggplot2::theme_minimal(base_size = 9) +
       ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank()) else NULL
     simple_report_doc(paste("Field check:", nm),
-      meta = c(paste(nrow(f), "stations"), paste(format(min(f$first), "%d %b %Y"), "to", format(max(f$last), "%d %b %Y")), if (!is.null(r)) paste(num(as.integer(r$files_read)), "files read")),
+      meta = c(paste(nrow(f), "stations"), paste(format(min(f$first), "%Y-%m-%d"), "to", format(max(f$last), "%Y-%m-%d")), if (!is.null(r)) paste(num(as.integer(r$files_read)), "files read")),
       summary = sprintf("%d of %d stations were recording up to the newest record (%s). Days with a daily value cover %.0f %% of the days from each station's first to last record.%s",
-                        nrow(f) - sum(f$level == "error"), nrow(f), format(x$newest, "%d %b %Y"), 100 * cov,
+                        nrow(f) - sum(f$level == "error"), nrow(f), format(x$newest, "%Y-%m-%d"), 100 * cov,
                         if (nrow(f) - ok) paste0(" ", nrow(f) - ok, " station", if (nrow(f) - ok > 1) "s have" else " has", " something to look at: see the table.") else ""),
       figures = c(Stations = as.character(nrow(f)), `Days with data` = sprintf("%.0f %%", 100 * cov), Records = num(sum(f$records)),
                   `Air temperature` = if (nrow(air)) sprintf("%.1f °C", mean(air[, .(m = mean(v, na.rm = TRUE)), by = station]$m, na.rm = TRUE)) else "—"),

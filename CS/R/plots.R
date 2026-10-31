@@ -124,7 +124,7 @@ plot_audit <- function(aud) {
   ggplot(s, aes(n, rule, fill = stage)) + geom_col(width = 0.7) +
     geom_text(aes(label = format(n, big.mark = ",")), hjust = -0.15, colour = GB$fg4, size = 3.2) +
     scale_x_continuous(expand = expansion(mult = c(0, 0.18))) + scale_fill_gruvbox() +
-    labs(title = "Audit: what was removed and why", x = "records / values", y = NULL, fill = NULL)
+    labs(title = "Audit: what was removed and why", x = "Records or values", y = NULL, fill = NULL)
 }
 
 write_report <- function(out, cfg, man, summ, aud_summ, gaps, dict, plots) {

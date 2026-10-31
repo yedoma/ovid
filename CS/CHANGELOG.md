@@ -1,9 +1,22 @@
-# Ovid CS changelog
+# ovid CS changelog
 
 Newest first. Each entry gives the date, what was added, changed and fixed, and **Output changes**: whether results a user already
 has would come out differently, and why. Entries before October 2026 are taken from the git history and are shorter.
 
 ## Unreleased
+
+**Changed (one way of writing things across CS, 2026-10-30; Plot_table_standards A4, A8)**
+- Chart axes name the quantity, then the unit in brackets: "Precipitation per day (mm)", "Bucket content (mm)",
+  "Records (%)", "Records or values"; facet labels "air_temp (°C)" (the logger's "deg C" shown as °C).
+- A precipitation chart with one series has no legend; legends sit at the bottom on every chart (Combined records had
+  its own at the top); the wind rose shows every speed class in its legend (four had no colour key).
+- Dates and times as 2024-04-04 and 2024-04-04 12:09 in the run status and the Simple view (were "Apr 04 2024, 10:30",
+  "04 Apr 2024").
+- Table downloads are all "Export table (CSV)" (were "Export CSV" and "Export"); Simple "Download the daily values (ZIP)".
+- Home: "Read 1 file" (was "Read 1 files").
+- Precipitation, Flags: acc_jump has its own colour (it shared partial_day's yellow).
+- **Output changes:** the audit summary plot in output/plots and the Simple report's figure have the new axis titles;
+  data files unchanged.
 
 **Fixed (found by the click-through test, 2026-10-30)**
 - Metadata, Problems exported with none was an empty file; it now has its heading row.

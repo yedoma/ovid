@@ -231,7 +231,7 @@ build_export <- function(project_dir, keys, zipfile, from = NULL, to = NULL, fla
   cmp <- list.files(file.path(out, "composites"), "\\.csv$", full.names = TRUE)      # combined records of the last run (R/composite.R)
   if (length(cmp)) { dir.create(file.path(root, "composites")); file.copy(cmp, file.path(root, "composites")) }
   for (f in c(APPLIED_FILE, "audit_summary.csv", "metadata.csv", "run_manifest.csv", "qc_summary.csv", "sensor_health.csv", "lineage.csv", "program_history.csv")) if (file.exists(file.path(a, f))) file.copy(file.path(a, f), root)
-  writeLines(c("Ovid Core // CS - logger data export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M")), "",
+  writeLines(c("ovid // CS - logger data export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M")), "",
     if (is.na(out_offset)) "data/            one CSV per station table. Timestamps are each station's own time, as stored (no common zone was applied)."
     else c(sprintf("data/            one CSV per station table. Timestamps were moved to UTC%+g from each station's utc_offset_hours (Station details); the time_zone column says so.", out_offset),
            if (!is.na(unzoned_offset)) sprintf("                 Stations without an offset were taken as UTC%+g.", unzoned_offset),

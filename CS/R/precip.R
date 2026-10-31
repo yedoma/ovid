@@ -83,7 +83,7 @@ hydrometeor_temp <- function(ta, rh) {
 }
 rain_fraction <- function(ta, rh) 1 / (1 + 2.630006 * 0.09336^hydrometeor_temp(ta, rh))
 # Snow, Mixed or Rain for the tables and plots: the rain fraction below 0.05 is snow, above 0.95 rain (Ovid's bins).
-# Without humidity, air temperature alone: snow below -2 C, rain above 2 C (an Ovid default, no published source).
+# Without humidity, air temperature alone: snow below -2 C, rain above 2 C (an ovid default, no published source).
 precip_phase <- function(ta, rh = NULL) {
   if (is.null(rh)) return(ifelse(is.na(ta), NA_character_, ifelse(ta < -2, "Snow", ifelse(ta > 2, "Rain", "Mixed"))))
   fr <- rain_fraction(ta, rh)

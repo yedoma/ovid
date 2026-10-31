@@ -49,9 +49,9 @@
   output$has_out <- reactive(!is.null(outs())); outputOptions(output, "has_out", suspendWhenHidden = FALSE)
   output$runstate <- renderUI({
     o <- outs()
-    if (VIEWER) ovid_status(if (is.null(o)) "No data" else paste("Data as of", format(o$when, "%b %d %Y, %H:%M")), if (is.null(o)) "off" else "ok")
+    if (VIEWER) ovid_status(if (is.null(o)) "No data" else paste("Data as of", format(o$when, "%Y-%m-%d %H:%M")), if (is.null(o)) "off" else "ok")
     else if (isTRUE(rv$stale)) ovid_status("Set-up changed. Run to apply.", "warn")
     else if (is.null(o)) ovid_status("Not run yet", "off")
-    else ovid_status(paste("Up to date. Last run", format(o$when, "%b %d, %H:%M")), "ok")
+    else ovid_status(paste("Up to date. Last run", format(o$when, "%Y-%m-%d %H:%M")), "ok")
   })
 

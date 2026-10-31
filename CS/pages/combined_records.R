@@ -44,7 +44,7 @@
     ggplot(r, aes(TIMESTAMP, value, colour = source)) + geom_point(size = 0.35, alpha = 0.8, shape = 16) +
       scale_colour_manual(values = cols, name = NULL) + guides(colour = guide_legend(override.aes = list(size = 3))) +
       labs(x = NULL, y = b$parameter, title = input$cb_name %||% "", subtitle = sprintf("%s values from %d source(s)%s", num(nrow(r)), nlevels(r$source),
-           if (nzchar(b$step)) paste0(", ", b$step, "ly means") else "")) + theme_ovid(GB) + theme(legend.position = "top")
+           if (nzchar(b$step)) paste0(", ", b$step, "ly means") else "")) + theme_ovid(GB)
   }, bg = GB$bg, res = 96)
   output$cb_used <- renderDT({ b <- cb_built(); req(b, nrow(b$sources)); x <- copy(b$sources)
     for (v in c("first", "last")) if (v %in% names(x)) x[, (v) := fmt_ts(get(v))]

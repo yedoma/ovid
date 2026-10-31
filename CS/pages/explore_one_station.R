@@ -26,7 +26,7 @@
   unit_of <- function(p) {
     o <- outs(); if (is.null(o) || !NROW(o$dict) || !all(c("parameter", "unit") %in% names(o$dict))) return(setNames(rep(NA_character_, length(p)), p))
     u <- o$dict[parameter %in% p & !is.na(unit) & unit != "", .(unit = { t <- names(sort(base::table(unit), decreasing = TRUE)); if (length(t)) t[1] else NA_character_ }), by = parameter]
-    setNames(u$unit[match(p, u$parameter)], p)
+    setNames(sub("^[Dd]eg ?C$", "\u00b0C", u$unit[match(p, u$parameter)]), p)   # the logger's "deg C" shown as °C
   }
   observeEvent(input$ex_station, rv$zoom <- NULL)
   observe({
@@ -148,7 +148,7 @@
   ex2_g <- reactive({
     d <- ex_view(); p <- intersect(input$ex_params, names(d)); kind <- input$ex_kind
     validate(need(length(p) > 0, "Pick at least one parameter."), need(nrow(d) > 1, "No records in this period."))
-    u <- unit_of(p); lab <- function(v) ifelse(!is.na(u[v]) & nzchar(u[v]), paste0(v, "   (", u[v], ")"), v)
+    u <- unit_of(p); lab <- function(v) ifelse(!is.na(u[v]) & nzchar(u[v]), paste0(v, " (", u[v], ")"), v)
     ttl <- paste(ex_key(), collapse = " / ")
     pcol <- param_colours(p, GB)                     # each parameter in the colour of what it measures (Ovid/theme.R)
     ramp_fill <- function(par, x) { out <- character(length(x)); for (q in unique(as.character(par))) { i <- as.character(par) == q
@@ -207,7 +207,7 @@
       a <- long[, { v <- sort(value, decreasing = TRUE); i <- unique(round(seq(1, length(v), length.out = min(length(v), 1500)))); .(pct = 100 * i / length(v), value = v[i]) }, by = parameter]
       a[, panel := factor(lab(as.character(parameter)), levels = unique(lab(p)))]
       return(ggplot(a, aes(pct, value, colour = parameter)) + geom_line(linewidth = 0.6) + scale_colour_manual(values = pcol, guide = "none") + facet_wrap(~panel, ncol = 2, scales = "free_y") +
-        scale_x_continuous(breaks = c(0, 10, 25, 50, 75, 90, 100)) + labs(x = "% of records at or above this value", y = NULL, subtitle = paste0(ttl, "   read across: the value exceeded that share of the time")))
+        scale_x_continuous(breaks = c(0, 10, 25, 50, 75, 90, 100)) + labs(x = "Records at or above this value (%)", y = NULL, subtitle = paste0(ttl, "   read across: the value exceeded that share of the time")))
     }
     if (kind == "windrose") {
       full <- ex_view(); n <- names(full); pick <- function(rx, not = "$^") { x <- grep(rx, n, ignore.case = TRUE, value = TRUE); x <- x[!grepl(not, x, ignore.case = TRUE)]; x <- x[vapply(x, function(c) is.numeric(full[[c]]) && any(!is.na(full[[c]])), logical(1))]; if (length(x)) x[1] else NA }
@@ -219,9 +219,9 @@
                            levels = c("N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"))]
       br <- unique(c(0, 1, 2, 4, 6, 8, 12, Inf)); w[, cls := cut(sp, br, right = FALSE, labels = c("under 1", "1 to 2", "2 to 4", "4 to 6", "6 to 8", "8 to 12", "12 and over"))]
       a <- w[, .(pct = 100 * .N / nrow(w)), by = .(sector, cls)]
-      return(ggplot(a, aes(sector, pct, fill = cls)) + geom_col(width = 0.9, colour = GB$bg, linewidth = 0.2, position = position_stack(reverse = TRUE)) + coord_polar(start = -pi / 16) +
+      return(ggplot(a, aes(sector, pct, fill = cls)) + geom_col(width = 0.9, colour = GB$bg, linewidth = 0.2, position = position_stack(reverse = TRUE), show.legend = TRUE) + coord_polar(start = -pi / 16) +
         scale_x_discrete(drop = FALSE) + scale_fill_manual(values = grDevices::colorRampPalette(c(GB$gray, GB$blue, GB$aqua, GB$yellow, GB$orange, GB$red))(7), drop = FALSE, name = "Wind speed (m/s)") +
-        labs(x = NULL, y = "% of records", subtitle = paste0(ttl, "   where the wind comes from, ", ws, " by ", wd, ", ", num(nrow(w)), " records")) + theme(panel.grid.major = element_line(colour = GB$bg2)))
+        labs(x = NULL, y = "Records (%)", subtitle = paste0(ttl, "   where the wind comes from, ", ws, " by ", wd, ", ", num(nrow(w)), " records")) + theme(panel.grid.major = element_line(colour = GB$bg2)))
     }
     if (kind %in% c("years", "box", "diurnal", "cum")) {
       long <- melt(d[, c("TIMESTAMP", p), with = FALSE], id.vars = "TIMESTAMP", variable.name = "parameter", na.rm = TRUE)

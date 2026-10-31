@@ -20,7 +20,7 @@ table.dataTable tbody td:first-child{position:sticky;left:0;z-index:2;background
 table.dataTable tbody tr.selected>td:first-child{background:var(--bg2) !important}
 table.dataTable.hover tbody tr:hover>td:first-child{background:var(--bgh) !important}
 .dataTables_scrollBody{border-bottom:1px solid var(--bg2) !important} .dataTables_scrollHead{background:var(--bg1)}
-table.dataTable tbody td{padding:8px 10px !important} .dataTables_scrollHead thead th,.dataTables_wrapper>table.dataTable thead th{padding:9px 18px 9px 10px !important}
+.dataTables_scrollHead thead th,.dataTables_wrapper>table.dataTable thead th{padding:9px 18px 9px 10px !important}
 .dataTables_scrollBody thead th,.dataTables_scrollBody thead td{padding-top:0 !important;padding-bottom:0 !important;height:0 !important;line-height:0 !important;border:0 !important}
 .dataTables_scrollBody thead th:before,.dataTables_scrollBody thead th:after{display:none !important}
 .lost{display:inline-block;padding:1px 9px;border-radius:10px;font-size:12px;font-weight:600} .lost.no{background:color-mix(in srgb, var(--green) 16%, transparent);color:var(--green)} .lost.yes{background:color-mix(in srgb, var(--red) 16%, transparent);color:var(--red)}

@@ -54,7 +54,7 @@ cs_home_ui <- function() tagList(tags$style(HTML(CS_HOME_CSS)),
         div(class = "d-cardx", div(class = "hm-chips", span(class = "dim", "Parameters"), uiOutput("hm_chip_ui", inline = TRUE)), ts_viewbar(), ts_view("hm_plot", 230),
             uiOutput("hm_small", class = "hm-small")),
         div(class = "d-cardx", div(class = "hm-thead", h4("Daily summary"), span(class = "dim", textOutput("hm_daily_note", inline = TRUE)), div(class = "d-fill"),
-            downloadButton("hm_daily_dl", "Export", class = "btn-sm")), DTOutput("hm_daily"))),
+            downloadButton("hm_daily_dl", "Export table (CSV)", class = "btn-sm")), DTOutput("hm_daily"))),
       div(class = "hm-side d-cardx", uiOutput("hm_station"))))))
 
 CS_HOME_CSS <- paste(readLines(file.path(APP_DIR, "www", "home.css"), encoding = "UTF-8"), collapse = "\n")
@@ -154,7 +154,7 @@ cs_home_server <- function(input, output, session, outs, pd, cur, st_shown, E, s
       kv("Sensors", if (nzchar(sensors)) sensors else "\u2014"),
       kv("Calibrations", paste(ncal, if (ncal == 1) "row" else "rows")),
       h4(style = "margin-top:12px", "Done to this data"),
-      p(class = "dim", style = "font-size:12.5px", paste0("Read ", if (nrow(m) && "files" %in% names(m)) sum(as.numeric(m$files), na.rm = TRUE) else "its", " files \u00b7 ",
+      p(class = "dim", style = "font-size:12.5px", paste0("Read ", if (nrow(m) && "files" %in% names(m)) { nf <- sum(as.numeric(m$files), na.rm = TRUE); paste(num(nf), if (nf == 1) "file" else "files") } else "its files", " \u00b7 ",
         if (nrow(rm)) paste0(num(sum(as.numeric(rm$n %||% 0), na.rm = TRUE)), " values changed or removed in the audit trail") else "nothing changed in the audit trail",
         if (npc) paste0(" \u00b7 ", npc, " correction", if (npc > 1) "s", " over a period") else "")),
       div(class = "btnrow", tags$a(class = "btn btn-default btn-sm", href = "#", `data-ovid-go` = "Shown", title = "Rename the station, or choose what shows", "Edit station"),

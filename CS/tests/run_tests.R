@@ -905,4 +905,13 @@ local({                                                               # every fi
         grepl('dict = with_cols(rd("column_dictionary.csv"', fo, fixed = TRUE))
   md <- paste(readLines(file.path(.app, "pages", "metadata.R"), warn = FALSE), collapse = "\n")
   check("Metadata, Problems exported with none is a CSV with its heading row (it was an empty file)", grepl("else data.table(Where = character(), Problem = character())", md, fixed = TRUE)) })
+local({                                                               # one way of writing things across CS (Plot_table_standards A4, A8)
+  fs <- list.files(.app, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests)/", fs)]
+  src <- unlist(lapply(fs, readLines, warn = FALSE))
+  ylab <- unlist(regmatches(src, gregexpr('labs\\([^)]*?\\b[xy] = (paste0?\\()?"[^"]+"', src, perl = TRUE)))
+  check("chart axis titles start with a capital (quantity, then the unit in brackets), never 'mm per day' or 'records or values'",
+        length(ylab) > 10 && !any(grepl('"[a-z%]', ylab)))
+  check("table downloads are all 'Export table (CSV)', no bare 'Export CSV' or 'Export'", !any(grepl('downloadButton\\("[^"]+", "Export( CSV)?"', src)))
+  check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
+  check("the logger's 'deg C' is shown as °C in Explore", grepl('sub("^[Dd]eg ?C$", "\\u00b0C"', paste(readLines(file.path(.app, "pages", "explore_one_station.R"), warn = FALSE), collapse = "\n"), fixed = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$pass, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }

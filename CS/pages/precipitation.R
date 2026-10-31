@@ -51,23 +51,24 @@
                 xmax = if (posix) as.POSIXct(format(fl$End), tz = "UTC") + 86400 else fl$End + 1, ymin = -Inf, ymax = Inf, fill = GB$red, alpha = 0.13)
     cap <- if (nrow(fl)) "red shading = period where the running total was inflated; the daily total comes from the bucket (low confidence)" else NULL
     long <- function(x, id) { m <- melt(x[, c(id, s), with = FALSE], id.vars = id, variable.name = "Series"); m[, Series := factor(pr_names[as.character(Series)], levels = pr_names[s])]; m }
-    sc <- list(scale_fill_manual(values = pr_cols), scale_colour_manual(values = pr_cols))
+    sc <- list(scale_fill_manual(values = pr_cols, name = NULL), scale_colour_manual(values = pr_cols, name = NULL),
+                if (length(s) < 2) guides(fill = "none", colour = "none"))           # a legend only when there is more than one series
     if (kind == "daily") { m <- long(d, "Date")[!is.na(value)]
       return(shade(ggplot(m, aes(Date, value, fill = Series))) + geom_col(width = 1) + facet_wrap(~Series, ncol = 1) + sc + guides(fill = "none") +
-               labs(x = NULL, y = "mm per day", subtitle = ttl, caption = cap)) }
+               labs(x = NULL, y = "Precipitation per day (mm)", subtitle = ttl, caption = cap)) }
     if (kind == "interval") {
       validate(need(as.numeric(diff(w)) <= 370, "Every record is drawn for periods of a year or less. Narrow the period."))
       v <- pr_iv()[TIMESTAMP >= as.POSIXct(format(w[1]), tz = "UTC") & TIMESTAMP < as.POSIXct(format(w[2] + 1), tz = "UTC")]
       m <- long(v, "TIMESTAMP")[!is.na(value) & value != 0]; validate(need(nrow(m) > 0, "No precipitation in this period."))
       return(shade(ggplot(m, aes(TIMESTAMP, value, colour = Series)), TRUE) + geom_linerange(aes(ymin = 0, ymax = value), linewidth = 0.4) +
-               facet_wrap(~Series, ncol = 1) + sc + guides(colour = "none") + labs(x = NULL, y = paste0("mm per ", i$interval_min, " min"), subtitle = ttl, caption = cap)) }
+               facet_wrap(~Series, ncol = 1) + sc + guides(colour = "none") + labs(x = NULL, y = paste0("Precipitation per ", i$interval_min, " min (mm)"), subtitle = ttl, caption = cap)) }
     if (kind == "cum") { m <- long(d, "Date"); m[is.na(value), value := 0]; m[, value := cumsum(value), by = Series]
       return(shade(ggplot(m, aes(Date, value, colour = Series))) + geom_line(linewidth = 0.6) + sc +
-               labs(x = NULL, y = "mm since the start of the period", subtitle = ttl, caption = cap)) }
+               labs(x = NULL, y = "Precipitation since the start of the period (mm)", subtitle = ttl, caption = cap)) }
     if (kind %in% c("month", "year")) {
       d[, P := if (kind == "month") as.Date(format(Date, "%Y-%m-01")) else as.Date(sprintf("%d-01-01", year(Date)))]
       m <- long(d, "P")[, .(value = sum(value, na.rm = TRUE)), by = .(P, Series)]
-      g <- ggplot(m, aes(P, value, fill = Series)) + geom_col(position = "dodge") + sc + labs(x = NULL, y = paste("mm per", kind), subtitle = ttl,
+      g <- ggplot(m, aes(P, value, fill = Series)) + geom_col(position = "dodge") + sc + labs(x = NULL, y = paste0("Precipitation per ", kind, " (mm)"), subtitle = ttl,
                  caption = "Months and years with missing days are under-counted; see the By year table.")
       if (kind == "year") g <- g + scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
           geom_text(aes(label = round(value)), position = position_dodge(width = 365), vjust = -0.4, size = 2.8, colour = GB$fg4)
@@ -76,7 +77,7 @@
       m[, `:=`(Year = factor(year(Date)), doy = as.Date("2000-01-01") + yday(Date) - 1)]; m[, value := cumsum(value), by = Year]
       cols <- grDevices::colorRampPalette(c(GB$blue, GB$aqua, GB$yellow, GB$orange, GB$red))(nlevels(m$Year))
       return(ggplot(m, aes(doy, value, colour = Year, group = Year)) + geom_line(linewidth = 0.6) + scale_colour_manual(values = cols) +
-               scale_x_date(date_labels = "%b", date_breaks = "1 month") + labs(x = NULL, y = "mm since 1 January", subtitle = paste0(ttl, "   ", pr_names[s[1]]),
+               scale_x_date(date_labels = "%b", date_breaks = "1 month") + labs(x = NULL, y = "Precipitation since 1 January (mm)", subtitle = paste0(ttl, "   ", pr_names[s[1]]),
                  caption = "A flat stretch is either a dry spell or missing data.")) }
     if (kind == "bucket") {
       v <- pr_iv()[TIMESTAMP >= as.POSIXct(format(w[1]), tz = "UTC") & TIMESTAMP < as.POSIXct(format(w[2] + 1), tz = "UTC")]
@@ -86,20 +87,20 @@
       g <- ggplot(v, aes(TIMESTAMP)) + geom_line(aes(y = bucket, colour = "Bucket as logged"), linewidth = 0.4, na.rm = TRUE) +
         geom_line(aes(y = bucket_filled, colour = "Bucket used (never falls within a cycle)"), linewidth = 0.4, na.rm = TRUE) +
         scale_colour_manual(values = c(`Bucket as logged` = pr_cols[["Running total (raw)"]], `Bucket used (never falls within a cycle)` = pr_cols[["Final"]]), name = NULL) +
-        labs(x = NULL, y = "mm in the bucket", subtitle = ttl, caption = "dashed lines = bucket emptied (red) or topped up (gold); each starts a new cycle")
+        labs(x = NULL, y = "Bucket content (mm)", subtitle = ttl, caption = "dashed lines = bucket emptied (red) or topped up (gold); each starts a new cycle")
       if (nrow(sv)) g <- g + geom_vline(data = sv, aes(xintercept = t, linetype = Event), colour = ifelse(sv$Event == "Emptied", GB$red, GB$yellow), linewidth = 0.3) +
           scale_linetype_manual(values = c(Emptied = "dashed", `Topped up` = "dashed", `Entered by hand` = "dotted"), guide = "none")
       return(shade(g, TRUE)) }
     if (kind == "diff") { validate(need(isTRUE(i$has_acc), "This gauge has no running total to compare with the bucket."))
       d[, diff := precip_acc_total_mm - precip_bucket_mm]
       return(shade(ggplot(d[!is.na(diff)], aes(Date, diff))) + geom_col(width = 1, fill = GB$blue) + geom_hline(yintercept = 2, colour = GB$yellow, linetype = "dashed", linewidth = 0.4) +
-               labs(x = NULL, y = "running total minus bucket, mm per day", subtitle = ttl,
+               labs(x = NULL, y = "Running total minus bucket per day (mm)", subtitle = ttl,
                     caption = "Above the dashed line the running total reports more than the bucket gained. Runs of such days become a faulty period (red).")) }
     d[, M := as.Date(format(Date, "%Y-%m-01"))]; m <- d[, .N, by = .(M, Flag = qc_flag)]
     ggplot(m, aes(M, N, fill = Flag)) + geom_col(width = 28) +
       scale_fill_manual(values = c(good = GB$aqua, partial_day = GB$yellow, acc_bucket_mismatch = GB$orange, low_confidence = GB$red, missing = GB$bg2,
-                                   bucket_only_window = GB$green, servicing_day = GB$blue, power_or_outage_day = GB$purple, acc_jump = GB$yellow)) +
-      labs(x = NULL, y = "days", subtitle = ttl)
+                                   bucket_only_window = GB$green, servicing_day = GB$blue, power_or_outage_day = GB$purple, acc_jump = GB$fg4))   # one colour per flag (acc_jump was partial_day's yellow) +
+      labs(x = NULL, y = "Days", subtitle = ttl)
   })
   output$pr_plot <- renderPlot(pr_g(), bg = GB$bg, res = 96)
   pr_tbl <- function(kind, empty) renderDT({ validate(need(!is.null(pr_sum()), "")); d <- pr_read(kind); validate(need(nrow(d) > 0, empty)); ovid_dt(d, page = 15, opts = list(scrollX = TRUE)) })
@@ -130,9 +131,9 @@
               " (an Alter-shielded Geonor, wind at gauge height), snow uses CE = 1.18\u00b7exp(\u22120.18\u00b7U) of Smith (2007) and rain CE = 0.95, as in Pan et al. (2016); it also needs relative humidity (",
               code("rh"), ") for the phase."),
       tags$li("Phase (Snow, Mixed, Rain): from the hydrometeor temperature, which uses air temperature and relative humidity (Harder and Pomeroy 2013), and its rain fraction; below 0.05 is snow and above 0.95 rain. ",
-              "Without humidity, snow below \u22122 \u00b0C and rain above 2 \u00b0C, an Ovid default with no published source."),
+              "Without humidity, snow below \u22122 \u00b0C and rain above 2 \u00b0C, an ovid default with no published source."),
       tags$li("After an outage longer than ", i$long_gap_hours, " hours the first record is not counted. What the bucket gained across the outage is reported separately as outage accumulation, not added to the totals.")),
-      p(class = "dim", "Every limit above is a column in the Gauge set-up table. Change it, save, and press Reprocess. The limits are Ovid's own quality rules (defaults chosen for these gauges), not published values; the Geonor booking step follows WMO-SPICE practice.")) })
+      p(class = "dim", "Every limit above is a column in the Gauge set-up table. Change it, save, and press Reprocess. The limits are ovid's own quality rules (defaults chosen for these gauges), not published values; the Geonor booking step follows WMO-SPICE practice.")) })
   # gauge set-up
   observe({ o <- outs(); req(o, nrow(o$stations) > 0); updateSelectInput(session, "pg_station", choices = setNames(st_value(o), st_label(o))) })
   observe({ o <- outs(); req(o, input$pg_station); k <- strsplit(input$pg_station, "|||", fixed = TRUE)[[1]]

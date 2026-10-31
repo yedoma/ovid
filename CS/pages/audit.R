@@ -49,7 +49,7 @@
     top <- a[, .(t = sum(cnt, na.rm = TRUE)), by = who][order(-t)][seq_len(min(.N, 25))]; a <- a[who %in% top$who]
     b <- a[, .(cnt = sum(cnt, na.rm = TRUE)), by = .(who, what)]; b[, who := factor(who, levels = rev(top$who))]
     ggplot(b, aes(cnt, who, fill = what)) + geom_col(width = 0.75) + scale_fill_gruvbox(name = NULL) + scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
-      labs(x = "records or values", y = NULL, subtitle = if (uniqueN(au_view()$who) > 25) "The 25 stations and loggers with the most entries" else NULL) + guides(fill = guide_legend(ncol = 2))
+      labs(x = "Records or values", y = NULL, subtitle = if (uniqueN(au_view()$who) > 25) "The 25 stations and loggers with the most entries" else NULL) + guides(fill = guide_legend(ncol = 2))
   }, bg = GB$bg, res = 96)
   output$au_count <- renderUI({ if (is.null(outs())) return(NULL); a <- au_view()
     p(class = "dim", num(sum(a$entries)), " log entries covering ", num(sum(as.numeric(a$n), na.rm = TRUE)), " records and values. One row per station, logger and column:") })
