@@ -1,9 +1,17 @@
-# Ovid GT changelog
+# ovid GT changelog
 
 Newest first. Each entry gives the date, what was added, changed and fixed, and **Output changes**: whether results a user already
 has would come out differently, and why. Entries before October 2026 are taken from the git history and are shorter.
 
 ## Unreleased
+
+**Changed (one way of writing things across GT, 2026-10-30; Plot_table_standards A4, A8)**
+- Every chart axis names its quantity: "Temperature (°C)" (was "°C" on the MAGT, depth and Simple charts), "Battery (V)",
+  "Active-layer thickness (m)".
+- Compare's legend sits at the top, as on every other GT chart.
+- Site notebook: the site's name at the page-title size (18 px; was 22 px, larger than the page title).
+- Dates and times as 2024-04-04 and 2024-04-04 12:09 in the run status and the Simple view; Simple downloads "(ZIP)".
+- **Output changes:** none (screen and report figures only).
 
 **Fixed (found by the click-through test, 2026-10-30)**
 - The heatmap (Sensors, Site notebook, Explore) failed with the test project: its colour limits came out missing (no finite temperature in the period, or a fixed scale with empty boxes); it now falls back to the automatic scale, or says there is not enough data. Simple, View: "Not named" broke the tiles (f[!named] is a not-join in data.table).

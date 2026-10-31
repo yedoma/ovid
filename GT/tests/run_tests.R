@@ -675,5 +675,13 @@ local({                                                               # every fi
   check("Simple View's Not named filter draws (f[!named] was read as a not-join)", grepl("unnamed = f[named == FALSE]", sg, fixed = TRUE))
   p1 <- tryCatch(plot_heatmap(data.table(TIMESTAMP = as.POSIXct("2024-01-01", tz = "UTC") + 0:47 * 3600, depth_m = rep(c(0.1, 0.5), 24), value = NA_real_, temp_c = NA_real_), lim = c(NA, NA)), error = function(e) e)
   check("a heatmap with no temperature to draw, or a fixed scale with empty boxes, shows a message instead of failing", !inherits(p1, "error")) })
+local({                                                               # one way of writing things across GT (Plot_table_standards A4, A8)
+  fs <- list.files(here, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests|docs)/", fs)]
+  src <- unlist(lapply(fs, readLines, warn = FALSE))
+  ax <- unlist(regmatches(src, gregexpr('\\b[xy] = "[^"]*"', src)))
+  check("every chart axis names its quantity before the unit (no bare '°C' or 'V')", length(ax) > 10 && !any(grepl('= "(\\\\u00b0C|°C|V|m)"', ax)))
+  check("chart legends sit at the top on every Standard chart", !any(grepl('legend.position = "bottom"', unlist(lapply(fs[!grepl("/simple/", fs)], readLines, warn = FALSE)))))
+  check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
+  check("the Site notebook's site name is no larger than a page title (18 px)", any(grepl(".nb-site{margin:0 0 2px;font-size:18px}", src, fixed = TRUE))) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 quit(status = if (n_bad) 1 else 0)

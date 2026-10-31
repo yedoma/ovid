@@ -18,7 +18,7 @@
   output$sm_alt <- renderDT({ o <- outs(); req(o); ovid_dt(sm_f(o$alt)[order(site, year)], page = 12) })
   output$sm_alt_plot <- renderPlot({ o <- outs(); req(o); a <- sm_f(o$alt)[!is.na(alt_m)]; validate(need(nrow(a) > 0, "No active-layer thickness for these sites (no permafrost within the sensors, or no complete year)."))
     ggplot(a, aes(year, alt_m, colour = site)) + geom_line(linewidth = 0.6) + geom_point(size = 2.2) + scale_y_reverse() + scale_colour_manual(values = rep(CAT_PAL, 10)[seq_len(uniqueN(a$site))], name = NULL) +
-      scale_x_continuous(breaks = function(l) seq(ceiling(l[1]), floor(l[2]), 1)) + labs(title = "Active-layer thickness", x = NULL, y = "ALT (m)") }, bg = MI$bg)
+      scale_x_continuous(breaks = function(l) seq(ceiling(l[1]), floor(l[2]), 1)) + labs(title = "Active-layer thickness", x = NULL, y = "Active-layer thickness (m)") }, bg = MI$bg)
   output$sm_ft <- renderDT({ o <- outs(); req(o); ovid_dt(sm_f(o$ft)[order(site, water_year, depth_m)], page = 12) })
   output$sm_zc <- renderDT({ o <- outs(); req(o); ovid_dt(sm_f(o$zc)[order(site, start, depth_m)], page = 12) })
   emp <- function(x, msg) { validate(need(!is.null(x) && nrow(x) > 0, msg)); x }

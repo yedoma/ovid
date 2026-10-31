@@ -35,6 +35,6 @@
       geom_point(data = x[bad == TRUE], aes(date, value), inherit.aes = FALSE, colour = MI$red, size = 1.6) +
       scale_colour_manual(values = setNames(c(param_colours("temp", MI)[[1]], MI$gray), c(r$site, "median of the other sites")), name = NULL) +
       labs(x = NULL, y = "Daily mean (\u00b0C)", title = paste0(r$site, " at ", r$depth_m, " m against the other sites"),
-           subtitle = paste0(r$verdict, "; red points: days that depart from the usual offset")) + theme(legend.position = "bottom") }, bg = MI$bg, res = 96)
+           subtitle = paste0(r$verdict, "; red points: days that depart from the usual offset")) + theme(legend.position = "top") }, bg = MI$bg, res = 96)
   output$cp_png <- downloadHandler("compare_sites.png", function(file) gt_save(cp_plot(), file, 13, 6))
   output$cp_dl <- downloadHandler("compare_sites.csv", function(file) { x <- copy(cp_long()); x[, TIMESTAMP := fmt_ts(TIMESTAMP)]; fwrite(x, file) })

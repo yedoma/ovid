@@ -56,6 +56,6 @@
   output$runstate <- renderUI({ o <- outs()
     if (isTRUE(rv$stale)) ovid_status("Set-up changed. Run to apply.", "warn")
     else if (is.null(o)) ovid_status("Not run yet", "off")
-    else ovid_status(paste("Up to date. Last run", format(o$when, "%b %d, %H:%M")), "ok") })
+    else ovid_status(paste("Up to date. Last run", format(o$when, "%Y-%m-%d %H:%M")), "ok") })
   output$log <- renderUI(pre(class = "log", paste(if (length(rv$log)) rv$log else "No run in this session yet.", collapse = "\n")))
   site_names <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$ss)) character() else sort(o$ss$site) })

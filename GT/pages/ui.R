@@ -311,7 +311,7 @@ nb_ui <- function() tagList(
   tags$style(HTML(".nb-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 14px}.nb-chip{padding:3px 10px;border:1px solid var(--bg3);border-radius:6px;color:var(--fg4);font-size:12.5px;text-decoration:none}
 .nb-chip:hover{background:var(--bg1);color:var(--fg);text-decoration:none}.nb-chip.on{border-color:var(--acc);color:var(--fg);box-shadow:inset 0 0 0 1px var(--acc)}
 .nb-chips .form-group{margin:0;width:140px}.nb-chips .selectize-input{min-height:28px;padding:3px 8px;border-radius:6px}
-.nb-site{margin:0 0 2px;font-size:22px}.nb-desc{color:var(--fg4);margin:0 0 10px;max-width:880px}.nb-sech{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.nb-sech h3{margin:0 auto 0 0}
+.nb-site{margin:0 0 2px;font-size:18px}.nb-desc{color:var(--fg4);margin:0 0 10px;max-width:880px}.nb-sech{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.nb-sech h3{margin:0 auto 0 0}
 .nb-sech .form-group{margin:0}.nb-sech .shiny-options-group{display:flex;gap:4px}.nb-sech .radio-inline{margin:0;padding:0}.nb-sech .radio-inline input{display:none}.nb-sech .radio-inline span{display:inline-block;padding:2px 10px;border:1px solid var(--bg3);border-radius:6px;font-size:12.5px;cursor:pointer}
 .nb-sech .radio-inline:has(input:checked) span{border-color:var(--acc);color:var(--fg);box-shadow:inset 0 0 0 1px var(--acc)}
 .nb-depth{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:12.5px;color:var(--fg4)}.nb-depth .form-group{margin:0;width:120px}")),

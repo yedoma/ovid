@@ -14,4 +14,4 @@
   output$he_bat <- renderPlot({ o <- outs(); req(o); b <- o$battery; validate(need(nrow(b) > 0, "No battery readings (GeoPrecision loggers write them)."))
     b[, date := as.Date(date)]
     ggplot(b, aes(date, volts_min, colour = logger_id)) + geom_line(linewidth = 0.5) + scale_colour_manual(values = rep(CAT_PAL, 10)[seq_len(uniqueN(b$logger_id))], name = NULL) +
-      labs(title = "Logger battery", subtitle = "Daily minimum (V)", x = NULL, y = "V") }, bg = MI$bg)
+      labs(title = "Logger battery", subtitle = "Daily minimum (V)", x = NULL, y = "Battery (V)") }, bg = MI$bg)

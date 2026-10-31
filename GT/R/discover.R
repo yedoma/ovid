@@ -15,7 +15,7 @@ EXPORT_ADVICE <- c(rbr = "Open the .hex in Ruskin and export it as text (.txt), 
                    geoprecision = "Open the .f2b in FG2-Shell (or GP5W) and export it as .csv into the same folder.",
                    hobo = "Open the .hobo in HOBOware and export it as .csv into the same folder.",
                    em50 = "Open the data in ECH2O Utility and export it as .xls.",
-                   campbell = "Mixed-array (CR10X) and binary tables are not read by GT: convert to TOA5 with LoggerNet's CardConvert, or process them in Ovid CS.")
+                   campbell = "Mixed-array (CR10X) and binary tables are not read by GT: convert to TOA5 with LoggerNet's CardConvert, or process them in ovid CS.")
 
 WATER_LOGGER_NOTE <- "HOBO water-level or conductivity logger: read by WLR, not GT"
 

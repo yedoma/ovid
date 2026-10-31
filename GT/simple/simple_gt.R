@@ -133,7 +133,7 @@ sp_gt_facts <- function(o, pd, reg = NULL) {
   f[exposed > 0 | !named | assumed, state := "warn"]
   f[!is.na(behind) & behind > SP_GT_STOPPED_DAYS, state := "warn"]
   f[!is.finite(last), state := "off"]
-  f[, note := fifelse(!is.na(behind) & behind > SP_GT_STOPPED_DAYS, paste0("No data after ", format(last, "%d %b %Y"), "."),
+  f[, note := fifelse(!is.na(behind) & behind > SP_GT_STOPPED_DAYS, paste0("No data after ", format(last, "%Y-%m-%d"), "."),
               fifelse(exposed > 0, "A sensor reads like air (exposed?), flagged and kept.",
               fifelse(!named, "Not named: still called after its logger.", fifelse(assumed, "Depths are assumed (default steps or a template).", ""))))]
   list(f = f[order(match(state, c("error", "warn", "ok", "off")), site)], daily = split(dd, by = "site", keep.by = FALSE), newest = newest)
@@ -191,7 +191,7 @@ sp_gt_export_ui <- function() div(class = "sp-cols",
     div(class = "sp-row", downloadButton("sp_rpt", "Download the report (HTML)", class = "sp-btn", icon = NULL))),
   div(class = "sp-card", div(class = "sp-h", "Daily temperatures and plots"),
     p("One CSV per site with a value per day for each depth and the flags of that day, with a README of the methods, their sources and the run's record. The plots: each site over time and as a profile."),
-    div(class = "sp-row", downloadButton("sp_csv", "Daily temperatures (.zip)", class = "sp-btn2", icon = NULL), downloadButton("sp_png", "Plots (.zip)", class = "sp-btn2", icon = NULL)),
+    div(class = "sp-row", downloadButton("sp_csv", "Daily temperatures (ZIP)", class = "sp-btn2", icon = NULL), downloadButton("sp_png", "Plots (ZIP)", class = "sp-btn2", icon = NULL)),
     p(class = "sp-dim sp-small", "Every reading, soil moisture, NetCDF or the full report: ", tags$a(href = simple_std_href("Export"), "Standard, Report"), ".")))
 
 # The Import checklist and the file table, in the Simple view's colours (core simple.css).
@@ -288,14 +288,14 @@ simple_server <- function(input, output, session, std) {
     f <- x$f; bad <- f[state %in% c("warn", "error")]; stop <- f[!is.na(behind) & behind > SP_GT_STOPPED_DAYS]
     lv <- if (nrow(bad)) "warn" else "ok"
     head <- paste0(nrow(f), " sites · ", nrow(f) - nrow(stop), " reporting")
-    sub <- paste0("Newest record ", format(x$newest, "%d %b %Y %H:%M"), ". ", if (nrow(bad)) paste0(bad$site[1], ": ", bad$note[1], if (nrow(bad) > 1) paste0(" ", nrow(bad) - 1, " more need a look.")) else "Nothing to look at.")
+    sub <- paste0("Newest record ", format(x$newest, "%Y-%m-%d %H:%M"), ". ", if (nrow(bad)) paste0(bad$site[1], ": ", bad$note[1], if (nrow(bad) > 1) paste0(" ", nrow(bad) - 1, " more need a look.")) else "Nothing to look at.")
     simple_hero(lv, head, sub, if (!VIEWER) tags$button(type = "button", class = "btn sp-btn2", onclick = "document.getElementById('run').click()", "Read again")) })
   output$sp_tiles <- renderUI({ x <- facts(); f <- shown(); k <- cur(); if (!nrow(f)) return(p(class = "sp-dim", "No site matches."))
     if (!all_tiles()) f <- utils::head(f, SP_GT_TILES)
     lapply(seq_len(nrow(f)), function(i) { r <- f[i]; d <- x$daily[[r$site]]
       dep <- if (r$n) sprintf("%d · %s–%s m%s", r$n, format(r$dmin), format(r$dmax), if (r$assumed) " *" else "") else "—"
       simple_tile(r$site, r$state, state = if (!r$named) "Not named" else NULL, spark = sp_gt_spark(d, r$dmin, r$dmax, r$state),
-        facts = stats::setNames(list(dep, if (is.finite(r$last)) format(r$last, "%d %b %Y") else "—",
+        facts = stats::setNames(list(dep, if (is.finite(r$last)) format(r$last, "%Y-%m-%d") else "—",
                                      if (is.na(r$magt)) "—" else sprintf("%.2f °C (%d)", r$magt, r$magt_year),
                                      if (!is.na(r$alt)) sprintf("%.2f m (%d)", r$alt, r$alt_year) else if (nzchar(r$alt_note)) "no pf" else "—"),
                                 c("Sensors", "Last record", "MAGT, deepest", "ALT, last year")),
@@ -320,7 +320,7 @@ simple_server <- function(input, output, session, std) {
     g <- ggplot2::ggplot(a, ggplot2::aes(y = depth_m)) + ggplot2::geom_vline(xintercept = 0, colour = MI$gray, linewidth = 0.3) +
       ggplot2::geom_path(ggplot2::aes(x = min), colour = MI$blue, linewidth = 0.8) + ggplot2::geom_path(ggplot2::aes(x = max), colour = MI$red, linewidth = 0.8) +
       ggplot2::geom_path(ggplot2::aes(x = mean), colour = MI$fg, linewidth = 0.8) + ggplot2::geom_point(ggplot2::aes(x = mean), colour = MI$fg, size = 1.6) +
-      ggplot2::scale_y_reverse() + ggplot2::labs(x = "°C", y = "Depth (m)", title = paste(k, y), subtitle = "Minimum, mean and maximum of the daily means") + theme_ovid(MI)
+      ggplot2::scale_y_reverse() + ggplot2::labs(x = "Temperature (°C)", y = "Depth (m)", title = paste(k, y), subtitle = "Minimum, mean and maximum of the daily means") + theme_ovid(MI)
     ac <- .or(MI$gold, MI$yellow, MI$accent)
     if (is.finite(alt)) g <- g + ggplot2::geom_hline(yintercept = alt, linetype = "dashed", colour = ac) + ggplot2::annotate("text", x = -Inf, y = alt, label = sprintf(" ALT %.2f m", alt), hjust = 0, vjust = -0.4, colour = ac, size = 3.4)
     g }, bg = MI$bg)
@@ -451,12 +451,12 @@ simple_server <- function(input, output, session, std) {
     bad <- f[state %in% c("warn", "error")]; who <- trim(input$sp_rpt_who %||% "")
     deep <- rbindlist(lapply(f$site, function(k) { d <- x$daily[[k]]; if (is.null(d) || !nrow(d)) return(NULL); z <- max(d$depth_m); d[abs(depth_m - z) < 1e-6, .(site = k, date, temp)] }))
     plot <- if (nrow(deep)) ggplot2::ggplot(deep[!is.na(temp)], ggplot2::aes(date, temp, colour = site)) + ggplot2::geom_line(linewidth = 0.3) + ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, colour = MI$gray) +
-      ggplot2::scale_colour_viridis_d(end = 0.85, guide = "none") + ggplot2::labs(x = NULL, y = "°C") + ggplot2::theme_minimal(base_size = 9) +
+      ggplot2::scale_colour_viridis_d(end = 0.85, guide = "none") + ggplot2::labs(x = NULL, y = "Temperature (°C)") + ggplot2::theme_minimal(base_size = 9) +
       ggplot2::theme(panel.grid.minor = ggplot2::element_blank()) else NULL
     simple_report_doc(paste("Field check:", nm),
-      meta = c(paste(format(min(f$first, na.rm = TRUE), "%d %b %Y"), "to", format(max(f$last, na.rm = TRUE), "%d %b %Y")), paste(nrow(f), "sites"), paste(uniqueN(sens()$serial), "strings"),
+      meta = c(paste(format(min(f$first, na.rm = TRUE), "%Y-%m-%d"), "to", format(max(f$last, na.rm = TRUE), "%Y-%m-%d")), paste(nrow(f), "sites"), paste(uniqueN(sens()$serial), "strings"),
                if (!is.null(r)) paste("run", substr(as.character(r$started), 1, 10)), if (nzchar(who)) paste("checked by", who)),
-      summary = paste0(sum(is.na(f$behind) | f$behind <= SP_GT_STOPPED_DAYS), " of ", nrow(f), " sites were recording up to the newest record (", format(x$newest, "%d %b %Y"), "). ",
+      summary = paste0(sum(is.na(f$behind) | f$behind <= SP_GT_STOPPED_DAYS), " of ", nrow(f), " sites were recording up to the newest record (", format(x$newest, "%Y-%m-%d"), "). ",
                        if (any(f$assumed)) paste0(sum(f$assumed), " sites have assumed depths (marked *): their MAGT and ALT may move once the depths are set. ") else "",
                        if (nrow(bad)) paste0(nrow(bad), " sites need a look: ", paste(utils::head(bad$site, 6), collapse = ", "), if (nrow(bad) > 6) " …" else "", ". ") else "",
                        if (nrow(fl)) paste0("Flags (values kept): ", paste0(fl$N, " ", gsub("_", " ", fl$check), collapse = ", "), ".") else ""),
@@ -497,13 +497,13 @@ simple_server <- function(input, output, session, std) {
     content = function(file) { x <- facts(); o <- outs(); dir <- tempfile("plots"); dir.create(dir)
       fs <- unlist(lapply(names(x$daily), function(k) { d <- x$daily[[k]]; if (is.null(d) || !nrow(d)) return(NULL); z <- sort(unique(d$depth_m))
         g1 <- ggplot2::ggplot(d, ggplot2::aes(date, temp, colour = factor(depth_m, levels = z))) + ggplot2::geom_line(linewidth = 0.3) + ggplot2::geom_hline(yintercept = 0, linewidth = 0.3) +
-          ggplot2::scale_colour_manual(values = depth_ramp(length(z)), name = "Depth (m)") + ggplot2::labs(x = NULL, y = "°C", title = k, subtitle = "Daily means, quality checked as the project sets") + ggplot2::theme_minimal(base_size = 10)
+          ggplot2::scale_colour_manual(values = depth_ramp(length(z)), name = "Depth (m)") + ggplot2::labs(x = NULL, y = "Temperature (°C)", title = k, subtitle = "Daily means, quality checked as the project sets") + ggplot2::theme_minimal(base_size = 10)
         f1 <- file.path(dir, paste0(safe_name(k), "_over_time.png")); ggplot2::ggsave(f1, g1, width = 18, height = 9, units = "cm", dpi = 200, bg = "white")
         a <- o$annual[site == k & isTRUE_v(complete) & year_type %in% c("calendar", "")]; f2 <- NULL
         if (nrow(a)) { y <- max(a$year); a <- a[year == y][order(depth_m)]
           g2 <- ggplot2::ggplot(a, ggplot2::aes(y = depth_m)) + ggplot2::geom_vline(xintercept = 0, linewidth = 0.3) + ggplot2::geom_path(ggplot2::aes(x = min), colour = MI$blue) +
             ggplot2::geom_path(ggplot2::aes(x = max), colour = MI$red) + ggplot2::geom_path(ggplot2::aes(x = mean)) + ggplot2::scale_y_reverse() +
-            ggplot2::labs(x = "°C", y = "Depth (m)", title = paste(k, y), subtitle = "Minimum, mean and maximum of the daily means") + ggplot2::theme_minimal(base_size = 10)
+            ggplot2::labs(x = "Temperature (°C)", y = "Depth (m)", title = paste(k, y), subtitle = "Minimum, mean and maximum of the daily means") + ggplot2::theme_minimal(base_size = 10)
           f2 <- file.path(dir, paste0(safe_name(k), "_profile.png")); ggplot2::ggsave(f2, g2, width = 10, height = 12, units = "cm", dpi = 200, bg = "white") }
         basename(c(f1, f2)) }))
       zip::zip(file, fs, root = dir) })

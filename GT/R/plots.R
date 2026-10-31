@@ -141,7 +141,7 @@ plot_depth_panels <- function(d, title = "", res = "day", ylim = NULL, free_y = 
     geom_line(aes(colour = dep, group = seg), linewidth = 0.4, show.legend = FALSE) + scale_colour_manual(values = depth_ramp(length(lv))) +
     facet_wrap(~dep, ncol = ncol, scales = if (free_y && is.null(ylim)) "free_y" else "fixed") +
     labs(title = title, subtitle = paste0("One panel per sensor, ", RES_LABEL[[res]], if (free_y && is.null(ylim)) " \u00b7 temperature axis free per panel" else "",
-                                         if (flags) " \u00b7 gold circles = flagged" else ""), x = NULL, y = "\u00b0C")
+                                         if (flags) " \u00b7 gold circles = flagged" else ""), x = NULL, y = "Temperature (\u00b0C)")
   if (flags) { f <- x[nzchar(flag)]; if (nrow(f)) p <- p + geom_point(data = f, shape = 1, size = 1.2, colour = MI$gold) }
   if (!is.null(removed) && nrow(removed)) { r <- removed[variable == "temp" & depth_m %in% lv][, dep := factor(depth_lab(depth_m), levels = depth_lab(lv))]
     if (nrow(r)) p <- p + geom_point(data = thin(r, 20000), shape = 4, size = 1.1, colour = MI$red) }
@@ -228,7 +228,7 @@ plot_seasonal <- function(dd, depth, axis = "water", title = "", ylim = NULL, wy
   ggplot(x, aes(ax, temp, colour = yr, group = interaction(yr, seg))) + geom_hline(yintercept = 0, colour = MI$orange, linewidth = 0.3, linetype = "22") +
     geom_line(linewidth = 0.55) + scale_colour_manual(values = rep(CAT_PAL, 10)[seq_len(nlevels(x$yr))], name = if (axis == "water") "Water year" else "Year") +
     scale_x_date(date_labels = "%b", date_breaks = "1 month", expand = c(0.005, 0)) + coord_cartesian(ylim = ylim) +
-    labs(title = title, subtitle = paste0(depth_lab(depth), ": each ", if (axis == "water") paste0("water year (", wy_months(wy_month), ")") else "year", " on a common axis, daily means"), x = NULL, y = "\u00b0C")
+    labs(title = title, subtitle = paste0(depth_lab(depth), ": each ", if (axis == "water") paste0("water year (", wy_months(wy_month), ")") else "year", " on a common axis, daily means"), x = NULL, y = "Temperature (\u00b0C)")
 }
 plot_climatology <- function(dd, depth, highlight = NULL, title = "", ylim = NULL) {
   x <- dd[abs(depth_m - depth) < 1e-6]; if (!nrow(x)) return(msg_plot("No daily means at this depth."))
@@ -238,7 +238,7 @@ plot_climatology <- function(dd, depth, highlight = NULL, title = "", ylim = NUL
     geom_hline(yintercept = 0, colour = MI$orange, linewidth = 0.3, linetype = "22")
   if (length(highlight) && nzchar(highlight)) { h <- x[format(date, "%Y") == highlight][order(ax)]; if (nrow(h)) p <- p + geom_line(data = h, aes(ax, temp), colour = MI$orange, linewidth = 0.7) }
   p + scale_x_date(date_labels = "%b", date_breaks = "1 month") + coord_cartesian(ylim = ylim) +
-    labs(title = title, subtitle = paste0(depth_lab(depth), ": mean by day of year (grey line) and the range of all years (band)", if (length(highlight) && nzchar(highlight)) paste0(", ", highlight, " in orange") else ""), x = NULL, y = "\u00b0C")
+    labs(title = title, subtitle = paste0(depth_lab(depth), ": mean by day of year (grey line) and the range of all years (band)", if (length(highlight) && nzchar(highlight)) paste0(", ", highlight, " in orange") else ""), x = NULL, y = "Temperature (\u00b0C)")
 }
 
 # ---- 8. annual means by depth --------------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ plot_annual <- function(an, yt = "calendar", title = "", complete_only = TRUE) {
   lv <- sort(unique(x$depth_m)); x[, dep := factor(depth_lab(depth_m), levels = depth_lab(lv))]
   ggplot(x, aes(year, mean, colour = dep)) + geom_hline(yintercept = 0, colour = MI$gray, linewidth = 0.3) + geom_line(linewidth = 0.6) + geom_point(size = 1.8) +
     scale_colour_manual(values = depth_ramp(length(lv)), name = "Depth") + scale_x_continuous(breaks = function(l) seq(ceiling(l[1]), floor(l[2]), 1)) +
-    labs(title = title, subtitle = "Annual mean of daily means (MAGT) at each depth", x = NULL, y = "\u00b0C")
+    labs(title = title, subtitle = "Annual mean of daily means (MAGT) at each depth", x = NULL, y = "Temperature (\u00b0C)")
 }
 
 # ---- 9. freeze / thaw timeline and thaw depth ------------------------------------------------------------------------

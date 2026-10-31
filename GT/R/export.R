@@ -134,7 +134,7 @@ build_export <- function(project_dir, sites, zipfile, from = NULL, to = NULL, re
   if (length(reports)) write_gt_reports(project_dir, file.path(tmp, "reports"), sites, reports, progress = function(i, n, what) progress(i, n, paste("report:", what)), opts = report_opts)
   probs <- problems_since(n_prob); if (nrow(probs)) fwrite(probs, file.path(tmp, "problems.csv"))
   applied_export(project_dir, tmp)                  # every correction applied in the run (core applied.R)
-  writeLines(c("Ovid Core // GT export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M"), "with version", GT_VERSION), "",
+  writeLines(c("ovid // GT export", paste("Made", format(Sys.time(), "%Y-%m-%d %H:%M"), "with version", GT_VERSION), "",
                paste0("Times: ", zone_label(out_offset), " (no daylight saving). The data are stored at ", zone_text(BASE_OFFSET), " and were moved to this zone for the export."),
                paste0("Time step: ", RES_LABEL[[res]], ". Layout: ", layout, "."), "",
                paste0("Depths: ", if (up) "metres above the ground surface positive, below it negative (depth_positive = up, as this project's set-up is typed)"
