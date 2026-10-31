@@ -11,18 +11,22 @@ std_folders <- function() tagList(
 # view holds them.
 std_pages <- function(sources = TRUE) list(
   "Catalogue",
-  ovid_tool("Home", icon = "house",                                 # GS/pages/mod_home.R: the folders and Scan, and counts of what the scan found
+  ovid_tool("Home", icon = "house",
+    page_head("Home", "The data folders, Scan, and what the scan found."),                                 # GS/pages/mod_home.R: the folders and Scan, and counts of what the scan found
     mod_home_ui("home", if (sources) tagList(std_folders(), actionButton("rebuild", "Scan the archive", class = "btn-primary"),
       p(class = "muted mt-2", "Scanning reads new and changed files and keeps everything people entered; the raw files are never changed.")))),
   ovid_tool("Archive", icon = "box-archive",
+    page_head("Archive", "Every survey the scan found. Click rows to select them; double-click a row to open it."),
     div(class = "panel-x", group_by_ui("gb")),                       # grouped by instrument or aircraft, stay, download or file (core grouping.R)
     mod_archive_ui("archive", sidebar_extra = tagList(                 # GS/pages/mod_archive.R
       hr(), fileInput("cat_import", "Open a catalogue (zip)", accept = ".zip"),
       checkboxInput("x_meas", "Include measurements", FALSE),
       downloadButton("dl_archive", "Export catalogue (ZIP)", class = "btn-primary w-100"),
       p(class = "muted mt-1", "A zip others can open without the raw files: index.html, the tables, previews and metadata.")))),
-  ovid_tool("Stack", icon = "bars-staggered", mod_stack_ui("stack")),   # GS/pages/mod_stack.R: a project's surveys side by side
+  ovid_tool("Stack", icon = "bars-staggered",
+    page_head("Stack", "A project\u2019s surveys side by side on one colour scale."), mod_stack_ui("stack")),   # GS/pages/mod_stack.R: a project's surveys side by side
   ovid_tool("Map", icon = "map-location-dot",
+    page_head("Map", "Where each survey was made, and the details of its transect."),
     ovid_controls(
       selectizeInput("map_years", "Survey years", choices = NULL, multiple = TRUE, options = list(plugins = list("remove_button"), placeholder = "All years"), width = "300px"),
       selectizeInput("map_projects", "Projects", choices = NULL, multiple = TRUE, options = list(plugins = list("remove_button"), placeholder = "All projects"), width = "300px"),
@@ -52,6 +56,7 @@ std_pages <- function(sources = TRUE) list(
       p(class = "muted mb-1", "Follows the year and project choices above the map. Click a row to edit that transect."), DTOutput("t_table"))),
   "GPR",
   ovid_tool("Map", value = "GPR", icon = "layer-group",
+    page_head("GPR map", "GPR tracks, the line table and a radargram to look at."),
     uiOutput("gpr_empty"),                                             # no line yet: what to do (the GPR side's empty state)
     p(class = "muted mt-3", "MALA ground-penetrating radar lines: the .rad header, the .rd3 or .rd7 traces and the .cor GPS positions are put together from what the header says, wherever they sit in these folders. Viewing only; nothing is changed or catalogued."),
     mod_gpr_map_ui("gprmap"),                                          # GS/pages/mod_gpr_map.R: the tracks, the line table, a shared cursor
@@ -60,9 +65,11 @@ std_pages <- function(sources = TRUE) list(
       div(class = "d-flex gap-2 align-items-center", actionButton("gpr_rescan", "Search again", class = "btn-sm btn-outline-secondary"), uiOutput("gpr_sum", inline = TRUE))),
     card(card_header("All lines found"), DTOutput("gpr_table"))),
   ovid_tool("Processing", value = "GPR processing", icon = "sliders",
+    page_head("GPR processing", "The processing flow of a GPR line, saved with the line as versions."),
     mod_gpr_flow_ui("gprflow", wb = !sources)),                        # GS/pages/mod_gpr_flow.R: one screen for both interfaces
   "Survey",
   ovid_tool("Survey", icon = "wave-square",
+    page_head("Survey", "One survey: pseudosection, distributions, contact, geometry and its data."),
     ovid_controls(tagAppendAttributes(selectInput("survey", "Survey", choices = NULL, width = "100%"), class = "d-wide"),
                     ovid_split_toggle("sv_split", "Survey and details")),
     uiOutput("survey_head"),
@@ -74,7 +81,7 @@ std_pages <- function(sources = TRUE) list(
             radioButtons("v_show", "Show", c(All = "all", Passed = "passed", Flagged = "flagged"), inline = TRUE),
             div(class = "ms-auto", popover(actionButton("v_opts", "Display options", icon = icon("sliders"), class = "btn-sm btn-outline-primary"),
               title = "Display", placement = "left",
-              selectInput("v_pal", "Colours", names(PALETTES)),
+              selectInput("v_pal", "Colours", names(PALETTES), selected = "Viridis"),   # viridis by default, Spectral an option (M, 9 Oct)
               radioButtons("v_scale", "Colour scale", c(Log = "log", Linear = "linear"), inline = TRUE),
               div(class = "d-flex gap-2", numericInput("v_min", "Resistivity min (ohm-m)", RHOA_RANGE[1], min = 0, width = "50%"), numericInput("v_max", "Resistivity max (ohm-m)", RHOA_RANGE[2], min = 1, width = "50%"))))),
           ovid_focus(uiOutput("pseudo_area")),
@@ -110,6 +117,7 @@ std_pages <- function(sources = TRUE) list(
                actionButton("m_save", "Save details", class = "btn-primary w-100 mt-2")),
           card(card_header("Files"), uiOutput("survey_files"))))),
   ovid_tool("QC", icon = "filter",
+    page_head("QC", "The quality checks of one survey under a profile, its flags and the electrodes turned off."),
     layout_sidebar(fillable = FALSE,
       sidebar = sidebar(width = 360, title = "Limits",
         selectInput("profile", "Start from profile", choices = NULL),
@@ -119,7 +127,7 @@ std_pages <- function(sources = TRUE) list(
           accordion_panel("Contact", lapply(which(SLIDERS$group == "Contact"), slider_row)),
           accordion_panel("Values", div(class = "d-flex align-items-start gap-2",
               div(style = "padding-top:28px", ovid_switch("on_rhoa_range", NULL, FALSE)),
-              div(class = "flex-grow-1", sliderInput("v_rhoa_range", "Apparent resistivity (log10 ohm-m)", -1, 6, c(0, 5), step = 0.1, width = "100%"))),
+              div(class = "flex-grow-1", sliderInput("v_rhoa_range", "Apparent resistivity (log10 of \u03a9\u00b7m)", -1, 6, c(0, 5), step = 0.1, width = "100%"))),
             lapply(seq_len(nrow(TOGGLES)), function(i) ovid_switch(paste0("on_", TOGGLES$rule[i]), TOGGLES$label[i], FALSE))),
           accordion_panel("Checks", lapply(which(SLIDERS$group == "Checks"), slider_row))),
         hr(), textInput("save_name", "Save as profile", "custom"),
@@ -140,6 +148,7 @@ std_pages <- function(sources = TRUE) list(
         DTOutput("eo_tbl"), actionButton("eo_clear", "Turn them all back on for this survey", class = "btn-outline-secondary mt-2")))),
   "Set-up",
   ovid_tool("Set-up tables", value = "Setup", icon = "table-list",
+    page_head("Set-up tables", "The tables that describe surveys, sites, transects and quality checks. Each save keeps the version before."),
     p(class = "muted mt-3", "Everything people decide about the archive is kept in tables in config/ in the project folder, and this page edits every one of them; the Survey, Map and QC pages write some of them too. A saved change applies on the next scan, and each save keeps the version before it in config/history."),
     do.call(navset_card_tab, c(list(id = "setup_tab"), lapply(which(SETUP_TABLES$tab), function(i)      # every table with a tab (pages/utils_setup.R)
       nav_panel(SETUP_TABLES$file[i], value = SETUP_TABLES$id[i], p(class = "muted", SETUP_TABLES$help[i]), editUI(SETUP_TABLES$id[i])))))),

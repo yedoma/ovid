@@ -22,7 +22,7 @@ WB_MAX_ROWS <- 5000L                                   # measurements the grid s
 # ticked at first.
 WB_COLS <- data.table(
   p      = c("A", "B", "M", "N", "rho_a (ohm-m)", "V/I (ohm)", "I (mA)", "V (mV)", "error (%)", "contact (ohm)", "chargeability (mV/V)",
-             "x (m)", "pseudo-depth (m)", "time", "flags"),
+             "x (m)", "Pseudo-depth (m)", "time", "flags"),
   col    = c("a", "b", "m", "n", "rhoa_ohmm", "resistance_ohm", "current_ma", "voltage_mv", "error_pct", "contact_ohm", "chargeability_mv_v",
              "px", "pz", "tod", "flags"),
   digits = c(0, 0, 0, 0, NA, NA, NA, NA, 2, 0, NA, 2, 2, NA, NA),
@@ -244,7 +244,7 @@ wb_server <- function(input, output, session, std) {
     if (!all(is.finite(lim))) lim <- c(0, 1); if (diff(lim) == 0) lim <- lim + c(-0.5, 0.5); tk <- log_ticks(lim)
     pal <- PALETTES[[input$v_pal %||% "Spectral"]] %||% PALETTES[[1]]; lab <- VAR_INFO$label[match(v, VAR_INFO$var)]
     session$sendCustomMessage("wb-xy", wb_xy_message(d$px, d$pz, d$meas_id, cv, d[[v]], wb_row_state(d$meas_id, now(), last()),
-      lab = sprintf("A%s B%s M%s N%s", d$a, d$b, d$m, d$n), key = key(), xlab = "distance along the line (m)", ylab = "pseudo-depth (m)",
+      lab = sprintf("A%s B%s M%s N%s", d$a, d$b, d$m, d$n), key = key(), xlab = "Distance along line (m)", ylab = "Pseudo-depth (m)",
       clab = lab, vlab = sub(" \\(.*", "", lab), clim = lim, cticks = tk$tickvals, clabs = tk$ticktext, pal = pal)) })
 
   # cell bar, inspector, status

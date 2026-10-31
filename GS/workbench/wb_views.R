@@ -74,7 +74,7 @@ wb_views_server <- function(input, output, session, ctx) {
       g <- plotly::add_trace(g, data = z, x = ~px, y = ~rhoa_ohmm, customdata = ~meas_id, type = "scatter", mode = "lines+markers", name = z$level[1], legendgroup = z$level[1],
                              text = ~sprintf("#%d · %s ohm-m<br>A%s B%s M%s N%s%s", meas_id, fmtv(rhoa_ohmm), a, b, m, n, ifelse(fl, "<br>flagged", "")), hoverinfo = "text",
                              marker = list(size = 5, symbol = ifelse(z$fl, "x", "circle")), line = list(width = 1)) }
-    plotly::layout(g, xaxis = list(title = "distance along the line (m)"), yaxis = list(title = "apparent resistivity (ohm-m)", type = "log"), dragmode = "select",
+    plotly::layout(g, xaxis = list(title = "Distance along line (m)"), yaxis = list(title = "Apparent resistivity (\u03a9\u00b7m, log)", type = "log"), dragmode = "select",
                    showlegend = length(unique(x$level_no)) <= 12, paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", font = list(color = PAL$fg, size = 11)) |>
       plotly::event_register("plotly_selected") |> plotly::event_register("plotly_click") |> plotly::config(displaylogo = FALSE, scrollZoom = TRUE) })
   cut_ids <- reactive(contact_cutoff(ctx$dat(), 1000 * (input$wbe_cut %||% 5)))

@@ -74,7 +74,7 @@ stack_change <- function(d1, d2) {
 
 # The project's surveys side by side on one colour scale (lim, ohm-m, log), raw values, sorted by date. d: one data.table of
 # measurements with survey_id; f: their survey_figures() rows. Each panel is titled with its figures.
-plot_stack <- function(d, f, lim = RHOA_RANGE, pal = PAL, ncol = 3) {
+plot_stack <- function(d, f, lim = RHOA_RANGE, pal = PAL, ncol = 3, colours = grDevices::hcl.colors(5, "viridis")) {   # viridis (PALETTES$Viridis, R/views.R)
   if (!nrow(d)) return(NULL)
   p <- d[is.finite(rhoa_ohmm) & rhoa_ohmm > 0]
   lab <- f[, .(survey_id, label = sprintf("%s  ·  %s\n%s kept  ·  contact %s  ·  repeat error %s", name, date,
@@ -85,11 +85,11 @@ plot_stack <- function(d, f, lim = RHOA_RANGE, pal = PAL, ncol = 3) {
   lo <- log10(max(lim[1], 0.01)); hi <- log10(max(lim[2], lim[1] * 1.01, 0.02))
   ggplot(p, aes(px, pz, colour = pmin(pmax(log10(rhoa_ohmm), lo), hi))) + geom_point(size = 1.4) +
     facet_wrap(~label, ncol = ncol) +
-    scale_colour_gradientn(colours = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"), limits = c(lo, hi),
-                           name = "Apparent resistivity (ohm-m, log scale)", labels = function(b) format(signif(10^b, 3), big.mark = ",", trim = TRUE)) +
+    scale_colour_gradientn(colours = colours, limits = c(lo, hi),
+                           name = "Apparent resistivity (\u03a9\u00b7m, log)", labels = function(b) format(signif(10^b, 3), big.mark = ",", trim = TRUE)) +
     guides(colour = guide_colourbar(barwidth = 16, title.position = "top")) +
     labs(x = "Distance along line (m)", y = "Pseudo-depth (m)", caption = "All measurements as read (nothing hidden or smoothed). Values outside the scale take its end colour. Pseudo-depth = 0.19 x array length.") +
-    theme_ovid(pal) + theme(legend.position = "bottom", strip.text = element_text(hjust = 0), plot.caption = element_text(colour = pal$fg4, size = 8, hjust = 0))
+    theme_ovid(pal) + theme(strip.text = element_text(hjust = 0), plot.caption = element_text(colour = pal$fg4, size = 11, hjust = 0))
 }
 
 # The change image: percent change at survey 1's positions, blue (lower) - white - red (higher), +/- lim %.
@@ -99,7 +99,7 @@ plot_change <- function(ch, n1, n2, lim = 25, pal = PAL) {
     guides(colour = guide_colourbar(barwidth = 16, title.position = "top")) +
     labs(x = "Distance along line (m)", y = "Pseudo-depth (m)", title = sprintf("%s to %s", n1, n2),
          caption = sprintf("%s quadrupoles in both surveys (of %s and %s), matched by electrode numbers. 100 x (second - first) / first.", ch$n_matched, ch$n_1, ch$n_2)) +
-    theme_ovid(pal) + theme(legend.position = "bottom", plot.caption = element_text(colour = pal$fg4, size = 8, hjust = 0))
+    theme_ovid(pal) + theme(plot.caption = element_text(colour = pal$fg4, size = 11, hjust = 0))
 }
 
 # Surveys given a project or a transect (config/surveys.csv; a new project or transect is added to its table). Returns the

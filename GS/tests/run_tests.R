@@ -445,4 +445,16 @@ local({                                                               # found by
   check(grepl('x[dated == FALSE]', sg, fixed = TRUE) && grepl("x <- x_all() %||% data.table()", sg, fixed = TRUE) && grepl('f <- "README.txt"', sg, fixed = TRUE),
         "Simple View's No date filter draws (x[!dated] was a not-join); Survey data and Previews download a note on an empty project instead of failing")
 })
+local({                                                               # one way of writing things across GS (Plot_table_standards A4)
+  fs <- list.files(here, "[.]R$", recursive = TRUE, full.names = TRUE); fs <- fs[!grepl("/(library|runtime|tests|docs)/", fs)]
+  src <- unlist(lapply(fs, readLines, warn = FALSE))
+  check(!any(grepl('"(Apparent resistivity \\((ohm-m|log10 ohm-m)[^"]*|log10 ohm-m|distance along the line \\(m\\)|pseudo-depth \\(m\\)|change \\(%\\)|apparent resistivity[^"]*)"', src)),
+        "chart axes and colour bars in sentence case with Ohm-metres written as in the plot standards (Apparent resistivity (Ohm.m, log); log10 only where the values are logs)")
+  check(!any(grepl("size = 8,", src, fixed = TRUE)), "chart captions are 11 px, the smallest size of the type scale (were 8)")
+  ps <- unlist(lapply(file.path(here, c("pages/fct_stack.R", "simple/simple_gs.R", "R/plots.R")), readLines, warn = FALSE))
+  check(!any(grepl('#2c7bb6|hcl.colors[(]9, "Spectral"', ps)) && grepl('selected = "Viridis"', paste(src, collapse = "\n"), fixed = TRUE),
+        "every pseudosection takes the Survey page's Colours, Viridis by default (Stack, Simple and the previews had their own)")
+  ui <- paste(readLines(file.path(here, "pages", "ui.R"), warn = FALSE), collapse = "\n")
+  tools <- regmatches(ui, gregexpr('ovid_tool\\("[^"]+"[^\n]*\n\\s*page_head\\(', ui))[[1]]
+  check(length(tools) >= 9, "every GS Standard page opens with the shared page title (page_head)") })
 if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green")

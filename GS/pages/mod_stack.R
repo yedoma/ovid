@@ -32,7 +32,7 @@ mod_stack_ui <- function(id) {
 
 # cat_s, stats, transects: reactives. pick: a reactiveVal with the project to show. read_meas(sid): a survey's measurements.
 # open_survey(sid), open_import(): act on the rest of the app.
-mod_stack_server <- function(id, cat_s, stats, transects, pick, read_meas, has_meas, open_survey, open_import) {
+mod_stack_server <- function(id, cat_s, stats, transects, pick, read_meas, has_meas, open_survey, open_import, palette = reactive("Viridis")) {
   moduleServer(id, function(input, output, session) {
     figs_all <- reactive(survey_figures(cat_s(), stats(), transects()))
     cmp_kept <- reactive(stack_min_kept(input$cmp_kept))   # also the Workbench's Compare with (returned below)
@@ -61,7 +61,7 @@ mod_stack_server <- function(id, cat_s, stats, transects, pick, read_meas, has_m
       plotOutput(session$ns("stack_plot"), height = paste0(140 + 230 * ceiling(k / 3), "px")) })
     output$stack_plot <- renderPlot({ f <- shown(); req(nrow(f) > 0)
       d <- rbindlist(lapply(f$survey_id, function(s) { x <- read_meas(s); cbind(survey_id = s, x[, .(rhoa_ohmm)], pseudo_xy(x)) }))
-      plot_stack(d, f, lim()) }, res = 96)
+      plot_stack(d, f, lim(), colours = PALETTES[[palette() %||% "Viridis"]] %||% PALETTES$Viridis) }, res = 96)   # the Survey page's Colours
     cmp <- reactive({ req(nzchar(input$cmp %||% ""), ref()); f <- figs_all()
       r1 <- f[survey_id == ref()]; r2 <- f[survey_id == input$cmp]; req(nrow(r1) == 1, nrow(r2) == 1)
       if (r1$survey_id == r2$survey_id) return(list(ok = FALSE, why = "pick two different surveys"))

@@ -50,11 +50,11 @@ export_archive <- function(zipfile, project_dir = CFG$project_dir, with_measurem
     if (file.exists(file.path(pd, "config", f))) file.copy(file.path(pd, "config", f), file.path(tmp, "metadata", f))
   if (with_measurements) file.copy(file.path(pd, "output", "surveys"), tmp, recursive = TRUE)
   writeLines(archive_index(fread(file = file.path(cat_dir, "surveys.csv"), colClasses = list(character = c("datetime_start", "datetime_end")))), file.path(tmp, "index.html"))
-  writeLines(c("Ovid GS catalogue", paste("Exported", format(Sys.time(), "%Y-%m-%d %H:%M"), "by", APP_NAME, APP_VERSION), "",
+  writeLines(c("ovid GS catalogue", paste("Exported", format(Sys.time(), "%Y-%m-%d %H:%M"), "by", APP_NAME, APP_VERSION), "",
                "Open index.html in a browser to browse the surveys. surveys.csv holds every survey with its metadata, statistics and QC",
                "result; files.csv lists every file in the archive; survey_stats.csv has the distributions; previews/ the pseudosections;",
                "metadata/ the tables people edit. The raw files are not included.",
-               if (with_measurements) "surveys/<survey_id>/ holds the measurements of each survey in the common Ovid GS format."),
+               if (with_measurements) "surveys/<survey_id>/ holds the measurements of each survey in the common ovid GS format."),
              file.path(tmp, "README.txt"))
   zip_dir(tmp, zipfile)
 }
@@ -71,12 +71,12 @@ archive_index <- function(s) {
                       cell(dt), if ("preview" %in% names(s)) ifelse(nzchar(preview), sprintf("<a href='previews/%s' target=_blank>%s</a>", cell(preview), cell(nm)), cell(nm)) else cell(nm),
                       cell(project), cell(site), cell(transect_id), cell(model), cell(n_read), cell(ifelse(is.na(pct_retained), "", paste0(round(pct_retained), "%"))),
                       cell(quality), cell(array), cell(notes))]
-  c("<!doctype html><html><head><meta charset='utf-8'><meta name=viewport content='width=device-width,initial-scale=1'><title>Ovid GS catalogue</title><style>",
+  c("<!doctype html><html><head><meta charset='utf-8'><meta name=viewport content='width=device-width,initial-scale=1'><title>ovid GS catalogue</title><style>",
     sprintf("body{background:%s;color:%s;font:14px/1.45 -apple-system,Segoe UI,Inter,sans-serif;margin:24px} h1{font-weight:600;margin:0 0 4px}
      .muted{color:%s} input{background:%s;color:%s;border:1px solid %s;border-radius:6px;padding:7px 10px;width:320px;margin:14px 0}
      table{border-collapse:collapse;width:100%%} th,td{padding:7px 10px;border-bottom:1px solid %s;text-align:left;white-space:nowrap} th{cursor:pointer;color:%s}
      td.n{text-align:right} a{color:%s} tr:hover td{background:%s}", PAL$bg, PAL$fg, PAL$fg4, PAL$bg1, PAL$fg, PAL$bg2, PAL$bg2, PAL$fg4, PAL$accent, PAL$bg1),
-    "</style></head><body><h1>Ovid GS catalogue</h1>",
+    "</style></head><body><h1>ovid GS catalogue</h1>",
     sprintf("<div class=muted>%d surveys &middot; exported %s &middot; click a name for its pseudosection, a heading to sort</div>", nrow(s), format(Sys.Date())),
     "<input id=q placeholder='Search' oninput='f()'><table id=t><thead><tr><th>Date</th><th>Name</th><th>Project</th><th>Site</th><th>Transect</th><th>Instrument</th><th>Measurements</th><th>Kept %</th><th>Quality</th><th>Array</th><th>Notes</th></tr></thead><tbody>",
     rows, "</tbody></table><script>",
@@ -93,7 +93,7 @@ import_catalogue <- function(zipfile, dest) {
   hits <- list.files(tmp, pattern = "^surveys\\.csv$", recursive = TRUE, full.names = TRUE)
   hits <- hits[file.exists(file.path(dirname(hits), "files.csv"))]                   # the catalogue's, not metadata/surveys.csv
   root <- if (length(hits)) dirname(hits[which.min(nchar(hits))]) else NA
-  if (is.na(root)) stop("This zip is not an Ovid GS catalogue (no surveys.csv in it).")
+  if (is.na(root)) stop("This zip is not an ovid GS catalogue (no surveys.csv in it).")
   unlink(dest, recursive = TRUE); cat_dir <- file.path(dest, "output", "catalogue"); dir.create(cat_dir, recursive = TRUE)
   dir.create(file.path(dest, "config"))
   for (f in list.files(root, full.names = TRUE)) {

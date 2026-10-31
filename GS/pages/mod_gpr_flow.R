@@ -107,7 +107,7 @@ mod_gpr_flow_server <- function(id, lines, tracks, project, tick, read_line = gp
 
     L <- reactive({ g <- lines(); validate(need(nrow(g) > 0, "No GPR line can be viewed yet. Add the folder with the .rad and .rd3 files on the GPR Map page."))
       req(input$line); r <- g[line == input$line]; req(nrow(r) == 1L); x <- read_line(r)
-      validate(need(ncol(x$m) >= 2L, sprintf("%s has %d trace(s) that can be read, too few to draw. The file is left as it is; pick another line, or copy the whole line from the instrument again.", r$line, ncol(x$m)))); x })
+      validate(need(ncol(x$m) >= 2L, sprintf("%s has %s that can be read, too few to draw. The file is left as it is; pick another line, or copy the whole line from the instrument again.", r$line, if (ncol(x$m) == 1L) "1 trace" else paste(ncol(x$m), "traces")))); x })
     # safe: an antenna frequency not stated is not known (NA)
     mhz <- reactive(tryCatch(gpr_antenna_mhz(L()$h$antennas), error = function(e) NA))
     output$head <- renderUI({ x <- L(); r <- x$r; h <- x$h; n <- ncol(x$m)

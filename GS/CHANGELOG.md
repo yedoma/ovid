@@ -1,4 +1,4 @@
-# Ovid GS changelog
+# ovid GS changelog
 
 GS was called ERT until 2026-10-14; the entries below that date use the old name.
 
@@ -6,6 +6,18 @@ Newest first. Each entry gives the date, what was added, changed and fixed, and 
 has would come out differently, and why. Entries before October 2026 are taken from the git history and are shorter.
 
 ## Unreleased
+
+**Changed (one way of writing things across GS, 2026-10-30; Plot_table_standards A4)**
+- Apparent resistivity is labelled one way on every chart, colour bar and the Simple view: "Apparent resistivity
+  (Ω·m, log)" (were "ohm-m, log", "ohm-m, log scale", "log10 ohm-m", "ρa (Ω·m)"); where the values themselves are logs
+  (the Survey range slider, the Workbench colour bar) "(log10 of Ω·m)". Resistance and contact resistance in Ω.
+- Workbench axes in sentence case ("Distance along line (m)", "Pseudo-depth (m)", "Change (%)").
+- Chart captions at 11 px (were 8, under the type scale); GPR "has 1 trace" (was "1 trace(s)").
+- Every pseudosection uses one colour scale: the Survey page's Colours, Viridis by default with Spectral an option (M, 9 Oct);
+  Stack and Simple followed their own (Spectral, red-blue) before.
+- Every Standard page opens with the shared page title and About (Home, Archive, Stack, Map, GPR map, GPR processing,
+  Survey, QC, Set-up tables had none; CS, WLR and GT have one on every page).
+- **Output changes:** catalogue preview images are drawn in Viridis (were red-blue); data files unchanged.
 
 **Fixed (found by the click-through test, 2026-10-30)**
 - GPR: the radargram and map listeners no longer warn "plotly_hover event ... not registered" before their plot is drawn.

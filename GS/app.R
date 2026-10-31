@@ -121,7 +121,7 @@ server <- function(input, output, session, embedded = FALSE) {
   stack_pick <- reactiveVal("")
   mod_archive_server("archive", cat_s, transects, open_survey = open_survey)
   mod_home_server("home", cat_s, stats, transects, open_import = open_import)
-  stk <- mod_stack_server("stack", cat_s, stats, transects, stack_pick, read_meas, has_meas, open_survey = open_survey, open_import = open_import)
+  stk <- mod_stack_server("stack", cat_s, stats, transects, stack_pick, read_meas, has_meas, open_survey = open_survey, open_import = open_import, palette = reactive(input$v_pal))
   ovid_areas_server(reactive(c(ERT = { s <- cat_s(); if (is.null(s) || !nrow(s)) 0L else sum(s$kind %in% c("original", "merged")) }, GPR = nrow(gpr_ok()))), proj)   # the ERT | GPR switch (core shell.R)
   invisible(list(E = E, rv = rv, stale = stale, proj = proj, cat_s = cat_s, qc = qc, eo_tick = eo_tick, chk = chk, mark = mark, stats = stats, transects = transects,
                  gpr_ok = gpr_ok, gpr_tracks = gpr_tracks, gpr_tick = gpr_tick, cat_profile = cat_profile, cmp_kept = stk$cmp_kept))

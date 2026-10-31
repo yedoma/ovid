@@ -5,11 +5,11 @@
 
 VAR_INFO <- data.table(
   var   = c("rhoa_ohmm", "resistance_ohm", "current_ma", "voltage_mv", "error_pct", "contact_ohm", "chargeability_mv_v"),
-  label = c("Apparent resistivity (ohm-m, log)", "Resistance V/I (ohm, log)", "Current (mA, log)", "Voltage (mV, log)", "Repeat error (%, log)", "Contact resistance (ohm, log)", "Chargeability (mV/V, log)"),
+  label = c("Apparent resistivity (\u03a9\u00b7m, log)", "Resistance V/I (\u03a9, log)", "Current (mA, log)", "Voltage (mV, log)", "Repeat error (%, log)", "Contact resistance (\u03a9, log)", "Chargeability (mV/V, log)"),
   floor = c(NA, NA, NA, NA, 0.05, NA, 0.01))      # every value axis is logarithmic; zero errors and chargeabilities are drawn at this floor
 RHOA_LIM <- log10(RHOA_RANGE)                     # apparent resistivity is drawn on RHOA_RANGE (R/plots.R; log10) so surveys compare
 to_log <- function(v, colour) { f <- VAR_INFO[var == colour]$floor; if (!is.na(f)) v <- pmax(v, f); ifelse(!is.na(v) & v > 0, log10(v), NA_real_) }
-PALETTES <- list(Spectral = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"), Viridis = c("#440154", "#3b528b", "#21908c", "#5dc963", "#fde725"),
+PALETTES <- list(Spectral = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"), Viridis = grDevices::hcl.colors(5, "viridis"),
                  Kanagawa = c(PAL$blue, mix_col(PAL$blue, PAL$teal, 0.5), PAL$gold, PAL$orange, PAL$red), Greys = c(PAL$bg1, PAL$fg))
 names(PALETTES)[3] <- APP_SCHEME     # the scheme scale is named after the scheme in use (Settings > Colours); Spectral and Viridis are fixed
 

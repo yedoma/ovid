@@ -234,7 +234,7 @@ simple_server <- function(input, output, session, std) {
     ggplot2::ggplot(p[is.finite(v)], ggplot2::aes(px, pz)) + ggplot2::geom_point(ggplot2::aes(colour = v), size = 2) +
       ggplot2::geom_point(data = p[is.finite(v) & flagged == TRUE], shape = 1, colour = PAL$fg, size = 2.8, stroke = 0.5) +
       (if (er) ggplot2::scale_colour_viridis_c(name = "Error (%)") else
-        ggplot2::scale_colour_gradientn(colours = grDevices::hcl.colors(9, "Spectral", rev = TRUE), name = "ρa (Ω·m)", labels = function(b) format(10^b, big.mark = ",", scientific = FALSE, trim = TRUE))) +
+        ggplot2::scale_colour_gradientn(colours = PALETTES[[input$v_pal %||% "Viridis"]] %||% PALETTES$Viridis, name = "Apparent resistivity (\u03a9\u00b7m, log)", labels = function(b) format(10^b, big.mark = ",", scientific = FALSE, trim = TRUE))) +
       ggplot2::labs(x = "Distance along line (m)", y = "Pseudo-depth (m)") + theme_ovid(PAL) }, bg = PAL$bg)
   output$sp_plot_note <- renderText({ s <- sel_row(); if (is.null(s) || !nrow(s)) return("")
     paste0("Apparent resistivity ρa = K·R, K from the electrode positions (Telford, Geldart & Sheriff 1990; Loke 2004): measured data, not an inversion. ",

@@ -49,13 +49,13 @@ plot_pseudosection <- function(d, flags, s1, profile = "", pal = PAL) {
     geom_point(data = both[ok & flagged & panel == labs3[1]], colour = pal$gray, size = 1.2, alpha = 0.7) +   # flagged: grey in the overview
     geom_point(data = both[ok == FALSE], shape = 1, colour = pal$red, size = 1.8) +
     facet_wrap(~panel, ncol = 1, drop = FALSE) +
-    scale_colour_gradientn(colours = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"), name = "Apparent resistivity (ohm-m, log scale)",
+    scale_colour_gradientn(colours = grDevices::hcl.colors(5, "viridis"), name = "Apparent resistivity (\u03a9\u00b7m, log)",
                            limits = lim, breaks = function(x) seq(ceiling(x[1]), floor(x[2])),
                            labels = function(b) format(10^b, big.mark = ",", scientific = FALSE, trim = TRUE)) +
     guides(colour = guide_colourbar(barwidth = 16, title.position = "top")) +
     labs(x = "Distance along line (m)", y = "Pseudo-depth (m)", title = paste0(l$name, "  \u00b7  ", l$date),
          subtitle = paste(bits, collapse = "  \u00b7  "),
          caption = paste0("QC profile: ", profile, if (nrow(fc)) paste0(" \u00b7 flags: ", paste(paste(fc$flag, fc$n), collapse = ", ")) else " \u00b7 nothing flagged",
-                          "\nGrey: flagged (overview). Red circles: apparent resistivity 0 or below. Pseudo-depth = 0.19 x array length.  Ovid id ", s1$survey_id)) +
-    theme_ovid(pal) + theme(plot.caption = element_text(colour = pal$fg4, size = 8, hjust = 0))
+                          "\nGrey: flagged (overview). Red circles: apparent resistivity 0 or below. Pseudo-depth = 0.19 x array length.  ovid id ", s1$survey_id)) +
+    theme_ovid(pal) + theme(plot.caption = element_text(colour = pal$fg4, size = 11, hjust = 0))
 }

@@ -70,10 +70,10 @@ wb_stack_figure <- function(d, flagged, contact, ef, ch = NULL, panels = c("pseu
       g <- plotly::plot_ly(source = "wbstack") |>
         plotly::add_markers(data = x[fl == FALSE], x = ~px, y = ~pz, customdata = ~meas_id, text = ~hv, hoverinfo = "text", name = "measurements", showlegend = FALSE,
                             marker = list(size = 6, color = ~c, colorscale = lapply(seq_along(PALETTES$Spectral), function(i) list((i - 1) / (length(PALETTES$Spectral) - 1), PALETTES$Spectral[i])),
-                                          cmin = lim[1], cmax = lim[2], colorbar = list(title = "log10 ohm-m", len = 0.3, y = 1, yanchor = "top"))) |>
+                                          cmin = lim[1], cmax = lim[2], colorbar = list(title = "Apparent resistivity (log10 of \u03a9\u00b7m)", len = 0.3, y = 1, yanchor = "top"))) |>
         plotly::add_markers(data = x[fl == TRUE], x = ~px, y = ~pz, customdata = ~meas_id, text = ~hv, hoverinfo = "text", name = "flagged", showlegend = FALSE,
                             marker = list(symbol = "x", size = 7, color = pal$red))
-      pp[[length(pp) + 1]] <- plotly::layout(g, yaxis = ax("pseudo-depth (m)")); hs <- c(hs, 0.4) }
+      pp[[length(pp) + 1]] <- plotly::layout(g, yaxis = ax("Pseudo-depth (m)")); hs <- c(hs, 0.4) }
     if (p == "contact") {
       g <- plotly::plot_ly(source = "wbstack")
       if (is.null(contact)) g <- plotly::add_annotations(g, text = "No contact resistance recorded for this survey", showarrow = FALSE, x = mean(xr), y = 3.5) |> plotly::layout(yaxis = ax("contact (ohm)"))
@@ -93,12 +93,12 @@ wb_stack_figure <- function(d, flagged, contact, ef, ch = NULL, panels = c("pseu
       g <- plotly::plot_ly(source = "wbstack", data = ch$data, x = ~px, y = ~pz, type = "scatter", mode = "markers", name = "change", showlegend = FALSE,
                            text = ~sprintf("%+.1f %%", change_pct), hoverinfo = "text",
                            marker = list(size = 6, color = ~pmin(pmax(change_pct, -25), 25), cmin = -25, cmax = 25,
-                                         colorscale = list(list(0, "#2166ac"), list(0.5, "#f7f7f7"), list(1, "#b2182b")), colorbar = list(title = "change (%)", len = 0.25, y = 0.25, yanchor = "top")))
-      pp[[length(pp) + 1]] <- plotly::layout(g, yaxis = ax("pseudo-depth (m)")); hs <- c(hs, 0.3) }
+                                         colorscale = list(list(0, "#2166ac"), list(0.5, "#f7f7f7"), list(1, "#b2182b")), colorbar = list(title = "Change (%)", len = 0.25, y = 0.25, yanchor = "top")))
+      pp[[length(pp) + 1]] <- plotly::layout(g, yaxis = ax("Pseudo-depth (m)")); hs <- c(hs, 0.3) }
   }
   if (!length(pp)) return(NULL)
   f <- plotly::subplot(pp, nrows = length(pp), shareX = TRUE, titleY = TRUE, heights = hs / sum(hs), margin = 0.015)
-  xa <- list(title = "distance along the line (m)", showspikes = TRUE, spikemode = "across", spikesnap = "cursor", spikethickness = 1, spikecolor = pal$fg4, spikedash = "solid")
+  xa <- list(title = "Distance along line (m)", showspikes = TRUE, spikemode = "across", spikesnap = "cursor", spikethickness = 1, spikecolor = pal$fg4, spikedash = "solid")
   plotly::layout(f, hovermode = "closest", xaxis = xa, paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", font = list(color = pal$fg, size = 11),
                  margin = list(l = 60, r = 20, t = 10, b = 40)) |> plotly::config(displaylogo = FALSE)
 }

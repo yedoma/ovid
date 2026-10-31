@@ -59,7 +59,7 @@ inversion_files <- function(s1, meas, flags, dir, model = NULL) {
   s <- c(0, cumsum(sqrt(diff(el$x)^2 + diff(el$y)^2))); sx <- function(e) ifelse(e == 0, 99999, s[match(e, el$electrode)])
   sp <- if (nrow(el) > 1) stats::median(diff(s)) else 1
   z <- ifelse(is.finite(el$z), el$z, 0); topo <- any(abs(z - z[1]) > 1e-6)
-  writeLines(c(paste(s1$survey_id, "(Ovid GS export)"), sprintf("%.3f", sp), "11", "0", "Type of measurement (0=app. resistivity,1=resistance)", "0", as.character(nrow(out)), "1", "0",
+  writeLines(c(paste(s1$survey_id, "(ovid GS export)"), sprintf("%.3f", sp), "11", "0", "Type of measurement (0=app. resistivity,1=resistance)", "0", as.character(nrow(out)), "1", "0",
                sprintf("4 %.3f 0 %.3f 0 %.3f 0 %.3f 0 %.6g", sx(out$a), sx(out$b), sx(out$m), sx(out$n), out$rhoa_ohmm),
                if (topo) c("Topography in separate list", "2", as.character(nrow(el)), sprintf("%.3f %.3f", s, z), "1"), "0", "0", "0", "0"),
              file.path(dir, paste0(id, "_res2dinv.dat")))
