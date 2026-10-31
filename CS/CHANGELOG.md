@@ -5,6 +5,8 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (narrow windows, 2026-10-31).** Home's station pop-up stays inside a narrow window. **Output changes:** none.
+
 **Changed (one way of writing things across CS, 2026-10-30; Plot_table_standards A4, A8)**
 - Chart axes name the quantity, then the unit in brackets: "Precipitation per day (mm)", "Bucket content (mm)",
   "Records (%)", "Records or values"; facet labels "air_temp (°C)" (the logger's "deg C" shown as °C).

@@ -457,4 +457,7 @@ local({                                                               # one way 
   ui <- paste(readLines(file.path(here, "pages", "ui.R"), warn = FALSE), collapse = "\n")
   tools <- regmatches(ui, gregexpr('ovid_tool\\("[^"]+"[^\n]*\n\\s*page_head\\(', ui))[[1]]
   check(length(tools) >= 9, "every GS Standard page opens with the shared page title (page_head)") })
+local({ g <- paste(readLines(file.path(here, "pages", "mod_gpr_flow.R"), warn = FALSE), collapse = "\n")
+  check(grepl("@media (max-width:1100px){.gpr-cols,.gpr-cols.wb{grid-template-columns:minmax(0,1fr)}}", g, fixed = TRUE) && !grepl("grid-template-columns:minmax(260px,320px) 1fr", g, fixed = TRUE),
+        "GPR processing folds from three columns to two and one as the window narrows (it scrolled sideways by up to 431 px)") })
 if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green")

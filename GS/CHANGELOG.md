@@ -7,6 +7,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (narrow windows, 2026-10-31).** GPR processing folds from three columns to two below 1400 px and one below
+1100 px (it scrolled sideways by up to 431 px and its picks and markers overlapped); its button and number rows wrap.
+**Output changes:** none.
+
 **Changed (one way of writing things across GS, 2026-10-30; Plot_table_standards A4)**
 - Apparent resistivity is labelled one way on every chart, colour bar and the Simple view: "Apparent resistivity
   (Ω·m, log)" (were "ohm-m, log", "ohm-m, log scale", "log10 ohm-m", "ρa (Ω·m)"); where the values themselves are logs

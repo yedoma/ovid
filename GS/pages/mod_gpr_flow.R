@@ -10,7 +10,11 @@ GPR_WB_JS <- "Shiny.addCustomMessageHandler('gpr-wb-order', function(m) { m.orde
 GPR_WB_CSS <- ".gpr-flow{display:flex;flex-direction:column;gap:4px} .gpr-step{border:1px solid var(--wb-ln, #333);padding:4px 6px}
 .gpr-step-h{display:flex;align-items:center;gap:6px} .gpr-step-h .form-group,.gpr-step-h .checkbox{margin:0} .gpr-step-n{font-weight:600;white-space:nowrap}
 .gpr-step-s{color:var(--wb-fg2, #999);font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .gpr-step details summary{font-size:11.5px;color:var(--wb-fg2, #999)}
-.gpr-mv{text-decoration:none;padding:0 2px} .gpr-wb .form-group{margin-bottom:6px}"
+.gpr-mv{text-decoration:none;padding:0 2px} .gpr-wb .form-group{margin-bottom:6px}
+.gpr-cols{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr) minmax(200px,260px);gap:12px;align-items:start} .gpr-cols.wb{grid-template-columns:minmax(240px,320px) minmax(0,1fr)}
+.gpr-pm{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+@media (max-width:1400px){.gpr-cols{grid-template-columns:minmax(240px,300px) minmax(0,1fr)} .gpr-cols>.gpr-aside{grid-column:1 / -1}}
+@media (max-width:1100px){.gpr-cols,.gpr-cols.wb{grid-template-columns:minmax(0,1fr)}}"
 
 # wb: TRUE in the Workbench (its button styles; the A-scan and map go to its inspector, mod_gpr_flow_aside_ui()).
 mod_gpr_flow_ui <- function(id, wb = FALSE) {
@@ -48,7 +52,7 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
       radioButtons(ns("v"), "Down", c(`Depth (m)` = "depth", `Time (ns)` = "time"), inline = TRUE),
       radioButtons(ns("tool"), "A click", c(Cursor = "cursor", Pick = "pick", `Add marker` = "marker"), inline = TRUE)),
     uiOutput(ns("head")),
-    div(style = sprintf("display:grid;grid-template-columns:minmax(260px,320px) 1fr%s;gap:12px;align-items:start", if (wb) "" else " minmax(220px,280px)"),
+    div(class = paste("gpr-cols", if (wb) "wb"),                         # three columns, two below 1400 px, one below 1100 px
       div(
         div(class = "d-flex gap-2 align-items-end", span(class = "wb-eb", "Processing flow"),
             selectInput(ns("preset"), NULL, c(`Preset...` = "", names(GPR_PRESETS)), width = "200px")),
@@ -57,7 +61,7 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
             lapply(seq_along(GPR_STEPS), function(i) step(names(GPR_STEPS)[i], i))),
         div(class = "mt-2", span(class = "wb-eb", "Velocity (depth axis)"),
           selectInput(ns("ground"), NULL, c(`Pick a typical value` = "", names(GPR_GROUND)), width = "100%"),
-          div(class = "d-flex gap-1", num("vel", "Ground (m/ns)", 0.141, 0.005, "100px", 0.03), num("vtop", "Thawed layer (m/ns)", 0.0775, 0.005, "110px", 0.03),
+          div(class = "d-flex gap-1 flex-wrap", num("vel", "Ground (m/ns)", 0.141, 0.005, "100px", 0.03), num("vtop", "Thawed layer (m/ns)", 0.0775, 0.005, "110px", 0.03),
               num("thaw", "Thaw depth (m)", 0, 0.1, "90px")),
           p(class = "muted", "Depth is two-way time x velocity / 2 from the time zero, with the thawed layer's velocity above the thaw depth (Davis and Annan 1989); the dashed line marks the permafrost table. Velocities are literature values (References below); measure one on site (hyperbola fit, CMP or a probe depth) and replace them.")),
         div(class = "mt-2", span(class = "wb-eb", "Display"),
@@ -72,20 +76,20 @@ mod_gpr_flow_ui <- function(id, wb = FALSE) {
         textOutput(ns("caption")),
         conditionalPanel("input.before", ns = ns, plotly::plotlyOutput(ns("rg0"), height = "300px")),
         plotly::plotlyOutput(ns("rg"), height = "460px"),
-        div(style = "display:grid;grid-template-columns:1fr 1fr;gap:12px",
-          div(div(class = "d-flex gap-2 align-items-end", span(class = "wb-eb", "Picks"), textInput(ns("layer"), NULL, "frost table", width = "160px", placeholder = "layer of the next pick")),
+        div(class = "gpr-pm",
+          div(div(class = "d-flex gap-2 align-items-end flex-wrap", span(class = "wb-eb", "Picks"), textInput(ns("layer"), NULL, "frost table", width = "160px", placeholder = "layer of the next pick")),
               DTOutput(ns("picks")),
-              div(class = "d-flex gap-2 mt-1", actionButton(ns("pick_undo"), "Delete the last pick", class = b[["btn"]]), ovid_export_button(ns("picks_csv"), "csv", "picks", class = b[["btn"]])),
+              div(class = "d-flex gap-2 mt-1 flex-wrap", actionButton(ns("pick_undo"), "Delete the last pick", class = b[["btn"]]), ovid_export_button(ns("picks_csv"), "csv", "picks", class = b[["btn"]])),
               p(class = "muted mt-1", "The depth of a pick is two-way time x velocity / 2 from the time zero, with the thawed layer's velocity above the thaw depth (Davis and Annan 1989; REFLEXW manual). Picks need Topography off; they are kept in config/gpr_picks.csv.")),
           div(span(class = "wb-eb", "Markers"), DTOutput(ns("marks_tbl")),
-              div(class = "d-flex gap-2 align-items-end mt-1", num("mk_tr", "Trace", NA, 1, "90px", 1), textInput(ns("mk_note"), "Note", "", width = "150px"),
+              div(class = "d-flex gap-2 align-items-end mt-1 flex-wrap", num("mk_tr", "Trace", NA, 1, "90px", 1), textInput(ns("mk_note"), "Note", "", width = "150px"),
                   actionButton(ns("mk_add"), "Add marker", class = paste(b[["btn"]], "mb-2")), actionButton(ns("mk_undo"), "Delete the last marker", class = paste(b[["btn"]], "mb-2")),
                   ovid_export_button(ns("marks_csv"), "csv", "markers", class = paste(b[["btn"]], "mb-2"))),
               p(class = "muted mt-1", "Markers added here are kept in config/gpr_markers.csv; the .mrk and the raw files are not changed."))),
         div(class = "d-flex gap-2 mt-2", ovid_export_button(ns("data_csv"), "csv", "processed data", class = b[["btn"]]),
             span(class = "muted", "The radargram's camera button saves the image with the flow in its caption; the processed data starts with the same caption line.")),
         tags$details(class = "mt-2", tags$summary("References for the processing and the permafrost velocities"), uiOutput(ns("refs")))),
-      if (!wb) mod_gpr_flow_aside_ui(id)))
+      if (!wb) div(class = "gpr-aside", mod_gpr_flow_aside_ui(id))))
 }
 
 # The A-scan at the cursor, where it is, and a small map (the Workbench's inspector, or beside the radargram in Standard).
