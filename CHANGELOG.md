@@ -4,6 +4,9 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Fixed (narrow windows, 2026-10-31).** Every page of CS, WLR, GT and GS checked at 900 to 1440 px: rail, top bar,
+Workbench, tables, buttons, Simple tiles and GS GPR processing no longer run out of their boxes or scroll sideways.
+
 **Changed (one look and one name, 2026-10-30; approved by M).** Core: one table style, numbers right-aligned, button and
 input sizes, legends at the top; CS, WLR, GT and GS: the name written "ovid" wherever a user reads it ("ovid // CS" in run
 logs and export READMEs, the GS catalogue, the core-not-found message). RS keeps "Ovid Core // RS" until its thread's

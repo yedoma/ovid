@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (narrow windows, 2026-10-31; M).** Measured every page at 900, 1024, 1280 and 1440 px: the tabs layout keeps its
+page list (the collapsed rail showed a stray count and "More pages"); rail and contents labels wrap; the top bar drops the
+corrections count below 1320 px so its buttons fit; Workbench tabs scroll, its toolbars and action rows wrap, its side panes
+narrow below 1240 and 1000 px; plain tables scroll inside their box; buttons wrap in narrow columns; long names wrap in Simple
+tiles; a date range never cuts a date. **Output changes:** none.
+
 **Changed (one look in every app, 2026-10-30; approved by M).** One table style (grid, plain and Reference tables at
 13.5 px, semibold headers, 6/10 px cells); numbers right-aligned in every ovid_dt table; small buttons have the regular
 13.5 px text; the plot's controls and time-step switch on the type scale; date inputs as large as the other inputs; muted

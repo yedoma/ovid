@@ -162,5 +162,10 @@ table.dataTable tbody td input{background:var(--bgh);color:var(--fg);border:1px 
 .d-notice.error{border-left-color:var(--red)} .d-notice.error>.fa,.d-notice.error>.fas,.d-notice.error>svg{color:var(--red)}
 .d-review{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
 
-@media (max-width:900px){body{padding-left:var(--d-rail-min)} .d-rail{width:var(--d-rail-min)} .d-rail-label{display:none} .d-rail-sec{font-size:0;padding:8px 0 4px} .d-rail-link{justify-content:center;padding:0} .d-context{display:none}}
+@media (max-width:900px){html:not(.d-layout-tabs) body{padding-left:var(--d-rail-min)} html:not(.d-layout-tabs) .d-rail{width:var(--d-rail-min)} html:not(.d-layout-tabs) .d-rail-label{display:none} html:not(.d-layout-tabs) .d-rail-sec{font-size:0;padding:8px 0 4px} html:not(.d-layout-tabs) .d-rail-link{justify-content:center;padding:0} html:not(.d-layout-tabs) .d-pg-more>summary{font-size:0} .d-context{display:none}}   /* the tabs layout keeps its page list (flow.css) */
 td.d-num{text-align:right !important;font-variant-numeric:tabular-nums}   /* numbers right-aligned in plain tables (shell.js) */
+.input-daterange input{min-width:96px}   /* a date never cut off (2019-04-16) */ .d-views a{white-space:nowrap}
+/* narrow windows (M, 31 Oct): a plain table wider than its box scrolls inside it; a button's label wraps rather than run out of its column */
+.shiny-table-output,.shiny-html-output:has(> table.table){overflow-x:auto;max-width:100%}
+.tab-pane .btn:not(.btn-sm){max-width:100%;white-space:normal}
+

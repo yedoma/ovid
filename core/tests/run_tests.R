@@ -1148,4 +1148,13 @@ local({                                                               # one look
   apps <- file.path(dirname(CORE_DIR), c("CS", "WLR", "GT", "GS"))
   src <- unlist(lapply(unlist(lapply(apps, list.files, pattern = "[.]R$", recursive = TRUE, full.names = TRUE)), function(f) if (grepl("/tests/", f)) character() else readLines(f, warn = FALSE)))
   check("the name is written ovid (lower case) wherever a user reads it in CS, WLR, GT and GS", !any(grepl('"Ovid Core //|Ovid Core folder|Ovid GS catalogue', src))) })
+local({                                                               # narrow windows (M, 31 Oct): nothing runs out of its box or is crushed
+  css <- function(f) paste(readLines(file.path(CORE_DIR, "www", f), warn = FALSE), collapse = "\n")
+  sh <- css("shell.css"); fl <- css("flow.css"); wb <- css("workbench.css"); sp <- css("simple.css")
+  check("the tabs layout keeps its page list in a narrow window; collapsed rails hide 'More pages'", grepl("html:not(.d-layout-tabs) .d-rail-label{display:none}", sh, fixed = TRUE) && grepl(".d-pg-more>summary{font-size:0}", sh, fixed = TRUE))
+  check("rail and contents labels wrap instead of running out of the panel", grepl(".d-rail-label{white-space:normal", fl, fixed = TRUE))
+  check("the top bar drops the corrections count below 1320 px so its buttons fit", grepl("@media (max-width:1320px){.d-top-right>.d-applied-out{display:none}}", fl, fixed = TRUE))
+  check("Workbench tabs scroll, its toolbars wrap and its side panes narrow", grepl(".wb-tabs{overflow-x:auto", wb, fixed = TRUE) && grepl(".wb-tools,.wb-gtools,.wb-cellbar,.wb-ctools{flex-wrap:wrap", wb, fixed = TRUE) && grepl("@media (max-width:1000px){.wb-nav{width:170px}", wb, fixed = TRUE))
+  check("plain tables scroll inside their box and buttons wrap in their column", grepl(".shiny-table-output,.shiny-html-output:has(> table.table){overflow-x:auto", sh, fixed = TRUE) && grepl(".tab-pane .btn:not(.btn-sm){max-width:100%;white-space:normal}", sh, fixed = TRUE))
+  check("a long name wraps inside its Simple tile; a date range never cuts a date", grepl(".sp-tile-h > :first-child { min-width: 0; overflow-wrap: anywhere; }", sp, fixed = TRUE) && grepl(".input-daterange input{min-width:96px}", sh, fixed = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

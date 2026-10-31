@@ -229,3 +229,12 @@ details.wb-tree{margin:0} .wb-tree>summary{list-style:none;display:flex;justify-
 .wb-undo[hidden]{display:none}
 .wb-undo button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:3px;font-weight:600;font-size:12px;padding:2px 10px;cursor:pointer}
 .wb-undo button.x{border:0;font-size:15px;padding:0 4px}
+/* ---- narrow windows (M, 31 Oct): toolbars wrap, tabs scroll, the side panes narrow, nothing overlaps ---------------- */
+.wb-tabs{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin} .wb-tab{white-space:nowrap;flex:none}
+.wb-top{min-width:0} .wb-top>*{flex-shrink:0} .wb-top .wb-project{flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.wb-tools,.wb-gtools,.wb-cellbar,.wb-ctools{flex-wrap:wrap;row-gap:6px}
+.wb-status{min-width:0;overflow:hidden} .wb-status>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
+@media (max-width:1240px){.wb-nav{width:200px} .wb-aside{width:260px}}
+@media (max-width:1000px){.wb-nav{width:170px} .wb-aside{width:230px} .wb-top{gap:8px;padding:0 10px}}
+.wb-acts{flex-wrap:wrap;row-gap:6px;min-width:0} .wb-cellbar{padding-top:6px;padding-bottom:6px}
+@media (max-width:1100px){.wb-pv{display:none} .wb-top .wb-btn,.wb-top .btn{padding-left:9px;padding-right:9px}}

@@ -136,3 +136,9 @@ html.sp-root, html.sp-root body { background: var(--sp-bg); }
 }
 
 td.d-num{text-align:right !important;font-variant-numeric:tabular-nums}   /* numbers right-aligned in plain tables (shell.js) */
+/* narrow windows (M, 31 Oct): a long name wraps inside its tile; the state chip keeps its own line width */
+.sp-tile { min-width: 0; }
+.sp-tile-h { flex-wrap: wrap; min-width: 0; }
+.sp-tile-h > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.sp-tile-h .sp-state { flex: none; white-space: nowrap; }
+.sp-tile dd { min-width: 0; overflow-wrap: anywhere; }

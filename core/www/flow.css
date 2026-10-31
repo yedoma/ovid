@@ -158,3 +158,9 @@ html.d-layout-tabs .d-context{display:none}
 html.d-has-aside .d-context{display:none}
 
 .d-rl-group{display:flex;gap:8px;align-items:baseline;padding:12px 0 2px;border-top:1px solid var(--bg2);font-size:14px}.d-rl-group+.d-chk-row{border-top:0}.d-rl-what{font-weight:600}
+/* ---- narrow windows (M, 31 Oct): nothing runs out of its box or is crushed ---------------------------------------- */
+.d-rail-link{height:auto;min-height:34px}
+.d-rail-label{white-space:normal;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.d-layout-notebook .d-rail-link{white-space:normal;padding-top:4px;padding-bottom:4px}
+@media (max-width:1320px){.d-top-right>.d-applied-out{display:none}}
+.d-layout-notebook .d-rail .d-views{display:flex} .d-layout-notebook .d-rail .d-views a{flex:1 1 auto;padding:4px 6px;text-align:center}   /* the view switch fits the contents panel */
