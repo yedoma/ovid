@@ -164,13 +164,15 @@ review_flag_items <- function(flags, where, parameter = "parameter", keep = char
   f <- f[!is.na(t0)][order(.w, check, t0)]; if (!nrow(f)) return(empty)                  # a flag with no time cannot be shown or removed
   f[, grp := cumsum(c(TRUE, diff(t0) > gap_h * 3600 | .w[-1] != .w[-.N] | check[-1] != check[-.N]))]
   if (!"detail" %in% names(f)) f[, detail := ""]
+  set(f, j = ".q", value = wb_queue_id(f$.w, f$.p, f$start, f$end, f$check))           # once for all flags (per item it was 11 s for 49,000 flags)
   fmt <- function(t) format(as.POSIXct(t, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S", tz = "UTC")
   kc <- intersect(keep, names(f))
   g <- f[, c(list(kind = "flag", where = .w[1], what = gsub("_", " ", check[1]), detail = as.character(detail[1]), parameter = paste(unique(.p), collapse = ", "),
-                  start = fmt(min(t0)), end = fmt(max(t1)), check = check[1], records = sum(as.numeric(records), na.rm = TRUE),
-                  qids = paste(wb_queue_id(.w, .p, start, end, check), collapse = " ")),
+                  start = min(t0), end = max(t1), check = check[1], records = sum(as.numeric(records), na.rm = TRUE),
+                  qids = paste(.q, collapse = " ")),
              lapply(stats::setNames(kc, kc), function(k) { v <- as.character(.SD[[k]])
                if (k %in% join) paste(unique(v[!is.na(v) & nzchar(v)]), collapse = ", ") else v[1] })), by = grp, .SDcols = kc][, grp := NULL]
+  g[, `:=`(start = fmt(start), end = fmt(end))]                                           # formatted once, not once an item
   g[order(-records)][]
 }
 # Each item's decision (NA when none): a flag is decided when every one of its flags has a decision in d (the review table).

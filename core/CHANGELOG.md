@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster (Needs you, 2026-10-31).** review_flag_items() works out the flag ids once for all flags and formats the times
+once: 49,125 flags (23,078 items) 7.6 -> 2.5 s each time an app opens; items identical. **Output changes:** none.
+
 **Fixed (narrow windows, 2026-10-31; M).** Measured every page at 900, 1024, 1280 and 1440 px: the tabs layout keeps its
 page list (the collapsed rail showed a stray count and "More pages"); rail and contents labels wrap; the top bar drops the
 corrections count below 1320 px so its buttons fit; Workbench tabs scroll, its toolbars and action rows wrap, its side panes

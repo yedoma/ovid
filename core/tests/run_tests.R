@@ -1157,4 +1157,11 @@ local({                                                               # narrow w
   check("Workbench tabs scroll, its toolbars wrap and its side panes narrow", grepl(".wb-tabs{overflow-x:auto", wb, fixed = TRUE) && grepl(".wb-tools,.wb-gtools,.wb-cellbar,.wb-ctools{flex-wrap:wrap", wb, fixed = TRUE) && grepl("@media (max-width:1000px){.wb-nav{width:170px}", wb, fixed = TRUE))
   check("plain tables scroll inside their box and buttons wrap in their column", grepl(".shiny-table-output,.shiny-html-output:has(> table.table){overflow-x:auto", sh, fixed = TRUE) && grepl(".tab-pane .btn:not(.btn-sm){max-width:100%;white-space:normal}", sh, fixed = TRUE))
   check("a long name wraps inside its Simple tile; a date range never cuts a date", grepl(".sp-tile-h > :first-child { min-width: 0; overflow-wrap: anywhere; }", sp, fixed = TRUE) && grepl(".input-daterange input{min-width:96px}", sh, fixed = TRUE)) })
+if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(shiny)); source(file.path(CORE_DIR, "cache.R"), local = TRUE)   # Needs you list: ids worked out once for all flags (31 Oct)
+  for (.f in c("periods", "shell", "flow")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  fl <- data.table(where = c("A", "A", "A", "B"), parameter = c("t", "t", "rh", "t"), check = "spike", records = 1,
+    start = c("2020-01-01 00:00:00", "2020-01-01 03:00:00", "2020-01-01 00:00:00", "2020-02-01"), end = c("2020-01-01 01:00:00", "2020-01-01 04:00:00", "2020-01-01 00:30:00", "2020-02-01"))
+  it <- review_flag_items(fl, "where"); q <- wb_queue_id(fl$where, fl$parameter, fl$start, fl$end, fl$check)
+  check("Needs you items carry the same flag ids, start and end as before, worked out once for all flags",
+        nrow(it) == 2 && setequal(unlist(strsplit(it$qids, " ")), q) && identical(it[where == "B", start], "2020-02-01 00:00:00")) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)
