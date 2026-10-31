@@ -1116,6 +1116,15 @@ if (requireNamespace("shiny", quietly = TRUE)) local({ suppressMessages(library(
   pals <- c(list(nord_palette()), lapply(names(OVID_ALT_SCHEMES), function(n) scheme_palette(n, nord_palette(), "blue")))
   low <- unlist(lapply(pals, function(p) { t <- ovid_tokens(p); vapply(c(t$fg4, t$fg3), function(c) min(vapply(c(t$bg, t$bgh, t$bg1), function(b) contrast_ratio(c, b), 0)), 0) }))
   check(sprintf("muted (fg4) and subtle (fg3) text reach 4.5:1 on the page, top bar and panels in all %d schemes", length(pals)), all(low >= 4.5 - 1e-6)) })
+# The file audit's sentences (file_audit.R), made only for the rows they fit: the same text as before for every case.
+local({ source(file.path(CORE_DIR, "file_audit.R"), local = TRUE)
+  fs <- data.table(file = c("a", "b", "c", "d", "e"), read = c(0L, 120000L, 5L, NA, 3L), status = c("read", "read", "read", "read", "skipped: empty"), used = c(TRUE, TRUE, TRUE, TRUE, FALSE))
+  kept <- data.table(source_file = c("b", "c"), in_output = c(120000L, 2L))
+  bf <- data.table(source_file = c("c", "c"), stage = "s", rule = c("gap", "dup"), level = "row", n = c(2L, 1L), entries = 1L)
+  fa <- file_reconcile(fs, kept, bf)
+  check("file audit: the same sentence for every case (no rows, all, some, not read) and the dropped rows by rule",
+        identical(fa$what_happened, c("no records", "all 120,000 records in the output", "2 of 5 records in the output", NA, "skipped: empty")) &&
+        identical(fa[file == "c"]$dropped_why, "2 gap; 1 dup")) })
 local({                                                               # one look in every app (approved by M in the project chat, 30 Oct)
   css <- function(f) paste(readLines(file.path(CORE_DIR, "www", f), warn = FALSE), collapse = "\n")
   sh <- css("shell.css"); tv <- css("tsview.css"); rf <- css("reference.css")

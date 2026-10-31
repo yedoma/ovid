@@ -11,6 +11,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 text in two sizes (14 and 12.5 px); legends at the top of a chart by default (theme_ovid); "1 deployment found" (was
 "deployment(s)"). **Output changes:** saved ggplot figures with a legend have it at the top; data files unchanged.
 
+**Faster (file audit, 2026-10-30; all apps)**
+- file_audit.R file_reconcile(): each row's "what happened" sentence is made only for the rows it fits, and whole counts are formatted in one go; the same text as before (test). An RS rebuild of a million-file audit: 21 s -> about 5 s.
+- **Output changes:** none.
+
 **Changed (shared text sizes and contrast, 2026-10-30; all five apps)**
 - Tokens (shell.R): muted text (fg4) and a new subtle-text token (fg3, the scheme's grey lifted) reach 4.5:1 on the page, top bar and panels in every scheme (legible_col); gray stays for lines and disabled controls. Test: all 19 schemes.
 - Sizes onto the type scale (11 / 12.5 / 13.5 / 14 / 26): tables 13 -> 13.5 px, rail section labels 10.5 -> 11 px, table row numbers 12 -> 12.5 px, value-box numbers 26 px, Simple step titles 15.5 -> 14 px and numbers 13 -> 12.5 px, project-list paths 11.5 -> 11 px.

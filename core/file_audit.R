@@ -34,8 +34,10 @@ file_reconcile <- function(files, kept, by_file = audit_by_file(), skip_stages =
           else data.table(source_file = character(), in_output = integer(), used_in = character())
   bf <- if (nrow(by_file)) by_file[!is.na(source_file)] else by_file
   if (length(skip_stages) && "stage" %in% names(bf)) bf <- bf[!stage %in% skip_stages]
-  rows <- if (nrow(bf) && any(bf$level %in% row_levels)) bf[level %in% row_levels, .(n = sum(n, na.rm = TRUE)), by = .(source_file, rule)][n > 0][order(source_file, -n)][
-    , .(dropped = as.integer(sum(n)), dropped_why = paste(sprintf("%s %s", num(n), rule), collapse = "; ")), by = source_file]
+  rows <- if (nrow(bf) && any(bf$level %in% row_levels)) { r0 <- bf[level %in% row_levels, .(n = sum(n, na.rm = TRUE)), by = .(source_file, rule)][n > 0][order(source_file, -n)]
+    # whole counts formatted in one go (the same text as num() per file, which took seconds on a large audit); other numbers as before
+    if (is.integer(r0$n)) r0[, lab := paste(formatC(n, format = "d", big.mark = ","), rule)][, .(dropped = as.integer(sum(n)), dropped_why = paste(lab, collapse = "; ")), by = source_file]
+    else r0[, .(dropped = as.integer(sum(n)), dropped_why = paste(sprintf("%s %s", num(n), rule), collapse = "; ")), by = source_file] }
           else data.table(source_file = character(), dropped = integer(), dropped_why = character())
   cells <- if (nrow(bf) && any(bf$level == "cell")) bf[level == "cell", .(values_removed = as.integer(sum(n, na.rm = TRUE))), by = source_file]
            else data.table(source_file = character(), values_removed = integer())
@@ -43,10 +45,14 @@ file_reconcile <- function(files, kept, by_file = audit_by_file(), skip_stages =
   for (v in c("in_output", "dropped", "values_removed")) set(fa, which(is.na(fa[[v]]) & fa$used %in% TRUE), v, 0L)
   fa[is.na(dropped_why) & used %in% TRUE, dropped_why := ""]
   fa[, reconciles := ifelse(used %in% TRUE, read == in_output + dropped, NA)]
-  fa[, what_happened := fifelse(!used %in% TRUE, as.character(status),
-        fifelse(read == 0L, paste("no", unit),
-        fifelse(in_output == read, sprintf("all %s %s in the output", num(read), unit),
-                sprintf("%s of %s %s in the output", num(in_output), num(read), unit))))]
+  # each row's sentence, made only for the rows it fits (formatting every number of a million-row audit three times took most of
+  # an RS rebuild); the same text as before
+  n0 <- function(x) formatC(x, format = "d", big.mark = ",")     # whole counts, never 1e+05 (a number formatted on its own)
+  u <- fa$used %in% TRUE; wh <- as.character(fa$status); wh[u] <- NA_character_
+  z <- which(u & fa$read == 0L); wh[z] <- paste("no", unit)
+  a <- which(u & fa$read != 0L & fa$in_output == fa$read); wh[a] <- sprintf("all %s %s in the output", n0(fa$read[a]), unit)
+  b <- which(u & fa$read != 0L & fa$in_output != fa$read); wh[b] <- sprintf("%s of %s %s in the output", n0(fa$in_output[b]), n0(fa$read[b]), unit)
+  fa[, what_happened := wh]
   fa[]
 }
 
