@@ -293,7 +293,9 @@ flight_footprint <- function(img, lidar_fov = NA_real_, cell = FOOTPRINT_CELL_M)
 # fp_area_m2, fp_height_m, fp_height_from, fp_width_m (photo width across the track, or the LiDAR swath), fp_gsd_cm (the
 # camera's GSD at that height; for an eBee the only GSD there is), fp_images, fp_cell_m, fp_note. A flight is LiDAR when it has LiDAR raw files and its payload's camera has a field of view in
 # LIDAR_FOV_DEG; its footprint is then the scanned strip, otherwise its photos.
-footprints_build <- function(img, fl, emo = NULL, links = NULL, rinex = NULL, bases = NULL) {
+# cache_file: an RDS of each flight's footprint keyed on its photo rows (heights included), its LiDAR angle and the footprint
+# code (FOOTPRINT_KEY, rs_pipeline.R), so a rebuild traces again only flights whose inputs changed; NULL: no cache.
+footprints_build <- function(img, fl, emo = NULL, links = NULL, rinex = NULL, bases = NULL, cache_file = NULL) {
   need <- c("flight_id", "lat", "lon", "alt", "alt_rel", "sensor_w_mm", "focal_mm", "px_x", "px_y", "model", "t", "file")
   img <- copy(img); for (k in setdiff(need, names(img))) set(img, j = k, value = NA)
   for (k in c("lat", "lon", "alt", "alt_rel", "sensor_w_mm", "focal_mm", "px_x", "px_y")) set(img, j = k, value = suppressWarnings(as.numeric(img[[k]])))
@@ -309,8 +311,17 @@ footprints_build <- function(img, fl, emo = NULL, links = NULL, rinex = NULL, ba
   fov <- img[, .(fov = { m <- names(LIDAR_FOV_DEG)[names(LIDAR_FOV_DEG) %in% model]; if (length(m)) LIDAR_FOV_DEG[[m[1]]] else NA_real_ }), by = flight_id]
   lid <- merge(lid, fov, by = "flight_id", all.x = TRUE)[, fov := fifelse(lidar, fov, NA_real_)]
   ids <- unique(img$flight_id)
-  r <- lapply(ids, function(f) { x <- flight_footprint(img[flight_id == f], lid[flight_id == f, fov][1])
-    list(o = if (nrow(x$outline)) x$outline[, `:=`(flight_id = f, kind = x$summary$fp_kind)], s = x$summary[, flight_id := f]) })
+  memo <- if (!is.null(cache_file) && file.exists(cache_file)) tryCatch(readRDS(cache_file), error = function(e) list()) else list()   # safe: a damaged cache is traced again
+  if (!is.list(memo)) memo <- list()
+  fk <- get0("FOOTPRINT_KEY", ifnotfound = "")
+  r <- lapply(ids, function(f) { g <- img[flight_id == f]; fov <- lid[flight_id == f, fov][1]
+    key <- if (!is.null(cache_file)) hash_of(list(fk, fov, g)) else ""
+    hit <- memo[[f]]; if (!is.null(hit) && identical(hit$key, key)) return(hit$r)
+    x <- flight_footprint(g, fov)
+    out <- list(o = if (nrow(x$outline)) x$outline[, `:=`(flight_id = f, kind = x$summary$fp_kind)], s = x$summary[, flight_id := f])
+    if (!is.null(cache_file)) memo[[f]] <<- list(key = key, r = out)
+    out })
+  if (!is.null(cache_file)) { memo <- memo[intersect(names(memo), ids)]; tmp <- paste0(cache_file, ".part"); saveRDS(memo, tmp); file.rename(tmp, cache_file) }
   sm <- rbindlist(lapply(r, `[[`, "s"), fill = TRUE)
   sm <- merge(sm, hz$from[, .(flight_id, fp_height_from = from)], by = "flight_id", all.x = TRUE)
   out <- rbindlist(lapply(r, `[[`, "o"), fill = TRUE)

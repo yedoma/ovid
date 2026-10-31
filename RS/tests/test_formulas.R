@@ -70,6 +70,15 @@ local({
   fp <- flight_footprint(d[, `:=`(alt = NA_real_, height = 100, model = "FC6310R", file = c("a", "b", "c"))], cell = 0.5)
   check(eq(fp$summary$fp_width_m, 150, 1e-9) && eq(fp$summary$fp_area_m2, 150 * (100 + 2 * 2e-4 * pi / 180 * FP_R), 150),
         "photo footprint: 150 m across (13.2 mm x 100 m / 8.8 mm), 100 m along; three photos 22.24 m apart cover 150 x 144.5 m (hand, within the outline's one-cell edge)")
+  # each flight's footprint is cached (R/footprints.R): the same inputs are not traced again, a moved photo is
+  fpc <- tempfile(fileext = ".rds"); n <- 0L; of <- flight_footprint
+  assign("flight_footprint", function(...) { n <<- n + 1L; of(...) }, envir = globalenv())
+  im <- copy(d)[, `:=`(file = c("a", "b", "c"), rel = c("a", "b", "c"), model = "FC6310R", alt = NA_real_)]
+  b1 <- footprints_build(copy(im), data.table(flight_id = "f"), cache_file = fpc); b2 <- footprints_build(copy(im), data.table(flight_id = "f"), cache_file = fpc); n2 <- n
+  im2 <- copy(im)[2, lon := lon + 1e-3]; b3 <- footprints_build(copy(im2), data.table(flight_id = "f"), cache_file = fpc); b4 <- footprints_build(copy(im2), data.table(flight_id = "f"))
+  assign("flight_footprint", of, envir = globalenv())
+  check(n2 == 1L && n == 3L && identical(b1$outlines, b2$outlines) && identical(b3$outlines, b4$outlines) && !identical(b3$outlines, b1$outlines),
+        "footprints: a flight whose photos have not changed is not traced again; one whose photos moved is, and matches tracing without the cache")
   # LiDAR swath (Baltsavias 1999; hand): 2 x 60 m x tan(70 / 2 deg) = 84.03 m for the Zenmuse L2 at 60 m
   ld <- data.table(lat = 61.3 + (0:10) * 1e-4, lon = -121.3, t = as.POSIXct("2026-09-01 18:00:00", tz = "UTC") + (0:10), height = 60, file = letters[1:11])
   fl2 <- flight_footprint(ld, LIDAR_FOV_DEG[["L2"]], cell = 0.5)

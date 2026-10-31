@@ -243,7 +243,7 @@ simple_server <- function(input, output, session, std) {
       tags$dt("Sources"), tags$dd(if (!off) sprintf("%d, all plugged in", nrow(s)) else sprintf("%d; %d not plugged in (%s from the last scan)", nrow(s), off, if (off == 1) "its flights come" else "their flights come")),
       tags$dt("Catalogue"), tags$dd(sp_rs_when(x$made))) })
   output$sp_checks <- renderUI({ x <- C(); f <- F(); if (is.null(f)) return(NULL); fa <- file.path(CAT(), "files.csv")
-    nfiles <- if (file.exists(fa)) max(0L, length(readLines(fa, warn = FALSE)) - 1L) else NA_integer_
+    nfiles <- if (file.exists(fa)) nrow(fread(file = fa, select = 1L, colClasses = "character", showProgress = FALSE)) else NA_integer_   # one column: 0.06 s, not 1.8 s reading every line
     cp <- sum(sp_rs_num(f$n_copies) > 1, na.rm = TRUE); lk <- sum(f$has_log %in% c(TRUE, "TRUE") | f$has_geotags %in% c(TRUE, "TRUE") | f$has_mrk %in% c(TRUE, "TRUE") | f$has_mission %in% c(TRUE, "TRUE"), na.rm = TRUE)
     fl <- f[kind != "photo set"]; nos <- sum(!nzchar(f$place)); cor <- sp_rs_corrected(f)
     row <- function(lv, what, detail, fix = NULL) div(class = paste("sp-check", paste0("sp-", lv)), span(class = "sp-dot"), tags$b(what), span(class = "sp-dim", detail), div(class = "sp-fill"), fix)

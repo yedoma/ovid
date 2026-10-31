@@ -198,7 +198,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   if (nrow(pt)) { tr <- pt[, if (.N >= 2L) { i <- unique(round(seq(1, .N, length.out = min(.N, 300L)))); .(line = paste(sprintf("%.6f %.6f", lat[i], lon[i]), collapse = ";")) }, by = flight_id]
     if (nrow(tr)) geo <- rbind(geo, tr[, .(flight_id, kind = "observed", what = "track from photo geotags", ref = "", line)], fill = TRUE) }
   # the ground each flight covered (R/footprints.R): its photos' footprints, or its LiDAR strip; catalogue/footprints.csv
-  fpb <- footprints_build(b$images, fl, A$records$emotion %||% list(), links, A$records$rinex, cfgs$gnss_bases)
+  fpb <- footprints_build(b$images, fl, A$records$emotion %||% list(), links, A$records$rinex, cfgs$gnss_bases, cache_file = file.path(cfg$project_dir, "cache", "footprints.rds"))
   fl <- merge(fl, fpb$flights, by = "flight_id", all.x = TRUE, sort = FALSE)
   # photos with no height of their own (eBee: the log gives it): blur and overlap from the footprint's height, as the GSD is
   hz <- fpb$heights %||% data.table()
@@ -288,6 +288,8 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
 #        rs_pipeline.R build                 rebuild from earlier scans only
 #        rs_pipeline.R export                rebuild and write the shareable viewer (output/viewer/Ovid_RS_viewer.zip)
 run_pipeline <- function(cfg = CFG, ...) { cfg$project_dir <- ovid_project_dir(cfg$project_dir); run_project(cfg, function() run_pipeline_steps(cfg, ...), need_raw = FALSE) }   # folders checked, project locked, run logged (core manifest.R)   # every run leaves output/logs/<start>.log (core manifest.R)
+FOOTPRINT_KEY <- code_fingerprint("flight_footprint", env = environment())   # each flight's footprint is cached (R/footprints.R)
+IMAGE_RAW_KEY <- code_fingerprint("read_image_raw", env = environment())   # the photo cache: only reading the files counts (R/catalogue.R)
 STEP_HASH <- step_hashes(environment())          # after every function is defined
 warn_core_shadows(PIPELINE_DIR)                  # an app function that replaces a core one (core/cache.R)
 if (RUN_ON_SOURCE && sys.nframe() == 0L) {

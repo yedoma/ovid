@@ -59,8 +59,8 @@ is_kml_tile <- function(path) {
 }
 
 # Image metadata for one source: every image (and raw photo, for the drone test) is read once and kept in
-# cache/sources/<id>/exif.rds by path, size and modified time, so a rescan reads only new or changed files. The cache is
-# dropped when the reading code changes (STEP_HASH$images). sample_idx() and fill_sampled() thin a folder to IMAGE_SAMPLE
+# cache/sources/<id>/exif.rds by path, size and modified time, so a rescan reads only new or changed files. The cache keeps
+# the raw tags and is dropped only when the code that reads the files changes (IMAGE_RAW_KEY, rs_pipeline.R). sample_idx() and fill_sampled() thin a folder to IMAGE_SAMPLE
 # images; scans no longer use them (every image is read), they are kept for quick looks and the tests.
 IMAGE_SAMPLE <- 30L
 sample_idx <- function(n) if (n <= 2L * IMAGE_SAMPLE || Sys.getenv("RS_FULL_READ") == "1") seq_len(n) else unique(round(seq(1, n, length.out = IMAGE_SAMPLE)))
@@ -76,24 +76,35 @@ fill_sampled <- function(r, g, i) {
 
 read_source_images <- function(files, sdir, chunk = 250L) {
   if (dir.exists(file.path(sdir, "images"))) unlink(file.path(sdir, "images"), recursive = TRUE)   # the per-folder cache of earlier versions
-  cf <- file.path(sdir, "exif.rds"); key <- STEP_HASH$images
+  cf <- file.path(sdir, "exif.rds"); key <- IMAGE_RAW_KEY
   im <- files[role %in% c("image", "image_raw") & status == ""]
   if (!nrow(im)) { unlink(cf); return(data.table()) }
   im[, k := paste(rel, size, as.numeric(mtime))]
+  # the cache holds raw tags (format 2), keyed on the code that reads the files only; a cache of an earlier version holds the
+  # fields already worked out: its rows are kept as they are (legacy), so an update never forces a re-read of the drive
   # safe: a damaged cache is read again from the source
-  old <- if (file.exists(cf)) tryCatch(readRDS(cf), error = function(e) NULL); have <- if (identical(old$key, key) && is.data.table(old$rows)) old$rows[k %in% im$k] else data.table()
-  todo <- im[!k %in% have$k][order(folder, file)]; got <- list(have)
-  keep <- function() { x <- rbindlist(got, fill = TRUE); tmp <- paste0(cf, ".part"); saveRDS(list(key = key, rows = x), tmp); file.rename(tmp, cf); x }
+  old <- if (file.exists(cf)) tryCatch(readRDS(cf), error = function(e) NULL)
+  ok_rows <- function(x) is.data.table(x) && "k" %in% names(x)
+  ik <- im$k; raw <- if (identical(old$format, 2L) && identical(old$key, key) && ok_rows(old$rows)) old$rows[k %in% ik] else data.table()
+  want <- ik; rk <- raw$k                               # plain vectors: inside [...] raw is the photo rows' raw column
+  leg <- if (identical(old$format, 2L)) { if (ok_rows(old$legacy)) old$legacy[k %in% want & !k %in% rk] else data.table() }
+         else if (!is.null(old) && ok_rows(old$rows)) old$rows[k %in% want] else data.table()
+  lk <- leg$k; todo <- im[!k %in% c(rk, lk)][order(folder, file)]; got <- list(raw)
+  keep <- function() { x <- rbindlist(got, fill = TRUE); tmp <- paste0(cf, ".part"); saveRDS(list(format = 2L, key = key, rows = x, legacy = leg), tmp); file.rename(tmp, cf); x }
   ch <- split(seq_len(nrow(todo)), (seq_len(nrow(todo)) - 1L) %/% chunk)
   for (j in seq_along(ch)) { g <- todo[ch[[j]]]
     run_tick(j, length(ch), sprintf("images %s of %s", num(max(ch[[j]])), num(nrow(todo))))   # progress and Cancel for a scan from the app (core util.R)
-    r <- tryCatch(cbind(g[, .(rel, folder, file, size, k, raw = role == "image_raw")], read_image_meta(g$path)),
+    r <- tryCatch(cbind(g[, .(rel, folder, file, size, k, raw = role == "image_raw")], read_image_raw(g$path)),
                   error = function(e) { problem(g$folder[1], paste("image metadata not read:", conditionMessage(e))); NULL })
-    if (!is.null(r)) got[[length(got) + 1L]] <- r[, meta_from := "read"]
+    if (!is.null(r)) got[[length(got) + 1L]] <- r
     if (j %% 20L == 0L) keep() }                                                 # a stopped scan keeps what it has read
-  out <- if (!nrow(todo) && identical(old$key, key) && nrow(have) == nrow(old$rows)) have else keep()   # nothing new: left as it is (core output_restore drops cache files a stopped run wrote)
-  say("    read ", num(nrow(todo)), " images", if (nrow(have)) paste0("; ", num(nrow(have)), " unchanged since the last scan") else "")
-  out[, k := NULL][]
+  same <- !nrow(todo) && identical(old$format, 2L) && identical(old$key, key) && nrow(raw) == nrow(old$rows) && nrow(leg) == nrow(old$legacy %||% data.table())
+  rw <- if (same) raw else keep()                       # nothing new: left as it is (core output_restore drops cache files a stopped run wrote)
+  have <- nrow(raw) + nrow(leg)
+  say("    read ", num(nrow(todo)), " images", if (have) paste0("; ", num(have), " unchanged since the last scan") else "")
+  out <- rbindlist(list(if (nrow(rw)) image_derive(rw), if (nrow(leg)) copy(leg)), fill = TRUE)
+  if (!nrow(out)) return(data.table())
+  out[, meta_from := "read"][, k := NULL][]
 }
 
 # Small records (MRK, RPT, geoinfo, KML, RINEX headers) are read every scan.

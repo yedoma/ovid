@@ -103,7 +103,7 @@
   }
   function pick(id) { Shiny.setInputValue('map_pick', id, { priority: 'event' }); }
   // flight colour: positioning state from the server, or a palette over year / sensor / aircraft / site, or one colour
-  let fcol = {}, fkey = [], yearKey = [];
+  let fcol = {}, fkey = [], yearKey = [], FPC = {}, PTC = {};
   function flightColours(fs, pal, dkey) {
     fcol = {}; fkey = [];
     if (S.by === 'drone') { fs.forEach(f => fcol[f.id] = f.dcol || f.col); fkey = (dkey || []).slice(0, 18); if ((dkey || []).length > 18) fkey.push([`+ ${dkey.length - 18} more`, '']); return; }   // config/footprint_colours.csv
@@ -116,7 +116,10 @@
   function draw(d) {
     if (typeof L === 'undefined') { document.getElementById('rsmap').innerHTML = '<p class="muted p-3">The map library could not be loaded: the map needs an internet connection (Leaflet and map tiles).</p>'; return; }
     if (!map) init(); last = d;
-    FL.forEach(clear); clear(YF); boxes = {}; const all = [], fs = rows(d.flights), fp = d.fp || {};
+    // footprints and image positions are sent once and kept here (app.R): a new catalogue (reset) starts afresh
+    if (d.reset) { FPC = {}; PTC = {}; d.reset = false; }
+    Object.assign(FPC, d.fp || {}); Object.assign(PTC, d.points || {}); d.fp = null; d.points = null;
+    FL.forEach(clear); clear(YF); boxes = {}; const all = [], fs = rows(d.flights), fp = FPC;
     flightColours(fs, d.pal || ['#e5c07b'], d.dkey);
     // one footprint per year: the joined outlines only (each kind its own, drawn on top of each other), flights not drawn
     (d.years || []).forEach(y => {
@@ -129,14 +132,14 @@
     fs.forEach(f => {
       if (f.lat_min === null || f.lat_min === undefined) return;
       const bb = [[f.lat_min, f.lon_min], [f.lat_max, f.lon_max]]; all.push(...bb);
-      const ring = fp[f.id], t = card(f.name, [f.date, f.site].filter(Boolean).join(' · '), [f.aircraft, f.sensor].filter(Boolean).join(' · '),
+      const ring = fp[f.fpk || f.id], t = card(f.name, [f.date, f.site].filter(Boolean).join(' · '), [f.aircraft, f.sensor].filter(Boolean).join(' · '),
                      `${f.n ?? '?'} images${f.gb ? ' · ' + f.gb + ' GB' : ''}`, f.status, ring ? `${f.fp_kind === 'lidar' ? 'LiDAR strip' : 'photo footprint'} ${f.fp_area_km2} km²` : 'no footprint: the box around its positions');
       // the ground the flight covered; a flight with none keeps the box around its positions (both derived: dotted)
       const shape = ring ? L.polygon(ring.map(p => p.map(pts)), { opacity: 1, dashArray: '2 4', lineCap: 'round' }) : L.rectangle(bb, { opacity: 1, dashArray: '2 4', lineCap: 'round' });
       boxes[f.id] = reg(FP, shape.bindTooltip(t, { sticky: true }).on('click', () => pick(f.id)).addTo(lay[FP]),
                         { col: fcol[f.id], w: f.id === sel ? 3 : 2, fill: true, sel: f.id === sel });
       boxes[f.id]._it = items[FP][items[FP].length - 1];
-      (d.points[f.id] || []).forEach(p => reg('Image positions', L.circleMarker(p, { fillOpacity: .9 }).addTo(lay['Image positions']), { col: fcol[f.id], dot: true, w: 1, r: 2 }));
+      (PTC[f.id] || []).forEach(p => reg('Image positions', L.circleMarker(p, { fillOpacity: .9 }).addTo(lay['Image positions']), { col: fcol[f.id], dot: true, w: 1, r: 2 }));
     });
     if (!d.year_mode) rows(d.geom).forEach(g => {
       const ll = pts(g.line); if (!ll.length) return; const plan = g.kind === 'planned', grp = plan ? 'Plans' : 'Flown tracks and receivers';

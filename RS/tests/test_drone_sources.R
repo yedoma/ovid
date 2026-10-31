@@ -7,7 +7,7 @@ local({ ex <- parse(file.path(here, "tests", "run_tests.R"))            # the JP
   for (e in ex) if (is.call(e) && identical(e[[1]], as.name("<-")) && as.character(e[[2]])[1] %in% c("le16", "le32", "exif_app1", "jpg", "dji_xmp")) eval(e, globalenv()) })
 tmp <- file.path(tempdir(), "rs_drone_test"); unlink(tmp, TRUE); dir.create(tmp, recursive = TRUE)
 fails <- 0L; check <- function(ok, what) { if (!isTRUE(ok)) { fails <<- fails + 1L; say("FAIL ", what, col = "red") } else say("ok   ", what, col = "green") }
-n_read <- 0L; read0 <- read_image_meta; read_image_meta <- function(paths) { n_read <<- n_read + length(paths); read0(paths) }   # counts the photos opened
+n_read <- 0L; read0 <- read_image_raw; read_image_raw <- function(paths) { n_read <<- n_read + length(paths); read0(paths) }   # counts the photos opened (the photo cache reads raw tags, R/catalogue.R)
 
 # a made-up place (45.5 N, 72.2 W); one DJI flight with no log, a phone photo and a Google phone photo (GCamera: is not a drone tag)
 S <- file.path(tmp, "Drive"); f1 <- file.path(S, "Flight A"); dir.create(f1, recursive = TRUE); dir.create(file.path(S, "phone"))

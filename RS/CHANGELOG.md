@@ -5,6 +5,14 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster (2026-10-30; outputs byte-identical, checked on a copy of a 297-flight catalogue)**
+- The photo cache keeps the raw tags read from each file and works the fields out on every scan: a change to how fields are derived (camera tables, clocks) no longer re-reads the drive; only a change to reading the files does. A cache of an earlier version is kept as it is (no forced re-read).
+- Each flight's footprint is cached (keyed on its photos, heights, LiDAR angle and the footprint code): a rebuild traces only flights whose inputs changed.
+- The Simple checks count the listed files from one column (0.06 s, was 1.8 s reading every line).
+- The map keeps the footprints and image positions it has been sent; each change of the view sends only new ones (a new catalogue starts afresh).
+- With core's faster file audit: rebuild 50 -> 25-29 s; app start to a usable Simple page 6.8 -> 3.5 s; a warm rescan of one year 9 -> 3-4 s.
+- **Output changes:** none.
+
 **Fixed (accuracy audit against the raw files, 2026-10-30)**
 - A camera clock with no zone (DJI's consumer drones write the phone's local time) was read as UTC: times, dates and sun were 6-7 h off (P4 Pro snowmelt flights showed 05:00-07:00 with the sun at 3°). It is now taken as the project's zone, said in the clock note, and the clock check is "look" until a time-zone row confirms it. Flight ids unchanged.
 - Sun elevation by NOAA's solar position equations (was Cooper's declination without the equation of time, up to 4° off).

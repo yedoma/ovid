@@ -74,7 +74,11 @@ NO_RTK_AIRCRAFT <- c("Phantom 3 Professional", "Phantom 3 Advanced", "Phantom 3 
 
 # Several files at once (core par_map, forked; one at a time on Windows): reading a file's head waits on the drive far longer
 # than the parsing takes (26 ms a photo on a USB drive, 7.5 ms with eight at once), so the waits overlap. Rows stay in order.
-read_image_meta <- function(paths) {
+# Split in two so the photo cache (catalogue.R read_source_images) keeps what was read from the files, the raw tags, and
+# works the rest out again on every scan: a change to how fields are derived (camera tables, sensor names, clocks) needs no
+# re-read of the drive; only a change to read_image_raw (IMAGE_RAW_KEY) does.
+read_image_meta <- function(paths) image_derive(read_image_raw(paths))
+read_image_raw <- function(paths) {
   rows <- par_map(paths, what = "image headers", function(p) {
     b <- file_head(p); e <- read_exif(b); x <- xmp_text(b)
     if (is.na(x) && length(b) == HEAD_BYTES && !is.na(e$make) && e$make == "DJI") { b <- file_head(p, 4L * HEAD_BYTES); x <- xmp_text(b) }
@@ -87,7 +91,13 @@ read_image_meta <- function(paths) {
     d$band <- xmp_tag(x, "Camera:BandName"); d
   })
   bad <- Filter(function(r) inherits(r, "error"), rows); if (length(bad)) stop(conditionMessage(bad[[1]]))   # as when read one by one
-  d <- rbindlist(rows, fill = TRUE)
+  rbindlist(rows, fill = TRUE)
+}
+# The fields RS uses, from the raw tags (a copy: the cache's rows stay raw). Columns a row set lacks are added empty.
+image_derive <- function(d) {
+  d <- copy(d)
+  for (k in c("fp_xres", "fp_unit", "px_x", "model", "make", "product", "camera_serial", "body_serial", "datetime_original", "subsec", "band", "drone_model", "rig", "utc", "file_size", "head_md5",
+              "gps_time", "gps_date", "cam_id")) if (!k %in% names(d)) set(d, j = k, value = if (k %in% c("fp_xres", "px_x", "file_size")) NA_real_ else NA_character_)
   for (k in c("rtk_flag", "rtk_std_lat", "rtk_std_lon", "rtk_std_hgt", "alt_rel", "gimbal_pitch", "acc_xy", "acc_z", "speed_x", "speed_y", "speed_z")) set(d, j = k, value = suppressWarnings(as.numeric(d[[k]])))
   # sensor width from the EXIF focal plane resolution (pixels per inch, cm or mm), else from the table of known cameras
   unit_mm <- c(`2` = 25.4, `3` = 10, `4` = 1)

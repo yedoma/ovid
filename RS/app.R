@@ -147,15 +147,23 @@ server <- function(input, output, session, embedded = FALSE) {
     year_footprints(le_view(), x$footprints, fp_kinds(input$f_fp), fp_memo, fp_tab()) })
   fp_tab <- reactive({ rv$tick; live_stamp(cfg_path(CFG$project_dir, "footprint_colours"))   # the colours by drone, sensor and year (R/footprints.R)
     tryCatch(load_configs(CFG)$footprint_colours, error = function(e) fp_colours_default()) })
+  # the browser keeps every footprint and image position it has been sent (www/rs_map.js): each change of the view sends only
+  # those it has not got; a new catalogue starts it afresh. A joined flight's outline is keyed on its parts.
+  sent <- new.env(); sent$fp <- character(); sent$pt <- character(); sent$reset <- TRUE
+  observeEvent(C(), { sent$fp <- character(); sent$pt <- character(); sent$reset <- TRUE }, priority = 10)
   observe({ f <- fold_joined(le_view()); x <- isolate(C()); if (is.null(x)) return()      # a joined flight is one (pages/list_edits.R)
     ym <- isTRUE(input$f_year_fp); yf <- years_fp()
     if (over("flights", nrow(f))) f <- f[0]
     g <- if (nrow(x$geometry)) x$geometry[kind != "derived" & (is.na(flight_id) | flight_id == "" | flight_id %in% f$flight_id)] else data.table()
-    p <- x$points[flight_id %in% f$flight_id]; fc <- fp_colours(f, fp_tab())   # colour by drone, sensor and year
+    fkey <- if ("part_ids" %in% names(f)) paste0(f$flight_id, "|", f$part_ids) else f$flight_id
+    fnew <- !ym & !fkey %in% sent$fp; fpj <- if (any(fnew)) fp_rings_json(x$footprints, f[fnew]) else structure(list(), names = character())
+    if (length(fpj)) names(fpj) <- fkey[fnew][match(names(fpj), f$flight_id[fnew])]
+    pnew <- setdiff(f$flight_id, sent$pt); p <- x$points[flight_id %in% pnew]; fc <- fp_colours(f, fp_tab())   # colour by drone, sensor and year
+    reset <- sent$reset; sent$reset <- FALSE; sent$fp <- union(sent$fp, fkey[fnew]); sent$pt <- union(sent$pt, pnew)
     session$sendCustomMessage("rsmap", list(
-      flights = f[, .(id = flight_id, col = unname(STATUS_COL[positioning_status] %|na|% PAL$gray), dcol = fc$col, name, date, year, site, aircraft, sensor, n = n_images,
+      flights = f[, .(id = flight_id, fpk = fkey, col = unname(STATUS_COL[positioning_status] %|na|% PAL$gray), dcol = fc$col, name, date, year, site, aircraft, sensor, n = n_images,
                       gb = round(size_gb, 1), status = positioning_status, lat_min, lon_min, lat_max, lon_max, fp_kind = fpk, fp_area_km2 = round(fp_area_m2 / 1e6, 3))],
-      fp = if (ym) NULL else fp_rings_json(x$footprints, f), years = year_layers(yf), year_mode = ym, dkey = fp_colour_key(fc, f),
+      fp = fpj, reset = reset, years = year_layers(yf), year_mode = ym, dkey = fp_colour_key(fc, f),
       pal = unname(c(PAL$blue, PAL$accent, PAL$green, PAL$red, PAL$purple, PAL$teal, PAL$gold, PAL$fg, PAL$fg4, mix_col(PAL$blue, PAL$bone, 0.5))),
       points = lapply(split(p[, .(lat, lon)], p$flight_id), function(d) unname(as.matrix(d))),
       geom = if (nrow(g)) g[, .(id = fifelse(is.na(flight_id), "", flight_id), kind, what, ref, line)] else list(), fit = FALSE)) })

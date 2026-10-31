@@ -559,6 +559,25 @@ local({                                                               # found in
   td <- tempfile("rs_ds"); dir.create(td); file.copy(file.path(here, "tests", "samples", "raster__gsddsm.tif"), file.path(td, "dsm.tif")); sd <- tempfile("rs_dsc"); dir.create(sd)
   fs <- list_source(td, data.table(pattern = character(), action = character(), reason = character())); d1 <- read_source_datasets(fs, sd); d2 <- read_source_datasets(fs, sd)
   check(nrow(d1) == 1 && file.exists(file.path(sd, "datasets.rds")) && isTRUE(all.equal(d1, d2)), "raster headers are kept in the source's cache: a rescan gives the same rows without reading the file again")
+  local({                                                             # the photo cache keeps raw tags (R/catalogue.R read_source_images)
+    td <- tempfile("rs_ic"); dir.create(td); sd <- tempfile("rs_icc"); dir.create(sd)
+    file.copy(file.path(here, "tests", "samples", c("image_jpg__DJI_20240921121527_0003_D.JPG", "image_jpg__EP-01-00001_0304_0001.JPG")), file.path(td, c("a.JPG", "b.JPG")))
+    fs <- list_source(td); n <- 0L; orig <- read_image_raw
+    assign("read_image_raw", function(p) { n <<- n + length(p); orig(p) }, envir = globalenv())
+    r1 <- read_source_images(fs, sd); n1 <- n
+    dj <- DJI_CAMERAS; assign("DJI_CAMERAS", c(DJI_CAMERAS, XX = "test"), envir = globalenv())        # a change to how fields are worked out
+    r2 <- read_source_images(fs, sd); n2 <- n; assign("DJI_CAMERAS", dj, envir = globalenv())
+    Sys.setFileTime(file.path(td, "a.JPG"), Sys.time() + 60); r3 <- read_source_images(list_source(td), sd); n3 <- n   # a changed file
+    k0 <- IMAGE_RAW_KEY; assign("IMAGE_RAW_KEY", "other", envir = globalenv()); r4 <- read_source_images(list_source(td), sd); n4 <- n; assign("IMAGE_RAW_KEY", k0, envir = globalenv())
+    saveRDS(list(key = "old", rows = cbind(r4, k = paste(r4$rel, r4$size, 0))[0]), file.path(sd, "exif.rds"))   # an earlier version's cache, here for no file
+    fl <- list_source(td); leg <- copy(r4)[, k := paste(fl$rel[match(rel, fl$rel)], fl$size[match(rel, fl$rel)], as.numeric(fl$mtime[match(rel, fl$rel)]))]
+    saveRDS(list(key = "old", rows = leg), file.path(sd, "exif.rds")); r5 <- read_source_images(fl, sd); n5 <- n
+    r6 <- read_source_images(fl, sd); n6 <- n                                  # the next scan: the kept rows read from the new cache
+    assign("read_image_raw", orig, envir = globalenv())
+    check(n1 == 2 && n2 == 2 && n3 == 3 && n4 == 5 && n5 == 5 && n6 == 5 && nrow(r6) == 2 && identical(r1[order(rel)], r2[order(rel)]) && nrow(r5) == 2 &&
+          identical(r1[order(rel), photo_key], r4[order(rel), photo_key]),
+          "photo cache: a change to how fields are worked out reads no photo again; a changed file, or a change to reading the files, does; an earlier version's cache is kept, not read again")
+  })
   cf <- camera_fill(data.table(model = c("thermoMAP", "FC6310"), focal_mm = c(9, 8.8), px_x = c(NA, 5472), px_y = c(NA, 3648), sensor_w_mm = c(NA, 13.2), sensor_w_source = c(NA, "EXIF")))
   check(cf$px_x[1] == 640 && cf$px_y[1] == 512 && abs(cf$sensor_w_mm[1] - 10.752) < 0.001 && cf$sensor_w_mm[2] == 13.2 && cf$px_x[2] == 5472,
         "a thermoMAP frame gets 640 x 512 px and a 10.75 mm sensor from senseFly's figures (14 cm/px at 75 m, 9 mm lens); a camera that gives its own size keeps it")
