@@ -43,7 +43,7 @@ PIPELINE_DIR <- local({ f <- NULL
   for (i in rev(seq_len(sys.nframe()))) { o <- sys.frame(i)$ofile; if (!is.null(o)) { f <- o; break } }
   if (is.null(f)) { a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) f <- sub("^--file=", "", a[1]) }
   if (is.null(f)) getwd() else dirname(normalizePath(f)) })
-APP_NAME <- "Ovid Core // RS"
+APP_NAME <- "ovid // RS"
 APP_VERSION <- RS_VERSION
 
 CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "core"), file.path(dirname(PIPELINE_DIR), "core"))
