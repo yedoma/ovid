@@ -105,7 +105,7 @@ read_rbr_hex <- function(path, header_only = FALSE) {
   anchors <- if (length(stamps)) data.table(t = as.POSIXct(strptime(vapply(stamps, `[`, "", 2), "%Y/%m/%d %H:%M:%S", tz = "UTC")),
                                             s = as.integer(vapply(stamps, `[`, "", 3))) else data.table(t = rbr_t(g("Logging start")), s = 1L)
   anchors <- anchors[!is.na(t)][, .SD[.N], by = s][order(s)]
-  drift <- if (!is.na(host) && !is.na(lgr)) { d <- as.numeric(host - lgr, units = "secs"); d - round(d / 3600) * 3600 } else NA_real_
+  drift <- if (!is.na(host) && !is.na(lgr)) { d <- as.numeric(host - lgr, units = "secs"); if (abs(d) > 86400) NA_real_ else d - round(d / 3600) * 3600 } else NA_real_   # off by more than a day: a stopped or reset clock, not drift
   meta <- list(format = "rbr_hex", type = "rbr", serial = serial, model = model, title = NA_character_, offset_hours = NA_real_, interval_s = period,
                rows = nsamp, download = host, host_time = host, logger_time = lgr, drift_s = drift, channels = nch,
                units = vapply(cal, `[[`, "", "unit"))
@@ -138,7 +138,10 @@ read_rbr_hex <- function(path, header_only = FALSE) {
   for (k in seq_len(nch)) {
     x <- cnt[, k]; cf <- if (k <= length(cal)) cal[[k]]$coef else NA; unit <- if (k <= length(cal)) cal[[k]]$unit else ""
     bad <- is.na(x) | x <= 0 | x >= 16777215
-    if (length(cf) == 4 && !anyNA(cf) && grepl("Deg", unit, ignore.case = TRUE)) {
+    # older Ruskin writes the unit "Unknown" for a thermistor whose later downloads say Degrees_C with the same four
+    # Steinhart-Hart coefficients: a first coefficient that gives a temperature within 100 C of zero is one
+    th <- length(cf) == 4 && !anyNA(cf) && (grepl("Deg", unit, ignore.case = TRUE) || (grepl("^(unknown)?$", trimws(unit), ignore.case = TRUE) && cf[1] > 0 && abs(1 / cf[1] - 273.15) < 100))
+    if (th) {
       r <- x / 2^24; L <- log((1 - r) / r); v <- 1 / (cf[1] + cf[2] * L + cf[3] * L^2 + cf[4] * L^3) - 273.15
     } else { v <- rep(NA_real_, ns); vars[k] <- "raw"; bad[] <- TRUE }
     v[bad] <- NA_real_; set(wide, j = chans[k], value = v)

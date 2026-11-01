@@ -116,7 +116,7 @@ CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPE
 CODE_NAMES <- code_names(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "gt_pipeline.R"))
 step_hashes <- function(env = parent.frame()) list(
   files = code_fingerprint("discover_files", env = env),
-  read  = code_fingerprint(c("read_source", "clock_checks", "tz_rows_for"), shallow = "run_pipeline_steps", env = env),
+  read  = code_fingerprint(c("read_source", "clock_checks", "clock_restart_note", "tz_rows_for"), shallow = "run_pipeline_steps", env = env),
   qc    = code_fingerprint(c("assign_sensors", "apply_qc", "gt_period", "period_step", "period_apply", "find_gaps", "rule_applies", "remove_rows", "site_groups"), shallow = "run_pipeline_steps", env = env),
   site  = code_fingerprint(c("soil_phase", "remove_rows"), shallow = "run_pipeline_steps", env = env),
   between = code_fingerprint(c("daily_means", "between_site_checks"), shallow = "run_pipeline_steps", env = env))
@@ -221,7 +221,8 @@ run_pipeline_steps <- function(cfg = CFG) {
     n0 <- vapply(SIDE3, function(n) length(get(n)), 0L); np0 <- length(AUDIT$problems); unreadable <- character()
     if (par && !exists(lid, envir = pre, inherits = FALSE)) read_ahead(c(lid, todo[match(todo, lids) > match(lid, lids)]), src, cfgs, cfg, pre)
     pr <- if (par) get0(lid, envir = pre, inherits = FALSE); if (par) suppressWarnings(rm(list = lid, envir = pre))
-    parts <- list()
+    parts <- list(); n_shift <- 0L
+    tcr <- if (NROW(cfgs$time)) which(norm_serial(cfgs$time$serial) == src[logger_id == lid, serial][1]) else integer()
     for (i in seq_len(nrow(fr))) {
       r <- tryCatch(read_pre(pr[[fr$path[i]]]) %||% read_source(fr[i], cfgs, cfg), error = function(e) { problem(fr$rel[i], paste("could not be read:", conditionMessage(e))); NULL })
       # a file with no data rows at all is skipped and reported (a table that holds only other channels is not this)
@@ -234,9 +235,15 @@ run_pipeline_steps <- function(cfg = CFG) {
                                                         first_ts = if (nrow(d)) min(d$TIMESTAMP, na.rm = TRUE) else .POSIXct(NA_real_, tz = "UTC"),   # a file with no records: NA of the same class
                                                         last_ts = if (nrow(d)) max(d$TIMESTAMP, na.rm = TRUE) else .POSIXct(NA_real_, tz = "UTC"))
       read_counts[[length(read_counts) + 1L]] <- d[, .(values_read = .N), by = .(logger_id, channel)]
-      cc <- clock_checks(d, cfg, lid); d <- cc$data
+      if (length(tcr)) { d <- apply_time_corrections(d, cfgs$time, tcr, audit = FALSE); n_shift <- n_shift + attr(d, "shifted") }   # core time_corrections.R; before the clock checks, so records stamped by a reset clock can be put right by hand
+      mo <- if (nrow(d)) max(d$ord) else 0L; cc <- clock_checks(d, cfg, lid); d <- cc$data
+      rs <- if (!nrow(cc$events)) cc$events else cc$events[rule == "impossible_time" & last == mo & t1 < as.POSIXct(paste0(cfg$min_year, "-01-01"), tz = "UTC") & as.numeric(t1) - as.numeric(t0) > 86400]   # the file ends on them: a restart, not old memory
+      if (nrow(rs) && !is.na(fr$download[i])) problem(fr$rel[i], clock_restart_note(rs, fr$serial[i], fr$download[i]))
       if (nrow(cc$events)) clock[[length(clock) + 1L]] <- cc$events[, source_file := fr$rel[i]]
       if (nrow(r$events)) events[[length(events) + 1L]] <- r$events[, `:=`(logger_id = lid, source_file = fr$rel[i])]
+      off <- if (!is.null(r$meta$host_time) && !is.null(r$meta$logger_time)) as.numeric(difftime(r$meta$host_time, r$meta$logger_time, units = "days")) else NA_real_
+      if (isTRUE(abs(off) > 1)) problem(fr$rel[i], sprintf("the logger clock was %s days %s the computer at this download (logger %s, computer %s): a stopped or reset clock, so its time stamps may be wrong (see Clock)",
+                                                     format(round(abs(off)), big.mark = ","), if (off > 0) "behind" else "ahead of", format(r$meta$logger_time, "%Y-%m-%d %H:%M"), format(r$meta$host_time, "%Y-%m-%d %H:%M")))
       if (!is.null(r$meta$drift_s)) clock[[length(clock) + 1L]] <- data.table(rule = "clock_drift", first = NA_integer_, last = NA_integer_, n = 0L,
                                      t0 = r$meta$host_time, t1 = r$meta$logger_time, logger_id = lid, source_file = fr$rel[i], drift_s = r$meta$drift_s)
       mods <- c(r$meta$model, m[bundle == fr$bundle[i] & !is.na(model), model]); mods <- mods[!is.na(mods) & nzchar(mods)]   # the .hobo names the model; its CSV does not
@@ -256,14 +263,12 @@ run_pipeline_steps <- function(cfg = CFG) {
     }
     if (!length(parts)) next
     d <- stitch_logger(parts, lid)
-    tcr <- if (NROW(cfgs$time)) which(norm_serial(cfgs$time$serial) == src[logger_id == lid, serial][1]) else integer()
-    d <- apply_time_corrections(d, cfgs$time, tcr, audit = FALSE)    # core time_corrections.R; GT lists the shifts in clock.csv
-    n_shift <- attr(d, "shifted")
+    # GT lists the shifts by hand in clock.csv
     if (n_shift) clock[[length(clock) + 1L]] <- data.table(rule = "clock_shift_by_hand", first = NA_integer_, last = NA_integer_, n = n_shift, t0 = min(d$TIMESTAMP), t1 = max(d$TIMESTAMP), logger_id = lid, source_file = NA_character_)
     ty <- fr$type[1]
     d[, `:=`(logger_type = ty, serial = fr$serial[1], sensor = sensor_of(channel, ty))]
     loggers[[lid]] <- d; seen_l[[lid]] <- seen_of(d)
-    if (inc) { saveRDS_safe(d, d3, compress = FALSE)
+    if (inc) { gt_cache_save(d, d3)
       c_used <- c(c_used, d3, cache_write(file.path(cdir, "read"), lid, k3, list(side = lapply(setNames(SIDE3, SIDE3), function(n) { x <- get(n); x[seq_along(x) > n0[[n]]] }),
         problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], unreadable = unreadable, log = AUDIT$log, seen = seen_l[[lid]]))) }
     audit_flush(paste0("1_", lid))
@@ -322,7 +327,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       audit_flush(paste0("2_", lid)); next
     }
     nf0 <- length(FLAGS$list); ns0 <- length(AUDIT$stash); np0 <- length(AUDIT$problems)
-    d <- loggers[[lid]] %||% cache_load(data3[[lid]])
+    d <- loggers[[lid]] %||% gt_cache_load(data3[[lid]])
     d <- remove_rows(d, which(!d$variable %in% c("temp", "vwc", "ec", "battery")), "read", "not_a_sensor",
                      "a channel that is not temperature, moisture or conductivity (unsupported RBR channel type)", detail = "summary")
     b <- d[variable == "battery"]                                 # battery readings go to the battery table, not the site records
@@ -335,7 +340,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     d <- gt_period(d, cfgs$period_rows, sn)                                             # corrections over a period (R/qc.R)
     g <- find_gaps(d, cfg$gap_factor); if (nrow(g)) gaps[[lid]] <- g
     kept[[lid]] <- d; kept_file[[lid]] <- d5; key5[[lid]] <- k5; kept_sites[[lid]] <- site_groups(d$site)
-    if (inc) { saveRDS_safe(d, d5, compress = FALSE)
+    if (inc) { gt_cache_save(d, d5)
       c_used <- c(c_used, d5, cache_write(file.path(cdir, "qc"), lid, k5, list(side = lapply(setNames(SIDE5, SIDE5), function(n) get(n)[[lid]]),
         flags = FLAGS$list[seq_along(FLAGS$list) > nf0], stash = AUDIT$stash[seq_along(AUDIT$stash) > ns0],
         problems = AUDIT$problems[seq_along(AUDIT$problems) > np0], log = AUDIT$log, sites = kept_sites[[lid]]))) }
@@ -354,14 +359,14 @@ run_pipeline_steps <- function(cfg = CFG) {
   sgs <- names(site_lids); sgs <- sgs[order(sgs != SITE_NONE, sgs, method = "radix")]       # the order a sort of all records by site gives
   removed_qc <- if (length(AUDIT$stash)) rbindlist(AUDIT$stash, fill = TRUE) else data.table()
   dir.create(file.path(cdir, "site"), showWarnings = FALSE); parts <- list(); site_out <- list(); n_site_hit <- 0L; log6 <- list(); site_done <- list()
-  kept_of <- function(lid) { if (is.null(kept[[lid]])) kept[[lid]] <<- cache_load(kept_file[[lid]]); kept[[lid]] }
+  kept_of <- function(lid) { if (is.null(kept[[lid]])) kept[[lid]] <<- gt_cache_load(kept_file[[lid]]); kept[[lid]] }
   for (sg in sgs) {
     run_tick(match(sg, sgs), length(sgs), sg)
     s <- if (sg == SITE_NONE) NA_character_ else sg
     k6 <- hash_of(list(STEP_HASH$site, sg, unlist(key5[sort(site_lids[[sg]])])))
     c6 <- if (inc) cache_read(file.path(cdir, "site"), sg, k6) else NULL
     if (!is.null(c6) && all(file.exists(file.path(od, c6$outputs)))) {
-      parts[[sg]] <- cache_load(sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "site"), sg, k6)))
+      parts[[sg]] <- gt_cache_load(sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "site"), sg, k6)))
       log6 <- c(log6, audit_restamp(c6$log)); AUDIT$stash <- c(AUDIT$stash, c6$stash)
       site_out[[sg]] <- c6$outputs; site_done[[sg]] <- c(c6, list(k6 = k6, hit = TRUE)); n_site_hit <- n_site_hit + 1L
       c_used <- c(c_used, cache_file(file.path(cdir, "site"), sg, k6), sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "site"), sg, k6))); next
@@ -376,7 +381,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     x <- remove_rows(x, which(x$k > 1L), "site", "site_overlap", "two loggers of this site cover the same depth and time; the later deployment is kept", detail = "summary")
     x[, k := NULL]; l6 <- AUDIT$log; st6 <- AUDIT$stash[seq_along(AUDIT$stash) > ns0]; log6 <- c(log6, l6); parts[[sg]] <- x
     site_done[[sg]] <- list(k6 = k6, log = l6, stash = st6, hit = FALSE)
-    if (inc) { df <- sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "site"), sg, k6)); saveRDS_safe(x, df, compress = FALSE); c_used <- c(c_used, df) }
+    if (inc) { df <- sub("\\.rds$", ".data.rds", cache_file(file.path(cdir, "site"), sg, k6)); gt_cache_save(x, df); c_used <- c(c_used, df) }
   }
   kept <- NULL
   AUDIT$log <- log6; audit_flush("3_sites")
@@ -408,16 +413,16 @@ run_pipeline_steps <- function(cfg = CFG) {
     x <- parts[[sg]]; st6 <- h$stash; o <- character()
     if (!is.na(s)) {
       tmp <- x[variable == "temp", .(TIMESTAMP, depth_m, value, flag, serial, sensor, depth_source, logger_type, logger_id)]
-      if (nrow(tmp)) { setorder(tmp, depth_m, TIMESTAMP); saveRDS(tmp, file.path(od, "sites", paste0(safe_name(s), ".rds")))
+      if (nrow(tmp)) { setorder(tmp, depth_m, TIMESTAMP); save_rds_fast(tmp, file.path(od, "sites", paste0(safe_name(s), ".rds")))
         w <- site_wide(tmp)                                                                       # R/export.R
         w[, TIMESTAMP := fmt_ts(TIMESTAMP)]; setnames(w, "TIMESTAMP", "timestamp_utc-07"); fwrite(w, file.path(od, "sites", paste0(safe_name(s), ".csv")))
         o <- c(o, file.path("sites", paste0(safe_name(s), c(".rds", ".csv")))) }
       soil <- x[variable %in% c("vwc", "ec"), .(TIMESTAMP, variable, depth_m, value, flag, serial, sensor, depth_source)]
-      if (nrow(soil)) { soil <- soil_phase(soil, tmp); saveRDS(soil, file.path(od, "soil", paste0(safe_name(s), ".rds")))
+      if (nrow(soil)) { soil <- soil_phase(soil, tmp); save_rds_fast(soil, file.path(od, "soil", paste0(safe_name(s), ".rds")))
         ws <- dcast(soil, TIMESTAMP ~ variable + depth_m, value.var = "value"); ws[, TIMESTAMP := fmt_ts(TIMESTAMP)]; setnames(ws, "TIMESTAMP", "timestamp_utc-07")
         fwrite(ws, file.path(od, "soil", paste0(safe_name(s), ".csv"))); o <- c(o, file.path("soil", paste0(safe_name(s), c(".rds", ".csv")))) }
       rm_s <- rbindlist(c(list(if (nrow(removed_qc)) removed_qc[site == s] else NULL), st6), fill = TRUE)
-      if (nrow(rm_s)) { saveRDS(rm_s, file.path(od, "sites", paste0(safe_name(s), "__removed.rds"))); o <- c(o, file.path("sites", paste0(safe_name(s), "__removed.rds"))) }
+      if (nrow(rm_s)) { save_rds_fast(rm_s, file.path(od, "sites", paste0(safe_name(s), "__removed.rds"))); o <- c(o, file.path("sites", paste0(safe_name(s), "__removed.rds"))) }
     }
     site_out[[sg]] <- o
     if (inc) c_used <- c(c_used, cache_write(file.path(cdir, "site"), sg, h$k6, list(log = h$log, stash = st6, outputs = o, between = bk)))
@@ -432,7 +437,7 @@ run_pipeline_steps <- function(cfg = CFG) {
 
   # ---- 7. summaries --------------------------------------------------------------------------------------------------
   say("[7/8] Daily means and summaries", col = "accent")
-  saveRDS(dd, file.path(od, "summaries", "daily.rds")); fwrite(dd, file.path(od, "summaries", "daily_means.csv"))
+  save_rds_fast(dd, file.path(od, "summaries", "daily.rds")); fwrite(dd, file.path(od, "summaries", "daily_means.csv"))
   est <- fill_daily(dd, cfg$fill_gap_days %||% 5, cfg$fill_min_depth %||% 0.5, cfg$fill_r2_min %||% 0.95); fwrite(est, file.path(od, "summaries", "daily_estimated.csv"))
   if (nrow(est)) say("  ", nrow(est), " missing day(s) estimated (summaries/daily_estimated.csv)", if (isTRUE(cfg$fill_in_annual)) "; annual statistics use them" else "; not used in annual statistics", col = "fg4")
   an <- annual_stats(if (isTRUE(cfg$fill_in_annual)) with_estimates(copy(dd), est) else dd, cfg$year_complete, cfg$water_year_start); fwrite(an, file.path(od, "summaries", "annual_stats.csv"))

@@ -5,6 +5,26 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed and faster (the Scotty Creek raw archive, 2026-10-31).** Run on the archive's four permafrost folders (586 files, 61
+loggers):
+- A GeoPrecision logger whose clock restarted at its default date (1998, after a power loss) loses everything it logged
+  since: six strings lost a year (Aug 2025 to Aug 2026). A Clock corrections row could not bring the records back, because
+  it was applied after the impossible-time check had removed them; it now comes first. The file's note gives the row
+  (serial, start, end, shift_minutes), which puts the last record at the download and the first at the visit before.
+- An RBR .hex from older Ruskin that gives a thermistor's unit as "Unknown" lost every value ("not a thermistor"): read as
+  temperature when its first Steinhart-Hart coefficient gives a temperature within 100 C of zero (the same coefficients
+  its later Degrees_C downloads carry; the 2012-17 profiles match the later ones to 0.07 C).
+- An RBR clock days or years off at download was shown as drift of up to 30 minutes (the remainder after whole hours);
+  with drift correction on it would have spread that over the file. Now no drift, and the file's note gives the offset.
+- Workbench: opening it and picking a site 29 -> 9 s and 4.4 -> 1.2 s (the site table was built with an R function per
+  cell; same table on all 60 sites).
+- A full run 197 -> 156 s (cold), 19 s with nothing changed: the data caches store each text once (as a factor, turned
+  back into text when read), the clock checks take a record's time once, and the site files are written with fast
+  compression (read the same). All 326 output files compared: identical apart from the run time.
+**Output changes:** RBR files with the unit "Unknown" now give values (427,000 on the archive); records moved by a Clock
+corrections row are now checked for clock faults at their new times; a note for each restarted clock and each clock off
+by days. Otherwise the same.
+
 **Changed (one way of writing things across GT, 2026-10-30; Plot_table_standards A4, A8)**
 - Every chart axis names its quantity: "Temperature (°C)" (was "°C" on the MAGT, depth and Simple charts), "Battery (V)",
   "Active-layer thickness (m)".

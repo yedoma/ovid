@@ -48,6 +48,16 @@ read_ahead <- function(lids, src, cfgs, cfg, pre) {
   for (l in lids) assign(l, setNames(got[fr$logger_id == l], fr$path[fr$logger_id == l]), envir = pre)
 }
 
+# A clock that restarted at its default date (1998 or 2000, after a power loss) stamps real readings long before the
+# logger was out: they leave as impossible_time. The note gives the Clock corrections row that puts the last of them at
+# the file's download time (within one logging interval; the visit before should match where the restart falls).
+clock_restart_note <- function(ev, serial, download) {
+  t0 <- min(ev$t0); t1 <- max(ev$t1); sh <- round(as.numeric(difftime(download, t1, units = "mins")))
+  sprintf("%s records stamped %s to %s: the clock restarted at its default date (a power loss) and they are left out. If they are this logger's, add a Clock corrections row: serial %s, start %s, end %s, shift_minutes %d (puts the last one at this download, %s; it should put the first one at the visit before, %s)",
+          format(sum(ev$n), big.mark = ","), format(t0, "%Y-%m-%d %H:%M"), format(t1, "%Y-%m-%d %H:%M"), serial, format(t0, "%Y-%m-%d %H:%M:%S"), format(t1, "%Y-%m-%d %H:%M:%S"),
+          sh, format(download, "%Y-%m-%d %H:%M"), format(t0 + sh * 60, "%Y-%m-%d %H:%M"))
+}
+
 # Clock faults inside one file, found from the order the rows were written in:
 #   impossible_time  before min_year or in the future
 #   stray_record     a corrupt time stamp among good readings (off the time grid and out of written order)
@@ -56,7 +66,8 @@ read_ahead <- function(lids, src, cfgs, cfg, pre) {
 #                    the new time are superseded by the later ones
 clock_checks <- function(d, cfg, logger_id) {
   if (!nrow(d)) return(list(data = d, events = data.table()))
-  u <- unique(d[, .(ord, TIMESTAMP)])
+  k <- which(!duplicated(d$ord)); u <- d[k, .(ord, TIMESTAMP)]                      # a record's time once (unique() over both took seconds on a long file)
+  if (length(k) < nrow(d)) { t1 <- u$TIMESTAMP[match(d$ord, u$ord)]; if (!all((d$TIMESTAMP == t1) %in% TRUE | (is.na(d$TIMESTAMP) & is.na(t1)))) u <- unique(d[, .(ord, TIMESTAMP)]) }   # a record with two times: as before
   keep_clock <- isFALSE(cfg$drop_bad_clock)                                                     # switch: Automatic corrections
   rows <- clock_faults(u$TIMESTAMP, u$ord, if (keep_clock) -Inf else as.POSIXct(paste0(cfg$min_year, "-01-01"), tz = "UTC"), if (keep_clock) Inf else Sys.time() + 2 * 86400,
                        stray = !isFALSE(cfg$drop_stray_records))                                      # core timestamps.R

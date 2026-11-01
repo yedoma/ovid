@@ -45,3 +45,17 @@ depth_position <- function(z) ifelse(is.na(z), NA_character_, ifelse(z < 0, "abo
 # The months of a water year that starts in month m: 10 -> "October to September".
 wy_months <- function(m) { m <- suppressWarnings(as.integer(m)); if (!length(m) || is.na(m) || m < 1 || m > 12) m <- 10L
   if (m == 1L) "January to December" else paste(month.name[m], "to", month.name[m - 1L]) }
+
+# The pipeline's data caches (read, qc, site): text columns are written as factors, so each distinct text is stored once
+# instead of once a row (writing about 5 times and reading about 10 times quicker on a long record), and turned back
+# into text when read: what comes back is identical to what was written. A cache written as text is read as it is.
+gt_cache_save <- function(x, f) {
+  ch <- if (is.data.frame(x)) names(x)[vapply(x, is.character, NA)] else character()
+  if (length(ch)) { x <- copy(x); for (c in ch) { v <- x[[c]]; u <- unique(v); set(x, j = c, value = structure(chmatch(v, u), levels = u, class = "factor")) }; setattr(x, "gt_text", ch) }
+  saveRDS_safe(x, f)
+}
+gt_cache_load <- function(f) {
+  x <- cache_load(f); ch <- attr(x, "gt_text")
+  if (length(ch)) { for (c in ch) set(x, j = c, value = as.character(x[[c]])); setattr(x, "gt_text", NULL) }
+  x
+}

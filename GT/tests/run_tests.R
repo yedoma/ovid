@@ -108,6 +108,23 @@ r <- read_rbr_hex(file.path(data, "rbr", "012345_20230205_1210.hex"))
 check("RBR .hex decodes to the temperatures it was made from", near(r$data[channel == "T1" & !is.na(value), value][1:50], rbr_T[1:50, 1], 1e-3))
 check("RBR .hex: an open thermistor is an error, not a value", r$data[channel == "T2" & ord == 100, !is.na(err) & is.na(value)])
 check("RBR .hex: clock drift read from the header (10 min)", r$meta$drift_s == 600)
+local({ smp <- file.path(here, "tests", "samples", "rbr_hex__000123_20240926_1542.hex"); l <- readLines(smp, warn = FALSE); f <- tempfile(fileext = ".hex")
+  writeLines(gsub("Degrees_C", "Unknown", l), f); a <- read_rbr_hex(smp)$data; b <- read_rbr_hex(f)$data
+  check("RBR .hex: a thermistor whose unit older Ruskin wrote as Unknown is read as temperature, as with Degrees_C (2012-17 downloads were lost)", identical(a$value, b$value) && all(b$variable == "temp"))
+  writeLines(sub("^Logger time .*$", "Logger time   21/07/04 21:49:41", l), f)
+  check("RBR .hex: a logger clock off by days at download is not drift (it read as 30 min)", is.na(read_rbr_hex(f)$meta$drift_s)) })
+local({ x <- data.table(t = as.POSIXct("2024-01-01", tz = "UTC") + 0:4, v = c(1, NA, 3, 4, 5), a = c("x", NA, "", "y", "x"), n = c(NA_character_, NA, NA, NA, NA), b = 1:5)
+  setattr(x, "keep", "me"); f <- tempfile(fileext = ".rds"); gt_cache_save(x, f); y <- gt_cache_load(f); g <- tempfile(fileext = ".rds"); saveRDS_safe(x, g)
+  check("a data cache written with its text once comes back identical (blanks, missing values, other attributes), and one written as text still reads",
+        identical(as.list(x), as.list(y)) && isTRUE(all.equal(x, y)) && identical(attr(y, "keep"), "me") && is.null(attr(y, "gt_text")) &&
+          identical(as.list(gt_cache_load(g)), as.list(x)) && is.factor(readRDS(f)$a)) })
+local({ t <- as.POSIXct("2024-01-01", tz = "UTC") + c(0:99, 50:59 - 1e5, 100:149) * 3600; n <- length(t)
+  one <- data.table(TIMESTAMP = t, ord = seq_len(n), channel = "T1", value = 1); three <- rbindlist(lapply(c("T1", "T2", "T3"), function(ch) copy(one)[, channel := ch]))
+  a <- clock_checks(one, CFG, "L")$events; b <- clock_checks(three, CFG, "L")$events
+  check("clock checks find the same faults whether a record has one channel or several (a record's time is taken once)", nrow(a) > 0 && identical(a[, !"n"], b[, !"n"])) })
+ev <- data.table(t0 = as.POSIXct("1998-01-01 00:00:30", tz = "UTC"), t1 = as.POSIXct("1999-01-08 00:30:00", tz = "UTC"), n = 17858L)
+check("a clock restarted at 1998: the note gives the Clock corrections row that puts the last record at the download",
+      grepl("serial E531CA, start 1998-01-01 00:00:30, end 1999-01-08 00:30:00, shift_minutes 14531751 ", clock_restart_note(ev, "E531CA", as.POSIXct("2026-08-25 12:21:10", tz = "UTC")), fixed = TRUE))
 x <- read_rbr_txt(file.path(data, "rbr", "012345_20230205_1210_SiteName.txt"))
 check("Ruskin text: values read by position despite the extra header column", near(x$data[channel == "T1", value][1:20], rbr_T[1:20, 1], 1e-6))
 check("Ruskin text is in UTC", x$meta$offset_hours == 0)
@@ -349,6 +366,9 @@ if (!is.null(res)) {
   check("a site's record is a table with a column per depth, each value with its flag, logger and sensor beside it, and a row for every time a value was removed",
         identical(app$wb_params(wg), depth_lab(sort(unique(hs$depth_m)))) && nrow(wg) == uniqueN(c(as.numeric(hs$TIMESTAMP), as.numeric(load_removed(s_hobo, proj)[variable == "temp", TIMESTAMP]))) &&
         all(c(paste0("flag|", app$wb_params(wg)[1]), paste0("serial|", app$wb_params(wg)[1])) %in% names(wg)) && sum(!is.na(as.matrix(wg[, app$wb_params(wg), with = FALSE]))) == nrow(hs))
+  local({ d <- copy(hs); d[, col := app$wb_col("temp", depth_m, "temp")]; ref <- dcast(d, TIMESTAMP ~ col, value.var = "value", fun.aggregate = function(x) x[1], fill = NA)
+    check("the site table built in one pass holds what a first-value aggregate per cell gave (that took 30 s on a long record)",
+          isTRUE(all.equal(ref, wg[TIMESTAMP %in% ref$TIMESTAMP, c("TIMESTAMP", app$wb_params(wg)), with = FALSE], check.attributes = FALSE))) })
   rg <- app$wb_removed(s_hobo, "temp", proj); p1 <- app$wb_params(wg)[1]
   rmp <- function() gt_period_to_manual(period_own_rows(cfg_path(proj, "period"), c("remove", "flag")))
   sg <- app$wb_states(wg, app$wb_params(wg), rg, rmp(), s_hobo)
@@ -683,5 +703,17 @@ local({                                                               # one way 
   check("chart legends sit at the top on every Standard chart", !any(grepl('legend.position = "bottom"', unlist(lapply(fs[!grepl("/simple/", fs)], readLines, warn = FALSE)))))
   check("dates in the run status and the Simple view are written 2024-04-04 (no 'Apr 04' or '04 Apr')", !any(grepl('"%(b %d|d %b %Y)', src)))
   check("the Site notebook's site name is no larger than a page title (18 px)", any(grepl(".nb-site{margin:0 0 2px;font-size:18px}", src, fixed = TRUE))) })
+local({   # a clock restarted at 1998 inside a download: left out, unless a Clock corrections row moves it (it was applied after the check, too late)
+  raw <- tempfile("raw"); dir.create(raw); smp <- readLines(file.path(here, "tests", "samples", "fg2_csv__E00001_20240927165437.csv"), warn = FALSE)
+  body <- grep("^[0-9]+,", smp, value = TRUE); t98 <- format(as.POSIXct("1998-01-01 00:00:30", tz = "UTC") + (0:47) * 3600, "%d.%m.%Y %H:%M:%S")
+  writeLines(c(smp[seq_len(grep("^NO,TIME", smp))], body, "<TIME: 01.01.1998 00:00:30>", sprintf("%d,%s,-1.5,-1.4,-1.3,-1.2,-1.1", 49 + seq_along(t98), t98)), file.path(raw, "E00001_20240927165437.csv"))
+  go <- function(tc) { p <- tempfile("p"); dir.create(file.path(p, "config"), recursive = TRUE); if (!is.null(tc)) fwrite(tc, file.path(p, "config", "time_corrections.csv"))
+    invisible(capture.output(run_pipeline(modifyList(CFG, list(raw_dirs = raw, metadata_dir = "", project_dir = p, make_plots = FALSE)))))
+    list(s = rbindlist(lapply(list.files(file.path(p, "output", "sites"), "^[^_]*_[^_]*[.]rds$", full.names = TRUE), readRDS)), pr = fread(file.path(p, "output", "audit", "problems.csv"))) }
+  a <- go(NULL); sh <- as.integer(difftime(as.POSIXct("2020-07-27", tz = "UTC"), as.POSIXct("1998-01-01", tz = "UTC"), units = "mins"))   # after the good records
+  b <- go(data.table(serial = "E00001", start = "1998-01-01 00:00:00", end = "1999-12-31 00:00:00", shift_minutes = sh, reason = "test"))
+  check("records stamped 1998 at the end of a download are left out and the note gives the Clock corrections row", !any(a$s$value == -1.5, na.rm = TRUE) && any(grepl("clock restarted at its default date", a$pr$problem)))
+  check("a Clock corrections row moves them before the clock checks, so they are kept at their corrected times",
+        any(b$s$value == -1.5 & b$s$TIMESTAMP == as.POSIXct("1998-01-01 00:00:30", tz = "UTC") + sh * 60, na.rm = TRUE)) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 quit(status = if (n_bad) 1 else 0)

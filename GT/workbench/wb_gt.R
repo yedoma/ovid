@@ -48,10 +48,9 @@ wb_load <- function(key, pd) {
   for (a in WB_ATTR) if (!a %in% names(d)) d[, (a) := NA_character_]
   d[, col := wb_col(variable, depth_m, k$kind)]
   where <- unique(d[, .(col, variable, depth_m = round(depth_m, 4))], by = "col")[order(variable != "temp", variable, depth_m)]   # one depth per column
-  first <- function(x) x[1]
-  w <- dcast(d, TIMESTAMP ~ col, value.var = "value", fun.aggregate = first, fill = NA)
-  for (a in WB_ATTR) { x <- dcast(d, TIMESTAMP ~ col, value.var = a, fun.aggregate = first, fill = NA)
-    setnames(x, where$col, paste0(a, "|", where$col), skip_absent = TRUE); w <- w[x, on = "TIMESTAMP"] }
+  d <- unique(d, by = c("TIMESTAMP", "col"))                                    # the first value at a time and depth (an R aggregate function per cell took 30 s on a long record)
+  w <- dcast(d, TIMESTAMP ~ col, value.var = c("value", WB_ATTR), fill = NA, sep = "|")   # one pass: values, then each attribute
+  setnames(w, paste0("value|", where$col), where$col, skip_absent = TRUE)
   # times at which every value was removed (a trimmed start, a period removed at every depth) are kept as rows, so their
   # removed values can be seen, selected and restored
   r <- load_removed(k$id, pd)
