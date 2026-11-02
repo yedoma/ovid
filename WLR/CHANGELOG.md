@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster (2026-11-01).** .hobo files with no CSV export are decoded in parallel before files are paired (finding files on
+the archive 36 -> 12 s), and time stamps read back from the outputs are parsed in one pass instead of two. All 2,525
+output files of an archive run compared with a run before: identical. **Output changes:** none.
+
 **Fixed and faster (the Scotty Creek raw archive, 2026-10-31).** Run on ~/Scotty_Creek_Raw_Only_Archive (about 1,450 water-level
 files): a run with no barologger stopped ("Object 'site' not found"); it now carries on and says so. Barologger folders are
 found by name (WL_CAMP_BARO, WL_SCIENCETENTBARO; was only a folder named exactly "baro") and a Solinst Barologger by its

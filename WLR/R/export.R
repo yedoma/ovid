@@ -8,7 +8,11 @@
 read_out <- function(project_dir, file, ...) { f <- out_dir(project_dir, "audit", file)
   if (file.exists(f) && file.info(f)$size > 0) try_or(fread(file = f, ...), data.table(), paste0("output/audit/", file, ": could not be read")) else data.table() }
 
-as_ts <- function(x) as.POSIXct(x, tz = "UTC", tryFormats = c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%dT%H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d"))
+# The first of these layouts every time stamp fits, as as.POSIXct(tryFormats =) picks it, but each text parsed once: the
+# usual layout is tried and kept in one pass (tryFormats parsed everything twice), the others only when it does not fit.
+as_ts <- function(x) {
+  if (is.character(x) && length(x)) { p <- as.POSIXct(strptime(x, "%Y-%m-%d %H:%M:%OS", tz = "UTC")); if (!anyNA(p[!is.na(x)])) return(p) }
+  as.POSIXct(x, tz = "UTC", tryFormats = c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%dT%H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d")) }
 
 fix_ts_cols <- function(dt, cols = c("TIMESTAMP", "start", "end", "first", "last", "first_ts", "last_ts", "visit_time", "z_ref_time", "gap_start", "gap_end", "time")) {
   for (v in intersect(cols, names(dt))) if (!inherits(dt[[v]], "POSIXct")) set(dt, j = v, value = as_ts(ifelse(dt[[v]] == "", NA, dt[[v]])))

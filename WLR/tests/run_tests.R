@@ -857,5 +857,10 @@ local({                                                               # the Scot
   t <- as.POSIXct(c("2024-09-15 12:00:00", "2024-09-15 12:00:01", "2023-12-31 23:59:59", "2025-10-01 00:00:00"), tz = "UTC")
   check("season and water year from the day number give what format() gave", identical(season_year(t), as.integer(format(t, "%Y")) + (t > as.POSIXct(paste0(format(t, "%Y"), "-09-15 12:00:00"), tz = "UTC"))) &&
         identical(water_year_of(t), as.integer(format(t, "%Y")) + (t >= as.POSIXct(paste0(format(t, "%Y"), "-10-01 00:00:00"), tz = "UTC")))) })
+local({ old <- function(x) as.POSIXct(x, tz = "UTC", tryFormats = c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%dT%H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d"))
+  xs <- list(c("2020-01-01 10:00:00", NA, "2021-05-05 23:59:59.5"), c("2020-01-01", "2020-02-02"), c("2020-01-01T10:00:00", NA), c("2020-01-01 10:00", "2020-01-02 11:00"),
+             NA_character_, character(0), c("2020-01-01 10:00:00", "junk"))
+  check("time stamps read back from the outputs: one pass gives what as.POSIXct(tryFormats) gave (the layout chosen, missing values, errors)",
+        all(vapply(xs, function(x) identical(tryCatch(old(x), error = function(e) "error"), tryCatch(as_ts(x), error = function(e) "error")), NA))) })
 cat(sprintf("\n%d passed, %d failed\n", n_ok, n_bad))
 if (n_bad) quit(status = 1)

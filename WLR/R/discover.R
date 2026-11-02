@@ -124,6 +124,13 @@ pair_files <- function(m) {
   ok <- m$status == "ok"
   m[ok & format %in% c("hobo_csv", "solinst_xle"), use := TRUE]
   hc <- which((ok | m$status == "temperature_logger") & m$format == "hobo_csv")
+  # .hobo files with no CSV export that core hobo.R can read are decoded in parallel first (read_cached() finds them)
+  dec <- which(ok & m$format == "hobo_binary" & !(m$serial %in% m$serial[hc]) & grepl(HOBO_DECODE_MODELS, m$model))
+  dec <- dec[!duplicated(m$md5[dec]) & vapply(dec, function(i) is.null(FILE_CACHE[[m$md5[i]]]) &&
+             (is.null(READ_CACHE$dir) || !file.exists(cache_file(READ_CACHE$dir, paste(m$md5[i], "hobo_decoded", sep = "_"), READ_CACHE$key))), NA)]
+  if (length(dec)) { if (is.null(READ_CACHE$pre)) READ_CACHE$pre <- new.env()
+    got <- par_map(dec, function(i) read_logger_file(m$path[i], "hobo_decoded"), what = "decoding .hobo files")
+    for (k in seq_along(dec)) if (!inherits(got[[k]], "error")) assign(paste(m$md5[dec[k]], "hobo_decoded", sep = "_"), got[[k]], envir = READ_CACHE$pre) }
   for (i in which(ok & m$format == "hobo_binary")) {
     cand <- hc[m$serial[hc] == m$serial[i]]
     pick <- cand[stem(m$path[cand]) == stem(m$path[i])]
