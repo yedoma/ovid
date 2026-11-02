@@ -129,7 +129,8 @@ hobo_decode_more <- function(path) {
   } else {
     tt <- hobo_tmc_c(as.vector(M)); dim(tt) <- dim(M); oor <- sum(is.na(tt))
     out <- data.table::data.table(TIMESTAMP = ts)
-    nm <- if (grepl("UTBI-001", model)) "temp_c" else paste0("temp_c_", make.unique(ifelse(nzchar(lab[seq_len(ncol(M))]), lab[seq_len(ncol(M))], paste0("ch", seq_len(ncol(M))))))
+    lb <- lab[seq_len(ncol(M))]; lb[is.na(lb) | !nzchar(lb)] <- paste0("ch", seq_len(ncol(M)))[is.na(lb) | !nzchar(lb)]   # no label: ch1, ch2, ...
+    nm <- if (grepl("UTBI-001", model)) "temp_c" else paste0("temp_c_", make.unique(lb))
     for (j in seq_len(ncol(M))) data.table::set(out, j = nm[j], value = tt[, j])
   }
   utc <- if (!is.null(h[["34"]]) && length(h[["34"]][[1]]) >= 8) as.POSIXct("2000-01-01", tz = "UTC") + hobo_be(h[["34"]][[1]][5:8]) else NA
