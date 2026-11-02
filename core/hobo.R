@@ -62,3 +62,78 @@ hobo_decode <- function(path) {
   off <- round(as.numeric(difftime(launch, utc, units = "hours")) * 4) / 4; if (!isTRUE(abs(off) <= 14)) off <- NA_real_   # the logger clock's offset from UTC
   attr(out, "utc_offset_h") <- off; attr(out, "model") <- model; attr(out, "serial") <- txt("6"); attr(out, "zone") <- txt("20"); attr(out, "interval_s") <- iv; attr(out, "stopped") <- stopped
   out }
+
+# ---- Other HOBO models (U12-008, U24-001, TidbiT UTBI-001) --------------------------------------------------------------
+# Same file layout as the U20: the tag header, 0xff padding, then a bit stream of records and events, record i at
+# launch + delay + i * interval, events taking no slot. What differs is the record, and the event mark is as many one
+# bits as the record's first field (as the U20's 14):
+#   TidbiT UTBI-001  one 12-bit thermistor count.
+#   U12-008          a 12-bit thermistor count per external channel (tag 0x0b on, sensor type 0x95 in tag 0x0c), then
+#                    8 bits of battery when the fifth channel is on (skipped, as the U20's battery).
+#   U24-001          a 16-bit low-range count, a 16-bit full-range count and a 12-bit temperature count (44 bits).
+# Thermistor (TidbiT, U12 probes): 1/T = sum c_k L^k (k = 0..7) with L = ln((count + 0.5) / (4095.5 - count)), the ratio
+#   of a 12-bit divider (c0 = 1/298.15 K: 25 C at mid-scale). Fitted (minimax) to HOBOware's exports, which give C to 0.001
+#   (its F values are C rounded to 0.001, then converted): every one of the 2,723 counts seen from -55 to 85 C comes out
+#   exactly as HOBOware prints it. Outside that range the values mostly come from an open or shorted probe (HOBOware prints
+#   them, up to 537 C); they are left NA and counted in attr "out_of_range".
+# U24: temperature = t0 + t1 * count (tag 0x31, third block); each conductivity range = sum c_k x^k (k = 0..5, tag 0x31) with
+#   x = min(count, c9) * (1 + (c7 + c8 * temperature) / 100), in uS/cm. Checked against the HOBOware export of 53 files:
+#   every record within the export's 0.1 uS/cm and 0.01 C.
+HOBO_DECODE_MORE <- "U12-008|U24-001|UTBI-001"
+HOBO_TMC <- list(c = c(0.0033542432429378107, 0.00027892603891183532, 4.2456309656381064e-06, 2.2303027410495148e-07,
+                       1.5458333292268499e-08, -6.3590643709237659e-09, -6.5028069971222435e-10, -2.3991770070640607e-11),
+                 off = 0.5, full = 4096, range = c(-55, 85))
+
+hobo_tmc_c <- function(x) { L <- log((x + HOBO_TMC$off) / (HOBO_TMC$full - x - HOBO_TMC$off))
+  t <- 1 / Reduce(`+`, lapply(seq_along(HOBO_TMC$c), function(k) HOBO_TMC$c[k] * L^(k - 1L))) - 273.15
+  t[!is.finite(t) | t < HOBO_TMC$range[1] | t > HOBO_TMC$range[2]] <- NA_real_; t }
+
+# The records of a U12-008, U24-001 or TidbiT .hobo file as a data.table: TIMESTAMP (logger clock) and temp_c (TidbiT),
+# temp_c_<label> per channel (U12-008), or ec_low_us, ec_full_us, temp_c (U24-001); attributes as hobo_decode's, plus
+# out_of_range. NULL for any other model or layout.
+hobo_decode_more <- function(path) {
+  b <- readBin(path, "raw", file.size(path)); hh <- hobo_header(b); if (is.null(hh)) return(NULL); h <- hh$h
+  txt <- function(tag) if (is.null(h[[tag]])) NA_character_ else trimws(rawToChar(h[[tag]][[1]][h[[tag]][[1]] != as.raw(0)]))
+  model <- txt("5"); if (is.na(model) || !grepl(HOBO_DECODE_MORE, model) || is.null(h[["7"]]) || is.null(h[["8"]])) return(NULL)
+  on <- vapply(h[["11"]] %||% list(), function(v) length(v) > 0 && as.integer(v[1]) == 1L, NA)
+  ty <- vapply(h[["12"]] %||% list(), function(v) if (length(v)) as.integer(v[1]) else 0L, 0L)
+  lab <- vapply(h[["181"]] %||% list(), function(v) trimws(rawToChar(v[v != as.raw(0)])), "")
+  if (grepl("UTBI-001", model)) { if (sum(on) != 1L) return(NULL); fields <- 12L; extra <- 0L; first <- 12L
+  } else if (grepl("U12-008", model)) { k <- which(on[1:min(4L, length(on))] & ty[seq_along(on)][1:min(4L, length(on))] == 0x95)
+    if (!length(k) || sum(on[1:4]) != length(k)) return(NULL)                    # a channel that is not a thermistor probe: not read
+    fields <- rep(12L, length(k)); extra <- if (length(on) >= 5 && on[5]) 8L else 0L; first <- 12L
+  } else { if (sum(on) != 3L || length(h[["49"]]) < 3) return(NULL); fields <- c(16L, 16L, 12L); extra <- 0L; first <- 16L }
+  lt <- as.integer(h[["7"]][[1]]); launch <- ISOdatetime(lt[1] * 100 + lt[2], lt[3], lt[4], lt[5], lt[6], lt[7], tz = "UTC")
+  iv <- hobo_be(h[["8"]][[length(h[["8"]])]])
+  delay <- if (!is.null(h[["34"]]) && length(h[["34"]][[1]]) >= 11) hobo_be(h[["34"]][[1]][9:11]) else 0
+  s0 <- 4L * ((hh$data_start + 4L) %/% 4L) + 1L                       # padding: the stream starts on the first 4-byte boundary
+  bits <- as.integer(matrix(rawToBits(b[s0:length(b)]), 8L)[8:1, ]); N <- length(bits)   # two or more bytes after the header
+  rd <- function(p, n) sum(bits[p:(p + n - 1L)] * 2^((n - 1L):0))
+  p <- 1L; t0 <- launch + delay
+  W <- sum(fields) + extra; off <- cumsum(c(0L, fields))[seq_along(fields)]
+  rows <- list(); k <- 0L; stopped <- FALSE
+  while (p + W - 1L <= N) {
+    if (all(bits[p:(p + first - 1L)] == 1L)) {                       # an event: skipped, it takes no slot
+      ty_ <- rd(p + first, 4L); n <- rd(p + first + 4L, 4L); if (ty_ == 15) break
+      if (ty_ == 2 && k == 0L && n) t0 <- launch + rd(p + first + 8L, 4L * n)   # started (button or set time): seconds after the launch
+      p <- p + first + 8L + 4L * n; if (ty_ == 3) break; next }
+    k <- k + 1L; rows[[k]] <- vapply(seq_along(fields), function(j) rd(p + off[j], fields[j]), 0); p <- p + W }
+  if (p + W - 1L > N && k > 0 && p <= N && !all(bits[p:N] == 1L)) stopped <- TRUE
+  M <- if (k) do.call(rbind, rows) else matrix(numeric(), 0, length(fields))
+  ts <- t0 + (seq_len(k) - 1) * iv
+  if (grepl("U24-001", model)) {
+    cal <- lapply(h[["49"]][1:3], function(r) readBin(r, "numeric", n = length(r) %/% 4, size = 4, endian = "big"))
+    tc <- cal[[3]][1] + cal[[3]][2] * M[, 3]
+    ec <- function(cc, x) { x <- pmin(x, cc[10]) * (1 + (cc[8] + cc[9] * tc) / 100); Reduce(`+`, lapply(0:5, function(i) cc[i + 1] * x^i)) }
+    out <- data.table::data.table(TIMESTAMP = ts, ec_low_us = ec(cal[[1]], M[, 1]), ec_full_us = ec(cal[[2]], M[, 2]), temp_c = tc); oor <- 0L
+  } else {
+    tt <- hobo_tmc_c(as.vector(M)); dim(tt) <- dim(M); oor <- sum(is.na(tt))
+    out <- data.table::data.table(TIMESTAMP = ts)
+    nm <- if (grepl("UTBI-001", model)) "temp_c" else paste0("temp_c_", make.unique(ifelse(nzchar(lab[seq_len(ncol(M))]), lab[seq_len(ncol(M))], paste0("ch", seq_len(ncol(M))))))
+    for (j in seq_len(ncol(M))) data.table::set(out, j = nm[j], value = tt[, j])
+  }
+  utc <- if (!is.null(h[["34"]]) && length(h[["34"]][[1]]) >= 8) as.POSIXct("2000-01-01", tz = "UTC") + hobo_be(h[["34"]][[1]][5:8]) else NA
+  offh <- round(as.numeric(difftime(launch, utc, units = "hours")) * 4) / 4; if (!isTRUE(abs(offh) <= 14)) offh <- NA_real_
+  attr(out, "utc_offset_h") <- offh; attr(out, "model") <- model; attr(out, "serial") <- txt("6"); attr(out, "zone") <- txt("20")
+  attr(out, "interval_s") <- iv; attr(out, "stopped") <- stopped; attr(out, "out_of_range") <- oor
+  out }
