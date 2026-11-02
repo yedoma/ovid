@@ -157,15 +157,21 @@ run_profiles <- function(cfg, table_profiles) {
 
 # Flags and statistics of every survey under every profile. cache: NULL, or function(sid, s1, compute) returning compute()'s
 # result, or the one kept from an earlier run when nothing it depends on changed (the pipeline's, cache/qc).
-run_qc <- function(surveys, meas, cfgs, profiles, cache = NULL) {
+# One survey's flags and statistics for every profile.
+qc_one <- function(d, sid, s1, cfgs, ok_p) { f <- list(); st <- list()
+  for (p in ok_p) { x <- qc_survey(d, sid, s1$type, cfgs$qc, p, cfgs$manual, s1, cfgs$electrodes); f[[p]] <- x; st[[p]] <- survey_stats(d, unique(x$meas_id), sid, p) }
+  list(flags = f, stats = st) }
+
+# pre: surveys already worked out (in parallel), each list(x = what qc_one() gave, problems = what it reported); their
+# problems are reported here, in survey order, as if worked out now.
+run_qc <- function(surveys, meas, cfgs, profiles, cache = NULL, pre = NULL) {
   ok_p <- profiles[profiles %in% c(cfgs$qc$profile, "none")]
   for (p in setdiff(profiles, ok_p)) problem("QC", paste0("profile '", p, "' is not in qc_profiles.csv"))
   F <- list(); S <- list()
   for (sid in names(meas)) {
-    d <- meas[[sid]]; s1 <- surveys[survey_id == sid][1]; type <- s1$type
-    one <- function() { f <- list(); st <- list()
-      for (p in ok_p) { x <- qc_survey(d, sid, type, cfgs$qc, p, cfgs$manual, s1, cfgs$electrodes); f[[p]] <- x; st[[p]] <- survey_stats(d, unique(x$meas_id), sid, p) }
-      list(flags = f, stats = st) }
+    d <- meas[[sid]]; s1 <- surveys[survey_id == sid][1]
+    one <- if (is.list(pre[[sid]]) && !inherits(pre[[sid]], "error")) local({ r <- pre[[sid]]; function() { for (pp in r$problems) problem(pp$where, pp$problem); r$x } })
+           else function() qc_one(d, sid, s1, cfgs, ok_p)
     r <- if (is.function(cache)) cache(sid, s1, one) else one()
     F <- c(F, r$flags); S <- c(S, r$stats)
     if (length(ok_p) && ok_p[1] == profiles[1]) { f <- r$flags[[1]]

@@ -61,6 +61,9 @@ build_surveys <- function(files, cfg) {
   cand[, survey_id := survey_id_of(md5)]
   first <- cand[order(grepl("!/", rel, fixed = TRUE), mtime, rel), .SD[1], by = md5]   # a loose file is the primary copy, before one inside a zip
   S <- list(); M <- list(); X <- list()
+  # files read for the first time are read in parallel first (core util.R par_map; the readers report nothing themselves)
+  nw <- first[readable %in% TRUE & !file.exists(cache_file(cdir, md5, STEP_HASH$read))]
+  pre <- setNames(par_map(seq_len(nrow(nw)), function(i) read_format(nw$path[i], nw$format[i]), what = "reading surveys"), nw$md5)
   for (i in seq_len(nrow(first))) {
     run_tick(i, nrow(first), basename(first$rel[i]))
     f <- first[i]; sid <- f$survey_id
@@ -69,7 +72,7 @@ build_surveys <- function(files, cfg) {
               folder = f$folder, stem = f$stem, status = "ok", message = "")
     if (!f$readable) { s$status <- "needs_reader"; s$message <- paste0("no reader yet for ", f$format); S[[sid]] <- s; next }
     r <- cache_read(cdir, f$md5, STEP_HASH$read)
-    if (is.null(r)) { r <- tryCatch(read_format(f$path, f$format), error = function(e) e)
+    if (is.null(r)) { r <- pre[[f$md5]] %||% tryCatch(read_format(f$path, f$format), error = function(e) e)
       if (!inherits(r, "error")) cache_write(cdir, f$md5, STEP_HASH$read, r) }
     if (inherits(r, "error")) { s$status <- "read_error"; s$message <- conditionMessage(r); problem(f$rel, s$message); S[[sid]] <- s; next }
     unread_report(r$meta, f$rel)                                              # cells that were not numbers (core audit.R)

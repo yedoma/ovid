@@ -60,7 +60,10 @@ GPR_SLACK <- 10L
 
 gpr_scan <- function(dirs) {
   dirs <- path.expand(dirs); dirs <- dirs[dir.exists(dirs)]; if (!length(dirs)) return(data.table())   # every folder missing (a drive not plugged in)
-  ls <- function(pat, all = FALSE) unlist(lapply(dirs, function(d) list.files(d, pattern = pat, recursive = TRUE, full.names = TRUE, all.files = all, ignore.case = TRUE)))
+  # the folders are listed once (they were walked once for each kind of file: seconds on a large drive); a kind is then
+  # picked from that list as list.files() would have (hidden files and folders only where asked for)
+  every <- lapply(dirs, function(d) { f <- list.files(d, recursive = TRUE, all.files = TRUE); list(path = file.path(d, f), name = basename(f), hidden = grepl("(^|/)\\.", f)) })
+  ls <- function(pat, all = FALSE) unlist(lapply(every, function(e) e$path[grepl(pat, e$name, ignore.case = TRUE) & (all | !e$hidden)]))
   fl <- function(p) { p <- unique(p); data.table(path = p, stem = tools::file_path_sans_ext(basename(p)), folder = dirname(p), size = file.size(p)) }
   rad <- fl(ls("\\.rad$")); cor <- fl(ls("\\.cor$")); mrk <- fl(ls("\\.mrk$"))
   if (!nrow(rad)) return(data.table())

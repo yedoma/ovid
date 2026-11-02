@@ -7,6 +7,14 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster GPR scan (2026-11-01).** The GPR folders are listed once instead of once for each kind of file (.rad, .cor,
+.mrk, .rd3/.rd7, partial downloads); the same files are found (287 on M's Loggers folder). **Output changes:** none.
+
+**Faster (2026-11-01).** Survey files read for the first time, and the quality checks of surveys with nothing cached,
+are worked out in parallel before the run goes through them in order (problems reported in the same order): a cold run on
+M's GS project 65 -> 36 s, with the previews drawn in parallel too (the first in the main process, which readies the
+macOS font system; any a worker misses is drawn again there); all 1,923 output files identical. **Output changes:** none.
+
 **Fixed (narrow windows, 2026-10-31).** GPR processing folds from three columns to two below 1400 px and one below
 1100 px (it scrolled sideways by up to 431 px and its picks and markers overlapped); its button and number rows wrap.
 **Output changes:** none.

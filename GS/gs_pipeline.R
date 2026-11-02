@@ -61,7 +61,7 @@ CODE_HASH <- code_hash(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPE
 CODE_NAMES <- code_names(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PIPELINE_DIR, "gs_pipeline.R"))
 step_hashes <- function(env = parent.frame()) list(
   read     = code_fingerprint("read_format", env = env),
-  qc       = code_fingerprint(c("run_qc", "qc_survey", "survey_stats"), shallow = "run_pipeline_steps", env = env),
+  qc       = code_fingerprint(c("run_qc", "qc_one", "qc_survey", "survey_stats"), shallow = "run_pipeline_steps", env = env),
   previews = code_fingerprint(c("plot_pseudosection", "preview_file"), env = env))
 CACHE_VERSION <- 1L                                    # the layout of cache/qc and cache/previews
 
@@ -128,7 +128,12 @@ run_pipeline_steps <- function(cfg = CFG) {
     else { p0 <- length(AUDIT$problems); x <- compute(); x$problems <- AUDIT$problems[seq_along(AUDIT$problems) > p0]; if (inc) cache_write(file.path(cdir, "qc"), sid, k, x) }
     if (inc) c_used <<- c(c_used, cache_file(file.path(cdir, "qc"), sid, k))
     x }
-  q <- run_qc(surveys, a$meas, cfgs, profs, cache = qc_cache); surveys <- q$surveys
+  # surveys with nothing cached are worked out in parallel first (core util.R par_map); their problems are reported in order
+  miss <- names(a$meas)[!vapply(names(a$meas), function(sid) inc && file.exists(cache_file(file.path(cdir, "qc"), sid, key_of(sid, surveys[survey_id == sid][1]))), NA)]
+  ok_p <- profs[profs %in% c(cfgs$qc$profile, "none")]
+  pre <- setNames(par_map(miss, function(sid) { p0 <- length(AUDIT$problems); x <- qc_one(a$meas[[sid]], sid, surveys[survey_id == sid][1], cfgs, ok_p)
+    list(x = x, problems = AUDIT$problems[seq_along(AUDIT$problems) > p0]) }, what = "quality checks"), miss)
+  q <- run_qc(surveys, a$meas, cfgs, profs, cache = qc_cache, pre = pre); surveys <- q$surveys
   if (n_q) say("  ", n_q, " of ", length(a$meas), " surveys unchanged, reused")
   o <- surveys[kind != "derived" & n_read > 0]
   say("  ", profs[1], ": median ", median(o$pct_retained, na.rm = TRUE), "% of measurements pass in the ", nrow(o), " original surveys")
@@ -161,15 +166,20 @@ run_pipeline_steps <- function(cfg = CFG) {
   rid <- if (is.null(AUDIT$run_id)) "" else AUDIT$run_id                 # flags.csv ends with rule_id, app and run_id, as in the other apps (no WMO code for ERT)
   for (sid in names(a$meas)) fwrite(q$flags[survey_id == sid][, `:=`(app = "GS", run_id = rid)], file.path(svd, sid, "flags.csv"))
   # a preview whose measurements, flags and title are unchanged is copied from cache/previews instead of drawn again
-  if (isTRUE(cfg$previews)) { pv <- file.path(catd, "previews"); dir.create(pv, showWarnings = FALSE); used <- character()
+  if (isTRUE(cfg$previews)) { pv <- file.path(catd, "previews"); dir.create(pv, showWarnings = FALSE); used <- character(); draw <- list()
     for (sid in o$survey_id) { s1 <- as.list(surveys[survey_id == sid]); f <- preview_file(s1, used); fl <- q$flags[survey_id == sid & profile == profs[1]]
       k <- hash_of(list(CACHE_VERSION, STEP_HASH$previews, mh[[sid]], key_rows(fl), s1[intersect(c("display_name", "primary_file", "acquired_date", "datetime_start", "survey_name", "model", "array", "n_electrodes", "spacing_m"), names(s1))], profs[1]))
       pc <- sub("\\.rds$", ".png", cache_file(file.path(cdir, "previews"), sid, k))
       if (inc && file.exists(pc)) { file.copy(pc, file.path(pv, f), overwrite = TRUE); n_pv <- n_pv + 1L }
       else { g <- plot_pseudosection(a$meas[[sid]], fl, s1, profs[1]); if (is.null(g)) next
-             ggsave(file.path(pv, f), g, width = 9, height = 8.5, dpi = 100); if (inc) file.copy(file.path(pv, f), pc, overwrite = TRUE) }
+             draw[[length(draw) + 1L]] <- list(g = g, file = file.path(pv, f), cache = pc) }
       if (inc) c_used <- c(c_used, pc)
       used <- c(used, f); surveys[survey_id == sid, preview := f] }
+    # the previews to draw: the first here (it readies the font system, which a forked worker cannot do safely on macOS),
+    # the rest in parallel; any a worker did not draw is drawn here, so a preview is never missing
+    one_pv <- function(x) { ggsave(x$file, x$g, width = 9, height = 8.5, dpi = 100); TRUE }
+    dr <- if (length(draw)) c(list(one_pv(draw[[1]])), par_map(draw[-1], one_pv, what = "previews")) else list()
+    for (i in seq_along(draw)) { if (!isTRUE(dr[[i]])) one_pv(draw[[i]]); if (inc) file.copy(draw[[i]]$file, draw[[i]]$cache, overwrite = TRUE) }
     unlink(file.path(pv, setdiff(list.files(pv), used))) }
   if (inc) for (d in c("qc", "previews")) cache_prune(file.path(cdir, d), c_used)
   if ("preview" %in% names(surveys)) { cat_s[surveys, preview := i.preview, on = "survey_id"]; fwrite(cat_s, file.path(catd, "surveys.csv")) }

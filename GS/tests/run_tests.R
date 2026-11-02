@@ -31,6 +31,12 @@ r <- run_pipeline(list(raw_dirs = dirname(raw), project_dir = file.path(tmp, "pr
 s <- r$surveys
 check(identical(unname(md5_before), unname(tools::md5sum(list.files(raw, full.names = TRUE)))), "raw files unchanged")
 check(nrow(r$files) == 8, "every file listed")
+local({ go <- function(w) { op <- options(ovid.workers = w); on.exit(options(op)); p <- file.path(tmp, paste0("par", w))
+    invisible(capture.output(x <- run_pipeline(list(raw_dirs = dirname(raw), project_dir = p, incremental = TRUE))))
+    fs <- list.files(file.path(p, "output", "catalogue"), "[.](csv|png)$", recursive = TRUE, full.names = TRUE)
+    list(s = x$surveys, md5 = setNames(unname(tools::md5sum(fs)), basename(fs))) }
+  a <- go(1L); b <- go(2L)
+  check(identical(a$s, b$s) && identical(a$md5, b$md5), "files read, surveys checked and previews drawn in parallel give the same surveys, catalogue and preview images as one at a time") })
 check(nrow(s) == 5 && TRUE, "surveys: one with a copy, one derived, two Syscal exports, one unreadable .bin")
 o <- s[kind == "original" & format == "agi_stg"]
 check(nrow(o) == 1 && o$n_read == 4 && grepl("LINE1_copy", o$other_paths), "byte-identical copy is one survey")
