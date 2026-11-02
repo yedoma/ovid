@@ -5,6 +5,11 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Smaller site files (2026-11-02).** The source_file column of output/sites/*.csv gives the raw file by its path within its
+raw folder, as files.csv gives it (rel), instead of the full path on every row (kept where two raw folders hold the same
+path). On M's project the site files went from 802 to 622 MB; every other output is the same. **Output changes:** the
+source_file column of the site files (files.csv maps each one back to its full path).
+
 **Faster (2026-11-01).** .hobo files with no CSV export are decoded in parallel before files are paired (finding files on
 the archive 36 -> 12 s), and time stamps read back from the outputs are parsed in one pass instead of two. All 2,525
 output files of an archive run compared with a run before: identical. **Output changes:** none.

@@ -544,6 +544,8 @@ xr <- file.path(wb_root, "raw_nobaro"); dir.create(file.path(xr, "2025"), recurs
 xp <- file.path(wb_root, "xb"); dir.create(file.path(xp, "config"), recursive = TRUE)
 fwrite(data.table(name = "CS", file = xf, time_column = "", pressure_column = "BP_mbar", units = "mbar", utc_offset_h = "-6", station_elevation_m = "", reference_elevation_m = "", temp_column = "", notes = ""), file.path(xp, "config", "external_baro.csv"))
 invisible(quiet_run(modifyList(wcfg("xb"), list(raw_dirs = xr)))); xs <- fread(list.files(file.path(xp, "output", "sites"), full.names = TRUE)[1])
+local({ fa <- fread(file.path(xp, "output", "audit", "files.csv"), colClasses = "character")
+  check("a site file names each raw file by its path within its raw folder (files.csv rel), not the full path on every row", nrow(xs) > 0 && all(xs$source_file %in% fa$rel) && !any(startsWith(xs$source_file, "/"))) })
 check("with no barologger, a water logger is compensated from the other record as a fill-in, and flagged so", nrow(xs) > 0 && any(!is.na(xs$depth_m)) && all(grepl("baro_fill", xs[!is.na(depth_m), flag_depth_m])) && all(xs[!is.na(depth_m), baro_name] == "ext: CS") && max(abs(xs$baro_kpa - wbaro[match(as.numeric(as.POSIXct(xs$TIMESTAMP, tz = "UTC")), as.numeric(wt))]), na.rm = TRUE) < 1e-3)
 
 cat("Workbench interface (preview)\n")

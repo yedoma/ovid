@@ -238,6 +238,9 @@ run_pipeline_steps <- function(cfg = CFG) {
   # ---- 3. stitch ------------------------------------------------------------------------------------------------
   say("[3/7] stitching each logger", col = "aqua")
   use <- man[use == TRUE & !is.na(serial) & nzchar(serial)]
+  # a raw file in the site files by its path within its raw folder, as files.csv gives it (rel), when no other file has the
+  # same one (several raw folders); the full path on every row made the site files about a third larger
+  rel_of <- { k <- !is.na(man$rel) & !duplicated(man$rel) & !duplicated(man$rel, fromLast = TRUE); stats::setNames(man$rel[k], man$path[k]) }
   if (!nrow(use)) stop("None of the files can be used. See the Raw files page for why.")
   recs <- list(); gaps <- list(); events <- list(); lstats <- list(); recon <- list(); contrib <- list(); alt_log <- list()
   # A logger whose files, clock corrections, role and settings are the same as in the last run is read back from the
@@ -556,7 +559,8 @@ run_pipeline_steps <- function(cfg = CFG) {
         if (!is.null(b)) X$be <- cbind(data.table(deployment = dep$deployment, site = dep$site, serial = s, year = dep$year), b) }
       di <- apply_drift(d, dep, chk, cfgs$drift, cfg); if (di$mode != "off" || nzchar(di$how)) X$drift <- di          # off by default: adds nothing unless asked
       if (isTRUE(di$applied)) audit_add("correct", "drift_correction", "summary", n = di$rows_corrected, site = dep$site, logger_id = s, reason = di$how)
-      fwrite(d, site_file(dep$deployment), dateTimeAs = "write.csv"); kept <- kept + nrow(d)
+      sf <- d$source_file; r <- rel_of[sf]; r[is.na(r)] <- sf[is.na(r)]; set(d, j = "source_file", value = unname(r))   # in the site file: the path within its raw folder
+      fwrite(d, site_file(dep$deployment), dateTimeAs = "write.csv"); set(d, j = "source_file", value = sf); kept <- kept + nrow(d)
       if (kind == "water") { X$dly <- daily_of(d, cfg$min_complete); X$meas <- compare_measurements(meas, d, s, cfg$meas_window_h) }
       X$contrib <- d[, .(records = .N), by = source_file][, used_in := dep$deployment]
       ok_d <- if ("depth_m" %in% names(d)) d$depth_m[!is.na(d$depth_m)] else numeric()
