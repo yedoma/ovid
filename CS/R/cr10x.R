@@ -49,7 +49,7 @@ guess_cr10x_id <- function(path, roots = character()) {
   ser <- regmatches(b, regexpr("CR10X[_ ]+[0-9]{4,6}", b, ignore.case = TRUE))
   if (length(ser)) return(paste0("CR10X_", sub("^CR10X[_ ]+", "", ser, ignore.case = TRUE)))
   if (length(roots)) {
-    top <- normalizePath(path.expand(roots), mustWork = FALSE); d <- normalizePath(dirname(path), mustWork = FALSE)
+    top <- normalizePath(path.expand(roots), "/", mustWork = FALSE); d <- normalizePath(dirname(path), "/", mustWork = FALSE)   # "/" both: dirname() gives "/" on Windows too
     while (!d %in% top && dirname(d) != d && grepl(CR10X_SORT_FOLDERS, basename(d), ignore.case = TRUE, perl = TRUE)) d <- dirname(d)
     if (!d %in% top && dirname(d) != d) return(paste0("CR10X_", toupper(gsub("^_+|_+$", "", gsub("[^A-Za-z0-9]+", "_", fix_enc(basename(d)))))))
   }

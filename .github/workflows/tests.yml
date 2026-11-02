@@ -38,6 +38,11 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev libnode-dev libcurl4-openssl-dev libuv1-dev cmake pandoc
 
+      # ncdf4 has no binary for this runner's macOS: built from source, it needs NetCDF's nc-config
+      - name: Install system libraries (macOS)
+        if: runner.os == 'macOS'
+        run: brew install netcdf
+
       - name: Cache packages
         uses: actions/cache@v4
         with:

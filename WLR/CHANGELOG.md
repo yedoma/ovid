@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: sites from folders on Windows (2026-11-02).** A logger with no deployment took its site from the folder its
+files are in; on Windows the folder was never matched to the raw folder (paths written with \\ against /), so the site
+came out wrong (e.g. "raw"). **Output changes:** on Windows, such loggers now get the same site as on macOS and Linux.
+
 **Fixed: an error on every page (2026-11-02).** "variable names are limited to 10000 bytes" came from a review text
 longer than core's Needs you id lookup could keep; fixed in core (review_hash). **Output changes:** none.
 

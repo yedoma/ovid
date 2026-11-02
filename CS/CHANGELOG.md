@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: CR10X logger from its folder on Windows (2026-11-02).** The station folder a CR10X file is filed in was
+never matched to the raw folder on Windows (paths written with \\ against /), so the guessed logger could be wrong.
+**Output changes:** on Windows, such files now get the same logger as on macOS and Linux.
+
 **Test (2026-11-02).** The parallel station plots check draws one plot first and leaves it out of the comparison: the first
 plot a process draws could come out with other bytes when the computer was very busy (fonts being set up), so the check
 failed now and then when every suite ran at once. **Output changes:** none.

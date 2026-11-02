@@ -63,8 +63,8 @@ BARO_FOLDER <- "^baro$|baro(loggers?|meters?|s)?($|[^a-z])"
 # folder itself (a layout of year folders only), or in a barologger folder.
 SORT_FOLDER <- "^((19|20)[0-9]{2}([-_ .][0-9]{1,2}){0,2}|undated|multi[-_ ]?years?.*|.*_or_undated|misc.*|unsorted|backup.*|downloads?|data|raw)$"
 site_from_folder <- function(paths, roots) {
-  if (!length(paths)) return(NULL); top <- normalizePath(path.expand(roots), mustWork = FALSE)
-  f <- unique(vapply(paths, function(p) { d <- normalizePath(dirname(p), mustWork = FALSE)
+  if (!length(paths)) return(NULL); top <- normalizePath(path.expand(roots), "/", mustWork = FALSE)
+  f <- unique(vapply(paths, function(p) { d <- normalizePath(dirname(p), "/", mustWork = FALSE)   # "/" both: dirname() gives "/" on Windows too
     while (!d %in% top && dirname(d) != d && grepl(SORT_FOLDER, basename(d), ignore.case = TRUE, perl = TRUE)) d <- dirname(d)
     if (d %in% top || dirname(d) == d || grepl(BARO_FOLDER, tolower(basename(d)), perl = TRUE)) "" else basename(d) }, ""))
   if (length(f) == 1 && nzchar(f)) f else NULL
