@@ -71,16 +71,18 @@ hobo_decode <- function(path) {
 #   U12-008          a 12-bit thermistor count per external channel (tag 0x0b on, sensor type 0x95 in tag 0x0c), then
 #                    8 bits of battery when the fifth channel is on (skipped, as the U20's battery).
 #   U24-001          a 16-bit low-range count, a 16-bit full-range count and a 12-bit temperature count (44 bits).
-# Thermistor (TidbiT, U12 probes): 1/T = sum c_k L^k (k = 0..4) with L = ln((count + 9.25) / (4108 - count - 9.25)), fitted to
-#   HOBOware's exports (216,624 values of 7 files; 2,732 distinct counts, -78 to 537 C): within 0.0015 C from -55 to 85 C.
-#   Outside that range the curve was not matched to the exports (the probes are rated about -40 to 70 or 100 C; such values
-#   mostly come from an open or shorted probe); those values are left NA and counted in attr "out_of_range".
+# Thermistor (TidbiT, U12 probes): 1/T = sum c_k L^k (k = 0..7) with L = ln((count + 0.5) / (4095.5 - count)), the ratio
+#   of a 12-bit divider (c0 = 1/298.15 K: 25 C at mid-scale). Fitted (minimax) to HOBOware's exports, which give C to 0.001
+#   (its F values are C rounded to 0.001, then converted): every one of the 2,723 counts seen from -55 to 85 C comes out
+#   exactly as HOBOware prints it. Outside that range the values mostly come from an open or shorted probe (HOBOware prints
+#   them, up to 537 C); they are left NA and counted in attr "out_of_range".
 # U24: temperature = t0 + t1 * count (tag 0x31, third block); each conductivity range = sum c_k x^k (k = 0..5, tag 0x31) with
 #   x = min(count, c9) * (1 + (c7 + c8 * temperature) / 100), in uS/cm. Checked against the HOBOware export of 53 files:
 #   every record within the export's 0.1 uS/cm and 0.01 C.
 HOBO_DECODE_MORE <- "U12-008|U24-001|UTBI-001"
-HOBO_TMC <- list(c = c(3.3534913777147485e-03, 2.797143887030222e-04, 4.093304474720064e-06, 3.615690146284884e-07, -3.81783914824597e-09),
-                 off = 9.25, full = 4108, range = c(-55, 85))
+HOBO_TMC <- list(c = c(0.0033542432429378107, 0.00027892603891183532, 4.2456309656381064e-06, 2.2303027410495148e-07,
+                       1.5458333292268499e-08, -6.3590643709237659e-09, -6.5028069971222435e-10, -2.3991770070640607e-11),
+                 off = 0.5, full = 4096, range = c(-55, 85))
 
 hobo_tmc_c <- function(x) { L <- log((x + HOBO_TMC$off) / (HOBO_TMC$full - x - HOBO_TMC$off))
   t <- 1 / Reduce(`+`, lapply(seq_along(HOBO_TMC$c), function(k) HOBO_TMC$c[k] * L^(k - 1L))) - 273.15
@@ -104,19 +106,21 @@ hobo_decode_more <- function(path) {
   lt <- as.integer(h[["7"]][[1]]); launch <- ISOdatetime(lt[1] * 100 + lt[2], lt[3], lt[4], lt[5], lt[6], lt[7], tz = "UTC")
   iv <- hobo_be(h[["8"]][[length(h[["8"]])]])
   delay <- if (!is.null(h[["34"]]) && length(h[["34"]][[1]]) >= 11) hobo_be(h[["34"]][[1]][9:11]) else 0
-  bits <- as.integer(matrix(rawToBits(b[hh$data_start:length(b)]), 8L)[8:1, ]); N <- length(bits)
+  s0 <- 4L * ((hh$data_start + 4L) %/% 4L) + 1L                       # padding: the stream starts on the first 4-byte boundary
+  bits <- as.integer(matrix(rawToBits(b[s0:length(b)]), 8L)[8:1, ]); N <- length(bits)   # two or more bytes after the header
   rd <- function(p, n) sum(bits[p:(p + n - 1L)] * 2^((n - 1L):0))
-  p <- 1L; while (p + 3L <= N && all(bits[p:(p + 3L)] == 1L)) p <- p + 4L      # the header's 0xff padding
+  p <- 1L; t0 <- launch + delay
   W <- sum(fields) + extra; off <- cumsum(c(0L, fields))[seq_along(fields)]
   rows <- list(); k <- 0L; stopped <- FALSE
   while (p + W - 1L <= N) {
     if (all(bits[p:(p + first - 1L)] == 1L)) {                       # an event: skipped, it takes no slot
       ty_ <- rd(p + first, 4L); n <- rd(p + first + 4L, 4L); if (ty_ == 15) break
+      if (ty_ == 2 && k == 0L && n) t0 <- launch + rd(p + first + 8L, 4L * n)   # started (button or set time): seconds after the launch
       p <- p + first + 8L + 4L * n; if (ty_ == 3) break; next }
     k <- k + 1L; rows[[k]] <- vapply(seq_along(fields), function(j) rd(p + off[j], fields[j]), 0); p <- p + W }
   if (p + W - 1L > N && k > 0 && p <= N && !all(bits[p:N] == 1L)) stopped <- TRUE
   M <- if (k) do.call(rbind, rows) else matrix(numeric(), 0, length(fields))
-  ts <- launch + delay + (seq_len(k) - 1) * iv
+  ts <- t0 + (seq_len(k) - 1) * iv
   if (grepl("U24-001", model)) {
     cal <- lapply(h[["49"]][1:3], function(r) readBin(r, "numeric", n = length(r) %/% 4, size = 4, endian = "big"))
     tc <- cal[[3]][1] + cal[[3]][2] * M[, 3]

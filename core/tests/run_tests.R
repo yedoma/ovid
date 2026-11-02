@@ -349,8 +349,8 @@ local({ source(file.path(CORE_DIR, "hobo.R"), local = TRUE)
     ch <- unlist(lapply(seq_along(on), function(i) c(tlv(0x0b, as.raw(on[i])), tlv(0x0c, as.raw(types[i])))))
     h <- c(charToRaw("HOBO"), tlv(0x05, charToRaw(model)), tlv(0x06, charToRaw("10000008")), tlv(0x07, as.raw(c(20, 22, 8, 19, 12, 0, 0, 0))),
            tlv(0x08, as.raw(c(0, 0, 7, 8))), unlist(extra), ch)
-    st <- c(rep(1L, 16), st, rep(1L, (-length(c(rep(1L, 16), st))) %% 8))
-    f <- tempfile(fileext = ".hobo"); writeBin(c(h, packBits(as.integer(matrix(st, 8)[8:1, ]), "raw")), f); f }
+    st <- c(st, rep(1L, (-length(st)) %% 8)); pad <- 4L * ((length(h) + 5L) %/% 4L) - length(h)   # 0xff to the first 4-byte boundary 2+ bytes on
+    f <- tempfile(fileext = ".hobo"); writeBin(c(h, as.raw(rep(0xff, pad)), packBits(as.integer(matrix(st, 8)[8:1, ]), "raw")), f); f }
   evn <- function(w, type, secs, n) c(rep(1L, w), bits(type, 4), bits(n, 4), if (n) bits(secs, 4 * n))
   tf <- mk("HOBO UTBI-001 TidbiT Temp", c(1, 0), c(0, 0), c(bits(2528, 12), evn(12, 0, 0, 0), bits(2517, 12), bits(2499, 12), evn(12, 3, 1, 1), bits(2000, 12)))
   t <- hobo_decode_more(tf)
@@ -360,6 +360,10 @@ local({ source(file.path(CORE_DIR, "hobo.R"), local = TRUE)
   u <- hobo_decode_more(uf)
   check("a U12-008 .hobo: four 12-bit probe counts a record (10.687, 12.509, 9.706, 0.051 C), then 8 bits of battery when the fifth channel is on",
         nrow(u) == 2L && max(abs(unlist(u[1, -1]) - c(10.687, 12.509, 9.706, 0.051))) < 0.002)
+  bf <- mk("HOBO U12-008 4-Ch Ext Out/Ind", c(1, 1, 1, 1), c(0x95, 0x95, 0x95, 0x95), c(evn(12, 2, 249825, 5), rep(c(bits(2644, 12), bits(2569, 12), bits(2684, 12), bits(3056, 12)), 2)))
+  bs <- hobo_decode_more(bf)
+  check("a U12-008 started by button: the Started event at the head of the stream (its one bits are not padding) sets the first time, launch + 249,825 s",
+        nrow(bs) == 2L && identical(format(bs$TIMESTAMP, "%Y-%m-%d %H:%M:%S"), c("2022-08-22 09:23:45", "2022-08-22 09:53:45")) && abs(bs[[2]][1] - 10.687) < 0.0006)
   cal24 <- list(c(-0.052096907, 0.071018413, 2.855952e-07, 5.800527e-11, -5.686593e-15, 1.435364e-19, 0, 3.17, -0.1047, 29162),
                 c(-1.81072855, 0.372236222, 4.395435e-06, 1.193569e-10, -2.231218e-14, 6.197125e-19, 0, 3.17, -0.1047, 30122), c(-9.553174, 0.012658064, 0))
   cf <- mk("HOBO U24-001 Conductivity", c(1, 1, 1, 0), c(0, 0, 0, 0), c(bits(735, 16), bits(131, 16), bits(908, 12), evn(16, 0, 0, 0), bits(804, 16), bits(144, 16), bits(873, 12)),
