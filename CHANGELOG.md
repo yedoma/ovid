@@ -4,6 +4,10 @@ The whole bundle at a glance, newest first. Each app and the core have their own
 
 ## Unreleased
 
+**Fixed (window sizes, second pass, 2026-11-02; approved by M).** All five apps (RS included) checked at 760, 900, 1920 and
+2560 px: number tiles no longer split numbers, the top bar fits 760 px, help text keeps a readable line on wide screens,
+Workbench actions stay out of the Inspector, GT's contents panel keeps its width. Core CSS only; no output changes.
+
 **Fixed (narrow windows, 2026-10-31).** Every page of CS, WLR, GT and GS checked at 900 to 1440 px: rail, top bar,
 Workbench, tables, buttons, Simple tiles and GS GPR processing no longer run out of their boxes or scroll sideways.
 

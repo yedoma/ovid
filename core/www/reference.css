@@ -6,4 +6,4 @@
 .ref-steps span.on{border-color:var(--acc,var(--wb-acc));color:var(--fg,var(--wb-fg));font-weight:600}.ref-body{max-width:900px;line-height:1.55}.ref-body table{border-collapse:collapse;margin:8px 0}.ref-body table{font-size:13.5px}.ref-body td,.ref-body th{border-bottom:1px solid var(--bg2,var(--wb-line));padding:6px 10px;text-align:left}.ref-body th{font-weight:600;color:var(--fg4,var(--wb-fg))}
 .ref-body .f,.ref-body .ex{border-left:3px solid var(--acc,var(--wb-acc));padding:4px 10px;margin:8px 0;background:var(--bg1,var(--wb-panel))}.ref-acts{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 @media (max-width:900px){.ref{grid-template-columns:1fr}.ref-side{position:static;max-height:none}}
-
+.ref-side,.ref-main{min-width:0}.ref-idx a{overflow-wrap:anywhere}   /* a long name wraps inside the list */

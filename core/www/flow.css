@@ -90,7 +90,8 @@ html.d-layout-notebook body{padding-left:0;padding-right:var(--d-rail)} html.d-l
 .d-nb-facts .d-aside-sec{margin:0}
 .d-nb-facts .d-aside-sec:nth-child(n+2){max-height:170px;overflow-y:auto;padding-right:6px}
 @media (max-width:1000px){.d-nb-facts>div{grid-template-columns:1fr;gap:12px}}
-@media (max-width:900px){html.d-layout-notebook{--d-rail:var(--d-rail-min)}}
+@media (max-width:900px){html.d-layout-notebook{--d-rail:210px} .d-layout-notebook .d-rail .d-views a{padding:4px 2px;font-size:12px}}   /* the contents keep a usable width */
+@media (max-width:700px){html.d-layout-notebook{--d-rail:0px} html.d-layout-notebook .d-rail{display:none}}   /* below 700 px the page alone */
 .d-layout-notebook .panel-x:not(.flat){border:1px solid var(--bg2);box-shadow:0 1px 3px rgba(0,0,0,.18)}      /* every card lifts the same: panels like the cards */
 .d-layout-notebook .d-cardx,.d-layout-notebook .panel-x,.d-layout-notebook .d-nb-facts{border-radius:8px}
 .d-layout-notebook .d-rail-link{padding-left:14px}

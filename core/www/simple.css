@@ -142,3 +142,4 @@ td.d-num{text-align:right !important;font-variant-numeric:tabular-nums}   /* num
 .sp-tile-h > :first-child { min-width: 0; overflow-wrap: anywhere; }
 .sp-tile-h .sp-state { flex: none; white-space: nowrap; }
 .sp-tile dd { min-width: 0; overflow-wrap: anywhere; }
+.sp-card { min-width: 0; overflow-wrap: anywhere; }   /* a long folder or site name wraps inside its card */

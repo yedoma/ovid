@@ -236,5 +236,5 @@ details.wb-tree{margin:0} .wb-tree>summary{list-style:none;display:flex;justify-
 .wb-status{min-width:0;overflow:hidden} .wb-status>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
 @media (max-width:1240px){.wb-nav{width:200px} .wb-aside{width:260px}}
 @media (max-width:1000px){.wb-nav{width:170px} .wb-aside{width:230px} .wb-top{gap:8px;padding:0 10px}}
-.wb-acts{flex-wrap:wrap;row-gap:6px;min-width:0} .wb-cellbar{padding-top:6px;padding-bottom:6px}
+.wb-acts{flex-wrap:wrap;row-gap:6px;min-width:0;flex:1 1 auto} .wb-cellbar{padding-top:6px;padding-bottom:6px;flex-wrap:wrap;min-width:0}   /* the actions wrap inside their panel, never under the Inspector */
 @media (max-width:1100px){.wb-pv{display:none} .wb-top .wb-btn,.wb-top .btn{padding-left:9px;padding-right:9px}}

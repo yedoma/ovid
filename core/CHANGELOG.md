@@ -5,6 +5,13 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Window sizes, second pass (2026-11-02).** Every page of the five apps measured at 760, 900, 1920 and 2560 px. Number
+tiles take as many per row as fit and never split a number or word (RS, GS); the top bar fits a 760 px window (the Cmd/Ctrl K
+hint goes, gaps tighten, the logo keeps the app name); help text stops at about 100 characters a line on wide screens; the
+Workbench actions wrap inside their panel instead of running under the Inspector; long names wrap in the Reference list
+and Simple-view cards; the notebook layout (GT) keeps its contents panel 210 px wide under 900 px (was a 52 px strip) and
+hides it under 700 px. **Output changes:** none.
+
 **Faster opening (Needs you list, 2026-11-01).** review_hash() looks digest up once, hashes each distinct text once and
 keeps the ids for the session (the same ids); review_ts() writes each distinct time once. WLR on M's project (364,000
 flags): opening 12.6 / 13.1 / 11.6 s -> 10.6 / 8.3 / 7.9 s (Standard / Workbench / Simple). **Output changes:** none.
