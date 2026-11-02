@@ -53,12 +53,12 @@ qc_flat_idx <- function(x, t, hours, min_n = 3L, group = NULL, band = NULL, skip
   d <- data.table(i = seq_len(n), x = as.numeric(x), t = as.numeric(t), g = if (is.null(group)) 1L else group)
   if (skip_na) d <- d[!is.na(x)]
   if (!nrow(d)) return(integer())
-  d[, run := rleid(g, x)]
-  r <- d[!is.na(x), .(t0 = t[1], t1 = t[.N], n = .N, v = x[1]), by = run]
-  r <- r[(t1 - t0) / 3600 >= hours & n >= min_n]
-  if (!is.null(band)) r <- r[abs(v) > band]
-  if (!nrow(r)) return(integer())
-  d[run %in% r$run & !is.na(x), i]
+  # runs of one value from where each starts and ends (grouping by run took seconds on a long record: most runs are one row)
+  run <- rleid(d$g, d$x); s <- which(c(TRUE, run[-1L] != run[-length(run)])); e <- c(s[-1L] - 1L, length(run))
+  ok <- !is.na(d$x[s]) & ((d$t[e] - d$t[s]) / 3600 >= hours) %in% TRUE & (e - s + 1L) >= min_n
+  if (!is.null(band)) ok <- ok & (abs(d$x[s]) > band) %in% TRUE
+  if (!any(ok)) return(integer())
+  d$i[sequence(e[ok] - s[ok] + 1L, s[ok])]
 }
 
 # ---- WMO quality control codes ---------------------------------------------------------------------------------------

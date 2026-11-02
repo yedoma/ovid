@@ -124,20 +124,24 @@ DT_FORMATS <- c("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%OS", "%m
 # in its last line still reads (avoids day/month mix-ups row by row). strptime() reads the start of a cell and ignores the
 # rest, so a format is also refused when it would leave something behind: an AM/PM the format has no %p for, seconds it has
 # no %S for, or a two-digit year read as %Y (a year before 1900).
+# Each distinct text is read once and the shares are counted over every cell (each text weighted by how often it occurs),
+# so the format chosen is the one reading every cell would choose: a column repeats its time stamps across downloads.
 parse_dt <- function(x, formats = DT_FORMATS) {
-  x <- trim(as.character(x)); out <- as.POSIXct(rep(NA_real_, length(x)), origin = "1970-01-01", tz = "UTC")
+  x <- trim(as.character(x)); k <- match(x, x <- unique(x)); w <- tabulate(k, length(x))
+  out <- as.POSIXct(rep(NA_real_, length(x)), origin = "1970-01-01", tz = "UTC")
+  share <- function(b, wv) sum(wv[b]) / sum(wv)
   todo <- !is.na(x) & nzchar(x)
   for (f in formats) {
     if (!any(todo)) break
-    v <- x[todo]
-    if (!grepl("%p", f, fixed = TRUE) && mean(grepl("[AaPp]\\.?[Mm]\\.?$", v)) > 0.5) next
-    if (!grepl("%S|%OS|%T", f) && mean(grepl("[0-9]:[0-9]{2}:[0-9]{2}", v)) > 0.5) next
+    v <- x[todo]; wv <- w[todo]
+    if (!grepl("%p", f, fixed = TRUE) && share(grepl("[AaPp]\\.?[Mm]\\.?$", v), wv) > 0.5) next
+    if (!grepl("%S|%OS|%T", f) && share(grepl("[0-9]:[0-9]{2}:[0-9]{2}", v), wv) > 0.5) next
     p <- as.POSIXct(strptime(v, f, tz = "UTC"))
     ok <- !is.na(p); if (!any(ok)) next
-    if (mean(as.integer(format(p[ok], "%Y")) < 1900) > 0.02) next
-    if (mean(ok) >= 0.98 || sum(!ok) <= 2L) { out[todo] <- p; todo[todo] <- !ok }
+    if (share(as.integer(format(p[ok], "%Y")) < 1900, wv[ok]) > 0.02) next
+    if (share(ok, wv) >= 0.98 || sum(wv[!ok]) <= 2L) { out[todo] <- p; todo[todo] <- !ok }
   }
-  out
+  out[k]
 }
 
 # Set-up table cells, one cell at a time (a column may mix dates and date-times): "2019-08-08", "2019-08-08 12:00",
@@ -289,7 +293,8 @@ par_map <- function(X, FUN, workers = run_workers(), what = "") {
       out[k] <- r }
     return(out) }
   for (k in b) { run_tick(max(k), length(X), what)
-    out[k] <- parallel::mclapply(X[k], function(x) { options(ovid.cancel_file = NULL); one(x) }, mc.cores = workers, mc.preschedule = FALSE) }
+    out[k] <- parallel::mclapply(X[k], function(x) { options(ovid.cancel_file = NULL); one(x) }, mc.cores = workers, mc.preschedule = FALSE)
+    invisible(tempdir(check = TRUE)) }                     # a worker that crashed takes the session's temporary folder with it: made again
   out
 }
 # Workers without forking (Windows): a PSOCK cluster, kept for the run. Each worker sources the app's pipeline without running

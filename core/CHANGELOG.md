@@ -5,6 +5,23 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster opening (Needs you list, 2026-11-01).** review_hash() looks digest up once, hashes each distinct text once and
+keeps the ids for the session (the same ids); review_ts() writes each distinct time once. WLR on M's project (364,000
+flags): opening 12.6 / 13.1 / 11.6 s -> 10.6 / 8.3 / 7.9 s (Standard / Workbench / Simple). **Output changes:** none.
+
+**Fixed (parallel work, 2026-11-01).** A forked worker that crashes takes the session's temporary folder with it, so a
+later write there failed ("cannot open file .../Rtmp..."). par_map() makes the folder again after each batch; the work of
+a worker that failed is done again in the main process, as before. **Output changes:** none.
+
+**Faster (dates and cache keys, 2026-11-01).** parse_dt() reads each distinct text once and counts the shares that pick a
+format over every cell (each text weighted by how often it occurs), so it picks the same format: 4 times quicker on a
+column whose times repeat, the same result on 3,000 random columns. hash_of() works the MD5 out in memory (digest) instead
+of writing the bytes to a temporary file: the same keys, so caches made before stay valid. **Output changes:** none.
+
+**Faster (stuck-value check, 2026-11-01).** qc_flat_idx() finds each run of one value from where it starts and ends
+instead of grouping the record by run (most runs are one row): about 15 times quicker (12 s of a GT run on the Scotty
+Creek archive); the same values on 2,400 random cases. Used by CS, WLR and GT. **Output changes:** none.
+
 **Faster (Needs you moves, 2026-10-31).** group_level_jumps() finds the two days either side of a file start by position
 in the sorted record instead of scanning it for each start; same suggestions. **Output changes:** none.
 

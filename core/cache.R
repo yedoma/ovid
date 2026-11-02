@@ -8,7 +8,9 @@
 
 # Short hash of any R value (the bytes from util.R hash_bytes).
 hash_of <- function(x, n = 16L) {
-  f <- tempfile(); on.exit(unlink(f)); writeBin(hash_bytes(x), f)
+  b <- hash_bytes(x)
+  if (requireNamespace("digest", quietly = TRUE)) return(substr(digest::digest(b, "md5", serialize = FALSE), 1, n))   # the same MD5, without the bytes going through a file
+  f <- tempfile(); on.exit(unlink(f)); writeBin(b, f)
   substr(unname(tools::md5sum(f)), 1, n)
 }
 

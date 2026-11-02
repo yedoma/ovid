@@ -1169,4 +1169,42 @@ local({ source(file.path(CORE_DIR, "grouping.R"), local = TRUE)        # level j
   fl <- data.table(serial = "S1", first = format(as.POSIXct(tt[c(1, 1001)], origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S"))
   j <- group_level_jumps(fl, function(s) data.table(t = as.POSIXct(tt, origin = "1970-01-01", tz = "UTC"), v = v), 0.05, "m")
   check("a step in level where a new file starts is suggested as a move, with the two days either side found by position in the record", nrow(j) == 1 && grepl("rose by 0.5 m", j$what)) })
+local({ source(file.path(CORE_DIR, "qc.R"), local = TRUE)
+  old <- function(x, t, hours, min_n = 3L, group = NULL, band = NULL, skip_na = TRUE) {   # before 2026-11-01: grouped by run
+    n <- length(x); if (!n) return(integer()); d <- data.table(i = seq_len(n), x = as.numeric(x), t = as.numeric(t), g = if (is.null(group)) 1L else group)
+    if (skip_na) d <- d[!is.na(x)]; if (!nrow(d)) return(integer()); d[, run := rleid(g, x)]
+    r <- d[!is.na(x), .(t0 = t[1], t1 = t[.N], n = .N, v = x[1]), by = run]; r <- r[(t1 - t0) / 3600 >= hours & n >= min_n]
+    if (!is.null(band)) r <- r[abs(v) > band]; if (!nrow(r)) return(integer()); d[run %in% r$run & !is.na(x), i] }
+  set.seed(7); same <- TRUE
+  for (k in 1:150) { n <- sample(1:300, 1); x <- round(cumsum(rnorm(n)) * sample(c(0.1, 1, 5), 1)) / 2; x[sample(n, n %/% 7)] <- NA; if (k %% 5 == 0) x[sample(n, 3)] <- NaN
+    t <- as.POSIXct("2020-01-01", tz = "UTC") + cumsum(sample(c(600, 1800, 3600), n, TRUE)); if (k %% 7 == 0) t[sample(n, 2)] <- NA
+    g <- if (k %% 2) sample(c("a", "b"), n, TRUE) else NULL
+    for (sk in c(TRUE, FALSE)) for (b in list(NULL, 0.5)) for (mn in c(1L, 3L)) same <- same && identical(old(x, t, 2, mn, g, b, sk), qc_flat_idx(x, t, 2, mn, g, b, sk)) }
+  check("stuck values: runs found from where each starts and ends give what grouping by run gave (150 random series, 8 settings; missing values, NaN, groups, a band)", same) })
+local({ old <- function(x, formats = DT_FORMATS) {   # before 2026-11-01: every cell read
+    x <- trim(as.character(x)); out <- as.POSIXct(rep(NA_real_, length(x)), origin = "1970-01-01", tz = "UTC"); todo <- !is.na(x) & nzchar(x)
+    for (f in formats) { if (!any(todo)) break; v <- x[todo]
+      if (!grepl("%p", f, fixed = TRUE) && mean(grepl("[AaPp]\\.?[Mm]\\.?$", v)) > 0.5) next
+      if (!grepl("%S|%OS|%T", f) && mean(grepl("[0-9]:[0-9]{2}:[0-9]{2}", v)) > 0.5) next
+      p <- as.POSIXct(strptime(v, f, tz = "UTC")); ok <- !is.na(p); if (!any(ok)) next
+      if (mean(as.integer(format(p[ok], "%Y")) < 1900) > 0.02) next
+      if (mean(ok) >= 0.98 || sum(!ok) <= 2L) { out[todo] <- p; todo[todo] <- !ok } }
+    out }
+  set.seed(9); fm <- c("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%m/%d/%y %I:%M:%S %p", "%d.%m.%Y %H:%M:%S", "%d/%m/%Y %H:%M:%OS", "%m/%d/%Y %H:%M", "%Y-%m-%d"); same <- TRUE
+  for (k in 1:300) { n <- sample(1:200, 1); x <- format(as.POSIXct("1995-01-01", tz = "UTC") + sample(0:1e9, n, TRUE), sample(fm, 1)); if (k %% 2) x <- sample(x, n, TRUE)
+    m <- sample(0:4, 1); if (m) x[sample(n, min(n, m))] <- sample(c("", NA, "junk", "12/31/99 1:00:00 PM", "2020-01-01", "1899-01-01 00:00:00"), min(n, m), TRUE)
+    if (k %% 7 == 0) x <- c(x, format(Sys.time(), sample(fm, 1))); same <- same && identical(old(x), parse_dt(x)) }
+  check("dates read once per distinct text, shares counted over every cell, give what reading every cell gave (300 random columns: formats, repeats, blanks, junk)", same)
+  source(file.path(CORE_DIR, "cache.R"), local = TRUE); b <- hash_bytes(list(1, "a", mtcars)); f <- tempfile(); writeBin(b, f)
+  check("a cache key worked out in memory is the MD5 the file route gave (existing caches stay valid)", identical(hash_of(list(1, "a", mtcars)), substr(unname(tools::md5sum(f)), 1, 16))) })
+if (.Platform$OS.type == "unix") local({ op <- options(ovid.workers = 2L); on.exit(options(op))
+  r <- par_map(1:4, function(i) { if (i == 2L) unlink(tempdir(), recursive = TRUE); i })   # as a crashing worker would
+  check("after workers lose the session's temporary folder it is there again, and the results come back", dir.exists(tempdir()) && identical(unlist(r), 1:4)) })
+local({ source(file.path(CORE_DIR, "cache.R"), local = TRUE); source(file.path(CORE_DIR, "config.R"), local = TRUE)
+  x <- c(paste("site|depth_m|2020-01-01", 1:500), "a", "a", "é ü", "", NA)
+  first <- review_hash(x); again <- review_hash(x); one <- vapply(x, function(s) substr(hash_of(s), 1, 16), "", USE.NAMES = FALSE); one[is.na(x)] <- first[is.na(x)]
+  check("Needs you ids: each text hashed once and kept for the session give the ids hash_of() gives, the second time too", identical(first, one) && identical(again, first))
+  tt <- as.POSIXct("2020-01-01", tz = "UTC") + c(3600, 7200, 3600, NA)
+  check("review times: each distinct time written once gives what writing every one gave", identical(review_ts(tt), format(tt, "%Y-%m-%d %H:%M:%S", tz = "UTC")) &&
+        identical(review_ts(c("2020-01-01T10:00:00Z", "2020-01-01", "2020-01-01", NA, "x")), c("2020-01-01 10:00:00", "2020-01-01 00:00:00", "2020-01-01 00:00:00", NA, "x"))) })
 cat(sprintf("\n%d passed, %d failed\n", RES$ok, length(RES$fail))); if (length(RES$fail)) quit(status = 1)

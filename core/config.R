@@ -252,14 +252,22 @@ review_path <- function(project_dir) file.path(path.expand(project_dir), "config
 # A time as "YYYY-MM-DD HH:MM:SS" whether it came as a time or as text (read back from flags.csv, a midnight may have lost
 # its 00:00:00); text that is not a time is kept as it is.
 review_ts <- function(x) {
+  u <- unique(x); if (length(u) < length(x)) return(review_ts(u)[match(x, u)])   # each distinct time once (a flag list repeats its times)
   if (inherits(x, "POSIXct")) return(format(x, "%Y-%m-%d %H:%M:%S", tz = "UTC"))
   x <- sub("Z$", "", sub("T", " ", trim(as.character(x)))); out <- x; todo <- grepl("^[0-9]{4}-", x) & !is.na(x)
   for (f in c("%Y-%m-%d %H:%M:%OS", "%Y-%m-%d %H:%M", "%Y-%m-%d")) { k <- which(todo); if (!length(k)) break
     t <- as.POSIXct(x[k], format = f, tz = "UTC"); ok <- !is.na(t); out[k[ok]] <- format(t[ok], "%Y-%m-%d %H:%M:%S"); todo[k[ok]] <- FALSE }
   out
 }
-review_hash <- function(x) vapply(x, function(s) substr(if (requireNamespace("digest", quietly = TRUE))   # the same as core cache.R hash_of(s), faster
-  digest::digest(hash_bytes(s), "md5", serialize = FALSE) else hash_of(s), 1, 16), "", USE.NAMES = FALSE)
+review_hash <- function(x) {                                              # the same as core cache.R hash_of(s), faster
+  if (!requireNamespace("digest", quietly = TRUE)) return(vapply(x, hash_of, "", USE.NAMES = FALSE))
+  dg <- digest::digest; u <- unique(x); h <- rep(NA_character_, length(u))  # looked up once, each text hashed once (per item it took seconds)
+  k <- !is.na(u) & nzchar(u); if (any(k)) h[k] <- unlist(mget(u[k], envir = REVIEW_HASH_MEMO, ifnotfound = NA_character_), use.names = FALSE)   # and kept for the
+  todo <- which(is.na(h)); if (length(todo)) h[todo] <- vapply(u[todo], function(s) substr(dg(hash_bytes(s), "md5", serialize = FALSE), 1, 16), "", USE.NAMES = FALSE)   # session:
+  m <- todo[k[todo]]; if (length(m)) { if (length(REVIEW_HASH_MEMO) > 2e6) rm(list = ls(REVIEW_HASH_MEMO, all.names = TRUE), envir = REVIEW_HASH_MEMO)   # each page that
+    list2env(stats::setNames(as.list(h[m]), u[m]), envir = REVIEW_HASH_MEMO) }                                                                        # opens asks again
+  h[match(x, u)] }
+REVIEW_HASH_MEMO <- new.env(hash = TRUE, parent = emptyenv())
 wb_queue_id <- function(where, parameter, start, end, check) review_hash(paste(where, parameter, review_ts(start), review_ts(end), check, sep = "|"))
 review_read <- function(path) { if (length(path) != 1 || !file.exists(path)) return(empty_cfg(REVIEW_COLS))
   tryCatch(ensure_cols(read_cfg(path), REVIEW_COLS), error = function(e) empty_cfg(REVIEW_COLS)) }
