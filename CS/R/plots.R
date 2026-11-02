@@ -34,6 +34,23 @@ gb_save <- function(p, file, w = 11, h = 6) tryCatch({
   suppressMessages(suppressWarnings(ggsave(file, p, width = w, height = min(h, 45), dpi = 110, bg = GB$bg, limitsize = FALSE))); file },
   error = function(e) { problem(basename(file), paste("plot not written:", conditionMessage(e))); character() })
 
+# Station plots are queued and drawn a few at a time in parallel (core util.R par_map; ggsave draws with ragg). The first
+# is drawn here, which readies the macOS font system that a forked worker cannot ready safely; a plot a worker did not
+# draw is drawn here again with gb_save(), which reports one that fails. gb_flush() draws what is left.
+PLOT_QUEUE <- new.env()
+gb_queue <- function(p, file, w = 11, h = 6) {
+  PLOT_QUEUE$jobs <- c(PLOT_QUEUE$jobs, list(list(p = p, file = file, w = w, h = h)))
+  if (length(PLOT_QUEUE$jobs) >= 2L * run_workers()) gb_flush()
+  file
+}
+gb_flush <- function() {
+  q <- PLOT_QUEUE$jobs; PLOT_QUEUE$jobs <- list(); if (!length(q)) return(invisible())
+  if (!isTRUE(PLOT_QUEUE$ready)) { gb_save(q[[1]]$p, q[[1]]$file, q[[1]]$w, q[[1]]$h); PLOT_QUEUE$ready <- TRUE; q <- q[-1] }
+  r <- par_map(q, function(x) { suppressMessages(suppressWarnings(ggsave(x$file, x$p, width = x$w, height = min(x$h, 45), dpi = 110, bg = GB$bg, limitsize = FALSE))); TRUE }, what = "plots")
+  for (i in which(!vapply(r, isTRUE, NA))) gb_save(q[[i]]$p, q[[i]]$file, q[[i]]$w, q[[i]]$h)
+  invisible()
+}
+
 # groups: optional named vector (parameter -> group). When given, parameters of
 # the same group are overlaid in one panel instead of one panel each.
 # units: optional named vector (parameter -> unit) shown beside each panel title.

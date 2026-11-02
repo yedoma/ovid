@@ -113,10 +113,10 @@ CODE_NAMES <- code_names(c(file.path(PIPELINE_DIR, "R"), CORE_DIR), file.path(PI
 step_hashes <- function(env = parent.frame()) list(
   headers  = code_fingerprint("read_header", env = env),
   programs = code_fingerprint("read_program", env = env),
-  stitch   = code_fingerprint("stitch_group", env = env),
+  stitch   = code_fingerprint(c("stitch_group", "parse_iso_utc", "to_numeric_columns"), env = env),
   pieces   = code_fingerprint(c("assign_stations", "apply_aliases", "map_parameters", "remove_rows"), shallow = "run_pipeline_steps", env = env),
   station  = code_fingerprint(c("resolve_overlaps", "period_step", "period_apply", "apply_qc", "sensor_health", "write_station", "derive_products",
-                                "plot_station", "gb_save", "remove_rows", "station_outputs"), shallow = "run_pipeline_steps", env = env))
+                                "plot_station", "gb_save", "gb_queue", "gb_flush", "remove_rows", "station_outputs"), shallow = "run_pipeline_steps", env = env))
 
 # CS records are wide (one row per logger record): an audit line names the station, logger, table and record.
 audit_schema(keys = c("station", "logger_id", "stream", "timestamp", "record", "column", "old_value"),
@@ -336,7 +336,7 @@ run_pipeline_steps <- function(cfg = CFG) {
                                                    last_ts = as.POSIXct(tob3_last, origin = "1970-01-01", tz = "UTC"))]
 
   say("[4/6] quality rules + station files", col = "aqua")
-  summ <- list(); station_plots <- character(); smp <- list(); ndaily <- list(); derived_made <- list()
+  summ <- list(); station_plots <- character(); smp <- list(); ndaily <- list(); derived_made <- list(); PLOT_QUEUE$jobs <- list()   # none left from a run that stopped
   cal_log <- list(); outputs <- list(); s_used <- character(); s_hit <- 0L; scache <- file.path(cfg$project_dir, "cache", "station")
   STATE <- c("summ", "smp", "ndaily", "derived_made", "cal_log", "qc_rm", "lin", "pstats", "file_kept", "health")   # what each station adds to the run's tables
   for (kk in names(pieces)) {
@@ -407,7 +407,7 @@ run_pipeline_steps <- function(cfg = CFG) {
       if (isTRUE(cfg$make_plots)) {
         rem <- rbindlist(Filter(function(a) a$stage[1] == "qc", AUDIT$log))
         p <- try_or(plot_station(dt, max_params = cfg$plot_max_params, removed = if (nrow(rem)) rem else NULL), where = paste("plot of", kk))
-        if (!is.null(p)) station_plots <- c(station_plots, gb_save(p, file.path(out, "plots", paste0("station_", safe_name(kk), ".png")),
+        if (!is.null(p)) station_plots <- c(station_plots, gb_queue(p, file.path(out, "plots", paste0("station_", safe_name(kk), ".png")),
                                                                   11, 1.2 + 1.35 * min(cfg$plot_max_params, length(vals))))
       }
       say(sprintf("  %-36s %10s records  %8s values removed", kk, format(nrow(dt), big.mark = ","), format(n_aud, big.mark = ",")), col = "fg4")
@@ -424,6 +424,7 @@ run_pipeline_steps <- function(cfg = CFG) {
     audit_flush(paste0("station_", kk))
     unlink(vapply(pieces[[kk]], `[[`, "", "file"))
   }
+  gb_flush()                                                        # the station plots still queued (R/plots.R)
   if (s_hit) say(sprintf("  %d of %d station tables were unchanged and reused", s_hit, length(pieces)), col = "fg4")
   if (isTRUE(cfg$incremental)) cache_prune(scache, s_used) else unlink(list.files(scache, full.names = TRUE))
   outputs_done(out, so_file, prev_out, outputs)

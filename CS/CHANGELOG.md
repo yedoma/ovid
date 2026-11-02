@@ -5,6 +5,17 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Faster Compare stations (2026-11-01).** Plot and explore > Compare stations builds its table without an R function per
+cell (17 times quicker on 2 million values; the same table). **Output changes:** none.
+
+**Faster stitching (the Scotty Creek raw archive, 2026-11-01).** A cold run on the archive 721 -> about 600 s: each
+distinct text in a column is cleaned and turned into a number once (a column repeats few values), each distinct time stamp
+is parsed once, and whole-second "YYYY-MM-DD HH:MM:SS" stamps are worked out from their numbers (7 times quicker than
+strptime; anything else still goes through it); the duplicate-record check looks only at rows that share a time. All
+Station plots are drawn a few at a time in parallel (ggsave already draws with ragg; the first is drawn in the main
+process, which readies the macOS font system, and any a worker misses is drawn again there): the cold run 721 -> about
+500 s, a rerun with nothing changed 94 -> 80 s. 2,014 output files compared with a run before: identical. **Output changes:** none.
+
 **Added (accepted dates per logger, 2026-10-31; M).** A new set-up table, Accepted dates (config/clock_bounds.csv:
 logger_id, table, earliest, latest, note, author), sets the dates a logger's (or one table's) records may carry; records
 outside are left out (audit rule outside_clock_bounds). With no date set by hand, a reset clock is found on its own: a block

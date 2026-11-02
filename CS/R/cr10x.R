@@ -162,7 +162,8 @@ parse_array_file <- function(path, logger_id, fsl, start_year, mtime) {
     hm <- if (!is.na(hi)) n(m[, hi]) else 0; sc <- if (!is.na(si)) n(m[, si]) else 0
     ok <- !is.na(year) & !is.na(day) & !is.na(hm) & year >= 1900 & year <= 2200 & day >= 1 & day <= 366
     ts <- rep(as.POSIXct(NA, tz = "UTC"), length(day))
-    ts[ok] <- ISOdatetime(year[ok], 1, 1, 0, 0, 0, tz = "UTC") + (day[ok] - 1) * 86400 +
+    yu <- unique(year[ok])                                                      # 1 January of each year made once, not once a record
+    ts[ok] <- ISOdatetime(yu, 1, 1, 0, 0, 0, tz = "UTC")[match(year[ok], yu)] + (day[ok] - 1) * 86400 +
       (hm[ok] %/% 100) * 3600 + (hm[ok] %% 100) * 60 + fifelse(is.na(sc[ok] + 0), 0, sc[ok] + 0)
     stamp <- format(ts, "%Y-%m-%d %H:%M:%S", tz = "UTC")
     stamp[is.na(ts)] <- paste0("invalid year/day/time: ", if (!is.na(yi)) m[is.na(ts), yi] else "", "/", m[is.na(ts), di])

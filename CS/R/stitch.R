@@ -45,17 +45,20 @@ to_numeric_columns <- function(dt, cfg, stage) {
   for (v in setdiff(names(dt), c("TIMESTAMP", "source_file", ".mtime", "logger_id", "table"))) {
     x <- dt[[v]]
     if (!is.character(x)) next
-    x <- fix_enc(x)
-    nanv <- !is.na(x) & (x == "" | toupper(x) %in% c("NAN", "-NAN", "NA"))
+    # each distinct text is cleaned and converted once, then spread back (a column repeats few values: one pass over the
+    # rows took most of a stitch)
+    u <- unique(x); k <- match(x, u)
+    ue <- fix_enc(u); nu <- !is.na(ue) & (ue == "" | toupper(ue) %in% c("NAN", "-NAN", "NA"))
+    x <- ue[k]; nanv <- nu[k]
     n_nan <- n_nan + sum(nanv & x != "", na.rm = TRUE)
     x[nanv] <- NA_character_
-    num <- suppressWarnings(as.numeric(x))
+    ue[nu] <- NA_character_; num <- suppressWarnings(as.numeric(ue))[k]
     bad <- !is.na(x) & is.na(num)
     nonmiss <- sum(!is.na(x))
     if (nonmiss == 0L || sum(bad) == 0L || (nonmiss - sum(bad)) / nonmiss >= cfg$numeric_min) {
       set(dt, j = v, value = x)
       if (any(bad)) remove_cells(dt, v, bad, stage, "non_numeric", "text in a numeric column")
-      set(dt, j = v, value = suppressWarnings(as.numeric(dt[[v]])))
+      set(dt, j = v, value = if (any(bad)) suppressWarnings(as.numeric(dt[[v]])) else num)   # num already is that column as numbers
     } else set(dt, j = v, value = x)                 # genuinely a text column
   }
   n_nan
@@ -226,6 +229,23 @@ read_ahead <- function(ks, groups, pre) {
   for (x in ks) { j <- which(job$tab == x); assign(x, stats::setNames(got[j], groups[[x]]$path[job$i[j]]), envir = pre) }
 }
 
+# Time stamps "YYYY-MM-DD HH:MM:SS" as UTC: whole seconds of a valid date and time are worked out from the numbers (as
+# strptime() gives them, a quarter of the time); anything else (fractions of a second, other layouts, impossible dates)
+# goes through as.POSIXct() as before.
+parse_iso_utc <- function(x) {
+  out <- rep(NA_real_, length(x)); ok <- !is.na(x) & nchar(x) == 19L & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", x)
+  if (any(ok)) { v <- x[ok]; n <- function(a, b) as.integer(substr(v, a, b))
+    y <- n(1, 4); mo <- n(6, 7); d <- n(9, 10); h <- n(12, 13); mi <- n(15, 16); se <- n(18, 19)
+    leap <- (y %% 4L == 0L & y %% 100L != 0L) | y %% 400L == 0L; dim <- c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L)
+    good <- mo >= 1L & mo <= 12L & d >= 1L & h <= 23L & mi <= 59L & se <= 59L & y >= 1L
+    good[good] <- d[good] <= dim[mo[good]] + (mo[good] == 2L & leap[good])
+    yy <- y - (mo <= 2L); era <- yy %/% 400L; yoe <- yy - era * 400L; mp <- (mo + 9L) %% 12L   # days from 1970-01-01 (H. Hinnant's civil-from-days)
+    doy <- (153L * mp + 2L) %/% 5L + d - 1L; doe <- yoe * 365L + yoe %/% 4L - yoe %/% 100L + doy; days <- era * 146097 + doe - 719468
+    out[which(ok)[good]] <- (days * 86400 + h * 3600 + mi * 60 + se)[good]; ok[ok] <- good }
+  if (any(!ok)) out[!ok] <- as.numeric(as.POSIXct(x[!ok], tz = "UTC", format = "%Y-%m-%d %H:%M:%OS"))
+  .POSIXct(out, tz = "UTC")
+}
+
 stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
   parts <- lapply(seq_len(nrow(g)), function(i) { x <- read_pre(pre[[g$path[i]]]); if (!is.null(x)) return(x$r)      # read ahead (read_ahead)
     tryCatch(
@@ -243,10 +263,11 @@ stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
   checks <- list()
 
   # --- timestamps ---------------------------------------------------------
-  raw_ts <- fix_enc(dt$TIMESTAMP)
+  ut <- unique(dt$TIMESTAMP); kt <- match(dt$TIMESTAMP, ut); ut <- fix_enc(ut)   # each distinct time stamp parsed once (repeated downloads repeat them)
+  raw_ts <- ut[kt]
   set(dt, j = ".raw_ts", value = raw_ts)
   dt[, .wrow := seq_len(.N), by = source_file]                 # the order each file was written in (for a reset clock below)
-  set(dt, j = "TIMESTAMP", value = as.POSIXct(raw_ts, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS"))
+  set(dt, j = "TIMESTAMP", value = parse_iso_utc(ut)[kt])
   dt <- apply_time_corrections(dt, tc)                 # your fixes first, so a logger that woke up in 1990 can be moved back
   # a file whose clock is broken through and through (dates scattered from 1923 to 2058 in one download) is left out whole
   corrupt <- if (isFALSE(cfg$auto_clock_bounds)) character() else corrupt_clock_files(dt$TIMESTAMP, dt$source_file, dt$.wrow, g$path[g$format %in% c("TOA5", "TOB3")])
@@ -301,7 +322,8 @@ stitch_group <- function(g, cfg, tc = NULL, pre = NULL) {
   # changes when files are copied to another drive; the modification time only where a file has no time stamps
   dt[, .mtime := { m <- suppressWarnings(max(as.numeric(TIMESTAMP), na.rm = TRUE)); if (is.finite(m)) m else as.numeric(.mtime[1]) }, by = source_file]
   setorderv(dt, c("TIMESTAMP", ".mtime"), c(1L, if (cfg$prefer == "newest") -1L else 1L))
-  dup <- duplicated(dt, by = setdiff(names(dt), c("source_file", ".mtime", ".ord")))
+  dup <- logical(nrow(dt)); cand <- which(duplicated(dt$TIMESTAMP) | duplicated(dt$TIMESTAMP, fromLast = TRUE))   # only rows sharing a time can be copies
+  if (length(cand)) dup[cand] <- duplicated(if (length(cand) == nrow(dt)) dt else dt[cand], by = setdiff(names(dt), c("source_file", ".mtime", ".ord")))
   dt  <- remove_rows(dt, dup, "stitch", "duplicate_record",
                      "identical copy of a record that is kept", detail = "summary")
   checks[[2]] <- try_or(clock_checks(dt[order(.ord)], lid, tb), NULL, paste0(lid, " ", tb, ": clock checks not done"))
@@ -427,7 +449,9 @@ station_outputs <- function(out, kk) {
   s <- safe_name(kk)                                   # letters, digits, _ and - only: safe inside a pattern
   ls <- function(d, re) { f <- list.files(file.path(out, d), paste0(re, "$")); if (length(f)) file.path(d, f) else character() }
   c(ls("stations", paste0("^", s, "\\.[a-z]+")), ls("derived", paste0("^", s, "_(daily|monthly|water_year)\\.csv")),
-    ls("qc", paste0("^", s, "_removed\\.csv")), ls("plots", paste0("^station_", s, "\\.png")))
+    ls("qc", paste0("^", s, "_removed\\.csv")),
+    union(ls("plots", paste0("^station_", s, "\\.png")),                  # a plot still queued to be drawn (R/plots.R) is one too
+          intersect(file.path("plots", paste0("station_", s, ".png")), substring(vapply(PLOT_QUEUE$jobs, `[[`, "", "file"), nchar(out) + 2L))))
 }
 
 # "Rescan": forgets what the cache holds for these files (their headers and checksums, and the stitched record of

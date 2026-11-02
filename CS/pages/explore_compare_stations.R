@@ -38,7 +38,7 @@
   # one panel per station on one time axis (the shared plot, core/tsview.R); one pointer line reads every station out
   output$cp_plot_ui <- renderUI(if (is.null(outs())) empty_msg() else tagList(ts_viewbar(), ts_view("cp_tsv", round(130 * psz()))))
   cp_wide <- reactive({ d <- cp_data(); validate(need(nrow(d) > 0 && any(!is.na(d$value)), "No values to compare for this choice."))
-    dcast(d, TIMESTAMP ~ station, value.var = "value", fun.aggregate = function(x) x[1]) })
+    dcast(unique(d, by = c("TIMESTAMP", "station")), TIMESTAMP ~ station, value.var = "value") })   # the first value at a time (an R function per cell was slow)
   observe({
     req(identical(input$ex_tab, "Compare stations")); w <- cp_wide(); st <- intersect(input$cp_stations, names(w)); req(length(st) > 0)
     u <- unit_of(input$cp_param); u <- if (is.na(u)) "" else unname(u); ref <- input$cp_diff

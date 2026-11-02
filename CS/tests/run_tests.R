@@ -955,4 +955,28 @@ local({                                                               # accepted
   check("a file whose dates jump about (more than 20 jumps of a month or more) is found as a corrupt clock; a file written in time order is not",
         identical(names(cc), "bad.dat") && cc[["bad.dat"]] > 20)
   check("a table's own row of Accepted dates wins over the logger's", identical(bound_row(rbind(b, data.table(logger_id = "1", table = "T1", earliest = "2020-01-01", latest = "", note = "", author = "")), "1", "T1")$earliest, "2020-01-01")) })
+local({ set.seed(3); t <- as.POSIXct("1899-12-25", tz = "UTC") + sort(runif(2e5, 0, 200 * 365.25 * 86400)); x <- format(t, "%Y-%m-%d %H:%M:%S")
+  x <- c(x, "2015-02-29 00:00:00", "2016-02-29 23:59:59", "1900-02-29 00:00:00", "2015-10-19 15:27:03.86", "2015-13-01 00:00:00", "2015-10-19 24:00:00", "2015-10-19 23:59:60",
+         "2015-1-5 3:4:5", "", NA, "junk", "2015-10-19 15:27:03 ", "0000-01-01 00:00:00")
+  check("time stamps worked out from their numbers are what strptime gives (200 years, leap days, fractions, impossible dates, other layouts)",
+        identical(parse_iso_utc(x), as.POSIXct(x, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS")))
+  dt <- data.table(TIMESTAMP = Sys.time(), source_file = "f", a = c("1.5", "NAN", "", "x", "1.5", "2"), b = c("t", "u", "t", "v", "t", "u"))
+  ref <- copy(dt); for (v in c("a", "b")) { x <- ref[[v]]; nan <- !is.na(x) & (x == "" | toupper(x) %in% c("NAN", "-NAN", "NA")); x[nan] <- NA; set(ref, j = v, value = x) }
+  n <- to_numeric_columns(dt, list(numeric_min = 0.5), "stitch")
+  check("text to numbers: each distinct text converted once gives the same column (NaN and blanks missing, text left out with a reason, a text column kept)",
+        n == 1L && identical(dt$a, c(1.5, NA, NA, NA, 1.5, 2)) && identical(dt$b, ref$b)) })
+local({ op <- options(ovid.workers = 2L); on.exit(options(op)); d <- tempfile("pq"); dir.create(file.path(d, "plots"), recursive = TRUE)
+  g <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_line()
+  PLOT_QUEUE$jobs <- list(); PLOT_QUEUE$ready <- NULL; fs <- file.path(d, "plots", paste0("station_S", 1:5, "__a.png"))
+  for (f in fs[1:3]) gb_queue(g, f, 4, 3); listed <- station_outputs(d, "S1__a")
+  for (f in fs[4:5]) gb_queue(g, f, 4, 3); gb_flush(); one <- file.path(d, "one.png"); gb_save(g, one, 4, 3)
+  ok_all <- c(drawn = all(file.exists(fs)), same = length(unique(tools::md5sum(c(fs, one)))) == 1L, listed = "plots/station_S1__a.png" %in% listed, empty = !length(PLOT_QUEUE$jobs))
+  if (!all(ok_all)) cat("  (plots:", paste(names(ok_all), ok_all, collapse = ", "), "; md5:", paste(substr(tools::md5sum(c(fs, one)), 1, 6), collapse = " "), ")\n")
+  check("station plots queued and drawn in parallel are all drawn, each as gb_save() draws it, and one still queued is listed among its station's outputs",
+        all(file.exists(fs)) && length(unique(tools::md5sum(c(fs, one)))) == 1L && "plots/station_S1__a.png" %in% listed && !length(PLOT_QUEUE$jobs)) })
+local({ src <- readLines(file.path(.app, "pages", "explore_compare_stations.R"), warn = FALSE); set.seed(5); same <- TRUE
+  for (k in 1:50) { n <- sample(1:500, 1); d <- data.table(TIMESTAMP = as.POSIXct("2020-01-01", tz = "UTC") + sample(1:80, n, TRUE) * 3600, station = sample(c("A", "B b", "C"), n, TRUE), value = round(rnorm(n), 2))
+    same <- same && identical(dcast(d, TIMESTAMP ~ station, value.var = "value", fun.aggregate = function(x) x[1]), dcast(unique(d, by = c("TIMESTAMP", "station")), TIMESTAMP ~ station, value.var = "value")) }
+  check("Compare stations: the first value per time and station without an R function per cell gives the same table (50 random tables)",
+        same && any(grepl('dcast(unique(d, by = c("TIMESTAMP", "station")), TIMESTAMP ~ station, value.var = "value")', src, fixed = TRUE))) })
 cat(sprintf("\n%d passed, %d failed\n", RES$pass, length(RES$fail))); if (length(RES$fail)) { cat("Failed:\n", paste0("  ", RES$fail, collapse = "\n"), "\n", sep = ""); quit(status = 1) }
