@@ -262,7 +262,7 @@ review_ts <- function(x) {
 review_hash <- function(x) {                                              # the same as core cache.R hash_of(s), faster
   if (!requireNamespace("digest", quietly = TRUE)) return(vapply(x, hash_of, "", USE.NAMES = FALSE))
   dg <- digest::digest; u <- unique(x); h <- rep(NA_character_, length(u))  # looked up once, each text hashed once (per item it took seconds)
-  k <- !is.na(u) & nzchar(u); if (any(k)) h[k] <- unlist(mget(u[k], envir = REVIEW_HASH_MEMO, ifnotfound = NA_character_), use.names = FALSE)   # and kept for the
+  k <- !is.na(u) & nzchar(u) & nchar(u, "bytes") < 10000L; if (any(k)) h[k] <- unlist(mget(u[k], envir = REVIEW_HASH_MEMO, ifnotfound = NA_character_), use.names = FALSE)   # and kept for the
   todo <- which(is.na(h)); if (length(todo)) h[todo] <- vapply(u[todo], function(s) substr(dg(hash_bytes(s), "md5", serialize = FALSE), 1, 16), "", USE.NAMES = FALSE)   # session:
   m <- todo[k[todo]]; if (length(m)) { if (length(REVIEW_HASH_MEMO) > 2e6) rm(list = ls(REVIEW_HASH_MEMO, all.names = TRUE), envir = REVIEW_HASH_MEMO)   # each page that
     list2env(stats::setNames(as.list(h[m]), u[m]), envir = REVIEW_HASH_MEMO) }                                                                        # opens asks again

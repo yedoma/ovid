@@ -5,6 +5,9 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: an error on every page (2026-11-02).** "variable names are limited to 10000 bytes" came from a review text
+longer than core's Needs you id lookup could keep; fixed in core (review_hash). **Output changes:** none.
+
 **Smaller site files (2026-11-02).** The source_file column of output/sites/*.csv gives the raw file by its path within its
 raw folder, as files.csv gives it (rel), instead of the full path on every row (kept where two raw folders hold the same
 path). On M's project the site files went from 802 to 622 MB; every other output is the same. **Output changes:** the

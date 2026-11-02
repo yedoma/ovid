@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: "variable names are limited to 10000 bytes" (2026-11-02).** The Needs you ids (review_hash) kept each text
+for the session as a variable name, and R allows names up to 10000 bytes, so one longer review text stopped every page
+(seen in WLR). Longer texts are now hashed each time and not kept. **Output changes:** none (the same ids).
+
 **Window sizes, second pass (2026-11-02).** Every page of the five apps measured at 760, 900, 1920 and 2560 px. Number
 tiles take as many per row as fit and never split a number or word (RS, GS); the top bar fits a 760 px window (the Cmd/Ctrl K
 hint goes, gaps tighten, the logo keeps the app name); help text stops at about 100 characters a line on wide screens; the

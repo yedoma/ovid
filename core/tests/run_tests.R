@@ -1238,6 +1238,9 @@ local({ source(file.path(CORE_DIR, "cache.R"), local = TRUE); source(file.path(C
   x <- c(paste("site|depth_m|2020-01-01", 1:500), "a", "a", "é ü", "", NA)
   first <- review_hash(x); again <- review_hash(x); one <- vapply(x, function(s) substr(hash_of(s), 1, 16), "", USE.NAMES = FALSE); one[is.na(x)] <- first[is.na(x)]
   check("Needs you ids: each text hashed once and kept for the session give the ids hash_of() gives, the second time too", identical(first, one) && identical(again, first))
+  long <- c(strrep("x", 12000), strrep("x", 12000), "a")   # R allows names up to 10000 bytes; longer texts are hashed, not kept
+  check("Needs you ids: a text over 10000 bytes is hashed like any other (no 'variable names are limited' error)",
+        identical(tryCatch(review_hash(long), error = function(e) "error"), vapply(long, function(s) substr(hash_of(s), 1, 16), "", USE.NAMES = FALSE)))
   tt <- as.POSIXct("2020-01-01", tz = "UTC") + c(3600, 7200, 3600, NA)
   check("review times: each distinct time written once gives what writing every one gave", identical(review_ts(tt), format(tt, "%Y-%m-%d %H:%M:%S", tz = "UTC")) &&
         identical(review_ts(c("2020-01-01T10:00:00Z", "2020-01-01", "2020-01-01", NA, "x")), c("2020-01-01 10:00:00", "2020-01-01 00:00:00", "2020-01-01 00:00:00", NA, "x"))) })
