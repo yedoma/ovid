@@ -967,6 +967,7 @@ local({ set.seed(3); t <- as.POSIXct("1899-12-25", tz = "UTC") + sort(runif(2e5,
         n == 1L && identical(dt$a, c(1.5, NA, NA, NA, 1.5, 2)) && identical(dt$b, ref$b)) })
 local({ op <- options(ovid.workers = 2L); on.exit(options(op)); d <- tempfile("pq"); dir.create(file.path(d, "plots"), recursive = TRUE)
   g <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_line()
+  gb_save(g, tempfile(fileext = ".png"), 4, 3)   # the first plot a process draws can come out with other bytes on a very busy computer (fonts being set up): not compared
   PLOT_QUEUE$jobs <- list(); PLOT_QUEUE$ready <- NULL; fs <- file.path(d, "plots", paste0("station_S", 1:5, "__a.png"))
   for (f in fs[1:3]) gb_queue(g, f, 4, 3); listed <- station_outputs(d, "S1__a")
   for (f in fs[4:5]) gb_queue(g, f, 4, 3); gb_flush(); one <- file.path(d, "one.png"); gb_save(g, one, 4, 3)

@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Test (2026-11-02).** The parallel station plots check draws one plot first and leaves it out of the comparison: the first
+plot a process draws could come out with other bytes when the computer was very busy (fonts being set up), so the check
+failed now and then when every suite ran at once. **Output changes:** none.
+
 **Faster Compare stations (2026-11-01).** Plot and explore > Compare stations builds its table without an R function per
 cell (17 times quicker on 2 million values; the same table). **Output changes:** none.
 
