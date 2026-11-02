@@ -104,7 +104,7 @@ CORE_DIR <- local({ d <- c(Sys.getenv("OVID_CORE"), file.path(PIPELINE_DIR, "cor
   d <- path.expand(d[nzchar(d)]); hit <- d[file.exists(file.path(d, "util.R"))]
   if (!length(hit)) stop("The shared ovid core folder was not found. Looked in: ", paste(d, collapse = ", "), ". Set OVID_CORE to its path.")
   normalizePath(hit[1]) })
-for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
+for (.f in c("util", "convert", "audit", "qc", "trend", "standards", "file_audit", "logger_files", "hobo", "cache", "timezones", "timestamps", "time_corrections", "neighbours", "config", "calibration", "periods", "table_rules", "metasheet", "import", "deployments", "corrections", "applied", "manifest", "preflight", "theme", "report", "report_options"))
   source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
 CFG$project_dir <- ovid_project_dir(CFG$project_dir)               # none set: ~/Projects/Ovid/Projects/<app>/project (core util.R)
 for (.f in c("util", "readers", "f2b", "config", "metadata", "discover", "stitch", "qc", "derived", "plots", "export", "preflight", "report"))

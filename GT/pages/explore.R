@@ -45,7 +45,7 @@
       list(label = "Ruskin export (.txt, .xls)", ext = c("txt", "xls"), ok = TRUE, note = "Used when there is no .hex for that download."),
       list(label = "GeoPrecision logger file (.f2b)", ext = "f2b", ok = TRUE, note = "Decoded by GT; an FG2-Shell .csv, if present, is preferred."),
       list(label = "FG2-Shell or HOBOware export (.csv)", ext = "csv", ok = TRUE, note = "Read; a water-level or conductivity logger is left to WLR."),
-      list(label = "HOBO logger file (.hobo)", ext = "hobo", ok = FALSE, note = "Not read: export it to CSV in HOBOware into the same folder."),
+      list(label = "HOBO logger file (.hobo)", ext = "hobo", ok = TRUE, note = "U12-008 and TidbiT read directly; a HOBOware .csv, if present, is preferred. Other models: export to CSV in HOBOware."),
       list(label = "EM50 workbook (.xlsx)", ext = "xlsx", ok = TRUE, note = "Read as an ECH2O Utility workbook."),
       list(label = "Campbell TOA5 (.dat)", ext = "dat", ok = TRUE, note = "TOA5 is read; mixed-array and binary tables are not."))
     known <- unlist(lapply(kinds, `[[`, "ext")); other <- sum(!ext %in% known)

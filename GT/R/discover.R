@@ -4,12 +4,12 @@
 # A bundle is one download of one logger: its own file (.hex, .f2b, .hobo) plus any exports of it (Ruskin .txt/.xls,
 # FG2-Shell .csv/.log, HOBOware .csv). Members are matched by type, folder, serial and file name (one name starts with
 # the other), never by the name's site label. In each bundle the best readable file is used:
-#   RBR .hex  >  Ruskin .txt  >  Ruskin .xls;   FG2-Shell .csv  >  .f2b (decoded by GT, R/f2b.R);   HOBOware .csv (the .hobo cannot be read)
+#   RBR .hex  >  Ruskin .txt  >  Ruskin .xls;   FG2-Shell .csv  >  .f2b (decoded by GT, R/f2b.R);   HOBOware .csv  >  .hobo (U12-008 and TidbiT read directly; other models need the .csv)
 # A bundle with nothing readable is listed as "needs export" with what to do.
 # A HOBO water-level or conductivity logger (a pressure or conductivity channel in its CSV, or a U20/U24 model in its .hobo)
 # is read by WLR, not GT: its whole bundle is listed as "water_logger" and none of it is read or asked to be exported.
 
-SOURCE_PRIORITY <- c(rbr_hex = 1, rbr_txt = 2, rbr_xls = 3, fg2_csv = 1, fg2_f2b = 2, hobo_csv = 1, em50_xls = 1, campbell_toa5 = 1)
+SOURCE_PRIORITY <- c(rbr_hex = 1, rbr_txt = 2, rbr_xls = 3, fg2_csv = 1, fg2_f2b = 2, hobo_csv = 1, hobo_decoded = 2, em50_xls = 1, campbell_toa5 = 1)
 
 EXPORT_ADVICE <- c(rbr = "Open the .hex in Ruskin and export it as text (.txt), or check the file is complete.",
                    geoprecision = "Open the .f2b in FG2-Shell (or GP5W) and export it as .csv into the same folder.",

@@ -5,6 +5,14 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Added (HOBO .hobo files read directly, 2026-11-02).** A HOBO U12-008 (thermistor probes) or TidbiT .hobo with no HOBOware
+export is now read (core hobo.R hobo_decode_more): times and values identical to HOBOware's export on 40 U12 files. A probe
+reading outside -55 to 85 C (open or shorted probe) is left missing with that reason. When a HOBOware .csv of the same download
+is there it is still used; other HOBO models still need the .csv. Explore's file list says so.
+- **Output changes:** a U12-008 or TidbiT download that had only its .hobo now gives data (it was listed as needing an export).
+  Where the .csv is there, results are unchanged; the audit lists the .hobo as readable but not used (golden project: two
+  audit cells).
+
 **Fixed and faster (the Scotty Creek raw archive, 2026-10-31).** Run on the archive's four permafrost folders (586 files, 61
 loggers):
 - A GeoPrecision logger whose clock restarted at its default date (1998, after a power loss) loses everything it logged

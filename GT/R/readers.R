@@ -44,7 +44,7 @@ sniff_format <- function(path) {
     f2b  = { h <- readBin(path, "raw", 2L)                                       # an .f2b starts with a marker (fe 02-06)
              if (length(h) == 2L && h[1] == as.raw(0xfe) && as.integer(h[2]) >= 2L) "fg2_f2b" else if (length(h) && h[1] == as.raw(0xfe)) "fg2_binary" else "unrecognised_format" },
     log  = if (startsWith(f1, "<")) "fg2_log" else "unrecognised_format",
-    hobo = "hobo_binary",
+    hobo = if (grepl(HOBO_GT_DECODED, hobo_bin_identity(path)$model %||% "")) "hobo_decoded" else "hobo_binary",   # temperature models: read directly
     dat  = if (grepl("^\"?TOA5", f1)) "campbell_toa5" else if (grepl("^\"?TOB", f1)) "campbell_binary" else if (grepl("^[0-9]+,", f1)) "campbell_array" else "unrecognised_format",
     txt  = if (any(grepl("<Creator>RBR", first, fixed = TRUE))) "rbr_txt" else "unrecognised_format",
     csv  = if (startsWith(f1, "<FG2")) "fg2_csv" else if (grepl("Plot Title", f1, fixed = TRUE) || grepl("Date Time", f1, fixed = TRUE) ||
@@ -72,6 +72,7 @@ fg2_binary|geoprecision|FALSE|raw|GeoPrecision logger file (.f2b) that cannot be
 fg2_csv|geoprecision|TRUE|export|FG2-Shell export (.csv)
 fg2_log|geoprecision|FALSE|companion|FG2-Shell decode log (.log)
 hobo_binary|hobo|FALSE|raw|HOBO logger file (.hobo)
+hobo_decoded|hobo|TRUE|raw|HOBO logger file (.hobo), read directly
 hobo_csv|hobo|TRUE|export|HOBOware export (.csv)
 em50_xls|em50|TRUE|raw|ECH2O Utility workbook (.xls)
 campbell_toa5|campbell|TRUE|raw|Campbell TOA5 table (.dat)
@@ -274,7 +275,23 @@ read_hobo_csv <- function(path, header_only = FALSE) {
   list(meta = meta, data = mark_cut(melt_channels(wide, lbl, rep("temp", length(ti))), path), events = evt)
 }
 
-# The .hobo binary is Onset's closed format: only its plain-text identity is read (model, serial, title, zone).
+# The .hobo binary is Onset's closed format. U12-008 thermistor probes and TidbiT files are read directly (core hobo.R
+# hobo_decode_more, the same values as HOBOware's export); for other models only the plain-text identity is read.
+HOBO_GT_DECODED <- "U12-008|UTBI-001"
+HOBO_PROBE_ERR <- "outside -55 to 85 C (an open or shorted probe)"
+read_hobo_decoded <- function(path, header_only = FALSE) {
+  meta <- modifyList(read_hobo_binary_header(path)$meta, list(format = "hobo_decoded"))
+  if (header_only) return(list(meta = meta))
+  d <- hobo_decode_more(path)                                          # core hobo.R
+  if (is.null(d)) stop("this .hobo file's channels are not thermistor probes; export it from HOBOware as .csv")
+  meta$offset_hours <- attr(d, "utc_offset_h") %||% meta$offset_hours; meta$interval_s <- attr(d, "interval_s"); meta$rows <- nrow(d)
+  ch <- setdiff(names(d), "TIMESTAMP"); lbl <- sub("^temp_c_?", "", ch); lbl[!nzchar(lbl) | grepl("^ch[0-9]+$", lbl)] <- paste0("T", seq_along(ch))[!nzchar(lbl) | grepl("^ch[0-9]+$", lbl)]
+  wide <- data.table(TIMESTAMP = d$TIMESTAMP, ord = seq_len(nrow(d))); for (k in seq_along(ch)) set(wide, j = lbl[k], value = d[[ch[k]]])
+  long <- melt_channels(wide, lbl, rep("temp", length(lbl)), err = lapply(ch, function(cn) ifelse(is.na(d[[cn]]), HOBO_PROBE_ERR, NA_character_)))
+  meta$channels <- length(ch); list(meta = meta, data = long, events = empty_events())
+}
+
+# Other models: only the plain-text identity is read (model, serial, title, zone).
 read_hobo_binary_header <- function(path) { id <- hobo_bin_identity(path)                      # core logger_files.R
   list(meta = list(format = "hobo_binary", type = "hobo", serial = norm_serial(id$serial), model = id$model, title = id$title, offset_hours = id$offset_hours,
                    interval_s = NA_real_, rows = NA_integer_, download = NA, water = grepl(HOBO_WATER_MODELS, id$model)))
@@ -359,7 +376,7 @@ read_logger_file <- function(path, format, header_only = FALSE, campbell_pattern
   unread_take()                                                           # cells that are not numbers, counted per file (core convert.R)
   unread_mark(switch(format,
     rbr_hex = read_rbr_hex(path, header_only), rbr_txt = read_rbr_txt(path, header_only), rbr_xls = read_rbr_xls(path, header_only),
-    fg2_csv = read_fg2_csv(path, header_only), fg2_f2b = read_f2b(path, header_only), hobo_csv = read_hobo_csv(path, header_only), hobo_binary = read_hobo_binary_header(path),
+    fg2_csv = read_fg2_csv(path, header_only), fg2_f2b = read_f2b(path, header_only), hobo_csv = read_hobo_csv(path, header_only), hobo_binary = read_hobo_binary_header(path), hobo_decoded = read_hobo_decoded(path, header_only),
     em50_xls = read_em50_xls(path, header_only), campbell_toa5 = read_campbell_toa5(path, header_only, campbell_patterns),
     stop("no reader for ", format)))
 }
