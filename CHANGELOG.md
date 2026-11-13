@@ -13,6 +13,9 @@ results gain `alt_lower_m`: a year where thaw went below the deepest sensor read
 projects whose barologgers record at :15 or similar; others unchanged). A run on a drive that cannot clone files no longer
 updates output over 2 GB in place without a copy: it stops and says why. Install and upgrade: docs/INSTALL.md.
 
+**GitHub checks (2026-11-12).** The Mac jobs run on `macos-15`: GitHub no longer offers `macos-14`, so the Mac test job
+failed before starting (run 43353605623).
+
 **Fixed (safety fixes gate 1, 2026-11-03).** CS logger programs can no longer run code when read; a run can no longer
 write into a raw folder through a link; two runs can no longer hold one project's lock; an interrupted run's recovery
 never puts back a partial or outdated copy. A run with finished output that cannot be copied first now stops instead of

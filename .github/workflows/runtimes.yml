@@ -1,6 +1,6 @@
 # Builds the release candidate and proves the exact files a release would attach. One source archive is made from the commit
 # (git archive); each portable runtime (build/make_runtime_mac.sh, build/make_runtime_win.ps1) is built from the package
-# snapshot in build/snapshot.txt on the system it is for: Apple silicon (macos-14), Intel Mac (macos-15-intel) and Windows.
+# snapshot in build/snapshot.txt on the system it is for: Apple silicon (macos-15), Intel Mac (macos-15-intel) and Windows.
 # Each runtime archive is then extracted, beside the extracted source archive, into a clean folder and tested from there with
 # the runtime's own R only (no installed R or library is used): the five apps start the way the launcher starts them and each
 # page answers (build/check_runtime.R); each app imports its sample, a run is killed part way and recovered, the project is
@@ -42,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: macos-14,       name: ovid-runtime-mac-arm64,  file: ovid-runtime-mac-arm64.tar.gz }
+          - { os: macos-15,       name: ovid-runtime-mac-arm64,  file: ovid-runtime-mac-arm64.tar.gz }
           - { os: macos-15-intel, name: ovid-runtime-mac-x86_64, file: ovid-runtime-mac-x86_64.tar.gz }
           - { os: windows-latest, name: ovid-runtime-win-x64,    file: ovid-runtime-win-x64.zip }
     runs-on: ${{ matrix.os }}
