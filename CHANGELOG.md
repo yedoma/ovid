@@ -2,7 +2,23 @@
 
 The whole bundle at a glance, newest first. Each app and the core have their own `CHANGELOG.md` with the detail.
 
-## Unreleased
+## Unreleased: v1.1.0 candidate (core 1.16.0, CS 1.12.0, WLR 0.13.0, GT 1.9.0, GS 0.6.0, RS 0.7.0; not tagged)
+
+**Release stability (2026-11-03).** Raw folders protected through links and hard links in every write path (runs, recovery,
+page actions in CS and RS); one run at a time by an authoritative lock; recovery after an interruption journalled, resumable
+and checked byte for byte; CS program files read without running code; GS catalogue imports open as new copies; the RS
+shareable viewer shows project values as text and leaves local folders out by default. **Output changes:** GT active-layer
+results gain `alt_lower_m`: a year where thaw went below the deepest sensor reading is now a lower bound, not an exact ALT
+(rerun GT projects with deep thaw); WLR barologger agreement now works for loggers recording off the hour (rerun WLR
+projects whose barologgers record at :15 or similar; others unchanged). A run on a drive that cannot clone files no longer
+updates output over 2 GB in place without a copy: it stops and says why. Install and upgrade: docs/INSTALL.md.
+
+**Fixed (safety fixes gate 1, 2026-11-03).** CS logger programs can no longer run code when read; a run can no longer
+write into a raw folder through a link; two runs can no longer hold one project's lock; an interrupted run's recovery
+never puts back a partial or outdated copy. A run with finished output that cannot be copied first now stops instead of
+updating in place. Details in core/ and CS/ changelogs. No output changes.
+Follow-up the same day: linked project roots and hard links, RS saved sources, recovery at start-up and WLR Rescan
+under the same checks; resumable and content-checked restores; CRBasic counts and sizes bounded.
 
 **Fixed (window sizes, second pass, 2026-11-02; approved by M).** All five apps (RS included) checked at 760, 900, 1920 and
 2560 px: number tiles no longer split numbers, the top bar fits 760 px, help text keeps a readable line on wide screens,

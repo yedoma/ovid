@@ -15,7 +15,7 @@ load_cat <- function(points_per_flight = CFG$points_per_flight) {
   im <- rd("images.csv", select = c("flight_id", "primary", "lat", "lon"))
   pts <- if (nrow(im)) thin_points(im[, primary := as.logical(primary)], points_per_flight) else data.table(flight_id = character(), lat = numeric(), lon = numeric())
   list(flights = fl, links = rd("links.csv"), geometry = rd("geometry.csv", colClasses = list(character = c("flight_id", "ref", "line"))),
-       points = pts, sources = rd("sources.csv"), gis_layers = rd("gis_layers.csv"), gis_features = rd("gis_features.csv", colClasses = list(character = c("feature", "line"))),
+       points = pts, sources = rd("sources.csv", strip.white = FALSE), gis_layers = rd("gis_layers.csv"), gis_features = rd("gis_features.csv", colClasses = list(character = c("feature", "line"))),
        datasets = rd("datasets.csv", colClasses = list(character = c("acquired", "footprint", "crs", "detail", "product", "platform"))), unassigned = rd("unassigned.csv"), logs = rd("logs.csv"), set_aside = rd("set_aside.csv", colClasses = list(character = c("folder", "why"))),   # other geodata set aside (R/geodata.R)
        footprints = { fp <- rd("footprints.csv", colClasses = list(character = c("flight_id", "kind", "line"))); if (nrow(fp)) fp else data.table(flight_id = character(), kind = character(), part = integer(), ring = integer(), line = character()) }, made = file.mtime(file.path(CAT(), "flights.csv")))
 }

@@ -5,6 +5,21 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: a Rescan that stops to ask the time zone (2026-11-03).** After the answer it goes on with the same files and its
+own completion message (it ran a plain run before). A cancelled run's message now says what happened to the output.
+The grouping preview reads site files without writing a cache in the project. **Output changes:** none.
+
+**Fixed: barologger agreement for loggers recording off the hour (2026-11-03; WLR 0.13.0).** Two barologgers that both
+record at :15 past the hour stopped the comparison with an error. Agreement is still worked out at the top of each hour
+when two loggers have a value there (results unchanged); when no hour has two, at every time either recorded, each value
+interpolated within the barometer gap rule. With no usable overlap the result says so (agreement "no usable overlap").
+**Output changes:** only where barologgers record off the hour, which before could not be compared.
+
+**Fixed: Rescan forgets cached files inside the checked run (2026-11-03).** Rescan on the Raw files page removed cached
+reads before the run had checked the project folder and taken its lock, trusting the cache folder itself; with that
+folder linked elsewhere it could remove files there. The selected files are now forgotten at the start of the run
+(cfg$rescan), after the checks, and only inside the project folder. **Output changes:** none.
+
 **Fixed: sites from folders on Windows (2026-11-02).** A logger with no deployment took its site from the folder its
 files are in; on Windows the folder was never matched to the raw folder (paths written with \\ against /), so the site
 came out wrong (e.g. "raw"). **Output changes:** on Windows, such loggers now get the same site as on macOS and Linux.

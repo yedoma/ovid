@@ -5,6 +5,42 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: review round of 2026-11-03.** Source paths are kept exactly in the Set-up editor, the catalogue and Simple's
+source status (a folder name may end in a space). Removing a source writes every changed table beside its place first
+and renames them in one journalled step, finished by the next removal or scan if stopped. The viewer's zip and page come
+from one selection: an excluded flight's shapes are in neither. The viewer's table and details work without the map
+(offline, or the map library blocked) and the map says why it is missing. Set-up table saves are checked and locked; the
+GNSS download writes only the downloaded file. **Output changes:** an excluded flight's geometry no longer appears in the
+viewer's geometry.csv.
+
+**Fixed: the shareable viewer and two page actions (2026-11-03; RS 0.7.0).** Flight names, notes, paths, link evidence and
+map labels are shown as text in the viewer's table, details and tooltips, and its data block is escaped so nothing in it
+can end the page's script. The sources' folders on this computer are left out of the viewer's page and CSVs by default
+(viewer_paths = TRUE keeps them); viewer_share_preview() lists what a viewer folder holds (files, rows, columns,
+positions, and any cell that looks like a local folder). Adding a source protects the folder being added, and Missions
+link edits go through the run's checks and lock. **Output changes:** the viewer's sources.csv (and datasets.csv,
+gis_features.csv) no longer hold absolute folder paths unless asked for.
+
+**Fixed: the Sources page writes nothing when shown; the form keeps the folder typed (2026-11-03).** Showing Sources (and
+the other pages and the set-up check) reads the set-up tables as they are (core read_configs); adding a folder, renaming
+a waiting one and the geodata switches go through the run's checks and lock (core project_mutate). A scan's unfinished
+file (scan.rds.part) is cleared inside the next checked run, not by the page when a scan ends, so a refused scan touches
+nothing. The Add and Scan form takes the folder exactly as typed when it exists (a name may end in a space) and trims it
+only when that finds the folder instead. **Output changes:** none.
+
+**Fixed: a source folder whose name ends in a space (2026-11-03).** Its path is protected, scanned, saved in sources.csv
+and read back exactly as written (it was trimmed, so the folder protected was not the one scanned). **Output changes:**
+none.
+
+**Fixed: scans given by position and Remove source are checked (2026-11-03).** run_pipeline(cfg, folder) now protects the
+folder as run_pipeline(cfg, scan = folder) does, and Remove source changes sources.csv and the catalogue only after the
+same checks and lock as a run (core project_mutate). **Output changes:** none.
+
+**Fixed: a run never writes into a saved source (2026-11-03).** The folders of config/sources.csv, the folders a scan is
+given and the first-run folders are now protected like raw folders (core protected_roots), plugged in or not, and also
+when the app starts and puts back an unfinished run's output; sources.csv is read without making any file. A catalogue is
+still rebuilt from the last scan of a source that is unplugged. **Output changes:** none.
+
 **Faster, round 2 (2026-10-30; outputs identical)**
 - A rebuild with nothing changed keeps the file audit as it is (it is made again only when the files, flight membership, links, datasets, GIS layers or its code change): 24.5 -> 17.5 s on a 297-flight catalogue.
 - STAC catalogue written compact (3.2 -> 2.6 MB) and only the files whose content changed; files of flights gone are removed.

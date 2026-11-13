@@ -65,7 +65,10 @@ active_layer <- function(td, an, pf_years = 2) {
                frozen_years = if (any(frozen)) max(run[frozen]) else 0L, deepest_frozen_m = if (any(frozen)) min(depth_m[frozen]) else NA_real_,
                deepest_m = max(depth_m), shallowest_m = min(depth_m), sensors = .N), by = .(site, year)]
   a <- td[, .(alt_m = if (any(!is.na(thaw_m))) max(thaw_m, na.rm = TRUE) else NA_real_, date_alt = if (any(!is.na(thaw_m))) date[which.max(thaw_m)] else as.Date(NA),
-              days = .N, below_deepest = sum(state == "thawed below the deepest sensor")), by = .(site, year)]
+              days = .N, below_deepest = sum(state == "thawed below the deepest sensor"),
+              below_m = if (any(state == "thawed below the deepest sensor")) max(deepest_m[state == "thawed below the deepest sensor"]) else NA_real_,
+              below_date = if (any(state == "thawed below the deepest sensor")) { b <- which(state == "thawed below the deepest sensor"); date[b][which.max(deepest_m[b])] } else as.Date(NA)),
+          by = .(site, year)]
   a <- merge(a, pf, by = c("site", "year"), all = TRUE)
   unc <- "ALT, permafrost not yet confirmed (frozen in fewer consecutive years of record than years_needed)"
   a[, result := fifelse(is.na(permafrost), "year incomplete at one or more depths",
@@ -74,7 +77,21 @@ active_layer <- function(td, an, pf_years = 2) {
                 fifelse(!permafrost & below_deepest > 0, "no permafrost within the sensors: thawed below the deepest sensor",
                 fifelse(!permafrost, "no permafrost within the sensors (no depth stays at or below 0 \u00b0C all year)",
                 fifelse(is.na(alt_m), "no thaw found", "ALT")))))) ]
+  # Thaw went below the deepest sensor reading on some day of the year: the year's deepest thaw is not known, only that it
+  # is at least as deep as that sensor (or the deepest thaw found between sensors). The ALT is then a lower bound, not a value.
+  # A permafrost year with only that evidence (no day with thaw between sensors) gives the same lower bound. date_alt is the day
+  # of the evidence for the value given (the bound's day when it comes from a below-sensor day), alt_evidence says which.
+  lb <- "ALT lower bound: on some days thaw went below the deepest sensor reading"
+  a[, `:=`(alt_lower_m = NA_real_, alt_evidence = fifelse(!is.na(alt_m), "thaw between sensors", ""))]
+  i <- a[, which(result %in% c("ALT", unc, "no thaw found") & below_deepest > 0)]
+  if (length(i)) {
+    a[i, from_below := !is.na(below_m) & (is.na(alt_m) | below_m >= alt_m)]
+    a[i, `:=`(alt_lower_m = round(pmax(alt_m, below_m, na.rm = TRUE), 3), date_alt = fifelse(from_below, below_date, date_alt),
+              alt_evidence = fifelse(from_below, "thawed below the deepest sensor (at least this deep)", "thaw between sensors (deeper later: at least this deep)"),
+              result = paste0(lb, fifelse(result == unc, " (permafrost not yet confirmed)", "")))]
+    a[, from_below := NULL] }
   a[!result %in% c("ALT", unc), alt_m := NA_real_]
+  a[, c("below_m", "below_date") := NULL]
   a[, c("frozen_once", "unconfirmed") := NULL]
   a[, alt_m := round(alt_m, 3)]
   a[]

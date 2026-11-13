@@ -526,6 +526,26 @@ local({
         all(p2[site == "P", result] == "ALT") && grepl("pereletok", p2[site == "Q" & year == 2020, result]) && is.na(p2[site == "Q" & year == 2020, alt_m]) &&
         grepl("not yet confirmed", p2[site == "R" & year == 2020, result]) && p2[site == "R" & year == 2020, alt_m] == 0.6)
   check("the number of years can be set per site (calibration options); 1 is the old one-year test", p1[site == "Q" & year == 2020, result] == "ALT" && p1[site == "R" & year == 2020, result] == "ALT")
+  ltd <- data.table(site = "P", date = as.Date(c("2019-08-30", "2020-08-01", "2020-09-01", "2021-08-30")), thaw_m = c(0.6, 0.6, NA, 0.6),
+                    state = c("between sensors", "between sensors", "thawed below the deepest sensor", "between sensors"), deepest_m = c(1, 1, 0.8, 1))
+  lb <- active_layer(copy(ltd), pa[site == "P"])
+  check("a year with a bracketed thaw depth and a later day thawed below the deepest sensor reading: a lower bound (at least 0.8 m), not an exact ALT; the other years stay exact",
+        grepl("^ALT lower bound", lb[year == 2020, result]) && is.na(lb[year == 2020, alt_m]) && lb[year == 2020, alt_lower_m] == 0.8 &&
+          all(lb[year != 2020, result] == "ALT") && all(lb[year != 2020, alt_m] == 0.6) && all(is.na(lb[year != 2020, alt_lower_m])))
+  check("the lower bound is dated by its evidence: 1 September, thawed below the deepest sensor", lb[year == 2020, date_alt] == as.Date("2020-09-01") && grepl("below the deepest sensor", lb[year == 2020, alt_evidence]) &&
+        all(lb[year != 2020, alt_evidence] == "thaw between sensors"))
+  otd <- data.table(site = "P", date = as.Date(c("2019-08-30", "2020-08-15", "2021-08-30")), thaw_m = c(0.6, NA, 0.6),
+                    state = c("between sensors", "thawed below the deepest sensor", "between sensors"), deepest_m = c(1, 0.9, 1))
+  ob <- active_layer(copy(otd), pa[site == "P"])
+  check("a permafrost year with only below-sensor evidence: the supported lower bound (at least 0.90 m on 15 August), not 'no thaw found'",
+        grepl("^ALT lower bound", ob[year == 2020, result]) && ob[year == 2020, alt_lower_m] == 0.9 && ob[year == 2020, date_alt] == as.Date("2020-08-15"))
+  pl <- plot_thaw_depth(ltd[!is.na(thaw_m)], lb); lab <- unlist(lapply(pl$layers, function(l) if (is.data.frame(l$data) && "alt_lower_m" %in% names(l$data)) sprintf("\u2265 %.2f m", l$data$alt_lower_m)))
+  pd8 <- unlist(lapply(pl$layers, function(l) if (is.data.frame(l$data) && "alt_lower_m" %in% names(l$data)) as.character(l$data$date_alt)))
+  check("... the plot marks it as at least 0.80 m on 1 September, and the report's table says what alt_lower_m means", any(grepl("0.80", lab)) && "2020-09-01" %in% pd8 &&
+          grepl("alt_lower_m: at least", paste(readLines(file.path(here, "R", "report.R"), warn = FALSE), collapse = " ")))
+  e <- tryCatch(site_name_check(c("North 1", "North_1", "South")), error = function(e) e); e2 <- tryCatch(site_name_check(c("Bog A", "bog_a")), error = function(e) e)
+  check("sites whose names give one file name (North 1 / North_1, or Bog A / bog_a on a disk that ignores case) stop the run, naming both",
+        inherits(e, "ovid_project_check") && grepl("'North 1' and 'North_1'", conditionMessage(e)) && inherits(e2, "ovid_project_check") && isTRUE(site_name_check(c("North 1", "North 2"))))
   check("trends of the annual mean leave sensors above the ground out", !nrow(trends(an, data.table(site = "BH", year = 2019:2021, alt_m = 1), 2)[depth_m < 0]))
 })
 local({                                                               # depths, between-site flags, the water year, the configuration

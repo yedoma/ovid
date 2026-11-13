@@ -46,14 +46,75 @@ cb_call <- function(s, name) {                  # arguments of Name(...) at the 
   body <- sub("\\)\\s*$", "", substring(s, attr(m, "match.length") + m))
   cb_args(body)
 }
-cb_num <- function(x, consts) {                 # a number, a Const, or simple arithmetic of those
-  x <- trim(gsub("\"", "", x)); if (!nzchar(x)) return(NA_real_)
-  if (grepl("^-?[0-9.]+$", x)) return(as.numeric(x))
-  ids <- regmatches(x, gregexpr("[A-Za-z_][A-Za-z0-9_]*", x))[[1]]
-  if (!grepl("^[A-Za-z0-9_.+*/() -]+$", x) || !all(tolower(ids) %in% names(consts))) return(NA_real_)
-  x <- gsub("([A-Za-z_][A-Za-z0-9_]*)", "\\L\\1", x, perl = TRUE)
-  # safe: a program constant that is not a plain number is not known (NA)
-  suppressWarnings(tryCatch(as.numeric(eval(parse(text = x), envir = list2env(consts, parent = baseenv()))), error = function(e) NA_real_))
+# A number, a Const, or arithmetic of those (+ - * /, unary signs, brackets). Program text is never run as R code: a
+# small parser reads numbers and names from the constants table only, and anything else (a call such as INT(), an
+# assignment, indexing, an unknown name) is not known (NA). A rejected expression signals a "cb_unread" condition
+# naming the field, which read_program() collects; a quoted string or a bare name (TRUE, _60Hz) is NA without one.
+CB_EXPR_MAX_CHARS <- 200L
+CB_EXPR_MAX_DEPTH <- 20L
+CB_FIELDS_MAX <- 20000L                         # the most fields one array, instruction or table is expanded to (a datalogger holds far fewer)
+cb_num <- function(x, consts, field = "") {
+  if (!length(x) || is.na(x[1])) return(NA_real_)
+  quoted <- grepl("\"", x[1], fixed = TRUE); x <- trim(gsub("\"", "", x[1])); if (!nzchar(x)) return(NA_real_)
+  r <- cb_expr(x, consts)
+  if (!is.null(r$why) && !quoted && !grepl("^[A-Za-z_][A-Za-z0-9_]*$", x))
+    signalCondition(structure(class = c("cb_unread", "condition"), list(message = sprintf("%s'%s' (%s)",
+      if (nzchar(field)) paste0(field, ": ") else "", substr(x, 1L, 60L), r$why), call = NULL)))
+  if (!is.null(r$why)) attr(r$value, "rejected") <- TRUE                  # not just unknown: cb_whole() then drops the instruction
+  r$value
+}
+cb_tokens <- function(x) {                     # numbers, names and the symbols + - * / ( ); NULL for any other text
+  out <- character(); i <- 1L; n <- nchar(x)
+  while (i <= n) {
+    rest <- substring(x, i); c1 <- substr(rest, 1L, 1L)
+    if (c1 == " " || c1 == "\t") { i <- i + 1L; next }
+    m <- regexpr("^(([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][+-]?[0-9]+)?|[A-Za-z_][A-Za-z0-9_]*|[-+*/()])", rest, perl = TRUE)
+    if (m < 0) return(NULL)
+    len <- attr(m, "match.length"); out <- c(out, substr(rest, 1L, len)); i <- i + len
+  }
+  out
+}
+cb_expr <- function(x, consts) {               # list(value, why): why is NULL when the expression was read
+  bad <- function(why) list(value = NA_real_, why = why)
+  if (nchar(x) > CB_EXPR_MAX_CHARS) return(bad(sprintf("longer than %d characters", CB_EXPR_MAX_CHARS)))
+  tk <- cb_tokens(x); if (is.null(tk)) return(bad("only numbers, constants, + - * / and brackets are read"))
+  pos <- 1L; peek <- function() if (pos <= length(tk)) tk[pos] else ""
+  fail <- function(why) stop(structure(class = c("cb_reject", "error", "condition"), list(message = why, call = NULL)))
+  primary <- function(depth) {
+    if (depth > CB_EXPR_MAX_DEPTH) fail(sprintf("nested deeper than %d", CB_EXPR_MAX_DEPTH))
+    t <- peek(); pos <<- pos + 1L
+    if (t %in% c("+", "-")) { v <- primary(depth + 1L); return(if (t == "-") -v else v) }
+    if (t == "(") { v <- sum_of(depth + 1L); if (peek() != ")") fail("unbalanced brackets"); pos <<- pos + 1L; return(v) }
+    if (grepl("^[0-9.]", t)) return(as.numeric(t))
+    if (grepl("^[A-Za-z_]", t)) {
+      if (peek() == "(") fail(sprintf("%s(...) is a call or an array element, which is not read", t))
+      k <- tolower(t); if (!k %in% names(consts)) fail(sprintf("%s is not a numeric constant", t))
+      v <- suppressWarnings(as.numeric(consts[[k]])); return(if (length(v) == 1L) v else NA_real_)
+    }
+    fail(if (nzchar(t)) sprintf("unexpected '%s'", t) else "incomplete expression")
+  }
+  product <- function(depth) {
+    v <- primary(depth)
+    while (peek() %in% c("*", "/")) { op <- peek(); pos <<- pos + 1L; w <- primary(depth); v <- if (op == "*") v * w else v / w }
+    v
+  }
+  sum_of <- function(depth) {
+    v <- product(depth)
+    while (peek() %in% c("+", "-")) { op <- peek(); pos <<- pos + 1L; w <- product(depth); v <- if (op == "+") v + w else v - w }
+    v
+  }
+  tryCatch({ v <- sum_of(0L); if (pos <= length(tk)) fail(sprintf("unexpected '%s'", tk[pos]))
+    if (is.nan(v) || is.infinite(v)) fail("the result is not a finite number (a division by zero?)")
+    list(value = v, why = NULL) },
+           cb_reject = function(e) bad(conditionMessage(e)))
+}
+cb_unread <- function(field, what) signalCondition(structure(class = c("cb_unread", "condition"), list(message = paste0(field, ": ", what), call = NULL)))
+# A count, size or index: a whole number from 1 to max, else reported for its field. NA when unknown (as before), 0 when invalid.
+cb_whole <- function(x, field, max = CB_FIELDS_MAX) {
+  if (!length(x)) return(NA_integer_)
+  if (is.na(x)) return(if (isTRUE(attr(x, "rejected"))) 0L else NA_integer_)
+  if (x != round(x) || x < 1 || x > max) { cb_unread(field, sprintf("%s is not a whole number from 1 to %s", format(x, digits = 6), format(max, big.mark = ","))); return(0L) }
+  as.integer(x)
 }
 cb_truthy <- function(x) { x <- tolower(trim(x)); nzchar(x) && !x %in% c("false", "0") }
 cb_interval <- function(n, u) {
@@ -64,19 +125,30 @@ cb_interval <- function(n, u) {
 }
 
 # fields written by one output instruction: name, index, processing and units
-cb_fields <- function(src, reps, vars, alias, units, suffix, proc) {
+cb_fields <- function(src, reps, vars, alias, units, suffix, proc, field = src) {
   nm <- trim(sub("\\(.*$", "", src)); idx <- if (grepl("\\(", src)) sub("^[^(]*\\((.*)\\)\\s*$", "\\1", src) else ""
   v <- vars[[tolower(nm)]]
   if (is.null(v) && !nzchar(idx) && length(alias)) {                   # source is an alias: use the element it names
     rk <- names(alias)[tolower(unlist(alias)) == tolower(nm)]
     if (length(rk) && grepl("\\(", rk[1])) return(cb_fields(rk[1], reps, vars, alias, units, suffix, proc))
   }
-  base <- v$name %||% nm; dims <- v$dims
-  reps <- if (is.na(reps) || reps < 1) 1L else as.integer(reps)
+  base <- v$name %||% nm; dims <- v$dims; unresolved <- FALSE
+  reps <- if (is.na(reps) || reps < 1) 1L else as.integer(reps)       # unknown: one field, as before (an invalid count is caught before)
+  if (length(dims) && grepl("\\(", src)) {                             # the element named must be in the array, and be read
+    st <- vapply(strsplit(idx, ",", fixed = TRUE)[[1]], function(z) cb_num(z, v$consts, paste("index of", base, "in", field)), 1)
+    if (anyNA(st)) {                                                     # an index not read (INT(1), a loop variable): its fields are not guessed
+      cb_unread(field, sprintf("the element %s(%s) could not be read, so the fields it writes are not known", base, idx))
+      return(data.table(column = paste0(base, suffix, "(?)"), source = src, process = proc, units = "", unresolved = TRUE)) }
+    st <- c(st, rep(1, length(dims)))[seq_along(dims)]
+    if (any(st != round(st) | st < 1 | st > dims)) { cb_unread(field, sprintf("%s(%s) is outside %s(%s)", base, paste(st, collapse = ","), base, paste(dims, collapse = ",")))
+      return(data.table()) } }
   if (!length(dims)) { ix <- rep("", reps); key <- rep(tolower(base), reps) } else {
-    st <- vapply(strsplit(idx, ",", fixed = TRUE)[[1]], function(z) cb_num(z, v$consts), 1)
+    st <- vapply(strsplit(idx, ",", fixed = TRUE)[[1]], function(z) cb_num(z, v$consts, paste("index of", base)), 1)
     st <- c(st, rep(1, length(dims)))[seq_along(dims)]; st[is.na(st)] <- 1
     pos0 <- sum((st - 1) * rev(cumprod(rev(c(dims[-1], 1)))))           # row-major position of the first element
+    if (pos0 + reps > prod(dims)) {                                      # more repetitions than elements left: only those that exist, marked uncertain
+      cb_unread(field, sprintf("%d repetitions from %s(%s) run past the end of %s(%s)", reps, base, paste(st, collapse = ","), base, paste(dims, collapse = ",")))
+      reps <- as.integer(prod(dims) - pos0); unresolved <- TRUE }
     ix <- vapply(pos0 + seq_len(reps) - 1, function(p) { k <- integer(length(dims)); r <- p
       for (d in rev(seq_along(dims))) { k[d] <- r %% dims[d] + 1; r <- r %/% dims[d] }
       paste0("(", paste(k, collapse = ","), ")") }, "")
@@ -87,7 +159,7 @@ cb_fields <- function(src, reps, vars, alias, units, suffix, proc) {
     a <- alias[[key[r]]]; nmr <- if (!is.null(a)) a else base; ixr <- if (!is.null(a)) "" else ix[r]
     un <- units[[tolower(nmr)]] %||% units[[tolower(base)]] %||% ""
     for (k in seq_along(suffix)) out[[length(out) + 1L]] <- data.table(column = paste0(nmr, suffix[k], ixr), source = paste0(base, ix[r]),
-      process = proc[k], units = if (proc[k] %in% c("TMx", "TMn")) "" else un)
+      process = proc[k], units = if (proc[k] %in% c("TMx", "TMn")) "" else un, unresolved = unresolved)
   }
   rbindlist(out)
 }
@@ -98,7 +170,7 @@ parse_crbasic <- function(path) {
   skip_ins <- "^(If|ElseIf|Else|EndIf|For|Next|Do|Loop|While|Wend|Select|Case|Call|CallTable|Scan|NextScan|Delay|Exit|Return|Sub|EndSub|Function|EndFunction|Const|Public|Dim|Alias|Units|DataTable|EndTable|BeginProg|EndProg|SequentialMode|PipeLineMode|SlowSequence|EndSequence|Erase|Move|Average|Sample|Maximum|Minimum|Totalize|StdDev|Median|Moment|WindVector|DataInterval|CardOut|TableFile|FieldNames|Include)$"
   for (s in l[grepl("^Const\\s", l, ignore.case = TRUE)]) {
     m <- regmatches(s, regexec("^Const\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.+)$", s, ignore.case = TRUE))[[1]]
-    if (length(m)) consts[[tolower(m[2])]] <- cb_num(m[3], consts)
+    if (length(m)) consts[[tolower(m[2])]] <- cb_num(m[3], consts, paste("Const", m[2]))
   }
   for (s in l) {
     kw <- tolower(regmatches(s, regexpr("^[A-Za-z_][A-Za-z0-9_]*", s))); if (!length(kw)) kw <- ""   # a line that does not start with a name has no keyword
@@ -106,21 +178,25 @@ parse_crbasic <- function(path) {
       for (it in cb_args(sub("^[A-Za-z]+\\s+", "", s))) {
         it <- trim(sub("\\s+As\\s+.*$", "", it, ignore.case = TRUE)); nm <- trim(sub("\\(.*$", "", it))
         if (!grepl("^[A-Za-z_][A-Za-z0-9_]*$", nm)) next
-        d <- if (grepl("\\(", it)) vapply(cb_args(sub("^[^(]*\\((.*)\\)\\s*$", "\\1", it)), cb_num, 1, consts = consts) else numeric()
-        vars[[tolower(nm)]] <- list(name = nm, dims = d[!is.na(d)], consts = consts)
+        d <- if (grepl("\\(", it)) vapply(cb_args(sub("^[^(]*\\((.*)\\)\\s*$", "\\1", it)), cb_num, 1, consts = consts, field = paste("size of", nm)) else numeric()
+        d <- vapply(d, cb_whole, 1L, field = paste("size of", nm)); d <- d[!is.na(d)]
+        if (any(d == 0L)) d <- integer()                                   # an invalid size (reported): the array is not expanded
+        else if (length(d) && prod(as.numeric(d)) > CB_FIELDS_MAX) { cb_unread(paste("size of", nm), sprintf("%s elements is more than %s", format(prod(as.numeric(d)), big.mark = ","),
+                                                                                                           format(CB_FIELDS_MAX, big.mark = ","))); d <- integer() }
+        vars[[tolower(nm)]] <- list(name = nm, dims = d, consts = consts)
         if (kw == "public") pub <- c(pub, nm)
       }
     } else if (kw == "alias") {
       m <- regmatches(s, regexec("^Alias\\s+(.+?)\\s*=\\s*([A-Za-z_][A-Za-z0-9_]*)", s, ignore.case = TRUE))[[1]]
       if (length(m)) { k <- tolower(gsub("\\s", "", m[2])); if (grepl("\\(", k)) {
-          n0 <- sub("\\(.*$", "", k); ii <- vapply(cb_args(sub("^[^(]*\\((.*)\\)$", "\\1", k)), cb_num, 1, consts = consts)
+          n0 <- sub("\\(.*$", "", k); ii <- vapply(cb_args(sub("^[^(]*\\((.*)\\)$", "\\1", k)), cb_num, 1, consts = consts, field = paste("Alias", m[3]))
           k <- paste0(n0, "(", paste(ii, collapse = ","), ")") }
         alias[[k]] <- m[3] }
     } else if (kw == "units") {
       m <- regmatches(s, regexec("^Units\\s+([A-Za-z_][A-Za-z0-9_()]*)\\s*=\\s*(.*)$", s, ignore.case = TRUE))[[1]]
       if (length(m)) units[[tolower(sub("\\(.*$", "", m[2]))]] <- trim(gsub("\"", "", m[3]))
     } else if (kw == "scan") {
-      a <- cb_call(s, "Scan"); if (length(a) >= 2 && is.na(scan$seconds)) scan <- cb_interval(cb_num(a[1], consts), a[2])
+      a <- cb_call(s, "Scan"); if (length(a) >= 2 && is.na(scan$seconds)) scan <- cb_interval(cb_num(a[1], consts, "Scan interval"), a[2])
     } else if (nzchar(kw) && !grepl(skip_ins, kw, ignore.case = TRUE)) {
       a <- cb_call(s, kw)                       # a measurement: the first argument is where the reading goes
       if (length(a)) { dest <- tolower(sub("\\(.*$", "", a[1])); if (!is.null(vars[[dest]]) && is.null(measured[[dest]])) measured[[dest]] <- sub("^([A-Za-z0-9_]+).*$", "\\1", s) }
@@ -140,7 +216,7 @@ parse_crbasic <- function(path) {
       next
     }
     if (grepl("^EndTable", s, ignore.case = TRUE)) { flush_pend(); tabs[[cur$name]] <- cur; cur <- NULL; next }
-    a <- cb_call(s, "DataInterval"); if (!is.null(a)) { cur$interval <- cb_interval(cb_num(a[2], consts), a[3]); next }
+    a <- cb_call(s, "DataInterval"); if (!is.null(a)) { cur$interval <- cb_interval(cb_num(a[2], consts, paste("DataInterval of", cur$name)), a[3]); next }
     a <- cb_call(s, "FieldNames")
     if (!is.null(a) && !is.null(pend)) {
       nn <- trim(sub(":.*$", "", strsplit(gsub("\"", "", a[1]), ",", fixed = TRUE)[[1]]))
@@ -151,10 +227,14 @@ parse_crbasic <- function(path) {
       flush_pend(); a <- cb_call(s, hit); if (length(a) < 2) next
       sf <- ins[[hit]][[1]]; pr <- ins[[hit]][[2]]
       if (hit %in% c("Maximum", "Minimum") && length(a) >= 5 && cb_truthy(a[5])) { sf <- c(sf, if (hit == "Maximum") "_TMx" else "_TMn"); pr <- c(pr, if (hit == "Maximum") "TMx" else "TMn") }
-      pend <- cb_fields(a[2], cb_num(a[1], consts), vars, alias, units, sf, pr)
+      fld <- paste0(hit, "(", a[1], ", ", a[2], ") in ", cur$name); n <- cb_whole(cb_num(a[1], consts, fld), fld)
+      if (identical(n, 0L)) { cur$skipped <- c(cur$skipped, hit); next }                  # an invalid count: reported, the instruction not expanded
+      pend <- cb_fields(a[2], n, vars, alias, units, sf, pr, fld)
+      if (sum(vapply(cur$fields, nrow, 1L)) + nrow(pend) > CB_FIELDS_MAX) { cb_unread(cur$name, sprintf("more than %s fields", format(CB_FIELDS_MAX, big.mark = ",")))
+        pend <- NULL; cur$skipped <- c(cur$skipped, hit) }
     } else if (tolower(kw) == "windvector") {
       flush_pend(); a <- cb_call(s, "WindVector"); if (length(a) < 3) next
-      opt <- if (length(a) >= 8) cb_num(a[8], consts) else 0
+      opt <- if (length(a) >= 8) cb_num(a[8], consts, paste("WindVector option in", cur$name)) else 0
       spec <- switch(as.character(opt), "1" = list(c(2, 3), c("_S_WVT", "_D1_WVT")), "2" = list(c(2, 2, 3, 3), c("_S_WVT", "_U_WVT", "_DU_WVT", "_SDU_WVT")),
                      "3" = list(c(2, 3), c("_U_WVT", "_DU_WVT")), "4" = list(c(2, 3), c("_S_WVT", "_DU_WVT")),
                      list(c(2, 3, 3), c("_S_WVT", "_D1_WVT", "_SD1_WVT")))
@@ -172,6 +252,7 @@ parse_crbasic <- function(path) {
     cb_fields(paste0(p, if (length(v$dims)) "(1)" else ""), if (length(v$dims)) prod(v$dims) else 1, vars, alias, units, "", "Smp") }))[
       , `:=`(table = "Public", interval = "current values", interval_seconds = NA_real_, note = "")], fill = TRUE)
   if (!nrow(cols)) return(cols)
+  if (!"unresolved" %in% names(cols)) cols[, unresolved := FALSE] else cols[is.na(unresolved), unresolved := FALSE]   # a field the program does not settle
   cols[, measured_by := vapply(tolower(sub("\\(.*$", "", source)), function(v) measured[[v]] %||% "", "")]
   cols[, `:=`(position = seq_len(.N)), by = table]
   cols[, `:=`(scan = scan$text, scan_seconds = scan$seconds)][]
@@ -249,18 +330,27 @@ parse_edlog <- function(path) {
 `%|na|%` <- function(a, b) { if (!length(a)) return(a); a[is.na(a)] <- b; a }
 
 # ---- one program file -> what it says ---------------------------------------
+# unread: the expressions that could not be interpreted (field and why); the rest of the program is still read.
 read_program <- function(path) {
-  kind <- prog_kind(path)
-  cols <- tryCatch(if (kind == "Edlog") parse_edlog(path)$columns else parse_crbasic(path), error = function(e) {
+  kind <- prog_kind(path); unread <- character()
+  cols <- tryCatch(withCallingHandlers(if (kind == "Edlog") parse_edlog(path)$columns else parse_crbasic(path),
+                                       cb_unread = function(c) unread <<- c(unread, conditionMessage(c))), error = function(e) {
     problem(basename(path), paste("program could not be read:", conditionMessage(e))); data.table() })
   list(name = basename(path), path = path, kind = kind, md5 = unname(tools::md5sum(path)), mtime = file.mtime(path),
-       signature = cs_signature(readBin(path, "raw", file.size(path))), columns = cols)
+       signature = cs_signature(readBin(path, "raw", file.size(path))), columns = cols, unread = unique(unread))
+}
+unread_problem <- function(p) {                 # one problem line per program with expressions it could not interpret
+  u <- p$unread; if (!length(u)) return(invisible())
+  problem(p$name, paste0("program value(s) not interpreted, left unknown: ", paste(head(u, 5), collapse = "; "),
+                         if (length(u) > 5) sprintf("; and %d more", length(u) - 5) else ""))
 }
 
 program_dir <- function(cfg) file.path(path.expand(cfg$project_dir), "config", "programs")
 
 # every program in config/programs (byte-identical copies read once); parsed results kept by md5
-load_programs <- function(cfg) {
+# save = FALSE (browsing a page): cached results are read, new ones parsed in memory, nothing written; runs and the checked
+# page actions save (cache/programs.rds).
+load_programs <- function(cfg, save = TRUE) {
   f <- list.files(program_dir(cfg), pattern = PROG_EXT, full.names = TRUE, ignore.case = TRUE, recursive = TRUE)
   f <- f[!startsWith(basename(f), "._")]
   if (!length(f)) return(list())
@@ -270,11 +360,27 @@ load_programs <- function(cfg) {
   old <- if (file.exists(cf)) tryCatch(readRDS(cf), error = function(e) list()) else list()
   key <- paste(md5, STEP_HASH$programs %||% "")
   out <- lapply(seq_along(f), function(i) { p <- old[[key[i]]]; if (is.null(p)) p <- read_program(f[i]); p$path <- f[i]; p$name <- basename(f[i]); p })
+  for (p in out) unread_problem(p)
+  if (!save) return(out)
   dir.create(dirname(cf), recursive = TRUE, showWarnings = FALSE)
   # safe: the cache only saves time
   try(saveRDS_safe(setNames(out, key), cf), silent = TRUE)
   out
 }
+
+# Logger programs page: program files (and .fsl label files, which go to config/fsl for the CR10X page) added to the project,
+# checked and locked as a run is (core project_mutate), so a config folder linked into a raw folder is never written.
+# Returns the names added.
+import_programs <- function(cfg, paths, names = basename(paths)) project_mutate(cfg, function() {
+  fsl <- grepl("\\.fsl$", names, ignore.case = TRUE); fd <- file.path(path.expand(cfg$project_dir), "config", "fsl")
+  if (any(fsl)) { dir.create(fd, recursive = TRUE, showWarnings = FALSE)
+    for (k in which(fsl)) { to <- file.path(fd, names[k]); tmp <- paste0(to, ".part_", Sys.getpid())
+      if (!file.copy(paths[k], tmp, overwrite = FALSE) || !file.rename(tmp, to)) { unlink(tmp); stop("Could not add ", names[k], " to config/fsl.") } } }   # a new file renamed into place
+  c(add_programs(cfg, paths[!fsl], names[!fsl]), names[fsl])
+})
+program_report_checked <- function(cfg) project_mutate(cfg, function() program_report(cfg))
+# CR10X page Match: before() (the page saves its pending table edits) runs inside the same checks and lock as the matching.
+cr10x_automatch_checked <- function(cfg, ..., before = NULL) project_mutate(cfg, function() { if (is.function(before)) before(); cr10x_automatch(cfg, ...) })
 
 # copy program files from a folder (or uploads) into config/programs; Edlog ones also go to config/fsl for the CR10X page
 add_programs <- function(cfg, paths, names = basename(paths)) {
@@ -311,7 +417,8 @@ match_programs <- function(man, progs) {
     score <- lapply(seq_along(progs), function(k) {
       pc <- progs[[k]]$columns; if (!nrow(pc)) return(NULL); pc <- pc$column[pc$table == tb]; if (!length(pc)) return(NULL)
       data.table(k = k, name_ok = pn[k] == tolower(basename(hp)), sig_ok = !is.na(sig) && progs[[k]]$signature == sig,
-                 same = setequal(fc, pc), found = length(intersect(fc, pc)) / length(union(fc, pc)), n = length(pc), extra = sum(!pc %in% fc))
+                 same = setequal(fc, pc), found = length(intersect(fc, pc)) / length(union(fc, pc)), n = length(pc), extra = sum(!pc %in% fc),
+                 unres = if ("unresolved" %in% names(progs[[k]]$columns)) sum(progs[[k]]$columns[table == tb, unresolved] %in% TRUE) else 0L)
     })
     s <- rbindlist(score)
     named <- any(pn == tolower(basename(hp)))
@@ -321,13 +428,14 @@ match_programs <- function(man, progs) {
     s <- s[name_ok | sig_ok | n >= 2][order(-same, -sig_ok, -name_ok, -found, extra, -as.numeric(vapply(k, function(z) progs[[z]]$mtime, 0)))]
     b <- s[1]; p <- progs[[b$k]]
     how <- paste(c(if (b$name_ok) "name", if (b$sig_ok) "signature", if (b$same) "columns" else sprintf("%.0f%% of columns", 100 * b$found)), collapse = " + ")
+    if (b$unres > 0) how <- paste0(how, "; ", b$unres, " program field(s) not read (see the program's notes): the match is uncertain")
     st <- if (b$same && (b$name_ok || b$sig_ok)) "matched" else if (b$same) "matched by columns (renamed program?)" else if (b$found >= 0.9) "columns differ slightly" else "columns differ"
     pc <- p$columns[table == tb]
     res[[i]] <- base[, `:=`(status = st, program = p$name, how = how, kind = p$kind, program_signature = p$signature,
                             interval = pc$interval[1], scan = pc$scan[1],
                             missing_in_program = paste(head(setdiff(fc, pc$column), 8), collapse = ", "),
                             missing_in_file = paste(head(setdiff(pc$column, fc), 8), collapse = ", "),
-                            other_versions = sum(s$same) - 1L)]
+                            other_versions = sum(s$same) - 1L, unresolved_fields = b$unres)]
   }
   rbindlist(res, fill = TRUE)
 }

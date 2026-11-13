@@ -290,7 +290,7 @@ simple_server <- function(input, output, session, std) {
   output$sp_map <- plotly::renderPlotly({ r <- rows_g(); req(r, nrow(r) > 0); x <- C(); fp <- x$footprints; y <- input$sp_year %||% "All years"
     if (y != "All years") r <- r[year == y]; z <- fp[flight_id %in% r$flight_id]; validate(need(nrow(z) > 0, "No footprint for these flights (no position or no camera geometry)."))
     sel <- cur_f(); g <- plotly::plot_ly(); lat <- c(); lon <- c()
-    fc <- fp_colours(r, tryCatch(load_configs(CFG)$footprint_colours, error = function(e) fp_colours_default())); fcol <- setNames(fc$col, r$flight_id)   # by drone, sensor and year
+    fc <- fp_colours(r, tryCatch(read_configs(CFG)$footprint_colours, error = function(e) fp_colours_default())); fcol <- setNames(fc$col, r$flight_id)   # by drone, sensor and year
     fc_of <- function(id) { c0 <- unname(fcol[id]); if (length(c0) != 1 || is.na(c0)) PAL$gray else c0 }
     for (i in seq_len(nrow(z))) { p <- do.call(rbind, lapply(strsplit(strsplit(z$line[i], ";", fixed = TRUE)[[1]], " ", fixed = TRUE), as.numeric)); if (!is.matrix(p)) next
       p <- rbind(p, p[1, ]); lat <- c(lat, p[, 1]); lon <- c(lon, p[, 2]); on <- identical(z$flight_id[i], sel)

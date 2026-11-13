@@ -178,7 +178,7 @@ gt_site_report_doc <- function(site, project_dir, opts = NULL, lims = NULL) {
     if (want("qc")) rpt_table(rem_t, "Removed values by rule (blank in the data; each is listed in output/audit/detail/)."),
     if (want("qc")) rpt_table(flg_t, "Flagged (suspect) values by check; they are kept in the data."),
     if (want("active_layer")) rpt_heading("Active layer"),
-    if (want("active_layer")) rpt_table(alt, "Active-layer thickness by year, from the deepest depth that thawed (interpolated between sensors)."),
+    if (want("active_layer")) rpt_table(alt, "Active-layer thickness by year, from the deepest depth that thawed (interpolated between sensors); alt_lower_m: at least this deep where thaw went below the deepest sensor reading (no exact value)."),
     if (want("active_layer")) rpt_table(zaa, "Depth of zero annual amplitude (annual range below 0.1 \u00b0C), by calendar year."),
     if (want("freeze_thaw")) rpt_heading("Freeze and thaw"),
     if (want("freeze_thaw")) rpt_table(if (nrow(ft)) ft[order(water_year, depth_m)] else NULL, "Per depth and water year: first and last day at or below 0 \u00b0C, days frozen, thawed and in the zero curtain."),

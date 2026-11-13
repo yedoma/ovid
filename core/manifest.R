@@ -4,7 +4,7 @@
 # Each app sets APP_NAME and APP_VERSION (bump the version when a change alters the output). CORE_VERSION is the
 # version of these shared files; bump it when a change here alters any app's output.
 
-CORE_VERSION <- "1.15.0"
+CORE_VERSION <- "1.16.0"
 
 file_md5 <- function(f) if (file.exists(f)) unname(tools::md5sum(f)) else ""
 
@@ -100,12 +100,25 @@ error_ref <- function(msg) paste0("E-", substr(hash_of(sub("\\s+$", "", as.chara
 # the run records, the set-up check, the set-up tables and when they changed. No raw data, nothing over 5 MB, no column that
 # looks like a password or token, and every path with the home folder shown as ~. Returns its reference code.
 #   check  a function returning the app's set-up check as a table (or NULL)
+# What the troubleshooting zip would hold now, for a look before it is saved: each file with its size, and what was left out
+# (and why). It is made the same way as the zip itself, in a temporary folder.
+troubleshooting_inventory <- function(project_dir, check = NULL) {
+  z <- tempfile(fileext = ".zip"); on.exit(unlink(z)); ref <- troubleshooting_zip(project_dir, z, check)
+  l <- utils::unzip(z, list = TRUE); ux <- tempfile(); on.exit(unlink(ux, recursive = TRUE), add = TRUE); utils::unzip(z, files = file.path(ref, "README.txt"), exdir = ux)
+  rd <- readLines(file.path(ux, ref, "README.txt"), warn = FALSE); i <- which(rd == "Left out:")
+  list(files = data.table(file = sub(paste0("^", ref, "/"), "", l$Name), bytes = l$Length)[nzchar(file)], left_out = if (length(i)) trimws(rd[(i + 1):length(rd)]) else character())
+}
 troubleshooting_zip <- function(project_dir, zipfile, check = NULL, n_logs = 10L, max_mb = 5) {
   pd <- path.expand(project_dir %||% ""); app <- if (exists("APP_NAME")) sub("^.*// *", "", APP_NAME) else "app"
   ref <- paste0("OVID-", toupper(safe_name(app)), "-", format(Sys.time(), "%Y%m%d-%H%M"), "-", substr(hash_of(list(pd, Sys.time(), Sys.getpid()), 16L), 1, 4))
   tmp <- file.path(tempfile("ovid_ts_"), ref); dir.create(tmp, recursive = TRUE); left <- character()
   home <- path.expand("~"); clean <- function(x) gsub(home, "~", x, fixed = TRUE)
+  rt <- tolower(path_norm(pd)); roots <- tryCatch(protected_roots(c(project_settings_read(pd), list(project_dir = pd, raw_dirs = get0("CFG")$raw_dirs))), error = function(e) character())
   put <- function(src, dest) { if (!file.exists(src)) return(invisible(FALSE))
+    real <- tolower(normalizePath(src, winslash = "/", mustWork = FALSE))        # a file reached through a link is not copied unless it is really the project's
+    inr <- any(vapply(roots, function(r) { rr <- tolower(path_norm(r)); real == rr || startsWith(real, paste0(rr, "/")) }, NA))
+    if (!startsWith(src, path.expand(file.path(home, ".ovid"))) && (!startsWith(real, paste0(rt, "/")) || inr)) {
+      left <<- c(left, paste0(clean(src), " (it leads outside the project folder: ", clean(normalizePath(src, winslash = "/", mustWork = FALSE)), ")")); return(invisible(FALSE)) }
     if (file.info(src)$size > max_mb * 1e6) { left <<- c(left, paste0(clean(src), " (over ", max_mb, " MB)")); return(invisible(FALSE)) }
     dir.create(dirname(file.path(tmp, dest)), recursive = TRUE, showWarnings = FALSE)
     # safe: a file that is not text is copied as it is
@@ -128,6 +141,9 @@ troubleshooting_zip <- function(project_dir, zipfile, check = NULL, n_logs = 10L
     if (!is.null(sc)) { sc <- as.data.table(sc); for (k in names(sc)) if (is.character(sc[[k]])) set(sc, j = k, value = clean(sc[[k]])); fwrite(sc, file.path(tmp, "setup_check_now.csv")) } }
   # set-up tables (secrets left out) and when they changed
   cf <- list.files(file.path(pd, "config"), pattern = "\\.csv$", full.names = TRUE)
+  ok_cf <- vapply(cf, function(f) { r <- tolower(normalizePath(f, winslash = "/", mustWork = FALSE)); startsWith(r, paste0(rt, "/")) &&
+    !any(vapply(roots, function(x) { rr <- tolower(path_norm(x)); r == rr || startsWith(r, paste0(rr, "/")) }, NA)) }, NA)
+  if (any(!ok_cf)) left <- c(left, paste0(clean(cf[!ok_cf]), " (it leads outside the project folder)")); cf <- cf[ok_cf]
   for (f in cf) { d <- try_or(fread(file = f, colClasses = "character", na.strings = NULL), where = basename(f)); if (is.null(d)) next
     drop <- grep("password|passwd|token|secret|api_?key", names(d), ignore.case = TRUE, value = TRUE); if (length(drop)) d[, (drop) := NULL]
     for (k in names(d)) set(d, j = k, value = clean(d[[k]]))
@@ -161,8 +177,10 @@ project_dirs <- function(project_dir, dirs) {
 # removes now whatever in `dirs` is not on it, and outputs_done() removes what the last run wrote and this one did not, and
 # keeps this run's list for the next.
 outputs_prev <- function(file, incremental = TRUE) if (isTRUE(incremental) && file.exists(file)) tryCatch(readRDS(file), error = function(e) character()) else character()
-outputs_prune <- function(out, dirs, keep) for (d in dirs) { f <- list.files(file.path(out, d)); unlink(file.path(out, d, f[!file.path(d, f) %in% keep])) }
-outputs_done <- function(out, file, prev, now) { now <- unlist(now, use.names = FALSE); unlink(file.path(out, setdiff(prev, now))); saveRDS_safe(now, file); invisible(now) }
+outputs_prune <- function(out, dirs, keep) for (d in dirs) { f <- list.files(file.path(out, d))
+  remove_within(file.path(out, d, f[!file.path(d, f) %in% keep]), getOption("ovid.project_root") %||% dirname(out)) }
+outputs_done <- function(out, file, prev, now) { run_checkpoint("outputs_done"); now <- unlist(now, use.names = FALSE)
+  remove_within(file.path(out, setdiff(prev, now)), getOption("ovid.project_root") %||% dirname(out)); saveRDS_safe(now, file); invisible(now) }
 
 # ---- before a run: the folders, and one run at a time ----------------------------------------------------------------------
 # Every app's run_pipeline() goes through run_project(): the project folder and the raw folders are checked, the project is
@@ -175,7 +193,7 @@ outputs_done <- function(out, file, prev, now) { now <- unlist(now, use.names = 
 #   - no other run is going on it (.ovid_lock, removed when the run ends; one left by a process that has gone is taken over).
 PROJECT_MARK <- ".ovid_project"; PROJECT_LOCK <- ".ovid_lock"
 OUTPUT_KEPT <- ".output_before_run"; OUTPUT_FAILED <- ".output_failed"                # see "the last finished output" below
-PROJECT_KNOWN <- c("config", "output", "cache", "viewer_app", "reports", PROJECT_MARK, PROJECT_LOCK, OUTPUT_KEPT, OUTPUT_FAILED, ".DS_Store", "Thumbs.db", "desktop.ini")
+PROJECT_KNOWN <- c("config", "output", "cache", "viewer_app", "reports", PROJECT_MARK, PROJECT_LOCK, OUTPUT_KEPT, OUTPUT_FAILED, ".ovid_run", ".ovid_last_run", ".output_before_run.part", ".DS_Store", "Thumbs.db", "desktop.ini")
 project_stop <- function(...) stop(structure(class = c("ovid_project_check", "error", "condition"), list(message = paste0(...), call = NULL)))
 path_norm <- function(p) {                                           # the real path, also of a folder not made yet (its nearest existing parent resolved)
   p <- sub("[/\\\\]+$", "", path.expand(p)); rest <- character()
@@ -183,18 +201,97 @@ path_norm <- function(p) {                                           # the real 
   sub("/+$", "", do.call(file.path, as.list(c(normalizePath(p, winslash = "/", mustWork = FALSE), rest))))
 }
 path_within <- function(a, b) { a <- tolower(path_norm(a)); b <- tolower(path_norm(b)); a == b || startsWith(a, paste0(b, "/")) }   # a is b or under it
+path_overlap <- function(a, b) path_within(a, b) || path_within(b, a)
+shown <- function(p) { r <- path_norm(p); if (tolower(r) == tolower(sub("[/\\\\]+$", "", path.expand(p)))) tilde(r) else paste0(tilde(p), " (resolves to ", tilde(r), ")") }
+
+# ---- the raw-data boundary -----------------------------------------------------------------------------------------------------
+# Raw folders are only read. Nothing a run writes or removes may resolve into a raw folder or around one: the project folder
+# (project_check) and every link inside it (raw_boundary_check: output/, output/stations, cache/, config/, the kept copies, an
+# app's own folders) are followed through link chains and Windows junctions, and one that points into or around a raw folder,
+# or cannot be resolved, stops the run before anything is written. remove_within() checks each removal again where it happens.
+RAW_LINKS_MAX <- 2000L; RAW_LINK_DEPTH <- 8L
+path_links <- function(dir) {                                        # links and junctions under dir (not followed): link -> resolved target ("" if unresolved)
+  if (!dir.exists(dir)) return(character())
+  if (.Platform$OS.type == "windows") {
+    d <- list.dirs(dir, recursive = TRUE, full.names = TRUE)[-1]; f <- list.files(dir, recursive = TRUE, full.names = TRUE, all.files = TRUE)
+    own <- file.path(normalizePath(dirname(d), winslash = "/", mustWork = FALSE), basename(d))
+    lk <- c(d[tolower(normalizePath(d, winslash = "/", mustWork = FALSE)) != tolower(own)], f[nzchar(Sys.readlink(f))])
+  } else {
+    lk <- suppressWarnings(system2("find", c("-P", shQuote(path.expand(dir)), "-type", "l"), stdout = TRUE, stderr = FALSE))
+    if (!is.null(attr(lk, "status"))) project_stop("The links in ", tilde(path_norm(dir)), " could not be listed, so the run cannot check that it stays out of the raw folders. Nothing was changed.")
+  }
+  if (length(lk) > RAW_LINKS_MAX) project_stop("The folder ", tilde(path_norm(dir)), " holds more than ", RAW_LINKS_MAX, " links; the run does not check that many. Nothing was changed.")
+  setNames(ifelse(file.exists(lk), normalizePath(lk, winslash = "/", mustWork = FALSE), ""), lk)
+}
+raw_boundary_check <- function(project_dir, raw) {
+  pd <- path_norm(project_dir); raw <- raw[nzchar(raw)]; todo <- pd; seen <- tolower(pd); depth <- 0L; scanned <- pd   # the real folder: a linked project root is scanned too
+  where <- function(l) { rel <- substring(l, nchar(pd) + 2L); if (startsWith(l, paste0(pd, "/")) && nzchar(rel)) rel else tilde(l) }
+  while (length(todo)) {
+    if (depth >= RAW_LINK_DEPTH) project_stop("In the project folder ", tilde(pd), ", links lead to other linked folders more than ", RAW_LINK_DEPTH, " deep (",
+                                              tilde(todo[1]), "), so the run cannot establish that it stays out of the raw folders. Nothing was changed. ",
+                                              "Replace those links with folders of their own and run again.")
+    links <- unlist(lapply(todo, path_links)); todo <- character(); depth <- depth + 1L
+    for (l in names(links)) { tg <- links[[l]]
+      if (!nzchar(tg)) project_stop("In the project folder ", tilde(path_norm(pd)), ", ", where(l), " is a link whose target cannot be found (",
+                                    tilde(Sys.readlink(l) %|% "unknown"), "). The run cannot tell whether it writes into a raw folder, so nothing was changed. ",
+                                    "Remove the link or reconnect its drive, then run again.")
+      for (r in raw) if (path_overlap(tg, r)) project_stop("In the project folder ", tilde(path_norm(pd)), ", ", where(l), " is a link to ", tilde(tg), ", which ",
+                                                           if (path_within(tg, r)) "is inside" else "holds", " the raw folder ", tilde(r), " (resolves to ", tilde(path_norm(r)), "). ",
+                                                           "Raw folders are only read, so nothing was changed. Replace the link with a folder of its own.")
+      if (!dir.exists(tg) && isTRUE(fs::file_info(tg)$hard_links > 1))         # a linked file that is itself a hard link (perhaps of a raw file)
+        project_stop("In the project folder ", tilde(pd), ", ", where(l), " is a link to ", tilde(tg), ", which shares its data with another file ",
+                     "(a hard link, perhaps to a raw file), so writing it would change that file too. Nothing was changed. Remove the link and run again.")
+      if (dir.exists(tg) && !tolower(tg) %in% seen) { seen <- c(seen, tolower(tg)); todo <- c(todo, tg); scanned <- c(scanned, tg) } }
+  }
+  hard_links_check(scanned, pd)
+  invisible(TRUE)
+}
+# A file the run may write in place that shares its bytes with another file (a hard link, possibly to a raw file) would be
+# changed in both: the run stops before opening it, naming it. Files written by the run are new files (written beside and
+# renamed into place, or created anew), so only files already there are checked.
+hard_links_check <- function(dirs, pd) {
+  for (d in dirs[dir.exists(dirs)]) {
+    # safe: an unreadable folder is reported by the run itself; this looks only for shared files
+    fi <- tryCatch(fs::dir_info(d, recurse = TRUE, type = "file", all = TRUE), error = function(e) NULL)
+    if (is.null(fi)) project_stop("The files in ", tilde(d), " could not be listed, so the run cannot check that it writes no raw file. Nothing was changed.")
+    hl <- fi$path[!is.na(fi$hard_links) & fi$hard_links > 1]
+    if (length(hl)) project_stop("In the project folder ", tilde(pd), ", ", paste(tilde(utils::head(hl, 3)), collapse = ", "), if (length(hl) > 3) ", ..." else "",
+                                 " shares its data with another file (a hard link, perhaps to a raw file), so writing it would change that file too. ",
+                                 "Nothing was changed. Replace it with a copy of its own (or delete it) and run again.")
+  }
+}
+# Removes paths only where each resolves (its folder's links followed, the last part not) inside root and outside the raw
+# folders of the run going (option ovid.raw_dirs); anything else stops with where it resolves and is left as it is.
+remove_within <- function(paths, root, recursive = FALSE, raw = getOption("ovid.raw_dirs")) {
+  paths <- sub("[/\\\\]+$", "", as.character(paths)); paths <- paths[nzchar(paths)]; if (!length(paths)) return(invisible(0L))
+  dirs <- unique(dirname(paths)); res <- setNames(vapply(dirs, path_norm, ""), dirs)
+  full <- file.path(res[dirname(paths)], basename(paths)); rt <- tolower(path_norm(root))
+  bad <- !(tolower(full) == rt | startsWith(tolower(full), paste0(rt, "/")))
+  lf <- tolower(full)
+  for (r in raw[nzchar(raw %||% "")]) { rr <- tolower(path_norm(r)); bad <- bad | lf == rr | startsWith(lf, paste0(rr, "/")) | startsWith(rr, paste0(lf, "/")) }
+  if (any(bad)) stop(structure(class = c("ovid_project_check", "error", "condition"), list(call = NULL, message = paste0(
+    "Not removed: ", tilde(paths[bad][1]), " resolves to ", tilde(full[bad][1]), ", which is outside the project folder ", tilde(path_norm(root)),
+    " or in a raw folder. Nothing was removed."))))
+  unlink(paths, recursive = recursive); invisible(length(paths))
+}
+# Every folder a run must never write: the raw folders, and any an app adds as protect_dirs (RS: its saved sources and the
+# folders a scan is given), whether plugged in or not.
+# An app with folders of its own to protect defines app_protect_dirs(cfg) (RS: its saved sources).
+protected_roots <- function(cfg) { extra <- if (is.function(f <- get0("app_protect_dirs", mode = "function"))) f(cfg) else character()
+  r <- as.character(unlist(c(cfg$raw_dirs, cfg$protect_dirs, extra))); unique(r[!is.na(r) & nzchar(trim(r))]) }   # kept exactly: a name may end in a space
 project_check <- function(cfg, app = sub("^.*// *", "", if (exists("APP_NAME")) APP_NAME else "app"), need_raw = TRUE) {
   pd <- trim(as.character(cfg$project_dir %||% "")[1] %|% "")
   if (!nzchar(pd)) pd <- ovid_project_dir(pd)                                    # none set: the default folder (core util.R)
   raw <- as.character(unlist(cfg$raw_dirs)); raw <- trim(raw[!is.na(raw) & nzchar(trim(raw))])
   if (need_raw && "raw_dirs" %in% names(cfg) && !length(raw)) project_stop("No raw data folder is set: it is the one thing every run needs. Choose the folder that holds the logger files on 1 Project ",
                                               "(Choose folder\u2026) and run again. Nothing was changed.")
-  for (r in raw) {
-    if (path_within(pd, r)) project_stop("The project folder ", tilde(path_norm(pd)), " is inside the raw folder ", tilde(path_norm(r)),
+  for (r in protected_roots(cfg)) {
+    if (path_within(pd, r)) project_stop("The project folder ", shown(pd), " is inside the raw folder ", shown(r),
                                          ". Raw folders are only read; choose a project folder outside them.")
-    if (path_within(r, pd)) project_stop("The raw folder ", tilde(path_norm(r)), " is inside the project folder ", tilde(path_norm(pd)),
+    if (path_within(r, pd)) project_stop("The raw folder ", shown(r), " is inside the project folder ", shown(pd),
                                          ". The app would read its own output as raw data; keep raw data outside the project folder.")
   }
+  raw_boundary_check(pd, protected_roots(cfg))
   gone <- raw[!dir.exists(path.expand(raw))]
   if (need_raw && length(gone)) project_stop("Raw folder not found: ", paste(tilde(gone), collapse = ", "), ". Is the drive plugged in? Nothing was changed; ",
                                  "plug it in and run again, or remove the folder from the data folders if it is no longer used.")
@@ -203,7 +300,7 @@ project_check <- function(cfg, app = sub("^.*// *", "", if (exists("APP_NAME")) 
     if (nzchar(owner) && !identical(owner, app)) project_stop("The folder ", tilde(path_norm(pd)), " is the project of Ovid ", owner, ", not ", app,
                                                               ". Two apps in one project folder overwrite each other's files: choose a folder of its own.") }
   else if (dir.exists(p)) {
-    other <- setdiff(list.files(p, all.files = TRUE, no.. = TRUE), PROJECT_KNOWN)
+    other <- setdiff(list.files(p, all.files = TRUE, no.. = TRUE), PROJECT_KNOWN); other <- other[!startsWith(other, PROJECT_LOCK) & !startsWith(other, OUTPUT_REVIEW) & !startsWith(other, RUN_JOURNAL) & !startsWith(other, ".ovid_new_")]
     ovid <- any(dir.exists(file.path(p, c("config", "output"))))
     if (length(other) && !ovid) project_stop("The project folder ", tilde(path_norm(pd)), " already holds other files (", paste(utils::head(other, 3), collapse = ", "),
                                                if (length(other) > 3) ", ..." else "", "). Choose an empty folder, or one made by Ovid.")
@@ -217,33 +314,87 @@ project_check <- function(cfg, app = sub("^.*// *", "", if (exists("APP_NAME")) 
   else if (file.exists(p)) project_stop("The project folder ", tilde(path_norm(pd)), " is a file, not a folder. Choose a folder.")
   invisible(TRUE)
 }
+# ---- one run at a time: the project lock -------------------------------------------------------------------------------------
+# The lock is the folder .ovid_lock holding run.txt (pid, host, start time, a token). It is written in full under another name
+# and renamed into place, so it never exists without its owner, and a rename onto a lock already there fails: one process
+# wins. A lock is taken over only when its owner is known to have gone: a process on this computer that has ended (its start
+# time is compared where the system tells it, so a reused pid does not count). A lock from another computer (a shared drive)
+# or one that cannot be read is never taken over: the run stops and says how to clear it. A live run keeps its lock however
+# long it runs. A takeover is done by one process at a time (.ovid_lock_takeover) and only of the very lock judged gone; the
+# lock is released only by the run that holds it (its token), so a former owner's late clean-up never removes a new lock.
+# (An empty .ovid_lock folder, which only an older version could leave, is replaced by the rename.)
+LOCK_TAKEOVER <- ".ovid_lock_takeover"; LOCK_TAKEOVER_STALE <- 60
 pid_alive <- function(pid) if (.Platform$OS.type == "windows") { if (requireNamespace("ps", quietly = TRUE)) pid %in% ps::ps_pids() else TRUE } else isTRUE(tools::pskill(pid, 0L))
-# The run holding the project's lock (started, host), or NULL when there is none or the one that left it has gone (its process
-# ended on this computer, or the lock is over a day old).
-lock_holder <- function(project_dir) {
-  lk <- file.path(path.expand(project_dir), PROJECT_LOCK); if (!dir.exists(lk)) return(NULL)
-  # safe: the lock's details are only for the message
-  info <- tryCatch(readLines(file.path(lk, "run.txt"), warn = FALSE), error = function(e) character())
-  g <- function(k) sub(paste0("^", k, ": *"), "", grep(paste0("^", k, ":"), info, value = TRUE)[1] %|% "")
-  pid <- suppressWarnings(as.integer(g("pid"))); same_host <- identical(g("host"), Sys.info()[["nodename"]])
-  alive <- !is.na(pid) && (!same_host || pid_alive(pid))
-  age <- as.numeric(difftime(Sys.time(), file.mtime(lk), units = "hours"))
-  if (alive && !is.na(age) && age < 24) list(started = g("started"), host = g("host")) else NULL
+pid_started <- function(pid = Sys.getpid()) {                       # a process's start time (seconds), "" when the system cannot say
+  if (!requireNamespace("ps", quietly = TRUE)) return("")
+  # safe: with no start time a lock is judged by its pid alone
+  tryCatch(format(as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(pid)))), nsmall = 2), error = function(e) "")
 }
+lock_read <- function(dir) {                                         # list(info lines, field getter); info is character() when unreadable
+  # safe: an unreadable lock is treated as held by someone unknown
+  info <- tryCatch(readLines(file.path(dir, "run.txt"), warn = FALSE), error = function(e) character())
+  list(info = info, get = function(k) sub(paste0("^", k, ": *"), "", grep(paste0("^", k, ":"), info, value = TRUE)[1] %|% ""))
+}
+# "none", "live" (its run is going), "gone" (its process on this computer has ended) or "unknown" (another computer, or unreadable)
+lock_state <- function(dir) {
+  if (!dir.exists(dir)) return(list(state = "none"))
+  l <- lock_read(dir); g <- l$get; pid <- suppressWarnings(as.integer(g("pid")))
+  st <- if (!length(l$info) || is.na(pid) || !nzchar(g("host"))) "unknown" else if (!identical(g("host"), Sys.info()[["nodename"]])) "unknown"
+        else if (!pid_alive(pid)) "gone" else if (nzchar(g("pid_start")) && nzchar(now <- pid_started(pid)) && abs(as.numeric(now) - as.numeric(g("pid_start"))) > 1) "gone"
+        else "live"
+  list(state = st, started = g("started"), host = g("host"), id = paste(l$info, collapse = "\n"))
+}
+# The run holding the project's lock (started, host), or NULL when there is none or its owner on this computer has gone.
+lock_holder <- function(project_dir) {
+  s <- lock_state(file.path(path.expand(project_dir), PROJECT_LOCK))
+  if (s$state %in% c("live", "unknown")) list(started = s$started %|% "unknown", host = s$host %|% "unknown", state = s$state) else NULL
+}
+lock_publish <- function(p, to, info) {                              # TRUE when `to` was created holding info (atomic rename)
+  tmp <- file.path(p, paste0(PROJECT_LOCK, "_new_", info[["token"]]))
+  if (!dir.create(tmp, showWarnings = FALSE)) return(FALSE)
+  ok <- tryCatch({ writeLines(paste0(names(info), ": ", info), file.path(tmp, "run.txt")); TRUE }, error = function(e) FALSE) &&
+        isTRUE(suppressWarnings(file.rename(tmp, to)))
+  if (!ok) unlink(tmp, recursive = TRUE)
+  ok && identical(lock_read(to)$get("token"), info[["token"]])
+}
+lock_retire <- function(p, dir, token) {                             # moves a lock aside under a unique name, then removes it
+  gone <- file.path(p, paste0(PROJECT_LOCK, "_gone_", token))
+  ok <- isTRUE(suppressWarnings(file.rename(dir, gone))); if (ok) unlink(gone, recursive = TRUE); ok
+}
+lock_stop <- function(p, s) project_stop(
+  if (s$state == "live") paste0("Another run is going on this project (started ", s$started, " on ", s$host, "). Wait for it to end.")
+  else paste0("The project is locked by a run ", if (nzchar(s$host %||% "")) paste0("on ", s$host, " (started ", s$started %|% "unknown", ")") else "that left no details",
+              ", and this computer cannot tell whether it is still going. If you are sure no run is going on it, delete the folder ",
+              tilde(file.path(path_norm(p), PROJECT_LOCK)), " and run again."))
 project_lock <- function(cfg) {
   p <- path.expand(cfg$project_dir); dir.create(p, recursive = TRUE, showWarnings = FALSE)
   mk <- file.path(p, PROJECT_MARK); app <- sub("^.*// *", "", if (exists("APP_NAME")) APP_NAME else "app")
   # safe: the marker file is a convenience; the project works without it
-  if (!file.exists(mk)) try(writeLines(c(paste0("app: ", app), "This folder is an Ovid project. Raw data is never kept here."), mk), silent = TRUE)
-  lk <- file.path(p, PROJECT_LOCK); me <- c(paste0("pid: ", Sys.getpid()), paste0("host: ", Sys.info()[["nodename"]]), paste0("started: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
-  if (!dir.create(lk, showWarnings = FALSE)) {
-    h <- lock_holder(p)
-    if (!is.null(h)) project_stop("Another run is going on this project (started ", h$started, " on ", h$host, "). Wait for it to end.")
-    unlink(lk, recursive = TRUE); dir.create(lk, showWarnings = FALSE)                            # left by a run that has gone
+  if (!file.exists(mk) && !nzchar(Sys.readlink(mk) %|% "")) try(write_new(mk, c(paste0("app: ", app), "This folder is an Ovid project. Raw data is never kept here.")), silent = TRUE)
+  lk <- file.path(p, PROJECT_LOCK); tok <- paste0(Sys.getpid(), "_", format(as.numeric(Sys.time()) * 1e6, scientific = FALSE), "_", sample.int(1e9, 1))
+  me <- c(pid = Sys.getpid(), host = Sys.info()[["nodename"]], started = format(Sys.time(), "%Y-%m-%d %H:%M:%S"), pid_start = pid_started(), token = tok)
+  for (attempt in 1:3) {
+    if (lock_publish(p, lk, me)) return(invisible(structure(lk, token = tok)))
+    s <- lock_state(lk)
+    if (s$state == "none") next                                       # released between the two looks: try again
+    if (s$state != "gone") lock_stop(p, s)
+    tk <- file.path(p, LOCK_TAKEOVER)                                 # one takeover at a time, and only of the lock judged gone
+    if (dir.exists(tk) && as.numeric(difftime(Sys.time(), file.mtime(tk), units = "secs")) > LOCK_TAKEOVER_STALE) lock_retire(p, tk, paste0("t", tok))
+    if (!dir.create(tk, showWarnings = FALSE)) { Sys.sleep(0.2); next }
+    taken <- tryCatch({ s2 <- lock_state(lk); if (s2$state == "gone" && identical(s2$id, s$id)) lock_retire(p, lk, tok) else FALSE },
+                      finally = unlink(tk, recursive = TRUE))
+    if (!taken && lock_state(lk)$state %in% c("live", "unknown")) lock_stop(p, lock_state(lk))
   }
-  writeLines(me, file.path(lk, "run.txt"))
-  invisible(lk)
+  s <- lock_state(lk); if (s$state %in% c("live", "unknown")) lock_stop(p, s)
+  project_stop("The project lock could not be taken (", tilde(lk), "). Nothing was changed; run again.")
 }
+# Releases the lock only when it is still this run's (token); TRUE when released.
+project_unlock <- function(lk) {
+  tok <- attr(lk, "token"); if (is.null(tok) || !dir.exists(lk)) return(invisible(FALSE))
+  if (!identical(lock_read(lk)$get("token"), tok)) return(invisible(FALSE))
+  invisible(lock_retire(dirname(lk), lk, tok))
+}
+lock_owned <- function(lk) !is.null(attr(lk, "token")) && identical(lock_read(lk)$get("token"), attr(lk, "token"))
 # Output and set-up files another program holds open (Excel on Windows locks a CSV it shows) or that may not be written:
 # the run would stop part way, so it does not start. Returns them under the project folder.
 files_locked <- function(project_dir) {
@@ -293,13 +444,25 @@ run_restored <- function(project_dir) { f <- file.path(path.expand(project_dir %
   if (nzchar(project_dir %||% "") && file.exists(f)) paste(readLines(f, warn = FALSE), collapse = " ") else "" }
 
 # ---- the last finished output, kept while a run goes -----------------------------------------------------------------------
-# A run updates output/ in place. Before it starts, output/ is copied to <project>/.output_before_run (on a Mac's own disk, APFS,
-# as a clone: instant and taking no space until files change). A run that finishes removes the copy; one that fails, is
-# cancelled or stops to ask a question puts it back, so the output is again what the last finished run left, with the stopped
-# run's log added. The cached results the stopped run made are dropped (they would let the next run skip outputs that were put
-# back), and output/.run_restored says what happened until a run finishes. A run whose process was killed leaves the copy:
-# it is put back when the app next starts or before the next run. No copy is kept (the output is updated in place, as before,
-# with output/.run_incomplete) when it would not fit on the drive, or is over OUTPUT_COPY_MAX and the disk cannot clone.
+# A run updates output/ in place, so before it starts output/ is copied (on a Mac's own disk, APFS, as a clone: instant and
+# taking no space until files change). Each run has an id, and the journal <project>/.ovid_run (written whole and renamed into
+# place) says how far it got:
+#   backup     the copy is being made in .output_before_run.part; output/ is not touched yet;
+#   verified   the copy holds every file of output/ at its size and is now .output_before_run (its .ovid_kept names the run,
+#              file count and bytes); only now does the run change output/;
+#   committed  the run finished; its output stands and the copy is only waiting to be removed.
+# A run that fails, is cancelled or stops to ask a question puts the copy back, so the output is again what the last finished
+# run left, with the stopped run's log added; the cached results it made are dropped (they would let the next run skip outputs
+# that were put back) and output/.run_restored says what happened until a run finishes. A run whose process was killed is
+# recovered under the lock before the next run or when the app starts (output_recover): a copy is put back only when it is
+# verified, belongs to that run and the run did not commit; a partial copy is never used; a committed run's copy is removed.
+# When putting back fails, both copies stay and the next try goes on from there. A copy left by an older version (no journal)
+# is not put back: it is kept beside the output as .output_to_review_<time> and the note says so. Set-up tables a stopped run
+# changed (pipeline additions such as CS's precip_gauges.csv; each also kept in config/history) are not put back: the note
+# names them. When output/ holds a finished run's results and no copy can be made (too large, not enough space, a failed copy)
+# the run does not start, so that output is never overwritten with no way back.
+RUN_PHASES <- c("backup", "verified", "restoring", "committed")
+RUN_JOURNAL <- ".ovid_run"; OUTPUT_STAGING <- ".output_before_run.part"; OUTPUT_REVIEW <- ".output_to_review_"
 OUTPUT_COPY_MAX <- 2e9; DISK_MIN <- 500e6
 fmt_bytes <- function(b) ifelse(is.na(b), "?", ifelse(b >= 1e9, sprintf("%.1f GB", b / 1e9), sprintf("%.0f MB", b / 1e6)))
 dir_bytes <- function(d) { f <- list.files(d, recursive = TRUE, full.names = TRUE, all.files = TRUE); if (length(f)) sum(file.info(f)$size, na.rm = TRUE) else 0 }
@@ -329,71 +492,316 @@ disk_check <- function(project_dir) {
                                             "; a run needs at least ", fmt_bytes(DISK_MIN), ". Nothing was changed: free some space and run again.")
   free
 }
-output_keep <- function(project_dir, free = disk_free(project_dir)) {    # TRUE when a copy is kept; a character string when not (why)
-  pd <- path.expand(project_dir); out <- file.path(pd, "output"); kept <- file.path(pd, OUTPUT_KEPT)
-  unlink(kept, recursive = TRUE)
+# A test may stop the process at a named point (OVID_TEST_KILL_AT, set by the test's child process itself), to check what the
+# next start makes of it; OVID_TEST_KILL_MARK names a file written first, so the test knows the point was reached.
+run_checkpoint <- function(name) if (identical(Sys.getenv("OVID_TEST_KILL_AT"), name)) {
+  mk <- Sys.getenv("OVID_TEST_KILL_MARK"); if (nzchar(mk)) writeLines(name, mk)
+  tools::pskill(Sys.getpid(), tools::SIGKILL) }
+journal_read <- function(pd) { f <- file.path(pd, RUN_JOURNAL); if (!file.exists(f)) return(NULL)
+  # safe: a journal that cannot be read is treated as missing (the copy, if any, is then kept for review)
+  x <- tryCatch(readLines(f, warn = FALSE), error = function(e) character()); if (!length(x)) return(NULL)
+  k <- sub(":.*$", "", x)                                                         # every line "key: value", each key once; else marked invalid
+  if (!all(grepl("^[a-z0-9_]+: ?", x)) || anyDuplicated(k)) return(list(invalid = TRUE))
+  as.list(setNames(sub("^[^:]*: *", "", x), k)) }
+journal_write <- function(pd, run, phase, ...) {
+  f <- file.path(pd, RUN_JOURNAL); x <- c(run = run, phase = phase, time = format(Sys.time(), "%Y-%m-%d %H:%M:%S"), ...)
+  if (!write_new(f, paste0(names(x), ": ", x))) project_stop("The run journal ", tilde(f), " could not be written. Nothing was changed; check that the project folder is writable.")
+  invisible(x) }
+# A small file written without opening any path that is already there: the lines go into a new file inside a folder this call
+# makes (mkdir fails on anything existing, a link included), which is then renamed onto `path` (a link there is replaced, never
+# written through). TRUE when done.
+write_new <- function(path, lines) {
+  tmp <- file.path(dirname(path), paste0(".ovid_new_", Sys.getpid(), "_", sample.int(1e9, 1)))
+  if (!dir.create(tmp, showWarnings = FALSE)) return(FALSE)
+  on.exit(unlink(tmp, recursive = TRUE))
+  ok <- tryCatch({ writeLines(lines, file.path(tmp, "f")); TRUE }, error = function(e) FALSE)
+  ok && isTRUE(suppressWarnings(file.rename(file.path(tmp, "f"), path)))
+}
+journal_clear <- function(pd) unlink(file.path(pd, c(RUN_JOURNAL, paste0(RUN_JOURNAL, ".part"))))
+KEPT_FILES <- c(".ovid_kept", "._.ovid_kept", ".ovid_kept_files", "._.ovid_kept_files")
+OUT_NOTES <- c(".run_restored", ".run_incomplete")                                # status notes in output/: never part of a copy's record
+out_inventory <- function(d, hash = FALSE) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE)); f <- f[!grepl("^\\._", basename(f)) & !basename(f) %in% KEPT_FILES & !f %in% OUT_NOTES]
+  list(n = length(f), bytes = if (length(f)) sum(file.size(file.path(d, f)), na.rm = TRUE) else 0, files = f, sizes = file.size(file.path(d, f)),
+       hashes = if (hash) vapply(file.path(d, f), function(x) digest::digest(file = x, algo = "xxhash64"), "", USE.NAMES = FALSE)) }   # xxHash: fast enough for every run
+cfg_inventory <- function(pd) { f <- list.files(file.path(pd, "config"), pattern = "\\.csv$", full.names = TRUE)   # set-up tables (not history)
+  setNames(unname(tools::md5sum(f)), basename(f)) }
+kept_info <- function(kept) { x <- tryCatch(readLines(file.path(kept, ".ovid_kept"), warn = FALSE), error = function(e) character())
+  as.list(setNames(sub("^[^:]*: *", "", x), sub(":.*$", "", x))) }
+# The copy is the one recorded for this run, file by file: names, sizes and content hashes (.ovid_kept_files), checked when it
+# is made and again before it is put back, so a same-size change is found too.
+# extra: files a restore adds itself (the stopped run's logs, the note), left out of the comparison when not in the record.
+kept_verified <- function(kept, run, extra = character()) { k <- kept_info(kept); if (!identical(k$run, run)) return(FALSE)
+  rec <- tryCatch(fread(file = file.path(kept, ".ovid_kept_files"), colClasses = "character", sep = "\t", na.strings = NULL), error = function(e) NULL)
+  if (is.null(rec) || !all(c("file", "size", "hash") %in% names(rec))) return(FALSE)
+  rec <- rec[!file %in% OUT_NOTES]                                                # a record made before the notes were left out of it (status, not data)
+  inv <- out_inventory(kept, hash = TRUE); own <- !(inv$files %in% setdiff(extra, rec$file))
+  inv <- list(files = inv$files[own], sizes = inv$sizes[own], hashes = inv$hashes[own])
+  identical(rec$file, inv$files) && identical(as.numeric(rec$size), as.numeric(inv$sizes)) && identical(rec$hash, inv$hashes) }
+# TRUE when a verified copy is kept (journal: verified); a character string when not (why). run: the run's id.
+output_keep <- function(project_dir, free = disk_free(project_dir), run = run_new_id()) {
+  pd <- path.expand(project_dir); out <- file.path(pd, "output"); kept <- file.path(pd, OUTPUT_KEPT); stage <- file.path(pd, OUTPUT_STAGING)
+  remove_within(stage, pd, recursive = TRUE)
+  if (dir.exists(kept)) return("a copy from an earlier run is still there")
   if (!dir.exists(out) || !length(list.files(out, recursive = TRUE, all.files = TRUE))) return("no output yet")
   clone <- disk_clones(pd); size <- dir_bytes(out)
-  if (!clone && size > OUTPUT_COPY_MAX) return(paste0("the output (", fmt_bytes(size), ") is too large to copy before each run"))
-  if (!clone && isTRUE(free < 2 * size + DISK_MIN)) return(paste0("a copy of the output (", fmt_bytes(size), ") would not fit on the drive (", fmt_bytes(free), " free)"))
-  ok <- if (.Platform$OS.type == "windows") { dir.create(kept)
-          all(file.copy(list.files(out, full.names = TRUE, all.files = TRUE, no.. = TRUE), kept, recursive = TRUE, copy.date = TRUE)) }
+  lk <- path_links(out)                                                           # a linked file's bytes are not the copy's: a restore could not undo a change to it
+  if (length(lk)) return(structure(paste0("output/ holds links to files elsewhere (", paste(utils::head(substring(names(lk), nchar(out) + 2L), 3), collapse = ", "),
+                                          "), whose contents a copy cannot keep"), action = "Replace those links with files of their own, then run again."))
+  if (!clone && size > OUTPUT_COPY_MAX) return(structure(paste0("the output is ", fmt_bytes(size), " and this drive cannot clone files, so each run would copy it in full; ",
+                                                                "the limit for a full copy is ", fmt_bytes(OUTPUT_COPY_MAX), ", whatever the free space"),
+    action = "Move the project folder to a drive that clones files (a Mac's own APFS disk), where the copy takes no space, or make the output smaller (fewer outputs or a project split by years)."))
+  if (!clone && isTRUE(free < 2 * size + DISK_MIN)) return(structure(paste0("a full copy of the output (", fmt_bytes(size), ") needs ", fmt_bytes(2 * size + DISK_MIN),
+                                                                            " free on the drive, and ", fmt_bytes(free), " is free"),
+    action = "Free space on the drive of the project folder, or move the project to a drive with room."))
+  journal_write(pd, run, "backup", config = paste(names(c0 <- cfg_inventory(pd)), c0, sep = "=", collapse = ";"))
+  ok <- tryCatch(if (.Platform$OS.type == "windows") { dir.create(stage)
+          all(file.copy(list.files(out, full.names = TRUE, all.files = TRUE, no.. = TRUE), stage, recursive = TRUE, copy.date = TRUE)) }
         else { flags <- if (clone) "-cpR" else if (Sys.info()[["sysname"]] == "Linux") c("-pR", "--reflink=auto") else "-pR"
-          identical(suppressWarnings(system2("cp", c(flags, shQuote(out), shQuote(kept)), stdout = FALSE, stderr = FALSE)), 0L) }
-  n_files <- function(d) { f <- list.files(d, recursive = TRUE, all.files = TRUE); sum(!grepl("^\\._", basename(f))) }   # ._ files: a Mac's companions on exFAT and network drives
-  if (!isTRUE(ok) || n_files(kept) != n_files(out)) {
-    unlink(kept, recursive = TRUE); return("the output could not be copied") }
-  writeLines(as.character(as.numeric(Sys.time())), file.path(kept, ".ovid_kept"))
+          identical(suppressWarnings(system2("cp", c(flags, shQuote(out), shQuote(stage)), stdout = FALSE, stderr = FALSE)), 0L) },
+        error = function(e) FALSE)
+  run_checkpoint("backup_copy")
+  a <- out_inventory(out, hash = TRUE); b <- if (isTRUE(ok)) out_inventory(stage, hash = TRUE) else NULL
+  same <- isTRUE(ok) && identical(a$files, b$files) && identical(a$sizes, b$sizes) && identical(a$hashes, b$hashes) && !length(path_links(stage))
+  if (same) same <- tryCatch({ fwrite(data.table(file = b$files, size = b$sizes, hash = b$hashes), file.path(stage, ".ovid_kept_files"), sep = "\t")
+    writeLines(c(paste0("run: ", run), paste0("time: ", as.numeric(Sys.time())), paste0("files: ", b$n), paste0("bytes: ", b$bytes)), file.path(stage, ".ovid_kept"))
+    kept_verified(stage, run) && file.rename(stage, kept) }, error = function(e) FALSE)
+  if (!same) { remove_within(stage, pd, recursive = TRUE); journal_clear(pd)
+    return(structure("the output could not be copied, or the copy did not match it file by file",
+                     action = "Check that the drive is not full, locked or read-only, and that no other program is changing the output, then run again.")) }
+  journal_write(pd, run, "verified", config = journal_read(pd)$config %||% "")
   TRUE
 }
-# keep: cache sub-folders an app marks as holding only what was read from its inputs (CACHE_INPUT_ONLY, e.g. RS "sources":
-# image headers and log reads); they stay valid whatever the output, so a stopped run keeps them. Default none.
+run_new_id <- function() paste0(format(Sys.time(), "%Y%m%dT%H%M%S"), "_", Sys.getpid(), "_", sample.int(1e6, 1))
+# Puts the verified copy back (the caller has checked it belongs to the interrupted run). Resumable: the journal says
+# "restoring" before anything moves, and each step is done only if its state shows it is still to do, so a process killed after
+# either rename finishes the work on the next try:
+#   1. output/ -> .output_failed (skipped when already moved, or when there is no output/);
+#   2. .output_before_run -> output/ (the copy keeps its .ovid_kept until the end, so a published copy is recognised);
+#   3. the stopped run's logs copied over, .output_failed removed, the cache it made dropped, the note written.
+# Returns TRUE, or a string saying what stops it (a file held open, or a state that is not this restore's: both kept).
+# keep: cache sub-folders an app marks as holding only what was read from its inputs (CACHE_INPUT_ONLY, e.g. RS "sources").
 output_restore <- function(project_dir, why = "stopped", keep = get0("CACHE_INPUT_ONLY", ifnotfound = character())) {
   pd <- path.expand(project_dir); out <- file.path(pd, "output"); kept <- file.path(pd, OUTPUT_KEPT); failed <- file.path(pd, OUTPUT_FAILED)
-  if (!dir.exists(kept)) return(FALSE)
-  # safe: with no stamp the folder's own time is used
-  since <- suppressWarnings(as.numeric(tryCatch(readLines(file.path(kept, ".ovid_kept"), warn = FALSE)[1], error = function(e) NA)))
-  if (is.na(since)) since <- as.numeric(file.mtime(kept))
-  unlink(failed, recursive = TRUE)
-  if (dir.exists(out) && !file.rename(out, failed)) return(FALSE)                  # a file held open (Windows): left for the next try
-  if (!file.rename(kept, out)) { file.rename(failed, out); return(FALSE) }
-  unlink(file.path(out, c(".ovid_kept", "._.ovid_kept")))
-  lg <- list.files(file.path(failed, "logs"), pattern = "\\.log$", full.names = TRUE)        # the stopped run's log is kept
-  lg <- lg[!basename(lg) %in% list.files(file.path(out, "logs"))]
-  if (length(lg)) { dir.create(file.path(out, "logs"), showWarnings = FALSE); file.copy(lg, file.path(out, "logs"), copy.date = TRUE) }
-  unlink(failed, recursive = TRUE)
+  j <- journal_read(pd); run <- j$run %||% ""
+  if (!identical(j$phase, "restoring")) journal_write(pd, run, "restoring", config = j$config %||% "", why = why) else why <- j$why %||% why
+  mv <- function(a, b) isTRUE(suppressWarnings(file.rename(a, b)))
+  if (dir.exists(kept) && dir.exists(out) && !dir.exists(failed) && !mv(out, failed))
+    return(paste0("output/ could not be moved aside (a file in it is held open by another program?); close it and run again"))
+  run_checkpoint("restore_1")
+  if (dir.exists(kept) && !dir.exists(out) && !mv(kept, out)) {
+    if (dir.exists(failed)) mv(failed, out)
+    return(paste0("the copy ", OUTPUT_KEPT, " could not be moved into output/ (a file held open?); close it and run again")) }
+  run_checkpoint("restore_2")
+  # The copy is in output/: its recorded bytes are checked on every attempt before anything is removed. What the clean-up adds
+  # itself is known from the journal, written before it starts (the stopped run's log names and md5s), so an earlier attempt's
+  # additions (a log, its .part file) never count against the copy, even after .output_failed is gone; the notes
+  # (.run_restored, .run_incomplete) are status, never part of the record.
+  if (dir.exists(kept) || !identical(kept_info(out)$run, run)) return("ambiguous")
+  if (is.null(j$cleanup)) {                                                       # first time here: what the clean-up will add, recorded before it is added
+    lg <- list.files(file.path(failed, "logs"), pattern = "\\.log$", full.names = TRUE)
+    rd <- kept_record(out); hl <- vapply(lg, function(x) digest::digest(file = x, algo = "xxhash64"), "", USE.NAMES = FALSE)
+    same <- file.path("logs", basename(lg)) %in% rd$file & hl == rd$hash[match(file.path("logs", basename(lg)), rd$file)]
+    lg <- lg[!same]                                                               # logs the last finished run left, unchanged: already in the copy
+    taken <- c(rd$file, file.path("logs", list.files(file.path(out, "logs"), all.files = TRUE, no.. = TRUE)))
+    to <- log_targets(basename(lg), taken)                                        # every final and .part name reserved: nothing there is replaced
+    j <- as.list(journal_write(pd, run, "restoring", config = j$config %||% "", why = why, cleanup = "yes",
+                               logs = paste(basename(lg), collapse = "|"), logs_to = paste(to, collapse = "|"), logs_md5 = paste(unname(tools::md5sum(lg)), collapse = "|"))) }
+  lr <- log_record(j)
+  if (is.null(lr)) return("invalid_logs")                                         # names or checksums not as this restore writes them: nothing is used
+  added <- if (length(lr$to)) c(file.path("logs", lr$to), file.path("logs", paste0(lr$to, ".part"))) else character()
+  if (!kept_verified(out, run, extra = added)) return("mismatch")
+  since <- suppressWarnings(as.numeric(kept_info(out)$time %||% NA)); if (is.na(since)) since <- as.numeric(file.mtime(out))
+  if (length(lr$to)) { dir.create(file.path(out, "logs"), showWarnings = FALSE)
+    to <- in_dir(file.path(out, "logs"), lr$to); from <- in_dir(file.path(failed, "logs"), lr$from)
+    m <- unname(tools::md5sum(to)); need <- is.na(m) | m != lr$md5
+    if (any(need) && all(file.exists(from[need]))) log_copy(from[need], to[need])
+    if (!identical(unname(tools::md5sum(to)), lr$md5))                            # the whole log must be published before its original goes
+      return(paste0("cleanup: the output is put back, but the stopped run's log could not be copied into output/logs",
+                    if (dir.exists(failed)) paste0("; it is kept in ", OUTPUT_FAILED, " (", paste(lr$from, collapse = ", "), ") and copying is tried again before the next run")
+                    else "; its original is no longer there, so it could not be copied again"))
+    unlink(in_dir(file.path(out, "logs"), paste0(lr$to, ".part"))) }              # only this restore's own staging files
+  if (dir.exists(failed)) {                                                       # retired only now, the stopped run's log safely published
+    rm_err <- tryCatch({ remove_within(failed, pd, recursive = TRUE); "" }, error = function(e) conditionMessage(e))
+    if (dir.exists(failed)) return(paste0("cleanup: the output is put back and the stopped run's log is in output/logs, but ", tilde(failed),
+                                          " (the stopped run's own output) could not be removed", if (nzchar(rm_err)) paste0(" (", rm_err, ")"),
+                                          "; it is kept and removing it is tried again before the next run")) }
+  run_checkpoint("restore_3")
   cf <- list.files(file.path(pd, "cache"), recursive = TRUE, full.names = FALSE, all.files = TRUE)
   cf <- file.path(pd, "cache", cf[!sub("/.*", "", cf) %in% keep])
-  unlink(cf[as.numeric(file.mtime(cf)) >= since - 2])
+  remove_within(cf[as.numeric(file.mtime(cf)) >= since - 2], pd)
   writeLines(paste0("The run of ", format(as.POSIXct(since, origin = "1970-01-01"), "%Y-%m-%d %H:%M"), " ", why,
-                    "; the output was put back as the run before it left it."), file.path(out, RUN_RESTORED))
+                    "; the output was put back as the run before it left it.", cfg_changed_note(pd)), file.path(out, RUN_RESTORED))
+  unlink(file.path(out, KEPT_FILES))
   TRUE
 }
-# A copy left by a run whose process was killed (and no run going now): put back. Returns what output/.run_restored says, or "".
-output_recover <- function(project_dir) {
-  pd <- path.expand(project_dir %||% ""); if (!nzchar(pd) || !dir.exists(file.path(pd, OUTPUT_KEPT)) || !is.null(lock_holder(pd))) return("")
-  if (output_restore(pd, "did not finish (the app or computer stopped)")) run_restored(pd) else ""
+# The stopped run's logs as the journal records them, or NULL when the record is not one this restore writes: plain unique
+# file names ending .log (no folder part, no "..", no separators), as many names, targets and MD5 digests.
+log_record <- function(j) {
+  sp <- function(x) if (is.null(x) || !nzchar(x)) character() else strsplit(x, "|", fixed = TRUE)[[1]]
+  from <- sp(j$logs); to <- sp(j$logs_to %||% j$logs); md5 <- sp(j$logs_md5)
+  plain <- function(x) all(grepl("^[A-Za-z0-9_][A-Za-z0-9_. -]*\\.log$", x)) && !any(grepl("\\.\\.", x)) && !anyDuplicated(x)
+  if (length(from) != length(to) || length(from) != length(md5) || !plain(from) || !plain(to) || !all(grepl("^[0-9a-f]{32}$", md5))) return(NULL)
+  list(from = from, to = to, md5 = md5)
+}
+# where each stopped-run log goes in output/logs: its own name, or name_stopped_run[_2...].log when the copy already holds that name
+log_targets <- function(names, taken) { taken <- tolower(taken); out <- character()      # letter case ignored (macOS and Windows disks)
+  for (n in names) { cand <- n; k <- 1L
+    while (any(tolower(file.path("logs", c(cand, paste0(cand, ".part")))) %in% taken)) { cand <- sub("\\.log$", paste0("_stopped_run", if (k > 1) paste0("_", k), ".log"), n); k <- k + 1L }
+    out <- c(out, cand); taken <- c(taken, tolower(file.path("logs", c(cand, paste0(cand, ".part"))))) }
+  out }
+# paths under dir only: each name must resolve to a file directly in dir, else the restore stops (checked where files are used)
+in_dir <- function(dir, names) { p <- file.path(dir, names); d <- tolower(path_norm(dir))
+  if (any(tolower(vapply(dirname(p), path_norm, "")) != d)) stop(structure(class = c("ovid_project_check", "error", "condition"),
+    list(call = NULL, message = paste0("A log name in the run journal leads outside ", tilde(dir), "; nothing was copied or removed."))))
+  p }
+kept_record <- function(kept) tryCatch(fread(file = file.path(kept, ".ovid_kept_files"), colClasses = "character", sep = "\t", na.strings = NULL), error = function(e) data.table(file = character()))
+log_copy <- function(from, to) for (k in seq_along(from)) { tmp <- paste0(to[k], ".part"); if (isTRUE(file.copy(from[k], tmp, overwrite = TRUE, copy.date = TRUE))) file.rename(tmp, to[k]) else unlink(tmp) }
+cfg_changed_note <- function(pd) {                                   # set-up tables the stopped run changed (kept, not put back)
+  j <- journal_read(pd); if (is.null(j$config)) return("")
+  b <- strsplit(strsplit(j$config, ";", fixed = TRUE)[[1]], "=", fixed = TRUE); b <- setNames(vapply(b, `[`, "", 2), vapply(b, `[`, "", 1))
+  now <- cfg_inventory(pd); ch <- union(names(now)[is.na(b[names(now)]) | b[names(now)] != now], setdiff(names(b), names(now)))
+  if (!length(ch)) "" else paste0(" The stopped run changed these set-up tables, which were kept as they are (earlier versions in config/history): ", paste(ch, collapse = ", "), ".")
+}
+note_restored <- function(pd, text) { if (dir.exists(file.path(pd, "output"))) writeLines(text, file.path(pd, "output", RUN_RESTORED)); text }   # never makes output/ (a restore may be half done)
+# Under the lock, before a run or when the app starts: what an interrupted run left, made safe. Returns a note for the user, or "".
+run_recover <- function(pd, why = "did not finish (the app or computer stopped)") {
+  kept <- file.path(pd, OUTPUT_KEPT); j <- journal_read(pd)
+  if (dir.exists(file.path(pd, OUTPUT_STAGING))) remove_within(file.path(pd, OUTPUT_STAGING), pd, recursive = TRUE)   # a copy never finished: never used
+  review <- function(what) { to <- file.path(pd, paste0(OUTPUT_REVIEW, format(Sys.time(), "%Y%m%dT%H%M%S")))
+    if (!file.rename(kept, to)) return(note_restored(pd, paste0("A copy of the output from before an earlier run (", OUTPUT_KEPT, ") could not be moved aside; it was left as it is.")))
+    journal_clear(pd)
+    note_restored(pd, paste0(what, " Both are kept: output/ as it is, and the copy in ", basename(to), ". Compare them, keep the right one as output/, and delete the other.")) }
+  if (is.null(j)) return(if (dir.exists(kept)) review("A copy of the output from before an earlier run was found, but not whether that run finished.") else "")
+  if (isTRUE(j$invalid) || !(j$phase %||% "") %in% RUN_PHASES || !grepl("^[0-9]{8}T[0-9]{6}_[0-9]+_[0-9]+$", j$run %||% "")) {   # an incomplete, repeated or unknown journal: nothing is moved
+    if (dir.exists(kept)) return(review(paste0("The run journal (", RUN_JOURNAL, ") is incomplete or names a state this version does not know, so it is not safe to put anything back.")))
+    journal_clear(pd)
+    return(note_restored(pd, paste0("The run journal (", RUN_JOURNAL, ") was incomplete or named an unknown state; nothing was moved. Check that output/ is as you expect."))) }
+  if (j$phase %in% c("committed", "backup") && dir.exists(kept) && !identical(kept_info(kept)$run, j$run))   # a copy this run did not make: never removed
+    return(review(paste0("The copy of the output (", OUTPUT_KEPT, ") belongs to another run than the one the journal names, so it was not removed.")))
+  if (identical(j$phase, "committed")) { if (dir.exists(kept)) remove_within(kept, pd, recursive = TRUE); journal_clear(pd); return("") }
+  if (identical(j$phase, "backup")) { if (dir.exists(kept)) remove_within(kept, pd, recursive = TRUE); journal_clear(pd)      # output/ was not touched yet
+    return("") }
+  failed <- file.path(pd, OUTPUT_FAILED); out <- file.path(pd, "output")
+  aside <- function(d) { to <- file.path(pd, paste0(OUTPUT_REVIEW, sub("^\\.", "", basename(d)), "_", format(Sys.time(), "%Y%m%dT%H%M%S")))
+    if (file.rename(d, to)) basename(to) else NA_character_ }
+  if (!identical(j$phase, "restoring")) {
+    if (!dir.exists(kept)) { journal_clear(pd); return("") }                       # a first run (nothing to put back): output/.run_incomplete says so
+    if (!kept_verified(kept, j$run)) return(review("The copy of the output kept before the last run does not match its record."))
+    if (dir.exists(failed)) { to <- aside(failed)                                  # not this restore's: kept for review, never removed
+      if (is.na(to)) return(note_restored(pd, paste0("A folder ", OUTPUT_FAILED, " from an earlier attempt is in the way and could not be moved aside; ",
+                                                     "the output was not put back. Move or delete it yourself, then run again.")))
+      say("  ", OUTPUT_FAILED, " from an earlier attempt was kept as ", to, " for review", col = "orange") }
+  } else if (dir.exists(kept) && !kept_verified(kept, j$run)) return(review("The copy of the output kept before the last run does not match its record."))
+  r <- output_restore(pd, why)
+  if (isTRUE(r)) { journal_clear(pd); return(run_restored(pd)) }
+  if (identical(r, "mismatch")) {                                                  # the published copy is not the one recorded: keep both, report
+    to <- if (dir.exists(failed)) aside(failed) else NA_character_; journal_clear(pd)
+    return(note_restored(pd, paste0("Putting back the output after the last run stopped was interrupted, and the copy now in output/ does not match its record ",
+                                    "(a file changed since it was made). It was not accepted as put back. Nothing was removed: output/ holds that copy",
+                                    if (!is.na(to)) paste0(", and the stopped run's output is in ", to), ". Compare them, keep the right one as output/, and delete the other."))) }
+  if (identical(r, "invalid_logs")) { journal_clear(pd)
+    return(note_restored(pd, paste0("Putting back the output was interrupted, and its journal's record of the stopped run's logs is not valid (a name that is not a plain ",
+                                    "file name, or names and checksums that do not match). Nothing was copied or removed: output/",
+                                    if (dir.exists(failed)) paste0(" and ", OUTPUT_FAILED), " are kept. Check output/ and copy any log you need by hand."))) }
+  if (startsWith(r, "cleanup: ")) return(note_restored(pd, paste0("The last run ", why, "; ", sub("^cleanup: ", "", r), ".")))
+  if (identical(r, "ambiguous")) {                                                 # the folders are not where this restore left them: keep everything
+    kept_now <- c(if (dir.exists(out)) "output/", if (dir.exists(kept)) OUTPUT_KEPT, if (dir.exists(failed)) OUTPUT_FAILED)
+    journal_clear(pd)
+    return(note_restored(pd, paste0("Putting back the output after the last run stopped was interrupted, and the folders are not as it left them. Nothing was removed: ",
+                                    paste(kept_now, collapse = ", "), " are kept. Compare them, keep the right one as output/, and delete the others."))) }
+  note_restored(pd, paste0("The last run ", why, ", and its output could not be put back yet: ", r, ". Both copies are kept (",
+                           paste(c(if (dir.exists(out)) "output/", if (dir.exists(kept)) OUTPUT_KEPT, if (dir.exists(failed)) OUTPUT_FAILED), collapse = ", "),
+                           "); it is tried again before the next run."))
+}
+# A run whose process was killed (and no run going now): made safe as above. Returns what output/.run_restored says, or "".
+# cfg: the app's settings (raw folders and any app_protect_dirs()); the project and its links are checked against them under the
+# lock before anything is changed, and a failed check is returned as the note, with nothing changed.
+output_recover <- function(project_dir, cfg = list()) {
+  pd <- path.expand(project_dir %||% ""); if (!nzchar(pd) || !any(file.exists(file.path(pd, c(OUTPUT_KEPT, OUTPUT_STAGING, RUN_JOURNAL, OUTPUT_FAILED))))) return("")
+  cfg$project_dir <- pd; roots <- protected_roots(cfg)
+  check <- function() tryCatch({ for (r in roots) if (path_overlap(pd, r)) project_stop("The project folder ", shown(pd), " overlaps the raw folder ", shown(r), ".")
+    raw_boundary_check(pd, roots); "" }, ovid_project_check = function(e) conditionMessage(e))
+  refused <- function(why) paste0("An earlier run did not finish, and its output was not put back: ", why)
+  bad <- check(); if (nzchar(bad)) return(refused(bad))                            # before the lock: nothing is written until the folder is known safe
+  lk <- tryCatch(project_lock(list(project_dir = pd)), ovid_project_check = function(e) NULL); if (is.null(lk)) return("")   # a run is going
+  on.exit(project_unlock(lk))
+  bad <- check(); if (nzchar(bad)) return(refused(bad))                            # again under the lock: nothing changed in between
+  old <- options(ovid.raw_dirs = roots, ovid.project_root = pd); on.exit(options(old), add = TRUE)
+  run_recover(pd)
 }
 
+# A change to a project outside a run (an app action: importing programs, removing a source): the same folder and link checks
+# and the same lock as a run, with no output copy. Removals inside fun() are checked by remove_within().
+project_mutate <- function(cfg, fun, need_raw = FALSE) {
+  project_check(cfg, need_raw = need_raw)
+  lk <- project_lock(cfg); on.exit(project_unlock(lk), add = TRUE)
+  old <- options(ovid.raw_dirs = protected_roots(cfg), ovid.project_root = path.expand(cfg$project_dir)); on.exit(options(old), add = TRUE)
+  raw_boundary_check(cfg$project_dir, protected_roots(cfg))                     # again under the lock
+  fun()
+}
+
+# A page's write to a project (a set-up table saved in an editor, the project's settings): the project's own settings give
+# its raw folders (with the app's CFG and app_protect_dirs()), then project_mutate()'s checks and lock. Errors carry the
+# reason; nothing is written when the checks fail.
+project_guarded <- function(project_dir, fun, raw = character()) {             # raw: more folders to protect (settings being saved)
+  pd <- path.expand(project_dir); cfg <- tryCatch(project_settings_read(pd), error = function(e) list())
+  cfg$raw_dirs <- unique(c(as.character(unlist(cfg$raw_dirs)), as.character(unlist(get0("CFG")$raw_dirs)), as.character(unlist(raw)))); cfg$project_dir <- pd
+  project_mutate(cfg, fun)
+}
+
+# The last run's result, kept with the project (.ovid_last_run) so it can be shown after a reload or a project switch:
+# status (finished, failed, cancelled, pending recovery), what happened to the output, and where the run's log is.
+RUN_RESULT <- ".ovid_last_run"
+run_result_write <- function(pd, status, note) {
+  lg <- sort(list.files(file.path(pd, "output", "logs"), "\\.log$", full.names = TRUE), decreasing = TRUE)[1]
+  try(write_new(file.path(pd, RUN_RESULT), c(paste0("status: ", status), paste0("time: ", format(Sys.time(), "%Y-%m-%d %H:%M")),
+                                             paste0("log: ", if (is.na(lg)) "" else lg), paste0("note: ", gsub("[\r\n]+", " ", note)))), silent = TRUE)   # safe: the record is extra
+}
+run_result <- function(project_dir) {                                  # list(status, time, log, note); a pending recovery wins over the record
+  pd <- path.expand(project_dir %||% ""); f <- file.path(pd, RUN_RESULT)
+  x <- if (file.exists(f)) tryCatch(readLines(f, warn = FALSE), error = function(e) character()) else character()
+  r <- as.list(setNames(sub("^[^:]*: *", "", x), sub(":.*$", "", x)))
+  if (nzchar(pd) && any(file.exists(file.path(pd, c(RUN_JOURNAL, OUTPUT_KEPT, OUTPUT_FAILED))))) {
+    r$status <- "pending recovery"; r$note <- paste0("A run did not finish and its recovery is not done (", paste(basename(file.path(pd, c(RUN_JOURNAL, OUTPUT_KEPT, OUTPUT_FAILED)))[file.exists(file.path(pd, c(RUN_JOURNAL, OUTPUT_KEPT, OUTPUT_FAILED)))], collapse = ", "),
+                                                     "): reopening the project or the next run finishes it.") }
+  r
+}
 run_project <- function(cfg, fun, need_raw = TRUE) {                # need_raw = FALSE: an app that keeps the last scan of a drive that is away (RS)
   options(ovid.cancelled = NULL)
   project_check(cfg, need_raw = need_raw)
-  lk <- project_lock(cfg); on.exit(unlink(lk, recursive = TRUE), add = TRUE)
+  lk <- project_lock(cfg); on.exit(project_unlock(lk), add = TRUE)
+  old_opt <- options(ovid.raw_dirs = protected_roots(cfg), ovid.project_root = path.expand(cfg$project_dir))
+  on.exit(options(old_opt), add = TRUE)
   held <- files_locked(cfg$project_dir)
   if (length(held)) project_stop("These files are open in another program or may not be written: ", paste(utils::head(held, 5), collapse = ", "),
                                  if (length(held) > 5) ", ..." else "", ". Close them (Excel locks a CSV it has open) and run again.")
   pd <- path.expand(cfg$project_dir)
-  if (dir.exists(file.path(pd, OUTPUT_KEPT))) { output_restore(pd, "did not finish (the app or computer stopped)")      # left by a run that was killed
-    say("  The last run did not finish; its output was put back as the run before it left it", col = "orange") }
-  free <- disk_check(pd); kept <- output_keep(pd, free); done <- FALSE
-  if (isTRUE(kept)) on.exit(if (!done) output_restore(pd, if (isTRUE(getOption("ovid.cancelled"))) "was cancelled" else "stopped before it finished")
-                            else unlink(file.path(pd, OUTPUT_KEPT), recursive = TRUE), add = TRUE, after = FALSE)
+  rec <- run_recover(pd); if (nzchar(rec)) say("  ", rec, col = "orange")
+  if (dir.exists(file.path(pd, OUTPUT_KEPT)) || dir.exists(file.path(pd, OUTPUT_FAILED)))
+    project_stop(if (nzchar(rec)) paste0(rec, " This run did not start. ") else paste0("The output of an earlier run that did not finish could not be put back (", tilde(file.path(pd, OUTPUT_KEPT)), "). "),
+                 "Nothing was changed; close any program holding a file in the project folder and run again.")
+  run <- run_new_id(); free <- disk_check(pd); kept <- output_keep(pd, free, run); done <- FALSE
+  if (!isTRUE(kept) && !identical(kept, "no output yet"))
+    project_stop("No copy of the last finished output could be made before this run (", kept, "), so the run did not start: it would change that output ",
+                 "with no way back. Nothing was changed. ", attr(kept, "action") %||% "Check the project folder's drive and run again.")
+  if (!isTRUE(kept)) journal_write(pd, run, "verified", config = paste(names(c0 <- cfg_inventory(pd)), c0, sep = "=", collapse = ";"))   # a first run: nothing to keep
+  first <- !isTRUE(kept); err <- ""
+  on.exit({ if (!lock_owned(lk)) NULL                                              # the lock was lost: another process owns the project now
+    else if (!done) { why <- if (isTRUE(getOption("ovid.cancelled"))) "was cancelled" else "stopped before it finished"
+      r <- run_recover(pd, why)
+      run_result_write(pd, if (isTRUE(getOption("ovid.cancelled"))) "cancelled" else "failed", paste0(if (nzchar(err)) paste0(err, ". ") else "",
+        if (first) "This was the first run: there was no earlier output to put back, so the output is incomplete until a run finishes." else r)) }
+    else { journal_write(pd, run, "committed"); run_checkpoint("committed")
+      if (dir.exists(file.path(pd, OUTPUT_KEPT))) remove_within(file.path(pd, OUTPUT_KEPT), pd, recursive = TRUE); journal_clear(pd)
+      run_result_write(pd, "finished", "") } }, add = TRUE, after = FALSE)
   mk <- file.path(pd, "output", RUN_INCOMPLETE); dir.create(dirname(mk), recursive = TRUE, showWarnings = FALSE)
   writeLines(paste("started", format(Sys.time(), "%Y-%m-%d %H:%M")), mk); unlink(file.path(pd, "output", RUN_RESTORED))
   # safe: cloud-folder notes are advice only
   notes <- tryCatch(cloud_notes(cfg), error = function(e) character())
-  res <- run_logged(c(cfg, list(run_kept = if (isTRUE(kept) || identical(kept, "no output yet")) "kept" else kept, run_notes = notes)),
-                    function() { for (n in notes) say("  Note: ", n, col = "orange"); cache_retry(cfg, fun) })
+  res <- withCallingHandlers(run_logged(c(cfg, list(run_kept = "kept", run_id = run, run_notes = notes)),
+                                        function() { for (n in notes) say("  Note: ", n, col = "orange"); cache_retry(cfg, fun) }),
+                             error = function(e) err <<- conditionMessage(e))
+  run_checkpoint("run_written")                                                   # tests: the run has written all its output and not committed
   done <- TRUE; unlink(mk); res
 }
 

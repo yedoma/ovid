@@ -7,6 +7,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: opening a catalogue again never replaces the copy already there (2026-11-03; GS 0.6.0).** Importing a catalogue
+zip removed an earlier import of the same name, with its saved edits. A zip is now checked (no path outside it, a
+catalogue in it), unpacked and laid out in a staging folder, and only a complete copy is put in place; a second import of
+the same file opens as name_2. A malformed zip or a failure while staging leaves everything as it was. **Output changes:**
+none.
+
 **Faster GPR scan (2026-11-01).** The GPR folders are listed once instead of once for each kind of file (.rad, .cor,
 .mrk, .rd3/.rd7, partial downloads); the same files are found (287 on M's Loggers folder). **Output changes:** none.
 

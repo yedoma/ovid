@@ -87,23 +87,34 @@ archive_index <- function(s) {
 
 # Opens a catalogue made by export_archive() so the app can browse it: the zip is unpacked into dest as a project
 # folder (output/catalogue, output/surveys when measurements were included, config from metadata/). The zip is not changed.
+# Opens a catalogue zip as a project of its own. The zip is checked (every entry a plain relative path, a catalogue's
+# surveys.csv and files.csv in it) and unpacked and laid out in a staging folder beside the imports; only a complete copy is
+# renamed into place. A copy already there (with its saved edits) is never replaced: a repeated import of the same file opens
+# as name_2, name_3, ... Returns the folder opened.
 import_catalogue <- function(zipfile, dest) {
-  tmp <- file.path(tempdir(), paste0("ert_import_", as.integer(Sys.time()))); dir.create(tmp)
-  utils::unzip(zipfile, exdir = tmp)
+  l <- tryCatch(utils::unzip(zipfile, list = TRUE), error = function(e) stop("This file could not be opened as a zip (", conditionMessage(e), ")."))
+  bad <- l$Name[grepl("(^|[/\\\\])\\.\\.([/\\\\]|$)", l$Name) | grepl("^([/\\\\]|[A-Za-z]:)", l$Name)]
+  if (length(bad)) stop("This zip holds paths outside itself (", bad[1], "); it was not opened.")
+  parent <- dirname(dest); dir.create(parent, recursive = TRUE, showWarnings = FALSE)
+  stage <- file.path(parent, paste0(".staging_", basename(dest), "_", Sys.getpid(), "_", sample.int(1e9, 1)))
+  if (!dir.create(stage)) stop("Could not make a staging folder in ", parent, ".")
+  done <- FALSE; on.exit(if (!done) unlink(stage, recursive = TRUE), add = TRUE)     # only the staging folder this call made is removed
+  tmp <- file.path(stage, ".unzipped"); dir.create(tmp); utils::unzip(zipfile, exdir = tmp)
   hits <- list.files(tmp, pattern = "^surveys\\.csv$", recursive = TRUE, full.names = TRUE)
   hits <- hits[file.exists(file.path(dirname(hits), "files.csv"))]                   # the catalogue's, not metadata/surveys.csv
-  root <- if (length(hits)) dirname(hits[which.min(nchar(hits))]) else NA
-  if (is.na(root)) stop("This zip is not an ovid GS catalogue (no surveys.csv in it).")
-  unlink(dest, recursive = TRUE); cat_dir <- file.path(dest, "output", "catalogue"); dir.create(cat_dir, recursive = TRUE)
-  dir.create(file.path(dest, "config"))
-  for (f in list.files(root, full.names = TRUE)) {
-    b <- basename(f)
-    if (b == "surveys" && dir.exists(f)) file.copy(f, file.path(dest, "output"), recursive = TRUE)
-    else if (b == "metadata") file.copy(list.files(f, full.names = TRUE), file.path(dest, "config"))
-    else file.copy(f, cat_dir, recursive = TRUE)
-  }
+  if (!length(hits)) stop("This zip is not an ovid GS catalogue (no surveys.csv with files.csv in it).")
+  root <- dirname(hits[which.min(nchar(hits))])
+  cat_dir <- file.path(stage, "output", "catalogue"); dir.create(cat_dir, recursive = TRUE); dir.create(file.path(stage, "config"))
+  for (f in list.files(root, full.names = TRUE)) { b <- basename(f)
+    ok <- if (b == "surveys" && dir.exists(f)) file.copy(f, file.path(stage, "output"), recursive = TRUE)
+          else if (b == "metadata") file.copy(list.files(f, full.names = TRUE), file.path(stage, "config"))
+          else file.copy(f, cat_dir, recursive = TRUE)
+    if (!all(ok)) stop("The catalogue could not be copied out of the zip (", b, "); nothing was opened.") }
   writeLines(c(paste("Imported from", basename(zipfile), "on", format(Sys.time(), "%Y-%m-%d %H:%M")),
-               "Changes made in the app are saved in this copy only."), file.path(dest, "IMPORTED.txt"))
+               "Changes made in the app are saved in this copy only."), file.path(stage, "IMPORTED.txt"))
   unlink(tmp, recursive = TRUE)
-  dest
+  final <- dest; k <- 1L; while (file.exists(final)) { k <- k + 1L; final <- paste0(dest, "_", k) }   # a copy already there keeps its edits
+  if (!file.rename(stage, final)) stop("The imported catalogue could not be put in place at ", final, ".")
+  done <- TRUE
+  final
 }

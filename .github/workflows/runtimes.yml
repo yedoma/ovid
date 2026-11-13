@@ -1,8 +1,12 @@
-# Builds the three portable runtimes (build/make_runtime_mac.sh, build/make_runtime_win.ps1), each from the package snapshot
-# in build/snapshot.txt, on the system it is for: Apple silicon (macos-14), Intel Mac (macos-15-intel) and Windows. Each is then
-# proved from a clean copy of the repository (git archive, no installed R used): the five apps start the way the launcher
-# starts them and each page answers (build/check_runtime.R), and every test suite runs with the runtime's R. The runtimes are
-# kept as the run's artifacts (and are what a release attaches). Run by hand, or on a version tag.
+# Builds the release candidate and proves the exact files a release would attach. One source archive is made from the commit
+# (git archive); each portable runtime (build/make_runtime_mac.sh, build/make_runtime_win.ps1) is built from the package
+# snapshot in build/snapshot.txt on the system it is for: Apple silicon (macos-14), Intel Mac (macos-15-intel) and Windows.
+# Each runtime archive is then extracted, beside the extracted source archive, into a clean folder and tested from there with
+# the runtime's own R only (no installed R or library is used): the five apps start the way the launcher starts them and each
+# page answers (build/check_runtime.R); each app imports its sample, a run is killed part way and recovered, the project is
+# reopened and an export written (build/check_release.R); and every suite runs as a release check (run_all_tests.R --release:
+# a suite whose fixture is missing fails). Linux runs the same release check on the same source archive with R from the
+# lockfile. Only files that passed are kept as the candidate's artifacts. Run by hand, or on a version tag.
 name: runtimes
 
 on:
@@ -14,7 +18,26 @@ permissions:
   contents: read
 
 jobs:
+  source:
+    runs-on: ubuntu-latest
+    outputs:
+      file: ${{ steps.src.outputs.file }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make the source archive
+        id: src
+        run: |
+          f="ovid-apps-${GITHUB_SHA::7}.tar.gz"
+          mkdir -p candidate && git archive --format=tar.gz -o "candidate/$f" HEAD
+          echo "file=$f" >> "$GITHUB_OUTPUT"; ls -l candidate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-source
+          path: candidate/
+          if-no-files-found: error
+
   runtime:
+    needs: source
     strategy:
       fail-fast: false
       matrix:
@@ -23,7 +46,7 @@ jobs:
           - { os: macos-15-intel, name: ovid-runtime-mac-x86_64, file: ovid-runtime-mac-x86_64.tar.gz }
           - { os: windows-latest, name: ovid-runtime-win-x64,    file: ovid-runtime-win-x64.zip }
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -34,29 +57,38 @@ jobs:
         if: runner.os == 'Windows'
         run: powershell -ExecutionPolicy Bypass -File build\make_runtime_win.ps1
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: build/out/${{ matrix.file }}
-          if-no-files-found: error
+          name: candidate-source
+          path: candidate
 
-      # a clean copy: the committed files only, with the runtime beside them as runtime/
-      - name: Make a clean copy
+      # the clean copy is made from the two candidate files only: the source archive, and the runtime archive extracted as runtime/
+      - name: Extract the source archive
         shell: bash
         # tar is given no path (on Windows it reads "D:\..." as a remote host); bash's cd takes either form
         run: |
           mkdir -p "$RUNNER_TEMP/clean"
-          git archive HEAD | (cd "$RUNNER_TEMP/clean" && tar -x)
-          cp -R "build/out/${{ matrix.name }}" "$RUNNER_TEMP/clean/runtime"
-          ls "$RUNNER_TEMP/clean"
+          (cd "$RUNNER_TEMP/clean" && tar -xzf -) < "candidate/${{ needs.source.outputs.file }}"
+      - name: Extract the runtime archive
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p "$RUNNER_TEMP/rt" && tar -xzf "build/out/${{ matrix.file }}" -C "$RUNNER_TEMP/rt"
+          mv "$RUNNER_TEMP/rt/${{ matrix.name }}" "$RUNNER_TEMP/clean/runtime" && ls "$RUNNER_TEMP/clean"
+      - name: Extract the runtime archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Expand-Archive -Path "build\out\${{ matrix.file }}" -DestinationPath "$env:RUNNER_TEMP\rt"
+          Move-Item "$env:RUNNER_TEMP\rt\${{ matrix.name }}" "$env:RUNNER_TEMP\clean\runtime"; Get-ChildItem "$env:RUNNER_TEMP\clean"
 
-      - name: Start the five apps and check each page
+      - name: Start the five apps, check each page, then the release steps
         if: runner.os == 'macOS'
         working-directory: ${{ runner.temp }}/clean
         run: |
           export RHOME="$PWD/runtime/R" R_LIBS_USER="$PWD/runtime/none" R_LIBS_SITE="$PWD/runtime/none"
           runtime/R/bin/Rscript build/check_runtime.R .
-      - name: Start the five apps and check each page
+          runtime/R/bin/Rscript build/check_release.R .
+      - name: Start the five apps, check each page, then the release steps
         if: runner.os == 'Windows'
         working-directory: ${{ runner.temp }}\clean
         shell: pwsh
@@ -64,18 +96,63 @@ jobs:
           $env:R_LIBS_USER = "$PWD\runtime\none"; $env:R_LIBS_SITE = "$PWD\runtime\none"
           & runtime\R\bin\x64\Rscript.exe build\check_runtime.R .
           if ($LASTEXITCODE -ne 0) { exit 1 }
+          & runtime\R\bin\x64\Rscript.exe build\check_release.R .
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
-      - name: Run all tests with the runtime
+      - name: Run all tests with the runtime (release check)
         if: runner.os == 'macOS'
         working-directory: ${{ runner.temp }}/clean
         run: |
           export RHOME="$PWD/runtime/R" R_LIBS_USER="$PWD/runtime/none" R_LIBS_SITE="$PWD/runtime/none"
-          runtime/R/bin/Rscript run_all_tests.R
-      - name: Run all tests with the runtime
+          runtime/R/bin/Rscript run_all_tests.R --release
+      - name: Run all tests with the runtime (release check)
         if: runner.os == 'Windows'
         working-directory: ${{ runner.temp }}\clean
         shell: pwsh
         run: |
           $env:R_LIBS_USER = "$PWD\runtime\none"; $env:R_LIBS_SITE = "$PWD\runtime\none"
-          & runtime\R\bin\x64\Rscript.exe run_all_tests.R
+          & runtime\R\bin\x64\Rscript.exe run_all_tests.R --release
           if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      # kept only now, after every check passed on the extracted copy of this very file
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: build/out/${{ matrix.file }}
+          if-no-files-found: error
+
+  linux:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: build
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-source
+          path: candidate
+      - name: Extract the source archive
+        run: mkdir -p clean && tar -xzf "candidate/${{ needs.source.outputs.file }}" -C clean
+      - name: R version from the lockfile
+        id: rver
+        run: echo "r=$(jq -r .R.Version clean/build/renv.lock)" >> "$GITHUB_OUTPUT"
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ steps.rver.outputs.r }}
+          use-public-rspm: true
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev libnode-dev libcurl4-openssl-dev libuv1-dev cmake pandoc
+      - name: Install the pinned packages
+        working-directory: clean
+        run: |
+          install.packages("renv")
+          renv::restore(lockfile = "build/renv.lock", library = .libPaths()[1], prompt = FALSE)
+          for (p in c("V8", "chromote", "processx", "callr")) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
+        shell: Rscript {0}
+      - name: Run all tests (release check) and the release steps
+        working-directory: clean
+        run: |
+          Rscript run_all_tests.R --release
+          Rscript build/check_release.R .

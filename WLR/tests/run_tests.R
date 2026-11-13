@@ -747,6 +747,65 @@ local({                                                               # damaged 
   raw0 <- tempfile("raw0"); dir.create(raw0); for (f in list.files(sd, "__", full.names = TRUE)) if (!dir.exists(f)) file.copy(f, file.path(raw0, sub("^.*?__", "", basename(f))))
   p0 <- tempfile("p0"); rn(raw0, p0); t <- damaged_table_runs(p0, function() rn(raw0, p0)); bad <- t[result != "ok" & !startsWith(result, "The set-up table")]; if (nrow(bad)) print(bad)
   check(paste0("a damaged or emptied set-up table never stops a run without saying which table: ", nrow(t), " runs"), !nrow(bad)) })
+local({                                                               # the grouping preview reads site files and writes nothing in the project
+  sf <- list.files(file.path(pw, "output", "sites"), "__.*\\.csv$", full.names = TRUE)
+  if (length(sf)) { serial <- sub("__.*$", "", basename(sf[1])); rawd <- tempfile("wl_raw"); dir.create(rawd)
+    writeLines("raw,1", file.path(rawd, paste0(safe_name(basename(sf[1])), "__keep.csv"))); h0 <- tools::md5sum(list.files(rawd, full.names = TRUE))
+    lv <- file.path(pw, "cache", "levels"); if (dir.exists(lv)) file.rename(lv, paste0(lv, "_aside")); file.symlink(rawd, lv)
+    got <- NULL; testServer(app$server, { got <<- wl_level(serial) })
+    unlink(lv); if (dir.exists(paste0(lv, "_aside"))) file.rename(paste0(lv, "_aside"), lv)
+    check("the grouping preview with cache/levels linked to a folder holding a matching raw CSV: reads the levels, removes and writes nothing there",
+          !is.null(got) && nrow(got) > 0 && identical(tools::md5sum(list.files(rawd, full.names = TRUE)), h0) && length(list.files(rawd)) == 1)
+  } else cat("  skip  no site files in the Workbench test project for the grouping preview check\n") })
+local({                                                               # a Rescan that stops to ask the time zone goes on with the same files and message
+  gr <- tempfile("tz_raw"); dir.create(gr); file.copy(list.files(file.path(here, "tests", "golden", "raw"), full.names = TRUE), gr, recursive = TRUE)
+  gp <- tempfile("wlr_tz"); dir.create(file.path(gp, "config"), recursive = TRUE)                    # no set-up tables: the loggers' zone is not stated anywhere
+  cf <- modifyList(CFG, list(raw_dirs = gr, metadata_dir = "", dgps_dir = "", project_dir = gp, unzoned_offset_h = -7, make_plots = FALSE))
+  invisible(capture.output(run_pipeline(cf))); fa <- fread(file = file.path(gp, "output", "audit", "files.csv"), colClasses = "character")
+  invisible(capture.output(run_pipeline(cf))); reused <- function() as.integer(fread(file = file.path(gp, "output", "audit", "run_manifest.csv"), colClasses = "character")[key == "files_reused", value])
+  all_reused <- reused(); done <- FALSE; asked <- FALSE
+  cf2 <- modifyList(cf, list(rescan = fa$rel[1]))
+  real_uc <- app$unzoned_check; n_ask <- 0L                                       # the first run asks for the zone, as a run with unzoned files does
+  fake <- function(...) { if ((n_ask <<- n_ask + 1L) == 1L) stop(structure(class = c("ovid_ask_zone", "error", "condition"), list(message = "Which zone?", call = NULL, n = 1L))); real_uc(...) }
+  app$unzoned_check <- fake; assign("unzoned_check", fake, envir = globalenv())
+  on.exit({ app$unzoned_check <- real_uc; assign("unzoned_check", real_uc, envir = globalenv()) }, add = TRUE)
+  testServer(app$server, { asked_before <- is.null(pending_run); do_run(cf2, after = function() done <<- TRUE); asked <<- !is.null(pending_run)
+    session$setInputs(uz_choice = "-7"); session$setInputs(uz_go = 1) })
+  check("a Rescan that stops to ask the loggers' time zone goes on, after the answer, with the same file and its own completion message",
+        n_ask == 2L && done && reused() < all_reused && reused() >= all_reused - 2) })   # asked once, then ran with the answer
+local({                                                               # barologger agreement on off-hour and staggered records
+  mk <- function(t0, n = 96, step = 900, v = 100 + sin(seq_len(n) / 8)) data.table(TIMESTAMP = as.POSIXct(t0, tz = "UTC") + (seq_len(n) - 1) * step, baro_kpa = v)
+  a <- mk("2024-06-01 00:15:00"); same <- baro_agreement(list(A = a, B = copy(a)))
+  check("two identical barologgers recording at :15 past the hour: compared, zero departure (it stopped with an error)",
+        all(same$departure_kpa == 0) && all(same$agreement == "compared") && all(same$compared > 0))
+  st <- baro_agreement(list(A = mk("2024-06-01 00:15:00", step = 1800), B = mk("2024-06-01 00:45:00", step = 1800, v = 100.05 + sin(seq_len(96) / 8))))
+  check("staggered loggers (:15 and :45) are compared at their own times, within the gap rule", all(st$agreement == "compared") && all(is.finite(st$departure_kpa)) && all(st$departure_kpa < 0.1))
+  no <- baro_agreement(list(A = mk("2024-01-01 00:15:00"), B = mk("2024-07-01 00:15:00")))
+  check("no usable overlap: no departure, said explicitly", all(is.na(no$departure_kpa)) && all(no$agreement == "no usable overlap"))
+  h <- list(A = mk("2024-06-01 00:00:00", step = 3600), B = mk("2024-06-01 00:00:00", step = 3600, v = 100.2 + sin(seq_len(96) / 8)), C = mk("2024-06-01 00:00:00", step = 3600, v = 99.9 + cos(seq_len(96) / 8)))
+  t <- sort(unique(unlist(lapply(h, function(x) as.numeric(x$TIMESTAMP[as.numeric(x$TIMESTAMP) %% 3600 == 0])))))
+  M <- sapply(h, function(x) baro_at(x$TIMESTAMP, x$baro_kpa, t, 6 * 3600)); med <- apply(M, 1, stats::median, na.rm = TRUE)
+  check("loggers on the hour give the departures the earlier comparison gave", identical(baro_agreement(h)$departure_kpa, unname(round(apply(abs(M - med), 2, stats::median, na.rm = TRUE), 3)))) })
+local({                                                               # Rescan: cache entries forgotten inside the checked, locked run
+  gr <- tempfile("rs_raw"); dir.create(gr); file.copy(list.files(file.path(here, "tests", "golden", "raw"), full.names = TRUE), gr, recursive = TRUE)
+  gp <- tempfile("wlr_rescan"); dir.create(file.path(gp, "config"), recursive = TRUE)
+  file.copy(list.files(file.path(here, "tests", "golden", "config"), full.names = TRUE), file.path(gp, "config"))
+  cf <- modifyList(CFG, list(raw_dirs = gr, metadata_dir = "", dgps_dir = "", project_dir = gp, unzoned_offset_h = -7, make_plots = FALSE))
+  invisible(capture.output(run_pipeline(cf)))
+  fa <- fread(file = file.path(gp, "output", "audit", "files.csv"), colClasses = "character"); one <- fa$rel[1]
+  reused <- function() as.integer(fread(file = file.path(gp, "output", "audit", "run_manifest.csv"), colClasses = "character")[key == "files_reused", value])
+  invisible(capture.output(run_pipeline(cf))); all_reused <- reused()
+  invisible(capture.output(run_pipeline(modifyList(cf, list(rescan = one)))))
+  check("Rescan inside the run: the selected file is read again, the others reused", reused() < all_reused && reused() >= all_reused - 2)
+  h0 <- tools::md5sum(sort(list.files(gr, recursive = TRUE, full.names = TRUE)))
+  rd <- file.path(gp, "cache", "read"); md5 <- fa$md5[1]; dir.create(file.path(gr, "cachelike"))
+  writeLines("sentinel", file.path(gr, "cachelike", paste0(md5, "_x.rds"))); h1 <- tools::md5sum(sort(list.files(gr, recursive = TRUE, full.names = TRUE)))
+  unlink(rd, recursive = TRUE); file.symlink(file.path(gr, "cachelike"), rd)
+  e <- tryCatch(run_pipeline(modifyList(cf, list(rescan = one))), error = function(e) e)
+  check("Rescan with cache/read linked into the raw folder: the run stops and no raw file is removed (raw tree byte for byte the same)",
+        inherits(e, "ovid_project_check") && identical(tools::md5sum(sort(list.files(gr, recursive = TRUE, full.names = TRUE))), h1))
+  e2 <- tryCatch(forget_wlr_files(gp, one), error = function(e) e)
+  check("... and forgetting files outside a run removes nothing", inherits(e2, "ovid_project_check") && file.exists(file.path(gr, "cachelike", paste0(md5, "_x.rds")))) })
 if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) local({
   source(file.path(CORE_DIR, "uitest.R"), local = TRUE)
   none <- tempfile("none_"); dir.create(none)                                    # no metadata or dGPS folder: only the test project is read

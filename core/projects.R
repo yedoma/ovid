@@ -58,17 +58,15 @@ project_apply_settings <- function(cfg, s, path = s$project_dir, keys = NULL) {
     cfg[k] <- list(v) }
   if (!is.null(path)) cfg$project_dir <- path.expand(path)
   cfg }
+# Saved under the same checks and lock as a run (core project_guarded): the file is written new beside and renamed into place
+# (write_new), so a link at its place is replaced, never written through. TRUE when saved; an error says why it was not.
 project_settings_save <- function(path, settings) {
   q <- path.expand(path); if (!dir.exists(q)) return(invisible(FALSE))
-  dir.create(file.path(q, "config"), showWarnings = FALSE)
   s <- settings[setdiff(names(settings), c("projects", "ui"))]; attr(s, "from_backup") <- NULL
   f <- file.path(q, PROJECT_SETTINGS)
-  tmp <- paste0(f, ".part")
-  writeLines(settings_json(s), tmp, useBytes = TRUE)
-  if (!file.rename(tmp, f)) {
-    file.copy(tmp, f, overwrite = TRUE)
-    unlink(tmp)
-  }
+  project_guarded(q, function() {
+    dir.create(file.path(q, "config"), showWarnings = FALSE)
+    if (!write_new(f, enc2utf8(settings_json(s)))) stop("The project's settings could not be written to ", tilde(f), ".") }, raw = s$raw_dirs)
   invisible(TRUE)
 }
 
@@ -129,8 +127,9 @@ project_duplicate <- function(path, name, others = character(), dest = NULL, set
 # ---- deleting to the Trash ---------------------------------------------------------------------------------------------------
 # One folder or file to the Trash: a Mac's own disk to ~/.Trash, another drive through the Finder, Windows to the Recycle Bin,
 # Linux through gio. TRUE when it went; otherwise nothing is deleted.
-to_trash <- function(path) {
-  p <- path_norm(path); if (!file.exists(p)) return(TRUE)
+to_trash <- function(path) {                                       # the item itself, never what a link at that place points to
+  p <- file.path(path_norm(dirname(path)), basename(sub("[/\\\\]+$", "", path))); if (!file.exists(p) && !nzchar(Sys.readlink(p) %|% "")) return(TRUE)
+  if (nzchar(Sys.readlink(p) %|% "")) return(FALSE)                                # a link: refused (the plan says so first)
   td <- getOption("ovid.trash_dir"); if (!is.null(td)) { dir.create(td, showWarnings = FALSE)            # tests: a folder of their own
     return(file.rename(p, file.path(td, paste0(basename(p), "_", as.integer(runif(1, 1, 1e9)))))) }
   os <- Sys.info()[["sysname"]]
@@ -150,21 +149,45 @@ to_trash <- function(path) {
 }
 
 # What deleting would take: "outputs" (output/ and cache/, the set-up kept) or "project" (the whole folder). A list of the items
-# (path, size) and why it cannot be done ("" when it can).
-project_delete_plan <- function(path, what = c("outputs", "project")) {
+# (path, size), why it cannot be done ("" when it can), and a signature of what was checked. Every item must be a real folder
+# or file directly in the project folder: a link (or Windows junction) is never followed, so a linked output/ cannot take a
+# raw archive with it; nothing may lie in or around a protected folder (the project's raw folders and any app_protect_dirs()),
+# and no link inside an item may lead into one.
+project_delete_plan <- function(path, what = c("outputs", "project"), cfg = NULL) {
   what <- match.arg(what); q <- path.expand(path); why <- ""
-  if (!dir.exists(q)) return(list(items = character(), size = 0, why = "The folder is not there."))
+  if (!dir.exists(q)) return(list(items = character(), size = 0, why = "The folder is not there.", sig = ""))
   if (!is.null(lock_holder(q))) why <- "A run is going on this project. Wait for it to end."
   ow <- project_owner(q); if (!nzchar(why) && nzchar(ow) && !identical(ow, project_app())) why <- paste0("This folder is a project of Ovid ", ow, ".")
   if (what == "project") { other <- setdiff(list.files(q, all.files = TRUE, no.. = TRUE), PROJECT_KNOWN)
     if (!nzchar(why) && length(other)) why <- paste0("The folder also holds things Ovid did not make (", paste(utils::head(other, 3), collapse = ", "), "): delete them yourself first, or delete only the outputs.")
     items <- q }
   else items <- file.path(q, c("output", "cache", OUTPUT_KEPT, OUTPUT_FAILED))
-  items <- items[file.exists(items)]
-  list(items = items, size = sum(vapply(items, function(i) if (dir.exists(i)) dir_bytes(i) else file.size(i), 0)), why = why)
+  linked <- function(x) nzchar(Sys.readlink(x) %|% "") || (dir.exists(x) && tolower(path_norm(x)) != tolower(file.path(path_norm(dirname(x)), basename(x))))
+  items <- items[file.exists(items) | vapply(items, function(x) nzchar(Sys.readlink(x) %|% ""), NA)]
+  if (!nzchar(why)) {
+    lk <- items[vapply(items, linked, NA)]
+    if (length(lk)) why <- paste0(paste(tilde(lk), collapse = ", "), if (length(lk) == 1) " is a link" else " are links", " to ", paste(tilde(vapply(lk, path_norm, "")), collapse = ", "),
+                                  ". Deleting would follow it, so nothing is deleted. Remove the link yourself (it is not the data), then delete again.") }
+  if (!nzchar(why)) {
+    cfg <- cfg %||% tryCatch(project_settings_read(q), error = function(e) list()); cfg$project_dir <- q
+    roots <- tryCatch(protected_roots(cfg), error = function(e) character())
+    for (r in roots) for (i in items) if (!nzchar(why) && path_overlap(i, r)) why <- paste0(tilde(i), " is in or around the raw folder ", tilde(r), ", so nothing is deleted.")
+    if (!nzchar(why)) why <- tryCatch({ raw_boundary_check(q, roots); "" }, ovid_project_check = function(e) paste("Nothing is deleted:", conditionMessage(e)))
+  }
+  sig <- paste(items, vapply(items, function(x) paste(fs::file_info(x)$inode, fs::file_info(x)$type), ""), collapse = "|")
+  list(items = items, size = sum(vapply(items, function(i) if (dir.exists(i)) dir_bytes(i) else file.size(i) %|% 0, 0)), why = why, sig = sig)
 }
-project_delete <- function(path, what = c("outputs", "project")) {
-  pl <- project_delete_plan(path, what); if (nzchar(pl$why)) project_stop(pl$why)
+# Deletes what the plan shows, under the project lock: the plan is worked out again there and must be the one the person saw
+# (same items, same folders), else nothing is deleted.
+project_delete <- function(path, what = c("outputs", "project"), expect = NULL, cfg = NULL) {
+  what <- match.arg(what); q <- path.expand(path)
+  pl0 <- project_delete_plan(q, what, cfg); if (nzchar(pl0$why)) project_stop(pl0$why)
+  lk <- project_lock(list(project_dir = q)); on.exit(project_unlock(lk))
+  pl <- project_delete_plan(q, what, cfg)
+  pl$why <- sub("^A run is going on this project.*", "", pl$why)                  # the lock held now is this deletion's own
+  if (nzchar(pl$why)) project_stop(pl$why)
+  if (!is.null(expect) && !identical(pl$sig, expect)) project_stop("The folders changed after the list was shown, so nothing was deleted. Open Delete again to see what it would take now.")
+  if (what == "project") { project_unlock(lk); on.exit() }                         # the lock is inside the folder that goes
   gone <- vapply(pl$items, to_trash, NA)
   if (!all(gone)) project_stop("These could not be moved to the Trash, so they were left as they are: ", paste(tilde(pl$items[!gone]), collapse = ", "), ".")
   invisible(pl$items)
@@ -241,7 +264,9 @@ projects_server <- function(id, open, settings_now, settings_file = get0("SETTIN
     if (run_busy()) return(showNotification("A run is going: wait for it before opening another project.", type = "warning")); switch_to(r$path[1]) })
   switch_to <- function(path) {
     cur <- st()$project_dir %||% ""; now <- tryCatch(settings_now(), error = function(e) st())
-    if (nzchar(cur) && dir.exists(path.expand(cur))) project_settings_save(cur, now)          # the project left keeps its settings
+    if (nzchar(cur) && dir.exists(path.expand(cur))) {                                       # the project left keeps its settings
+      sv <- tryCatch(project_settings_save(cur, now), error = function(e) e)
+      if (inherits(sv, "error")) showNotification(paste("The settings of the project left were not saved:", conditionMessage(sv)), type = "warning", duration = NULL) }
     s <- project_settings_read(path); s$project_dir <- path.expand(path)
     for (k in intersect(PROJECT_FOLDER_KEYS, names(now))) if (is.null(s[[k]])) s[k] <- list(if (k == "raw_dirs") character() else "")
     st_set(c(s, list(projects = projects_remember(st(), path.expand(path)))))
@@ -297,8 +322,8 @@ projects_server <- function(id, open, settings_now, settings_file = get0("SETTIN
       if (isTRUE(x$open)) { s <- st(); s$project_dir <- r; st_set(list(project_dir = r)); open(r, utils::modifyList(project_settings_read(r), list(project_dir = r))) } }
     tick(tick() + 1); showNotification(paste0("Renamed to ", project_name(r), "."), type = "message") })
   pending_del <- NULL
-  del <- function(what, x) { pending_del <<- x
-    pl <- project_delete_plan(x$path, what)
+  del <- function(what, x) {
+    pl <- project_delete_plan(x$path, what); x$sig <- pl$sig; pending_del <<- x
     if (nzchar(pl$why)) return(showNotification(pl$why, type = "warning", duration = NULL))
     if (!length(pl$items)) return(showNotification("There is nothing to delete.", type = "message"))
     showModal(modalDialog(title = if (what == "project") paste0("Delete the project ", x$name, "?") else paste0("Delete the outputs of ", x$name, "?"), easyClose = TRUE,
@@ -309,7 +334,7 @@ projects_server <- function(id, open, settings_now, settings_file = get0("SETTIN
   observeEvent(input$sw_del, { x <- rows(); o <- x[open == TRUE]; if (!nrow(o)) return(showNotification("No project is open.", type = "message")); del(input$sw_del, o[1]) })
   for (w in c("outputs", "project")) local({ what <- w
     observeEvent(input[[paste0("del_ok_", what)]], { x <- pending_del; pending_del <<- NULL; removeModal(); if (is.null(x)) return()
-      r <- tryCatch(project_delete(x$path, what), error = function(e) e)
+      r <- tryCatch(project_delete(x$path, what, expect = x$sig), error = function(e) e)
       if (inherits(r, "error")) return(showNotification(conditionMessage(r), type = "error", duration = NULL))
       if (what == "project") { st_set(list(projects = setdiff(projects_known(st()), x$path)))
         if (isTRUE(x$open)) showNotification("The open project was deleted: open or make another one.", type = "warning", duration = NULL) }

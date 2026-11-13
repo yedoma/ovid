@@ -25,7 +25,8 @@
     # safe: the title applies in this session; only remembering it failed
     CFG$viewer_title <<- v; try(settings_save(SETTINGS_FILE, list(viewer_title = v)), silent = TRUE)
     # a project folder not made yet: the title is kept in the app's settings and goes to the project when it is left (projects_server)
-    try(project_settings_save(CFG$project_dir, utils::modifyList(project_settings_read(CFG$project_dir), list(viewer_title = v))), silent = TRUE)
+    sv <- if (dir.exists(path.expand(CFG$project_dir))) tryCatch(project_settings_save(CFG$project_dir, utils::modifyList(project_settings_read(CFG$project_dir), list(viewer_title = v))), error = function(e) e)
+    if (inherits(sv, "error")) showNotification(paste("The title is used now but was not saved with the project:", conditionMessage(sv)), type = "warning")
     show_title(v) }
   for (k in c("x_title", "wb_x_title")) local({ k <- k; tt <- debounce(reactive(input[[k]]), 800); observeEvent(tt(), set_title(tt()), ignoreInit = TRUE) })
   # Export viewer (ZIP): saves the title, writes the viewer in the background, then downloads it through the hidden link dl

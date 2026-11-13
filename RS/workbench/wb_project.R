@@ -30,7 +30,7 @@ wb_stac_ui <- function() div(class = "wb-std d-tool", tags$h1(class = "wb-h1", "
 wb_project_server <- function(input, output, session, ctx) {
   E <- ctx$E; std <- ctx$std
   # safe: the sources table's editor reports a read problem
-  output$wb_scan <- renderUI({ std$rv$tick; x <- std$C(); live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
+  output$wb_scan <- renderUI({ std$rv$tick; x <- std$C(); live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(read_configs(CFG)$sources, error = function(e) data.table())
     plugged <- if (nrow(s)) sum(dir.exists(path.expand(s$path))) else 0
     tile <- function(v, k, cls = "") div(class = paste("wb-tile", cls), div(class = "v", v), div(class = "k", k))
     # safe: an output of the last run, only shown

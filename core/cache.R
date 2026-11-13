@@ -116,10 +116,14 @@ cache_write <- function(dir, name, key, value) {
   invisible(f)
 }
 
+# Cached files are removed only inside a checked, locked run (core run_project sets the project folder they must lie in);
+# the cache folder itself is never taken as the place it is safe to remove from.
+cache_root <- function() getOption("ovid.project_root") %||% stop(structure(class = c("ovid_project_check", "error", "condition"),
+  list(call = NULL, message = "Cached files are removed only during a run, after the project folder is checked. Nothing was removed.")))
 # Removes every cached result of this kind that the run did not use.
 cache_prune <- function(dir, used) {
   have <- list.files(dir, full.names = TRUE)
-  unlink(have[!normalizePath(have, winslash = "/", mustWork = FALSE) %in% normalizePath(used, winslash = "/", mustWork = FALSE)])
+  remove_within(have[!normalizePath(have, winslash = "/", mustWork = FALSE) %in% normalizePath(used, winslash = "/", mustWork = FALSE)], cache_root())
 }
 
 # Drops every cached result for the given names (all keys), so the next run redoes them: "rescan this file".
@@ -127,7 +131,7 @@ cache_forget <- function(dir, names) {
   if (!dir.exists(dir) || !length(names)) return(invisible(0L))
   f <- list.files(dir, full.names = TRUE)
   hit <- f[sub("__[^_]*\\.rds$", "", basename(f)) %in% safe_name(names)]
-  unlink(hit); invisible(length(hit))
+  remove_within(hit, cache_root()); invisible(length(hit))
 }
 
 # ---- cached data files written and read safely --------------------------------------------------------------------------------
@@ -146,4 +150,4 @@ cache_load <- function(f) tryCatch(readRDS(f), error = function(e) stop(structur
   list(call = NULL, message = paste0("a cached file could not be read (", basename(f), ": ", conditionMessage(e), ")")))))
 cache_retry <- function(cfg, fun) tryCatch(fun(), ovid_cache_bad = function(e) {
   say("  ", conditionMessage(e), "; the cache is cleared and the run starts again from the raw files", col = "orange")
-  unlink(file.path(path.expand(cfg$project_dir), "cache"), recursive = TRUE); fun() })
+  pd <- path.expand(cfg$project_dir); remove_within(file.path(pd, "cache"), pd, recursive = TRUE); fun() })

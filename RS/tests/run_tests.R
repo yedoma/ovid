@@ -744,4 +744,107 @@ if (!identical(Sys.getenv("OVID_SKIP_UI"), "1") && requireNamespace("chromote", 
   ui <- tryCatch(ui_click_through(normalizePath(here), c(RS_PROJECT_DIR = proj, RS_NO_RUN = "1")), error = function(e) data.table(page = "(start)", shown = FALSE, errors = conditionMessage(e)))
   bad <- ui[!shown | nzchar(errors)]; if (nrow(bad)) print(bad[, .(page, shown, errors = substr(errors, 1, 300))])
   check(nrow(ui) > 3 && !nrow(bad), "every page opens in a browser with no output, JavaScript or server error (the test project)") })
+local({                                         # saved sources, scan folders and first-run folders are never written
+  q <- file.path(tmp, "guard_proj"); S <- file.path(tmp, "guard_src"); dir.create(S); file.copy(list.files(A, full.names = TRUE), S, recursive = TRUE)
+  writeLines("sentinel", file.path(S, "setup_check.csv")); h0 <- function(d) tools::md5sum(sort(list.files(d, recursive = TRUE, full.names = TRUE)))
+  before <- h0(S); q0 <- file.path(tmp, "guard_empty"); dir.create(q0)
+  check(identical(rs_protected(list(project_dir = q0, raw_dirs = character()), S), S) && !length(list.files(q0, recursive = TRUE, all.files = TRUE)),
+        "the protected folders are read without making any file")
+  invisible(capture.output(run_pipeline(list(project_dir = q), scan = S, source_id = "G")))
+  unlink(file.path(q, "output", "audit"), recursive = TRUE); file.symlink(S, file.path(q, "output", "audit"))
+  e <- tryCatch(run_pipeline(list(project_dir = q)), error = function(e) e)
+  check(inherits(e, "ovid_project_check") && grepl("raw folder", conditionMessage(e)) && identical(h0(S), before),
+        "output/audit linked into a saved source: the run stops and setup_check.csv in the archive keeps its bytes")
+  N <- file.path(tmp, "guard_new"); dir.create(N); writeLines("sentinel", file.path(N, "setup_check.csv")); q2 <- file.path(tmp, "guard_proj2")
+  dir.create(file.path(q2, "output"), recursive = TRUE); file.symlink(N, file.path(q2, "output", "audit"))
+  e <- tryCatch(run_pipeline(list(project_dir = q2), scan = N), error = function(e) e)
+  check(inherits(e, "ovid_project_check") && readLines(file.path(N, "setup_check.csv")) == "sentinel", "... and so does a newly selected source")
+  unlink(file.path(q, "output", "audit")); file.rename(S, paste0(S, "_away"))
+  r <- tryCatch(run_pipeline(list(project_dir = q), scan = character()), error = function(e) e)
+  check(!inherits(r, "error") && nrow(r$flights) > 0, "with the saved source unplugged, the catalogue is still rebuilt from its last scan")
+  file.rename(paste0(S, "_away"), S)
+  tree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE, include.dirs = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f[!dir.exists(f)]))) }
+  for (how in c("positional", "named")) {                      # scan given as the second argument or by name: the same folder is protected
+    N2 <- file.path(tmp, paste0("guard_arch_", how)); dir.create(N2); writeLines("sentinel", file.path(N2, "notes.txt")); t0 <- tree(N2)
+    q3 <- file.path(tmp, paste0("guard_pos_", how)); dir.create(q3); file.symlink(N2, file.path(q3, "config"))
+    e <- tryCatch(if (how == "positional") run_pipeline(list(project_dir = q3), N2) else run_pipeline(list(project_dir = q3), scan = N2), error = function(e) e)
+    check(inherits(e, "ovid_project_check") && identical(tree(N2), t0), paste0("a ", how, " scan with config/ linked into the selected archive stops before writing there")) }
+  for (how in c("positional", "named")) {                      # an archive folder whose name ends in a space: the same folder protected, scanned and saved
+    sp <- file.path(tmp, paste0("archive_", how, " ")); dir.create(sp); file.copy(list.files(A, full.names = TRUE), sp, recursive = TRUE); t0 <- tree(sp)
+    q4 <- file.path(tmp, paste0("guard_space_", how)); dir.create(q4); file.symlink(sp, file.path(q4, "config"))
+    e <- tryCatch(if (how == "positional") run_pipeline(list(project_dir = q4), sp) else run_pipeline(list(project_dir = q4), scan = sp), error = function(e) e)
+    check(inherits(e, "ovid_project_check") && identical(tree(sp), t0), paste0("a ", how, " scan of a folder named with a trailing space, config/ linked into it: refused, nothing written there")) }
+  sp <- file.path(tmp, "archive_ok "); dir.create(sp); file.copy(list.files(A, full.names = TRUE), sp, recursive = TRUE); q5 <- file.path(tmp, "guard_space_ok")
+  invisible(capture.output(run_pipeline(list(project_dir = q5), scan = sp, source_id = "SP")))
+  saved <- load_configs(modifyList(CFG, list(project_dir = q5)))$sources$path
+  file.rename(sp, paste0(tmp, "/archive_away")); r5 <- tryCatch(run_pipeline(list(project_dir = q5), scan = character()), error = function(e) e); file.rename(paste0(tmp, "/archive_away"), sp)
+  check(identical(saved, normalizePath(sp, winslash = "/", mustWork = FALSE)) && endsWith(saved, " ") && !inherits(r5, "error") && nrow(r5$flights) > 0,
+        "a source whose folder name ends in a space is saved and reloaded exactly, and rebuilt from its last scan while unplugged")
+  catd <- file.path(q, "output", "catalogue"); file.rename(catd, paste0(catd, "_real")); file.copy(file.path(paste0(catd, "_real"), "flights.csv"), file.path(S, "flights.csv"))
+  file.symlink(S, catd); f0 <- tools::md5sum(file.path(S, "flights.csv")); s0 <- tools::md5sum(file.path(q, "config", "sources.csv"))
+  e <- tryCatch(remove_source(q, "G"), error = function(e) e)
+  check(inherits(e, "ovid_project_check") && identical(tools::md5sum(file.path(S, "flights.csv")), f0) && identical(tools::md5sum(file.path(q, "config", "sources.csv")), s0),
+        "Remove source with output/catalogue linked into the saved source: refused; flights.csv in the archive and sources.csv keep their bytes")
+  unlink(catd); file.rename(paste0(catd, "_real"), catd); unlink(file.path(S, "flights.csv"))
+  r <- remove_source(q, "G")
+  check(!"G" %in% fread(file = file.path(q, "config", "sources.csv"), colClasses = "character")$source_id && r$flights > 0, "... and a normal removal still works") })
+local({                                         # removing a source: all tables or none, or finished on the next try
+  qr <- file.path(tmp, "remove_copy"); dir.create(qr); file.copy(list.files(proj, full.names = TRUE), qr, recursive = TRUE)
+  catd <- file.path(qr, "output", "catalogue"); h <- function() tools::md5sum(c(file.path(qr, "config", "sources.csv"), sort(list.files(catd, "\\.csv$", full.names = TRUE))))
+  sid <- fread(file = file.path(qr, "config", "sources.csv"), colClasses = "character")$source_id[1]; h0 <- h()
+  real_fw <- data.table::fwrite
+  assign("fwrite", function(x, file = "", ...) { if (grepl("links\\.csv\\.removing$", file)) stop("disk full"); real_fw(x, file, ...) }, envir = globalenv())
+  e <- tryCatch(remove_source(qr, sid), error = function(e) e); rm("fwrite", envir = globalenv())
+  check(inherits(e, "error") && identical(h(), h0) && !length(list.files(c(catd, file.path(qr, "config")), "\\.removing$")),
+        "removing a source when writing links.csv fails after the others were written: nothing changed, no staged file left")
+  real_rn <- base::file.rename; k <- 0L
+  assign("file.rename", function(from, to) { if (endsWith(to, "links.csv") && (k <<- k + 1L) == 1L) return(FALSE); real_rn(from, to) }, envir = globalenv())
+  e2 <- tryCatch(remove_source(qr, sid), error = function(e) e); rm("file.rename", envir = globalenv())
+  mid <- file.exists(file.path(qr, "cache", "remove_source.txt"))
+  invisible(capture.output(r <- run_pipeline(list(project_dir = qr), scan = character())))
+  fl <- fread(file = file.path(catd, "flights.csv"), colClasses = "character"); lk <- fread(file = file.path(catd, "links.csv"), colClasses = "character")
+  check(inherits(e2, "error") && mid && !file.exists(file.path(qr, "cache", "remove_source.txt")) && !sid %in% fread(file = file.path(qr, "config", "sources.csv"), colClasses = "character")$source_id &&
+          !sid %in% fl$source_id && all(lk$flight_id %in% fl$flight_id), "a rename stopped part way is finished by the next scan: no source, flight or link of it is left dangling")
+})
+local({                                         # the shareable viewer shows project values as text and leaves local folders out by default
+  hs <- file.path(tmp, "share_<i>src"); dir.create(hs); file.copy(list.files(A, full.names = TRUE), hs, recursive = TRUE)
+  qv <- file.path(tmp, "share_proj"); invisible(capture.output(r0 <- run_pipeline(list(project_dir = qv), scan = hs, source_id = "H")))
+  cf <- read_cfg(file.path(qv, "config", "flights.csv")); r0$links <- fread(file = file.path(qv, "output", "catalogue", "links.csv"), colClasses = "character")
+  id <- r0$flights$flight_id[1]; evil <- "<img src=x onerror=\"window.PWN=1\">"
+  cf <- rbind(cf[flight_id != id], data.table(flight_id = id, display_name = paste("Lake", evil)), fill = TRUE); write_cfg(ensure_cols(cf, FLIGHT_COLS)[, ..FLIGHT_COLS], qv, "flights")
+  if (nrow(r0$links)) { lk <- data.table(flight_id = r0$links$flight_id[1], file = r0$links$file[1], state = "confirmed", reason = evil, author = "t", date = "2026-01-01")
+    write_cfg(ensure_cols(lk, LINK_COLS)[, ..LINK_COLS], qv, "links") }
+  invisible(capture.output(run_pipeline(list(project_dir = qv), scan = character(), export = TRUE)))
+  vd <- file.path(qv, "output", "viewer", "Ovid_RS_viewer"); page <- paste(readLines(file.path(vd, "index.html"), warn = FALSE), collapse = "\n"); pv <- viewer_share_preview(vd)
+  csvs <- paste(unlist(lapply(list.files(vd, "\\.csv$", full.names = TRUE), readLines, warn = FALSE)), collapse = "\n")
+  check(!grepl(normalizePath(tmp), page, fixed = TRUE) && !grepl(normalizePath(tmp), csvs, fixed = TRUE) && !nrow(pv$local_paths) && !pv$page_has_local_paths && pv$flights > 0,
+        "the shareable viewer leaves this computer's folders out of the page and the CSVs by default; the preview finds none")
+  check(!grepl("<img", page, fixed = TRUE) && grepl("\\u003cimg", page, fixed = TRUE) && grepl("const E=s=>", page, fixed = TRUE),
+        "markup in a flight name and link evidence is carried as escaped data, never as page markup")
+  gq <- fread(file = file.path(qv, "output", "catalogue", "geometry.csv"), colClasses = "character"); fx <- setdiff(unique(gq$flight_id[nzchar(gq$flight_id)]), id)[1]
+  if (!is.na(fx)) { cf2 <- read_cfg(file.path(qv, "config", "flights.csv")); cf2 <- rbind(cf2[flight_id != fx], data.table(flight_id = fx, exclude_from_archive = "yes"), fill = TRUE)
+    write_cfg(ensure_cols(cf2, FLIGHT_COLS)[, ..FLIGHT_COLS], qv, "flights"); invisible(capture.output(run_pipeline(list(project_dir = qv), scan = character(), export = TRUE)))
+    vz <- file.path(tmp, "vz"); unlink(vz, TRUE); utils::unzip(paste0(vd, ".zip"), exdir = vz); vf <- list.files(vz, recursive = TRUE, full.names = TRUE)
+    zipped <- paste(unlist(lapply(vf, readLines, warn = FALSE)), collapse = "\n")
+    check(!grepl(fx, zipped, fixed = TRUE), "a flight excluded from the archive is in no file of the viewer zip: not its row, links, image points or shapes (geometry.csv and the page alike)") }
+  invisible(capture.output(run_pipeline(list(project_dir = qv, viewer_paths = TRUE), scan = character(), export = TRUE)))
+  check(nrow(viewer_share_preview(vd)$local_paths) > 0, "... and with paths asked for, the preview names the CSV columns that hold them")
+  if (requireNamespace("chromote", quietly = TRUE) && !is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL))) {
+    invisible(capture.output(run_pipeline(list(project_dir = qv), scan = character(), export = TRUE)))
+    b <- chromote::ChromoteSession$new(); on.exit(b$close(), add = TRUE)
+    b$Page$navigate(paste0("file://", normalizePath(file.path(vd, "index.html")))); Sys.sleep(2)
+    ev <- function(js) b$Runtime$evaluate(js)$result$value
+    ev(sprintf("(()=>{const r=[...document.querySelectorAll('#bd tr')].find(t=>t.dataset.id===%s);if(r)r.click();return 1})()", jsonlite::toJSON(id, auto_unbox = TRUE)))
+    check(identical(ev("String(window.PWN)"), "undefined") && identical(ev("document.querySelectorAll('#bd img, #detail img').length"), 0L) &&
+          isTRUE(ev("document.getElementById('detail').textContent.includes('<img')")), "in a browser the markup shows as text in the table and details, and runs nothing")
+    b2 <- chromote::ChromoteSession$new(); on.exit(b2$close(), add = TRUE)
+    b2$Network$enable(); b2$Network$setBlockedURLs(urls = list("*cdnjs.cloudflare.com*", "*arcgisonline.com*"))
+    b2$Emulation$setDeviceMetricsOverride(width = 390, height = 800, deviceScaleFactor = 1, mobile = TRUE)
+    b2$Page$navigate(paste0("file://", normalizePath(file.path(vd, "index.html")))); Sys.sleep(2)
+    ev2 <- function(js) b2$Runtime$evaluate(js)$result$value
+    n_rows <- ev2("document.querySelectorAll('#bd tr').length"); ev2("(()=>{const r=document.querySelector('#bd tr');if(r)r.click();return 1})()")
+    check(isTRUE(n_rows > 0) && isTRUE(ev2("document.getElementById('detail').textContent.length > 0")) && isTRUE(ev2("document.getElementById('map').textContent.includes('could not load')")),
+          "with the map library blocked (offline) at 390 px wide, the viewer's table and details still work and the map says why it is missing")
+  } else say("skip  the viewer's browser check needs Chrome (chromote)", col = "fg4")
+})
 if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green")

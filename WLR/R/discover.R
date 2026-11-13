@@ -36,7 +36,7 @@ read_ahead <- function(m) {
 }
 
 # Rescan: forgets the selected files as read (and the files paired with them), and their loggers as stitched and
-# compensated, so the next run reads and redoes them.
+# compensated, so the run reads and redoes them. Called inside the checked, locked run (cfg$rescan, run_pipeline_steps).
 forget_wlr_files <- function(project_dir, rels) {
   # safe: forgetting files needs the last run's list; with none there is nothing to forget
   pd <- path.expand(project_dir); fa <- tryCatch(fread(file = file.path(pd, "output", "audit", "files.csv"), colClasses = "character"), error = function(e) data.table())
@@ -44,7 +44,7 @@ forget_wlr_files <- function(project_dir, rels) {
   hit <- fa[rel %in% rels]; hit <- rbind(hit, fa[path %in% hit$pair | pair %in% hit$path])
   f <- list.files(file.path(pd, "cache", "read"), full.names = TRUE)
   gone <- f[substr(basename(f), 1, 32) %in% unique(hit$md5)]          # cache names start with the md5
-  unlink(gone)
+  remove_within(gone, cache_root())
   if ("serial" %in% names(hit)) { sn <- unique(hit$serial[!is.na(hit$serial) & nzchar(hit$serial)])
     for (d in c("stitch", "logger")) cache_forget(file.path(pd, "cache", d), sn) }
   invisible(length(gone))

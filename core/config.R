@@ -7,15 +7,19 @@
 
 # A table that cannot be a CSV (NUL bytes: a save cut short, or another file saved over it) or that fread cannot read stops
 # with a message that names it and the last good copy in config/history (condition class "ovid_bad_table").
-read_cfg <- function(path) {
+# The columns of a set-up table kept exactly as written (CONFIG_FILES' exact, e.g. RS sources.csv path), by file name.
+cfg_exact_of <- function(file) { cf <- get0("CONFIG_FILES"); if (is.null(cf)) return(character())
+  w <- Filter(function(x) identical(x$file, basename(file)), cf); if (length(w)) w[[1]]$exact %||% character() else character() }
+# exact: columns kept exactly as written (a folder path whose name ends in a space); every other value is trimmed.
+read_cfg <- function(path, exact = character()) {
   bad <- function(why) { h <- cfg_last_backup(path)
     msg <- paste0("The set-up table ", basename(path), " is damaged (", why, ")",
                   if (length(h)) paste0(". The last good copy is config/history/", h, ": restore it from the table's History, or copy it over ", basename(path)) else "", ".")
     stop(structure(class = c("ovid_bad_table", "error", "condition"), list(message = msg, call = NULL))) }
   sz <- file.size(path)
   if (!is.na(sz) && sz > 0 && any(readBin(path, "raw", min(sz, 65536)) == as.raw(0))) bad("it holds binary data, not text")
-  dt <- tryCatch(fread(file = path, colClasses = "character", na.strings = NULL, encoding = "UTF-8"), error = function(e) bad(conditionMessage(e)))
-  for (v in names(dt)) set(dt, j = v, value = trim(fifelse(is.na(dt[[v]]), "", dt[[v]])))
+  dt <- tryCatch(fread(file = path, colClasses = "character", na.strings = NULL, encoding = "UTF-8", strip.white = !length(exact)), error = function(e) bad(conditionMessage(e)))
+  for (v in names(dt)) { x <- fifelse(is.na(dt[[v]]), "", dt[[v]]); set(dt, j = v, value = if (v %in% exact) x else trim(x)) }
   dt
 }
 # The newest copy of a table in config/history (file name), or character() when there is none.
@@ -43,6 +47,17 @@ cfg_cols <- function(what) { c <- CONFIG_FILES[[what]]$cols; if (is.function(c))
 cfg_path <- function(project_dir, what) file.path(path.expand(project_dir), "config", CONFIG_FILES[[what]]$file)
 
 # Reads every set-up table in CONFIG_FILES, creating any that are missing (with defaults where there are some).
+# The set-up tables as they are, for a page or a check to show: nothing is made, migrated or written (a missing table reads
+# as its default, a damaged one as empty with a problem). Making missing tables and migrating stay in load_configs(), which
+# runs inside checked, locked operations (core run_project, project_mutate).
+read_configs <- function(cfg) {
+  out <- list()
+  for (w in names(CONFIG_FILES)) { f <- cfg_path(cfg$project_dir, w); cols <- cfg_cols(w)
+    d <- if (!file.exists(f)) { if (!is.null(CONFIG_FILES[[w]]$default)) CONFIG_FILES[[w]]$default() else empty_cfg(cols) }
+         else tryCatch(read_cfg(f, CONFIG_FILES[[w]]$exact %||% character()), error = function(e) { problem(basename(f), conditionMessage(e)); empty_cfg(cols) })
+    out[[w]] <- ensure_cols(as.data.table(d), cols) }
+  out
+}
 load_configs <- function(cfg) {
   dir.create(file.path(path.expand(cfg$project_dir), "config"), recursive = TRUE, showWarnings = FALSE)
   config_migrate(cfg$project_dir, "pipeline")                       # tables folded into others, moved in once (below)
@@ -50,7 +65,7 @@ load_configs <- function(cfg) {
   for (w in names(CONFIG_FILES)) {
     f <- cfg_path(cfg$project_dir, w); cols <- cfg_cols(w)
     if (!file.exists(f)) fwrite(if (!is.null(CONFIG_FILES[[w]]$default)) CONFIG_FILES[[w]]$default() else empty_cfg(cols), f)
-    d <- tryCatch(read_cfg(f), error = function(e) { problem(basename(f), conditionMessage(e)); empty_cfg(cols) })
+    d <- tryCatch(read_cfg(f, CONFIG_FILES[[w]]$exact %||% character()), error = function(e) { problem(basename(f), conditionMessage(e)); empty_cfg(cols) })
     out[[w]] <- ensure_cols(d, cols)
     if (!is.null(CONFIG_FILES[[w]]$rule_ids)) out[[w]] <- qc_read_rules(f, cols, CONFIG_FILES[[w]]$rule_ids)   # a rule table: every row keeps a rule_id (core/qc.R)
   }

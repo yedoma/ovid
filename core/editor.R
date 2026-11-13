@@ -62,7 +62,7 @@ live_config <- function(project_dir) { if (length(project_dir) != 1 || is.na(pro
 live_table <- function(path) { live_stamp(path); p <- path.expand(path %||% "")
   if (length(p) != 1 || !nzchar(p) || !file.exists(p)) return(data.table())
   # safe: a live view only; the editor reads the table itself and says when it cannot (edit_read() below)
-  tryCatch(read_cfg(p), error = function(e) data.table()) }
+  tryCatch(read_cfg(p, cfg_exact_of(p)), error = function(e) data.table()) }
 live_settings <- function(file = get0("SETTINGS_FILE")) { if (is.null(file)) return(list()); live_stamp(file); settings_read(file) }
 live_touch <- function() { st <- live_store(); if (!is.null(st)) st$look(); invisible() }
 
@@ -132,7 +132,7 @@ edit_cols <- function(p) { reg <- get0("CONFIG_FILES", inherits = TRUE); if (!is
     return(structure(cc, optional = op)) }                  # optional columns (an app's own) are added without a notice
   NULL }
 edit_read <- function(p) {
-  d <- tryCatch(suppressWarnings(read_cfg(p)), error = function(e) e)
+  d <- tryCatch(suppressWarnings(read_cfg(p, cfg_exact_of(p))), error = function(e) e)   # a folder path kept exactly (a name may end in a space)
   note <- function(...) if (!is.null(shiny::getDefaultReactiveDomain())) shiny::showNotification(paste0(...), type = "warning", duration = 20)
   if (inherits(d, "error")) { note(basename(p), " could not be read (", conditionMessage(d), "). It is shown empty; fix or replace the file, or save a new table over it."); d <- data.table() }
   d <- as.data.table(d); want <- edit_cols(p); miss <- setdiff(want, names(d)); opt <- intersect(miss, attr(want, "optional")); miss <- setdiff(miss, opt)
@@ -205,7 +205,7 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     showNotification(paste("Saved", basename(isolate(path())), "\u00b7 the version before is in history. Run to apply."), type = "message", duration = 5); bump() })
   observeEvent(input$tbl_cell_edit, { if (ro_hand()) return()
     e <- input$tbl_cell_edit; d <- data()
-    d[e$row, e$col + 1L] <- trim(as.character(e$value)); change(d, redraw = FALSE) })
+    v <- as.character(e$value); d[e$row, e$col + 1L] <- if (names(d)[e$col + 1L] %in% cfg_exact_of(isolate(path()))) v else trim(v); change(d, redraw = FALSE) })
   observeEvent(input$add, { if (ro_hand()) return(); d <- data(); req(d); d[nrow(d) + 1L, ] <- ""; change(d) })
   observeEvent(input$dup, { if (ro_hand()) return(); d <- data(); s <- input$tbl_rows_selected; req(d, length(s) > 0)
     change(rbind(d, d[s, , drop = FALSE])) })
@@ -225,9 +225,14 @@ ovid_edit_server <- function(id, path, reload, locked = character(), on_change =
     p <- isolate(path()); was_dirty <- isolate(dirty())
     d <- d[rowSums(d != "") > 0, , drop = FALSE]
     dw <- yesno_as(d, basename(p), shown = FALSE)                                # Yes/No cells are written TRUE/FALSE
-    # safe: the save itself goes on; only the history copy is missed
-    try(backup_cfg(p, dw, edit_user(session)), silent = TRUE)
-    fwrite_safe(dw, p); data(d); dirty(FALSE); loaded(file_stamp(p)); undo(list()); live_touch()
+    pd <- dirname(dirname(p)); wr <- function() {
+      # safe: the save itself goes on; only the history copy is missed
+      try(backup_cfg(p, dw, edit_user(session)), silent = TRUE)
+      fwrite_safe(dw, p) }
+    ok <- tryCatch({ if (basename(dirname(p)) == "config") project_guarded(pd, wr) else wr(); TRUE },   # a project's table (<project>/config/): checked and locked as a run is
+      error = function(e) { showNotification(paste0("Not saved: ", conditionMessage(e), " Your edits are still here."), type = "error", duration = NULL); FALSE })
+    if (!ok) return(invisible(FALSE))                                              # the edits stay unsaved (dirty), on screen
+    data(d); dirty(FALSE); loaded(file_stamp(p)); undo(list()); live_touch()
     if (was_dirty) on_change()
     if (!quiet) showNotification("Saved. Run the pipeline to apply.", type = "message")
   }

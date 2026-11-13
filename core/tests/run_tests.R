@@ -150,13 +150,398 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
   output_keep(pd); writeLines("half", file.path(o, "stations", "A.csv"))                      # a run whose process was killed
   check("a copy left by a killed run is put back when the app starts", nzchar(output_recover(pd)) && readLines(file.path(o, "stations", "A.csv")) == "new")
   OUTPUT_COPY_MAX <- 0; disk_clones <- function(path) FALSE
-  check("no copy is kept of an output too large to copy; the run log says so", grepl("too large", output_keep(pd)))
+  check("no copy is kept of an output too large to copy; the run log says so", grepl("limit for a full copy", output_keep(pd)))
   DISK_MIN <- Inf
   check("a run does not start on a full drive", inherits(tryCatch(run_project(cfg, function() NULL), error = function(e) e), "ovid_project_check"))
   check("the free space of a drive is read", isTRUE(disk_free(pd) > 0))
   check("folders a cloud service syncs are recognised, others are not",
         identical(vapply(c("~/Library/Mobile Documents/com~apple~CloudDocs/raw", "~/Library/CloudStorage/OneDrive-Org/p", "C:/Users/x/Dropbox (Personal)/raw", "/data/raw"), cloud_service, "", USE.NAMES = FALSE),
                   c("iCloud Drive", "OneDrive", "Dropbox", ""))) })
+
+cat("runs: one run at a time (the project lock), with real processes\n")
+local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  APP_NAME <- "Ovid Core // TEST"; say <- function(...) invisible()
+  base <- tempfile("lockt"); dir.create(base); base <- normalizePath(base, winslash = "/")
+  rs <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+  child <- file.path(base, "child.R")                   # takes the lock when told to go, works for `hold` seconds inside it, releases it
+  writeLines(c("a <- commandArgs(TRUE); suppressMessages(library(data.table)); APP_NAME <- 'Ovid Core // TEST'",
+               "for (f in c('util', 'audit', 'cache', 'manifest')) source(file.path(a[1], paste0(f, '.R')))",
+               "writeLines('', file.path(a[3], paste0('ready_', Sys.getpid()))); while (!file.exists(file.path(a[3], 'go'))) Sys.sleep(0.01)",
+               "lk <- tryCatch(project_lock(list(project_dir = a[2])), error = function(e) NULL)",
+               "if (is.null(lk)) { cat('refused\\n', file = file.path(a[3], paste0('out_', Sys.getpid()))); quit(save = 'no') }",
+               "cat('enter', format(Sys.time(), '%OS3'), '\\n', file = file.path(a[3], paste0('out_', Sys.getpid())))",
+               "Sys.sleep(as.numeric(a[4])); ok <- lock_owned(lk); project_unlock(lk)",
+               "cat('leave', ok, '\\n', file = file.path(a[3], paste0('out_', Sys.getpid())), append = TRUE)"), child)
+  race <- function(pd, n = 4, hold = 3) {             # n processes released at once; returns what each wrote
+    sig <- file.path(base, basename(tempfile("sig"))); dir.create(sig)
+    for (i in seq_len(n)) system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(sig), hold), wait = FALSE, stdout = FALSE, stderr = FALSE)
+    t0 <- Sys.time(); while (length(list.files(sig, "^ready_")) < n && difftime(Sys.time(), t0, units = "secs") < 60) Sys.sleep(0.05)
+    writeLines("", file.path(sig, "go"))
+    t0 <- Sys.time(); while ((length(list.files(sig, "^out_")) < n || any(vapply(list.files(sig, "^out_", full.names = TRUE), function(f) { x <- readLines(f, warn = FALSE); x[1] != "refused" && length(x) < 2 }, NA))) &&
+                             difftime(Sys.time(), t0, units = "secs") < 60) Sys.sleep(0.1)
+    vapply(list.files(sig, "^out_", full.names = TRUE), function(f) paste(readLines(f, warn = FALSE), collapse = " | "), "") }
+  pd1 <- file.path(base, "p1"); dir.create(pd1); r1 <- race(pd1)
+  check("four processes asking for a free lock at once: exactly one enters, the others are refused, and the lock is gone after",
+        length(r1) == 4 && sum(startsWith(r1, "enter")) == 1 && sum(r1 == "refused") == 3 && grepl("leave TRUE", r1[startsWith(r1, "enter")]) && !dir.exists(file.path(pd1, PROJECT_LOCK)))
+  dead <- as.integer(system2(rs, c("--vanilla", "-e", shQuote("cat(Sys.getpid())")), stdout = TRUE))
+  pd2 <- file.path(base, "p2"); dir.create(file.path(pd2, PROJECT_LOCK), recursive = TRUE)
+  writeLines(c(paste0("pid: ", dead), paste0("host: ", Sys.info()[["nodename"]]), "started: earlier", "token: old"), file.path(pd2, PROJECT_LOCK, "run.txt"))
+  r2 <- race(pd2)
+  check("four processes taking over a lock whose process has ended: exactly one enters", length(r2) == 4 && sum(startsWith(r2, "enter")) == 1 && sum(r2 == "refused") == 3)
+  pd3 <- file.path(base, "p3"); dir.create(pd3)
+  a <- project_lock(list(project_dir = pd3))
+  Sys.setFileTime(a, Sys.time() - 3 * 86400)
+  old <- tryCatch({ project_lock(list(project_dir = pd3)); "taken" }, error = function(e) conditionMessage(e))
+  check("a live run keeps its lock however old it is", grepl("Another run is going", old) && lock_owned(a))
+  writeLines(c(paste0("pid: ", dead), paste0("host: ", Sys.info()[["nodename"]]), "started: earlier", paste0("token: ", attr(a, "token"))), file.path(a, "run.txt"))
+  b <- project_lock(list(project_dir = pd3))                                       # a judged gone (pid ended): b takes over
+  check("a former owner's late release never removes the new lock", !isTRUE(project_unlock(a)) && dir.exists(b) && lock_owned(b) && isTRUE(project_unlock(b)) && !dir.exists(b))
+  dir.create(file.path(pd3, PROJECT_LOCK)); writeLines(c("pid: 1", "host: some-other-computer", "started: 2026-01-01 10:00:00", "token: x"), file.path(pd3, PROJECT_LOCK, "run.txt"))
+  far <- tryCatch({ project_lock(list(project_dir = pd3)); "taken" }, error = function(e) conditionMessage(e))
+  writeLines("\x01garbled", file.path(pd3, PROJECT_LOCK, "run.txt"))
+  blank <- tryCatch({ project_lock(list(project_dir = pd3)); "taken" }, error = function(e) conditionMessage(e))
+  check("a lock from another computer, or one that cannot be read, is not taken over; the message says how to clear it",
+        grepl("some-other-computer", far) && grepl("cannot tell", far) && grepl("cannot tell", blank) && dir.exists(file.path(pd3, PROJECT_LOCK)))
+  unlink(file.path(pd3, PROJECT_LOCK), recursive = TRUE)
+  cfg <- list(project_dir = pd3, raw_dirs = { r <- file.path(base, "raw"); dir.create(r); r })
+  inside <- logical()
+  run_project(cfg, function() inside[["ok"]] <<- lock_owned(structure(file.path(pd3, PROJECT_LOCK), token = lock_read(file.path(pd3, PROJECT_LOCK))$get("token"))))
+  e <- tryCatch(run_project(cfg, function() stop("broke")), error = function(e) "error")
+  cn <- tryCatch(run_project(cfg, function() signalCondition(structure(class = c("interrupt", "condition"), list(message = "", call = NULL)))), interrupt = function(e) "cancelled")
+  check("the lock is held during the run and released after success, an error and a cancel", isTRUE(inside[["ok"]]) && e == "error" && cn == "cancelled" &&
+        !dir.exists(file.path(pd3, PROJECT_LOCK)) && !length(grep(PROJECT_LOCK, list.files(pd3, all.files = TRUE), fixed = TRUE))) })
+
+cat("runs: recovery after a process is killed, and failures while keeping or putting back the output\n")
+local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  APP_NAME <- "Ovid Core // TEST"; say <- function(...) invisible()
+  base <- tempfile("recov"); dir.create(base); base <- normalizePath(base, winslash = "/"); raw <- file.path(base, "raw"); dir.create(raw)
+  rs <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+  child <- file.path(base, "child.R")                 # one run: changes A.csv, adds B.csv and a cache file, then finishes
+  writeLines(c("a <- commandArgs(TRUE); suppressMessages(library(data.table)); APP_NAME <- 'Ovid Core // TEST'; say <- function(...) invisible()",
+               "Sys.setenv(OVID_TEST_KILL_AT = a[4], OVID_TEST_KILL_MARK = a[5])",
+               "for (f in c('util', 'audit', 'cache', 'manifest')) source(file.path(a[1], paste0(f, '.R')))",
+               "if (identical(a[6], 'recover')) { output_recover(a[2], list(raw_dirs = a[3])); quit(save = 'no') }",
+               "run_project(list(project_dir = a[2], raw_dirs = a[3]), function() { o <- file.path(a[2], 'output', 'stations'); dir.create(o, recursive = TRUE, showWarnings = FALSE); dir.create(file.path(a[2], 'cache'), showWarnings = FALSE)",
+               "  writeLines('new A', file.path(o, 'A.csv')); writeLines('new B', file.path(o, 'B.csv')); writeLines('new', file.path(a[2], 'cache', 'run.rds'))",
+               "  run_checkpoint('processing'); writeLines('new C', file.path(o, 'C.csv')) })"), child)
+  mark <- file.path(base, "reached")                  # written by the child at the checkpoint, just before it is killed
+  run_child <- function(pd, at = "", what = "run") { unlink(mark)
+    system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(raw), shQuote(if (nzchar(at)) at else "none"), shQuote(mark), what),
+            stdout = FALSE, stderr = FALSE)
+    !nzchar(at) || identical(tryCatch(readLines(mark, warn = FALSE)[1], error = function(e) ""), at) }   # TRUE: the child reached the point (a launch error is not a crash)
+  inv <- function(pd) { d <- file.path(pd, "output"); f <- sort(list.files(d, recursive = TRUE, all.files = TRUE)); f <- f[!grepl("^logs/|^\\.run_", f)]
+    setNames(unname(tools::md5sum(file.path(d, f))), f) }
+  fresh <- function(name) { pd <- file.path(base, name); dir.create(file.path(pd, "output", "stations"), recursive = TRUE); dir.create(file.path(pd, "cache"))
+    writeLines("old A", file.path(pd, "output", "stations", "A.csv")); writeLines("old D", file.path(pd, "output", "stations", "D.csv"))
+    writeLines("old", file.path(pd, "cache", "old.rds")); Sys.setFileTime(file.path(pd, "cache", "old.rds"), Sys.time() - 3600); pd }
+  leftovers <- function(pd) any(file.exists(file.path(pd, c(OUTPUT_KEPT, OUTPUT_STAGING, OUTPUT_FAILED, RUN_JOURNAL, PROJECT_LOCK))))
+  done_inv <- { pd0 <- fresh("ref"); run_child(pd0); inv(pd0) }
+  check("a run in its own process finishes and leaves no copy, journal or lock", identical(names(done_inv), c("stations/A.csv", "stations/B.csv", "stations/C.csv", "stations/D.csv")) && !leftovers(pd0))
+  pd <- fresh("k1"); before <- inv(pd); reached <- run_child(pd, "backup_copy")
+  mid <- reached && dir.exists(file.path(pd, OUTPUT_STAGING)) && identical(journal_read(pd)$phase, "backup")
+  note <- output_recover(pd)
+  check("killed while copying the output: the unverified copy is never used, the output is unchanged and nothing is left behind",
+        mid && identical(inv(pd), before) && !leftovers(pd) && !nzchar(note))
+  pd <- fresh("k2"); before <- inv(pd); reached <- run_child(pd, "processing")
+  mid <- reached && identical(journal_read(pd)$phase, "verified") && readLines(file.path(pd, "output", "stations", "A.csv")) == "new A"
+  note <- output_recover(pd)
+  check("killed while processing after the copy was verified: the copy is put back (checksums as before), the run's cache dropped, the note says so",
+        mid && identical(inv(pd), before) && !leftovers(pd) && grepl("put back", note) && !file.exists(file.path(pd, "cache", "run.rds")) && file.exists(file.path(pd, "cache", "old.rds")) &&
+          length(list.files(file.path(pd, "output", "logs"), "\\.log$")) == 1)                          # the stopped run's log is kept
+  run_child(pd)
+  check("... and the next run then gives what a run with no interruption gives", identical(inv(pd), done_inv) && !leftovers(pd))
+  pd <- fresh("k3"); reached <- run_child(pd, "committed")
+  mid <- reached && identical(journal_read(pd)$phase, "committed") && dir.exists(file.path(pd, OUTPUT_KEPT))
+  note <- output_recover(pd)
+  check("killed after the run committed but before the copy was removed: the new output stands and the copy is removed",
+        mid && identical(inv(pd), done_inv) && !leftovers(pd) && !nzchar(note))
+  for (at in c("restore_1", "restore_2")) {            # the recovery itself killed right after each of its two renames
+    pd <- fresh(at); before <- inv(pd); r1 <- run_child(pd, "processing"); r2 <- run_child(pd, at, "recover")
+    state <- c(output = dir.exists(file.path(pd, "output")), kept = dir.exists(file.path(pd, OUTPUT_KEPT)), failed = dir.exists(file.path(pd, OUTPUT_FAILED)))
+    note <- output_recover(pd, list(raw_dirs = raw)); again <- output_recover(pd, list(raw_dirs = raw))
+    logs <- length(list.files(file.path(pd, "output", "logs"), "\\.log$"))
+    check(paste0("recovery killed after ", if (at == "restore_1") "moving output/ aside" else "moving the copy into output/", " (", at, "): the next recovery finishes it; ",
+                 "a second one has nothing to do; the output is as before, with the stopped run's log"),
+          r1 && r2 && state[["failed"]] && (at == "restore_2" || !state[["output"]]) && grepl("put back", note) && !nzchar(again) &&
+            identical(inv(pd), before) && logs == 1 && !leftovers(pd))
+    run_child(pd)
+    check(paste0("... (", at, ") and the next run gives what a run with no interruption gives"), identical(inv(pd), done_inv) && !leftovers(pd)) }
+  pd <- fresh("mism"); r1 <- run_child(pd, "processing"); r2 <- run_child(pd, "restore_2", "recover")
+  writeLines("old Q", file.path(pd, "output", "stations", "A.csv"))              # the published copy changed, same length
+  note <- output_recover(pd, list(raw_dirs = raw)); again <- output_recover(pd, list(raw_dirs = raw))
+  rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("a restore killed after its second rename, whose published copy then changed (same length): recovery reports the mismatch, keeps both, does not say put back",
+        r1 && r2 && grepl("does not match its record", note) && !grepl("put back as the run before", note) && readLines(file.path(pd, "output", "stations", "A.csv")) == "old Q" &&
+          length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "new A" && !nzchar(again))
+  for (ph in c("", "unknown")) {                       # a journal naming this run but no phase, or one it does not know
+    pd <- fresh(paste0("phase_", if (nzchar(ph)) ph else "none")); run_child(pd, "processing"); j <- readLines(file.path(pd, RUN_JOURNAL))
+    writeLines(if (nzchar(ph)) sub("^phase: .*", paste0("phase: ", ph), j) else grep("^phase:", j, value = TRUE, invert = TRUE), file.path(pd, RUN_JOURNAL))
+    n1 <- output_recover(pd, list(raw_dirs = raw)); n2 <- output_recover(pd, list(raw_dirs = raw))
+    rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+    check(paste0("a journal with this run's id and ", if (nzchar(ph)) "an unknown phase" else "no phase", ": nothing is put back or removed; both copies survive two recoveries; the note says what to review"),
+          grepl("journal", n1) && grepl("Compare them", n1) && readLines(file.path(pd, "output", "stations", "A.csv")) == "new A" &&
+            length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "old A" && !nzchar(n2)) }
+  pd <- fresh("logfail"); before <- inv(pd); run_child(pd, "processing"); lg0 <- list.files(file.path(pd, "output", "logs"), full.names = TRUE)
+  real_copy <- log_copy; log_copy <- function(from, to) for (k in seq_along(to)) writeLines("cut", to[k])   # a partial copy
+  n1 <- output_recover(pd, list(raw_dirs = raw)); lgf <- list.files(file.path(pd, OUTPUT_FAILED, "logs"), full.names = TRUE)
+  check("the stopped run's log cannot be copied: the data is put back, the original log stays readable in .output_failed, and the note says clean-up is pending",
+        grepl("log could not be copied", n1) && identical(inv(pd)[!grepl("^\\.ovid_kept", names(inv(pd)))], before) && length(lgf) == 1 && !identical(readLines(lgf), "cut"))
+  m0 <- unname(tools::md5sum(lgf))
+  log_copy <- real_copy; n2 <- output_recover(pd, list(raw_dirs = raw)); n3 <- output_recover(pd, list(raw_dirs = raw))
+  check("... once copying works, the full log is in output/logs, .output_failed is gone only then, and a further recovery has nothing to do",
+        grepl("put back", n2) && identical(unname(tools::md5sum(file.path(pd, "output", "logs", basename(lgf)))), m0) &&
+          !dir.exists(file.path(pd, OUTPUT_FAILED)) && !nzchar(n3) && !leftovers(pd))
+  pd <- fresh("logfail_change"); run_child(pd, "processing")                      # a failed log copy, then a same-size change to the restored data, then a retry
+  real_copy <- log_copy; log_copy <- function(from, to) invisible()
+  n1 <- output_recover(pd, list(raw_dirs = raw)); lgf <- list.files(file.path(pd, OUTPUT_FAILED, "logs"), full.names = TRUE); m0 <- unname(tools::md5sum(lgf))
+  log_copy <- real_copy; writeLines("old Q", file.path(pd, "output", "stations", "A.csv"))
+  n2 <- output_recover(pd, list(raw_dirs = raw)); n3 <- output_recover(pd, list(raw_dirs = raw))
+  rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("log copy failed, then the restored data changed (same size) before the retry: the retry reports a mismatch, keeps both copies and the stopped run's log",
+        grepl("log could not be copied", n1) && grepl("does not match its record", n2) && !grepl("put back as the run before", n2) && !nzchar(n3) &&
+          readLines(file.path(pd, "output", "stations", "A.csv")) == "old Q" && length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "new A" &&
+          identical(unname(tools::md5sum(file.path(pd, rv, "logs", basename(lgf)))), m0))
+  bad_journals <- list(both_vc = function(j) c(j, "phase: committed"), both_cv = function(j) c(sub("^phase: .*", "phase: committed", j), "phase: verified"),
+                       two_runs = function(j) c(j, "run: 20200101T000000_1_1"))
+  for (nm in names(bad_journals)) {                    # repeated keys: in either order, or two run ids
+    pd <- fresh(paste0("dup_", nm)); run_child(pd, "processing"); writeLines(bad_journals[[nm]](readLines(file.path(pd, RUN_JOURNAL))), file.path(pd, RUN_JOURNAL))
+    n1 <- output_recover(pd, list(raw_dirs = raw)); n2 <- output_recover(pd, list(raw_dirs = raw))
+    rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+    check(paste0("a journal with repeated keys (", nm, "): neither copy is put back or removed, both survive two recoveries, the note says why"),
+          grepl("journal", n1) && readLines(file.path(pd, "output", "stations", "A.csv")) == "new A" && length(rv) == 1 &&
+            readLines(file.path(pd, rv, "stations", "A.csv")) == "old A" && !nzchar(n2)) }
+  pd <- fresh("other_run"); run_child(pd, "processing"); j <- readLines(file.path(pd, RUN_JOURNAL))
+  writeLines(sub("^run: .*", "run: 20200101T000000_1_1", sub("^phase: .*", "phase: committed", j)), file.path(pd, RUN_JOURNAL))
+  n1 <- output_recover(pd, list(raw_dirs = raw)); rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("a committed journal for another run than the copy's: the copy is not removed (kept for review) and the output stays",
+        grepl("belongs to another run", n1) && length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "old A" &&
+          readLines(file.path(pd, "output", "stations", "A.csv")) == "new A")
+  pd <- fresh("logrename"); before <- inv(pd); run_child(pd, "processing")       # the log's temporary file written, its rename refused
+  real_rename <- file.rename; file.rename <- function(from, to) if (endsWith(to, ".log") && endsWith(from, ".log.part")) FALSE else real_rename(from, to)
+  n1 <- output_recover(pd, list(raw_dirs = raw)); part <- list.files(file.path(pd, "output", "logs"), "\\.part$"); lgf <- list.files(file.path(pd, OUTPUT_FAILED, "logs"), full.names = TRUE)
+  m0 <- unname(tools::md5sum(lgf)); rm(file.rename)
+  n2 <- output_recover(pd, list(raw_dirs = raw)); n3 <- output_recover(pd, list(raw_dirs = raw))
+  check("a log rename refused after its temporary file was written: the retry publishes the whole log, removes the temporary file and finishes (no false mismatch)",
+        grepl("log could not be copied", n1) && length(part) == 1 && grepl("put back", n2) && !grepl("does not match", n2) && !nzchar(n3) && identical(inv(pd), before) &&
+          identical(unname(tools::md5sum(file.path(pd, "output", "logs", basename(lgf)))), m0) && !length(list.files(file.path(pd, "output", "logs"), "\\.part$")) && !leftovers(pd))
+  pd <- fresh("priornote"); writeLines("An earlier rollback's note.", file.path(pd, "output", RUN_RESTORED)); before <- inv(pd); run_child(pd, "processing")
+  real_copy <- log_copy; log_copy <- function(from, to) invisible()
+  n1 <- output_recover(pd, list(raw_dirs = raw)); lgf <- list.files(file.path(pd, OUTPUT_FAILED, "logs"), full.names = TRUE); m0 <- unname(tools::md5sum(lgf))
+  log_copy <- real_copy; n2 <- output_recover(pd, list(raw_dirs = raw)); n3 <- output_recover(pd, list(raw_dirs = raw))
+  check("a copy holding an earlier rollback's note, then a failed log copy and a retry: data and the whole log survive and recovery finishes",
+        grepl("log could not be copied", n1) && grepl("put back", n2) && !nzchar(n3) && identical(inv(pd), before) &&
+          identical(unname(tools::md5sum(file.path(pd, "output", "logs", basename(lgf)))), m0) && !leftovers(pd))
+  pd <- fresh("killretire"); before <- inv(pd); run_child(pd, "processing"); lgf <- list.files(file.path(pd, "output", "logs"), full.names = TRUE)
+  m0 <- unname(tools::md5sum(lgf)); nm <- basename(lgf); reached <- run_child(pd, "restore_3", "recover")
+  mid <- reached && !dir.exists(file.path(pd, OUTPUT_FAILED)) && file.exists(file.path(pd, RUN_JOURNAL))
+  n1 <- output_recover(pd, list(raw_dirs = raw)); n2 <- output_recover(pd, list(raw_dirs = raw))
+  check("recovery killed right after it removed .output_failed (checkpoint reached): the restart finishes; data and log hashes kept; journal and markers gone; then nothing to do",
+        mid && grepl("put back", n1) && identical(inv(pd), before) && identical(unname(tools::md5sum(file.path(pd, "output", "logs", nm))), m0) &&
+          !any(file.exists(file.path(pd, "output", KEPT_FILES))) && !leftovers(pd) && !nzchar(n2))
+  raw2 <- file.path(base, "raw2"); dir.create(raw2, showWarnings = FALSE); rawlog <- file.path(raw2, "sentinel.log.part"); writeLines("raw", rawlog); r0 <- tools::md5sum(rawlog)
+  bad_logs <- list(parent = "../../../raw2/sentinel.log", absolute = paste0(raw2, "/sentinel.log"), windows = "..\\..\\..\\raw2\\sentinel.log",
+                   count = c("a.log", "b.log"), digest = "a.log")
+  for (nm in names(bad_logs)) {                         # a journal whose log record is not one a restore writes
+    pd <- fresh(paste0("badlog_", nm)); run_child(pd, "processing"); real_copy <- log_copy; log_copy <- function(from, to) invisible()
+    output_recover(pd, list(raw_dirs = raw2)); log_copy <- real_copy
+    j <- readLines(file.path(pd, RUN_JOURNAL)); v <- bad_logs[[nm]]
+    md5 <- if (nm == "digest") "nothex" else paste(rep(unname(tools::md5sum(rawlog)), if (nm == "count") 1 else length(v)), collapse = "|")
+    j <- sub("^logs: .*", paste0("logs: ", paste(v, collapse = "|")), sub("^logs_to: .*", paste0("logs_to: ", paste(v, collapse = "|")), sub("^logs_md5: .*", paste0("logs_md5: ", md5), j)))
+    writeLines(j, file.path(pd, RUN_JOURNAL)); n <- output_recover(pd, list(raw_dirs = raw2))
+    check(paste0("a journal log record that is not valid (", nm, "): reported, the raw sentinel keeps its bytes, output/ and .output_failed are kept"),
+          grepl("not valid", n) && identical(tools::md5sum(rawlog), r0) && dir.exists(file.path(pd, OUTPUT_FAILED)) && file.exists(file.path(pd, "output", "stations", "A.csv"))) }
+  pd <- fresh("nologs"); dir.create(file.path(pd, "output", "logs")); writeLines("staging-like", file.path(pd, "output", "logs", ".part")); writeLines("old log", file.path(pd, "output", "logs", "old.log"))
+  before <- inv(pd); run_child(pd, "processing"); lg <- list.files(file.path(pd, "output", "logs"), "^2.*\\.log$", full.names = TRUE); unlink(lg)   # the stopped run left no log
+  n <- output_recover(pd, list(raw_dirs = raw))
+  check("a stopped run with no log: the restore finishes and a backed-up output/logs/.part keeps its bytes", grepl("put back", n) && identical(inv(pd), before))
+  pd <- fresh("collide"); dir.create(file.path(pd, "output", "logs")); writeLines("the backed-up old.log", file.path(pd, "output", "logs", "old.log")); before <- inv(pd)
+  run_child(pd, "processing"); lg <- list.files(file.path(pd, "output", "logs"), "^2.*\\.log$", full.names = TRUE); file.rename(lg, file.path(pd, "output", "logs", "old.log"))
+  m1 <- unname(tools::md5sum(file.path(pd, "output", "logs", "old.log"))); n <- output_recover(pd, list(raw_dirs = raw))
+  check("a stopped run's log with the name of a backed-up log: the backed-up one keeps its bytes and the stopped run's is kept beside it",
+        grepl("put back", n) && identical(inv(pd), before) && readLines(file.path(pd, "output", "logs", "old.log")) == "the backed-up old.log" &&
+          identical(unname(tools::md5sum(file.path(pd, "output", "logs", "old_stopped_run.log"))), m1))
+  for (case in c("clean", "changed")) {                 # a copy whose record was made by the earlier version (it listed the status note)
+    pd <- fresh(paste0("oldrec_", case)); writeLines("a note", file.path(pd, "output", RUN_RESTORED)); before <- inv(pd); run_child(pd, "processing")
+    rf <- file.path(pd, OUTPUT_KEPT, ".ovid_kept_files"); rec <- fread(rf, colClasses = "character", sep = "\t")
+    rec <- rbind(rec, data.table(file = RUN_RESTORED, size = "7", hash = digest::digest(file = file.path(pd, OUTPUT_KEPT, RUN_RESTORED), algo = "xxhash64")))[order(file)]
+    fwrite(rec, rf, sep = "\t"); if (case == "changed") writeLines("old Z", file.path(pd, OUTPUT_KEPT, "stations", "A.csv"))
+    n <- output_recover(pd, list(raw_dirs = raw)); n2 <- output_recover(pd, list(raw_dirs = raw))
+    check(paste0("a copy recorded by the earlier version with a status note (", case, "): ", if (case == "clean") "put back, then nothing to do" else "the changed data file is still found"),
+          if (case == "clean") grepl("put back", n) && identical(inv(pd), before) && !nzchar(n2) else grepl("does not match its record", n)) }
+  pd <- fresh("logs_prev"); dir.create(file.path(pd, "output", "logs")); writeLines("the last finished run's log", file.path(pd, "output", "logs", "prev.log"))
+  writeLines("backed-up OLD", file.path(pd, "output", "logs", "old.log")); before <- inv(pd); run_child(pd, "processing")
+  new_log <- setdiff(list.files(file.path(pd, "output", "logs"), "\\.log$"), c("prev.log", "old.log")); m_new <- unname(tools::md5sum(file.path(pd, "output", "logs", new_log)))
+  writeLines("the stopped run's Old", file.path(pd, "output", "logs", "OLD.log.tmp")); file.rename(file.path(pd, "output", "logs", "OLD.log.tmp"), file.path(pd, "output", "logs", "Old2.log"))
+  n <- output_recover(pd, list(raw_dirs = raw)); lgs <- list.files(file.path(pd, "output", "logs"))
+  check("logs at restore: an unchanged log from the last finished run is not copied again; the stopped run's own log is published under its name; nothing backed up is replaced",
+        grepl("put back", n) && identical(inv(pd), before) && !any(grepl("prev_stopped_run", lgs)) && new_log %in% lgs &&
+          identical(unname(tools::md5sum(file.path(pd, "output", "logs", new_log))), m_new) && readLines(file.path(pd, "output", "logs", "old.log")) == "backed-up OLD" && "Old2.log" %in% lgs)
+  check("log names are reserved ignoring letter case: OLD.log next to a backed-up old.log gets a name of its own",
+        identical(log_targets(c("OLD.log", "x.log", "x.log"), c("logs/old.log", "logs/x.log.part")), c("OLD_stopped_run.log", "x_stopped_run.log", "x_stopped_run_2.log")))
+  pd <- fresh("rmfail"); before <- inv(pd); run_child(pd, "processing"); real_rm <- remove_within; k <- 0L
+  remove_within <- function(paths, root, ...) { if (any(basename(paths) == OUTPUT_FAILED) && (k <<- k + 1L) == 1L) stop("held open"); real_rm(paths, root, ...) }
+  n1 <- output_recover(pd, list(raw_dirs = raw)); mid <- dir.exists(file.path(pd, OUTPUT_FAILED)) && file.exists(file.path(pd, RUN_JOURNAL))
+  e <- tryCatch({ run_project(list(project_dir = pd, raw_dirs = raw), function() NULL); "ran" }, error = function(e) conditionMessage(e))
+  remove_within <- real_rm; n3 <- output_recover(pd, list(raw_dirs = raw))
+  check("removing .output_failed fails once: the note says the output is back and where the stopped run's output is kept; the journal stays; the next start finishes it",
+        grepl("could not be removed", n1) && grepl(OUTPUT_FAILED, n1, fixed = TRUE) && mid && e == "ran" && identical(inv(pd)[names(inv(pd)) != "stations/C.csv"], before[names(before) != "stations/C.csv"]) &&
+          !leftovers(pd) && !nzchar(n3))
+  pd <- file.path(base, "first_kill"); dir.create(pd); reached <- run_child(pd, "processing")
+  n <- output_recover(pd, list(raw_dirs = raw)); lg1 <- list.files(file.path(pd, "output", "logs"), "\\.log$")
+  partial <- file.exists(file.path(pd, "output", "stations", "A.csv")) && nzchar(run_incomplete(pd))
+  run_child(pd)
+  check("a first run killed after writing (no earlier output): nothing to put back, the partial output is marked incomplete with its log; the next run finishes",
+        reached && partial && length(lg1) == 1 && identical(inv(pd), done_inv[names(done_inv) %in% names(inv(pd))]) && !nzchar(run_incomplete(pd)) && !leftovers(pd))
+  pd <- fresh("result"); run_child(pd, "processing"); pend <- run_result(pd)$status
+  output_recover(pd, list(raw_dirs = raw)); tryCatch(run_project(list(project_dir = pd, raw_dirs = raw), function() stop("bad file")), error = function(e) NULL); rf <- run_result(pd)
+  options(ovid.cancelled = TRUE); tryCatch(run_project(list(project_dir = pd, raw_dirs = raw), function() { options(ovid.cancelled = TRUE); stop("cancelled") }), error = function(e) NULL)
+  rc <- run_result(pd); options(ovid.cancelled = NULL)
+  p1 <- file.path(base, "result_first"); dir.create(p1); tryCatch(run_project(list(project_dir = p1, raw_dirs = raw), function() { dir.create(file.path(p1, "output", "x"), recursive = TRUE); stop("broke") }), error = function(e) NULL)
+  r1 <- run_result(p1); run_child(pd); rok <- run_result(pd)
+  check("each run leaves its result with the project: pending recovery, failed (with why and the log), cancelled, an incomplete first run, finished",
+        pend == "pending recovery" && rf$status == "failed" && grepl("bad file", rf$note) && file.exists(rf$log) && rc$status == "cancelled" && grepl("put back", rc$note) &&
+          r1$status == "failed" && grepl("first run", r1$note) && rok$status == "finished")
+  pd <- fresh("leftover"); before <- inv(pd); run_child(pd, "processing"); dir.create(file.path(pd, OUTPUT_FAILED)); writeLines("other", file.path(pd, OUTPUT_FAILED, "x.csv"))
+  note <- output_recover(pd, list(raw_dirs = raw)); rv <- grep("output_failed", list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("an unrelated .output_failed left from before is kept for review (never removed) and the output is put back",
+        grepl("put back", note) && identical(inv(pd), before) && length(rv) == 1 && startsWith(rv, OUTPUT_REVIEW) && file.exists(file.path(pd, rv, "x.csv")))
+  pd <- fresh("corrupt"); run_child(pd, "processing"); kf <- file.path(pd, OUTPUT_KEPT, "stations", "A.csv")
+  writeLines("old Z", kf); partial <- inv(pd)                                    # the same size as "old A": only the content hash differs
+  note <- output_recover(pd, list(raw_dirs = raw)); rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("a copy changed after it was made (same size, other bytes) is not put back: it is kept for review and the note says so",
+        grepl("does not match its record", note) && identical(inv(pd), partial) && length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "old Z")
+  pd <- fresh("extlink"); ext <- file.path(base, "ext_file.csv"); writeLines("ext 1", ext); file.symlink(ext, file.path(pd, "output", "stations", "E.csv")); before <- inv(pd)
+  r <- tryCatch({ run_project(list(project_dir = pd, raw_dirs = raw), function() writeLines("ext 2", file.path(pd, "output", "stations", "E.csv"))); "ran" }, error = function(e) conditionMessage(e))
+  check("output/ holding a link to a file elsewhere: the run does not start (a copy could not undo a same-size edit through it); the file is unchanged",
+        grepl("holds links to files elsewhere", r) && grepl("stations/E.csv", r) && readLines(ext) == "ext 1" && !leftovers(pd))
+  pd <- fresh("k4"); before <- inv(pd); run_child(pd, "processing")
+  real_rename <- file.rename; n <- 0L
+  file.rename <- function(from, to) { if (basename(to) == OUTPUT_FAILED) { n <<- n + 1L; return(FALSE) }; real_rename(from, to) }
+  note <- output_recover(pd); kept_ok <- dir.exists(file.path(pd, OUTPUT_KEPT)) && identical(journal_read(pd)$phase, "restoring") && grepl("held open", note)
+  rm(file.rename); note2 <- output_recover(pd)
+  check("putting back fails (a file held open): both copies stay and say so; the next try puts it back",
+        n == 1 && grepl("could not be put back yet", note) && kept_ok && grepl("put back", note2) && identical(inv(pd), before) && !leftovers(pd))
+  pd <- fresh("legacy"); dir.create(file.path(pd, OUTPUT_KEPT)); file.copy(file.path(pd, "output", "stations"), file.path(pd, OUTPUT_KEPT), recursive = TRUE)
+  writeLines("1700000000", file.path(pd, OUTPUT_KEPT, ".ovid_kept")); writeLines("half", file.path(pd, "output", "stations", "A.csv")); before <- inv(pd)
+  note <- output_recover(pd); rv <- grep(OUTPUT_REVIEW, list.files(pd, all.files = TRUE), fixed = TRUE, value = TRUE)
+  check("a copy left by an older version (no journal) is not put back: both are kept and the note says what to review",
+        identical(inv(pd), before) && length(rv) == 1 && file.exists(file.path(pd, rv, "stations", "A.csv")) && grepl("Compare them", note) && !leftovers(pd))
+  pd <- fresh("startup"); dir.create(file.path(pd, OUTPUT_KEPT)); writeLines("1700000000", file.path(pd, OUTPUT_KEPT, ".ovid_kept"))
+  arch <- file.path(base, "archive"); dir.create(arch); writeLines("sentinel", file.path(arch, ".run_restored")); writeLines("x", file.path(arch, "keep.csv"))
+  h <- function() tools::md5sum(sort(list.files(arch, all.files = TRUE, full.names = TRUE)))
+  unlink(file.path(pd, "output"), recursive = TRUE); file.symlink(arch, file.path(pd, "output")); h0 <- h()
+  app_protect_dirs <- function(cfg) arch                                          # an app's own protected folders (RS saved sources)
+  note <- output_recover(pd, list(raw_dirs = raw))
+  check("recovery when the app starts checks the project against the app's protected folders first: output/ linked into one is refused, nothing changed",
+        grepl("was not put back", note) && grepl("raw folder", note) && identical(h(), h0) && dir.exists(file.path(pd, OUTPUT_KEPT)))
+  rm(app_protect_dirs); note <- output_recover(pd, list(raw_dirs = arch))
+  check("... the same through the raw folders the app passes (recovery after a failed background job)", grepl("was not put back", note) && identical(h(), h0))
+  rtree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE, include.dirs = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f[!dir.exists(f)]))) }
+  raw2 <- file.path(base, "raw2"); dir.create(raw2, showWarnings = FALSE); writeLines("keep", file.path(raw2, "a.csv"))
+  inner <- file.path(raw2, "proj"); dir.create(file.path(inner, "output", "stations"), recursive = TRUE); writeLines("old A", file.path(inner, "output", "stations", "A.csv"))
+  file.copy(file.path(inner, "output"), file.path(base, "tmpcopy"), recursive = TRUE); dir.create(file.path(inner, OUTPUT_KEPT))
+  writeLines("1700000000", file.path(inner, OUTPUT_KEPT, ".ovid_kept")); t0 <- rtree(raw2)
+  note <- output_recover(inner, list(raw_dirs = raw2))
+  check("start-up recovery of a project inside a raw folder refuses before writing anything there (no lock, no marker); the copies stay",
+        grepl("was not put back", note) && identical(rtree(raw2), t0))
+  pd <- fresh("danglingmark"); run_child(pd, "processing"); unlink(file.path(pd, PROJECT_MARK)); file.symlink(file.path(raw2, "nothere.txt"), file.path(pd, PROJECT_MARK))
+  t0 <- rtree(raw2); k0 <- rtree(file.path(pd, OUTPUT_KEPT))
+  note <- output_recover(pd, list(raw_dirs = raw2))
+  check("start-up recovery with .ovid_project linked to a missing file in a raw folder refuses; nothing is made in the raw folder; the copies stay",
+        grepl("was not put back", note) && identical(rtree(raw2), t0) && !file.exists(file.path(raw2, "nothere.txt")) && identical(rtree(file.path(pd, OUTPUT_KEPT)), k0))
+  rawcsv <- file.path(raw2, "a.csv"); extf <- file.path(base, "ext_hard.csv"); file.link(rawcsv, extf); h0 <- tools::md5sum(rawcsv)
+  pd <- fresh("parthl"); file.symlink(extf, file.path(pd, paste0(RUN_JOURNAL, ".part")))
+  r <- tryCatch({ run_project(list(project_dir = pd, raw_dirs = raw2), function() NULL); "ran" }, error = function(e) conditionMessage(e))
+  check("a project file linked to an outside file that is a hard link of a raw CSV (.ovid_run.part): the run stops before the raw CSV changes",
+        grepl("shares its data", r) && identical(tools::md5sum(rawcsv), h0) && readLines(rawcsv) == "keep")
+  try_run <- function(pd) tryCatch({ run_project(list(project_dir = pd, raw_dirs = raw), function() writeLines("changed", file.path(pd, "output", "stations", "A.csv"))); "ran" },
+                                   error = function(e) conditionMessage(e))
+  pd <- fresh("toobig"); before <- inv(pd)
+  r <- local({ OUTPUT_COPY_MAX <- 0; disk_clones <- function(path) FALSE; environment(output_keep) <- environment(); environment(run_project) <- environment(); environment(try_run) <- environment(); try_run(pd) })
+  check("output over the full-copy limit on a drive that cannot clone: the run does not start; the message gives the size, the limit and a move to a cloning drive (not free space)",
+        grepl("did not start", r) && grepl("the output is 0 MB", r) && grepl("limit for a full copy is 0 MB, whatever the free space", r) && grepl("APFS", r) &&
+          !grepl("Free space", r) && identical(inv(pd), before) && !leftovers(pd))
+  pd <- fresh("lowspace"); before <- inv(pd)
+  r <- local({ disk_clones <- function(path) FALSE; disk_free <- function(path) 6e8; dir_bytes <- function(d) 1.5e8   # 150 MB: under the limit
+    environment(output_keep) <- environment(); environment(disk_check) <- environment(); environment(run_project) <- environment(); environment(try_run) <- environment(); try_run(pd) })
+  check("too little free space for a full copy (under the size limit): the run does not start; the message gives what is needed and free, and says to free space",
+        grepl("(150 MB) needs 800 MB free", r, fixed = TRUE) && grepl("600 MB is free", r) && grepl("Free space on the drive", r) && !grepl("limit for a full copy", r) && identical(inv(pd), before) && !leftovers(pd))
+  pd <- fresh("copyfail"); before <- inv(pd)
+  r <- local({ system2 <- function(cmd, ...) if (identical(cmd, "cp")) 1L else base::system2(cmd, ...); file.copy <- function(...) FALSE
+    environment(output_keep) <- environment(); environment(run_project) <- environment(); environment(try_run) <- environment(); try_run(pd) })
+  check("the copy fails (a locked or full destination): the run does not start and the output is unchanged",
+        grepl("could not be copied", r) && identical(inv(pd), before) && !leftovers(pd))
+  pd <- file.path(base, "first"); dir.create(pd)
+  e <- tryCatch(run_project(list(project_dir = pd, raw_dirs = raw), function() { dir.create(file.path(pd, "output", "stations"), recursive = TRUE)
+    writeLines("half", file.path(pd, "output", "stations", "A.csv")); stop("broke") }), error = function(e) "failed")
+  check("a first run that fails leaves its partial output marked incomplete, and no copy or journal", e == "failed" && nzchar(run_incomplete(pd)) && !leftovers(pd))
+  check("... and the next run starts and finishes", try_run(pd) == "ran" && !nzchar(run_incomplete(pd)))
+  pd <- fresh("cfg"); dir.create(file.path(pd, "config")); writeLines("a,b", file.path(pd, "config", "precip_gauges.csv"))
+  tryCatch(run_project(list(project_dir = pd, raw_dirs = raw), function() { writeLines(c("a,b", "1,2"), file.path(pd, "config", "precip_gauges.csv")); stop("broke") }), error = function(e) NULL)
+  check("set-up tables a stopped run changed are named in the note (kept, not put back)", grepl("precip_gauges.csv", run_restored(pd)) && length(readLines(file.path(pd, "config", "precip_gauges.csv"))) == 2) })
+
+cat("runs: raw folders are never written, through links or otherwise\n")
+local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f, ".R")), local = TRUE)
+  APP_NAME <- "Ovid Core // TEST"; say <- function(...) invisible()
+  base <- tempfile("rawb"); dir.create(file.path(base, "raw", "logger"), recursive = TRUE); base <- normalizePath(base); raw <- file.path(base, "raw")
+  for (i in 1:3) writeLines(paste("record", i), file.path(raw, "logger", paste0("f", i, ".dat")))
+  inv <- function() { f <- sort(list.files(raw, recursive = TRUE, all.files = TRUE, full.names = TRUE)); setNames(unname(tools::md5sum(f)), f) }
+  before <- inv(); k <- 0L
+  proj <- function(prep) { k <<- k + 1L; pd <- file.path(base, paste0("p", k)); dir.create(pd); prep(pd); pd }
+  blocked <- function(pd, extra = NULL) {             # a run that would empty output/, cache/ and config/: stopped before it starts
+    e <- tryCatch(run_project(list(project_dir = pd, raw_dirs = raw), function() { for (d in c("output", "cache", "config", extra)) unlink(list.files(file.path(pd, d), full.names = TRUE, recursive = TRUE))
+      writeLines("x", file.path(pd, "output", "stations", "new.csv")) }), error = function(e) e)
+    inherits(e, "ovid_project_check") && identical(inv(), before) && grepl("raw folder|cannot be found", conditionMessage(e)) }
+  sym <- function(to, at) { dir.create(dirname(at), recursive = TRUE, showWarnings = FALSE); file.symlink(to, at) }
+  if (.Platform$OS.type != "windows") {
+    check("project/output linked to the raw folder: the run does not start and the raw files are byte for byte the same",
+          blocked(proj(function(p) sym(raw, file.path(p, "output")))))
+    check("... nor with output/stations linked into the raw folder (nested link)", blocked(proj(function(p) sym(file.path(raw, "logger"), file.path(p, "output", "stations")))))
+    check("... nor with cache/, config/ or the kept copy (.output_before_run) linked into it",
+          blocked(proj(function(p) { dir.create(file.path(p, "output", "stations"), recursive = TRUE); sym(raw, file.path(p, "cache")) })) &&
+          blocked(proj(function(p) { dir.create(file.path(p, "output", "stations"), recursive = TRUE); sym(file.path(raw, "logger"), file.path(p, "config")) })) &&
+          blocked(proj(function(p) { dir.create(file.path(p, "output", "stations"), recursive = TRUE); sym(raw, file.path(p, OUTPUT_KEPT)) })))
+    check("... nor through a chain of links, a link around the raw folder, or a link inside a linked folder elsewhere",
+          blocked(proj(function(p) { sym(raw, file.path(base, paste0("hop", k))); sym(file.path(base, paste0("hop", k)), file.path(p, "output", "stations")) })) &&
+          blocked(proj(function(p) sym(base, file.path(p, "output", "stations")))) &&
+          blocked(proj(function(p) { ext <- file.path(base, paste0("ext", k)); sym(raw, file.path(ext, "deep")); sym(ext, file.path(p, "output", "stations")) })))
+    e <- NULL; pd <- proj(function(p) sym(file.path(base, "gone_drive", "out"), file.path(p, "output", "stations")))
+    check("... nor with a link that cannot be resolved (fails closed, naming the link and its target)", blocked(pd) &&
+          grepl("output/stations is a link whose target cannot be found", conditionMessage(tryCatch(project_check(list(project_dir = pd, raw_dirs = raw)), error = function(e) e))))
+    pd <- proj(function(p) sym(file.path(raw, "logger"), file.path(p, "output", "stations")))
+    m <- conditionMessage(tryCatch(project_check(list(project_dir = pd, raw_dirs = raw)), error = function(e) e))
+    check("the message names the link, where it resolves and the raw folder", grepl("output/stations is a link to", m) && grepl("inside the raw folder", m))
+    real <- proj(function(p) sym(file.path(raw, "logger"), file.path(p, "output", "stations"))); lnk <- file.path(base, paste0("projlink", k)); file.symlink(real, lnk)
+    check("a project folder set through a link is scanned at its real place: a nested output/stations link into raw stops the run", blocked(lnk))
+    chain <- proj(function(p) { prev <- p; for (i in 1:9) { nx <- file.path(base, paste0("deep", k, "_", i)); dir.create(nx); file.symlink(nx, file.path(prev, "next")); prev <- nx } })
+    m <- conditionMessage(tryCatch(project_check(list(project_dir = chain, raw_dirs = raw)), error = function(e) e))
+    check("links leading to linked folders deeper than the limit stop the run, naming where", grepl("more than 8 deep", m) && grepl("deep", m) && identical(inv(), before))
+    pd <- proj(function(p) { sym(raw, file.path(base, "rawlink")); NULL })
+    m <- conditionMessage(tryCatch(project_check(list(project_dir = file.path(base, "rawlink", "proj"), raw_dirs = raw)), error = function(e) e))
+    check("a project folder reached through a link into the raw folder is refused, with the path as set and where it resolves", grepl("rawlink/proj (resolves to", m, fixed = TRUE))
+    od <- proj(function(p) { dir.create(file.path(p, "output", "stations"), recursive = TRUE); sym(file.path(raw, "logger"), file.path(p, "output", "plots")) })
+    old <- options(ovid.raw_dirs = raw); on.exit(options(old), add = TRUE)
+    e1 <- tryCatch(outputs_prune(file.path(od, "output"), "plots", character()), error = function(e) e)
+    e3 <- tryCatch(cache_prune(file.path(od, "output", "plots"), character()), error = function(e) e)   # outside a run: refused too
+    e2 <- tryCatch(remove_within(file.path(od, "output", "plots/"), od, recursive = TRUE), error = function(e) e)
+    check("removals are checked where they happen: pruning, a trailing / and cache pruning through a link stop and leave the raw files",
+          inherits(e1, "ovid_project_check") && inherits(e3, "ovid_project_check") && identical(inv(), before) &&
+          (inherits(e2, "ovid_project_check") || (!file.exists(file.path(od, "output", "plots")) && identical(inv(), before))))
+    options(old)
+  }
+  if (.Platform$OS.type == "windows") {
+    check("a Windows junction from output/stations into the raw folder: the run does not start",
+          blocked(proj(function(p) { dir.create(file.path(p, "output"), recursive = TRUE); Sys.junction(file.path(raw, "logger"), file.path(p, "output", "stations")) })))
+  }
+  pd <- proj(function(p) { dir.create(file.path(p, "output", "stations"), recursive = TRUE)
+    for (n in c("A", "B", "old")) writeLines(n, file.path(p, "output", "stations", paste0(n, ".csv")))
+    if (.Platform$OS.type != "windows") sym(file.path(base, "elsewhere"), file.path(p, "reports")) })
+  dir.create(file.path(base, "elsewhere"), showWarnings = FALSE)
+  run_project(list(project_dir = pd, raw_dirs = raw), function() { dir.create(file.path(pd, "output", "plots")); dir.create(file.path(pd, "cache", "read"), recursive = TRUE)
+    outputs_prune(file.path(pd, "output"), "stations", c("stations/A.csv", "stations/B.csv")) })
+  check("a normal project still creates its folders and prunes outputs that are no longer made; a link elsewhere is allowed",
+        dir.exists(file.path(pd, "output", "plots")) && dir.exists(file.path(pd, "cache", "read")) &&
+          identical(sort(list.files(file.path(pd, "output", "stations"))), c("A.csv", "B.csv")) && identical(inv(), before)) })
 
 cat("automatic corrections: the list\n")
 local({ source(file.path(CORE_DIR, "corrections.R"), local = TRUE)
@@ -199,7 +584,42 @@ local({ for (.f in c("cache", "manifest", "projects")) source(file.path(CORE_DIR
         length(list.files(getOption("ovid.trash_dir"))) == 1)
   project_delete(q, "project"); check("a whole project goes to the Trash", !dir.exists(q))
   dir.create(file.path(main, ".ovid_lock")); writeLines(c(paste0("pid: ", Sys.getpid()), paste0("host: ", Sys.info()[["nodename"]])), file.path(main, ".ovid_lock", "run.txt"))
-  check("nothing is deleted while a run holds the project", grepl("run is going", project_delete_plan(main, "outputs")$why)) })
+  check("nothing is deleted while a run holds the project", grepl("run is going", project_delete_plan(main, "outputs")$why))
+  unlink(file.path(main, ".ovid_lock"), recursive = TRUE)
+  arch <- file.path(root, "archive"); dir.create(arch); writeLines("raw", file.path(arch, "logger.dat")); inv <- function() { f <- sort(list.files(arch, recursive = TRUE, full.names = TRUE)); c(f, tools::md5sum(f)) }
+  a0 <- inv(); trash_n <- function() length(list.files(getOption("ovid.trash_dir")))
+  for (lnk in c("output", "cache")) { pr <- file.path(root, paste0("del_", lnk)); dir.create(file.path(pr, "config"), recursive = TRUE); writeLines("app: TEST", file.path(pr, PROJECT_MARK))
+    file.symlink(arch, file.path(pr, lnk)); n0 <- trash_n(); pl <- project_delete_plan(pr, "outputs")
+    e <- tryCatch(project_delete(pr, "outputs", expect = pl$sig), error = function(e) e)
+    check(paste0("Delete outputs with ", lnk, "/ linked to a raw archive: the plan says it is a link and nothing is deleted; the archive keeps its files and bytes"),
+          grepl("is a link", pl$why) && inherits(e, "ovid_project_check") && identical(inv(), a0) && trash_n() == n0 && file.exists(file.path(arch, "logger.dat"))) }
+  pr <- file.path(root, "del_changed"); dir.create(file.path(pr, "output"), recursive = TRUE); writeLines("app: TEST", file.path(pr, PROJECT_MARK)); writeLines("x", file.path(pr, "output", "a.csv"))
+  pl <- project_delete_plan(pr, "outputs"); ok_before <- !nzchar(pl$why)
+  file.rename(file.path(pr, "output"), file.path(pr, "output_old")); file.symlink(arch, file.path(pr, "output")); n0 <- trash_n()   # changed after the dialog opened
+  e <- tryCatch(project_delete(pr, "outputs", expect = pl$sig), error = function(e) e)
+  check("a link put in place after the dialog opened: the deletion under the lock sees it and deletes nothing", ok_before && inherits(e, "ovid_project_check") && identical(inv(), a0) && trash_n() == n0)
+  unlink(file.path(pr, "output")); file.rename(file.path(pr, "output_old"), file.path(pr, "output")); pl <- project_delete_plan(pr, "outputs")
+  pr2 <- file.path(root, "del_swap"); dir.create(file.path(pr2, "output"), recursive = TRUE); writeLines("app: TEST", file.path(pr2, PROJECT_MARK)); pl2 <- project_delete_plan(pr2, "outputs")
+  unlink(file.path(pr2, "output"), recursive = TRUE); dir.create(file.path(pr2, "output")); e2 <- tryCatch(project_delete(pr2, "outputs", expect = pl2$sig), error = function(e) e)
+  project_delete(pr, "outputs", expect = pl$sig)
+  ps <- file.path(root, "set_linked"); dir.create(ps); writeLines("app: TEST", file.path(ps, PROJECT_MARK)); ra <- file.path(root, "set_raw"); dir.create(ra); writeLines("raw", file.path(ra, "x.csv"))
+  file.symlink(ra, file.path(ps, "config")); r0 <- c(sort(list.files(ra, all.files = TRUE, no.. = TRUE)), tools::md5sum(file.path(ra, "x.csv")))
+  e <- tryCatch(project_settings_save(ps, list(raw_dirs = ra, min_year = 2001)), error = function(e) e)
+  check("project settings with config/ linked into a raw folder: refused, nothing written there (no temporary file either)",
+        inherits(e, "ovid_project_check") && identical(c(sort(list.files(ra, all.files = TRUE, no.. = TRUE)), tools::md5sum(file.path(ra, "x.csv"))), r0))
+  ok <- project_settings_save(main, modifyList(project_settings_read(main), list(min_year = 1999))); check("... and saved in a safe project", isTRUE(ok) && project_settings_read(main)$min_year == 1999)
+  tz <- file.path(root, "ts_proj"); dir.create(file.path(tz, "output", "audit"), recursive = TRUE); dir.create(file.path(tz, "config")); writeLines("app: TEST", file.path(tz, PROJECT_MARK))
+  rw <- file.path(root, "ts_raw"); dir.create(rw); writeLines("secret raw record", file.path(rw, "station.csv")); file.symlink(file.path(rw, "station.csv"), file.path(tz, "output", "audit", "problems.csv"))
+  writeLines("a,b", file.path(tz, "output", "audit", "run_manifest.csv")); r0 <- tools::md5sum(file.path(rw, "station.csv"))
+  zf <- file.path(root, "ts.zip"); ref <- troubleshooting_zip(tz, zf); ux <- file.path(root, "ts_unzip"); utils::unzip(zf, exdir = ux)
+  zt <- paste(unlist(lapply(list.files(ux, recursive = TRUE, full.names = TRUE), readLines, warn = FALSE)), collapse = "\n")
+  check("a troubleshooting zip leaves out an audit file linked to a raw file (named under Left out); the rest is in; the raw file is unchanged",
+        !grepl("secret raw record", zt, fixed = TRUE) && grepl("problems.csv (it leads outside the project folder", zt, fixed = TRUE) &&
+          file.exists(file.path(ux, ref, "audit", "run_manifest.csv")) && identical(tools::md5sum(file.path(rw, "station.csv")), r0))
+  ti <- troubleshooting_inventory(tz)
+  check("the troubleshooting inventory lists the files the zip holds and what it leaves out", "audit/run_manifest.csv" %in% ti$files$file && !"audit/problems.csv" %in% ti$files$file &&
+        any(grepl("problems.csv", ti$left_out)))
+  check("a folder replaced after the dialog opened is not deleted; an unchanged plan is", inherits(e2, "ovid_project_check") && grepl("changed after", conditionMessage(e2)) && !dir.exists(file.path(pr, "output"))) })
 
 cat("renaming a site in every set-up table\n")
 local({ source(file.path(CORE_DIR, "rename.R"), local = TRUE)

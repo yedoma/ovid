@@ -102,7 +102,7 @@ PIPELINE_DIR <- local({ f <- NULL
   if (is.null(f)) getwd() else dirname(normalizePath(f)) })
 if (!dir.exists(file.path(PIPELINE_DIR, "R"))) stop("The R/ folder that belongs beside wlr_pipeline.R was not found in ", PIPELINE_DIR)
 APP_NAME <- "ovid // WLR"
-APP_VERSION <- PIPELINE_VERSION <- "0.12.0"          # bump when a change alters the output
+APP_VERSION <- PIPELINE_VERSION <- "0.13.0"          # bump when a change alters the output
 
 # The shared Ovid Core files (audit trail, helpers, set-up tables, run manifest, set-up check): from OVID_CORE if
 # set, else core/ beside this file (a portable copy), else ../core (the Ovid_Apps bundle).
@@ -157,6 +157,8 @@ canonical_serials <- function(x) {
 # =============================================================================
 run_pipeline_steps <- function(cfg = CFG) {
   t0 <- Sys.time()
+  if (length(cfg$rescan)) forget_wlr_files(cfg$project_dir, cfg$rescan)        # Rescan (Raw files page): inside the checked, locked run
+  cfg$rescan <- NULL                                                              # not a setting: no cached step depends on it
   BASE_OFFSET <<- cfg$base_offset_h %||% CFG$base_offset_h
   UTM_ZONE <<- cfg$utm_zone %||% CFG$utm_zone
   cfg$project_dir <- sub("[/\\\\]+$", "", path.expand(trim(cfg$project_dir)))

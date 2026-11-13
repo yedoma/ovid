@@ -3,7 +3,7 @@
 
 setup_check <- function(cfg) {
   chk <- check_collector(c("level", "area", "item", "problem", "fix")); add <- chk$add
-  cfgs <- tryCatch(load_configs(cfg), error = function(e) { add("error", "Set-up tables", "", conditionMessage(e), "Fix or remove the file named."); NULL })
+  cfgs <- tryCatch(read_configs(cfg), error = function(e) { add("error", "Set-up tables", "", conditionMessage(e), "Fix or remove the file named."); NULL })
   s <- if (is.null(cfgs)) data.table(source_id = character(), path = character()) else cfgs$sources
   # RS reads sources, not raw folders: a new project has none yet (its first scan adds one), so only the project folder is checked;
   # a source not plugged in keeps its last scan, so that is only a note

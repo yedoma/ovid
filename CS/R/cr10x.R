@@ -255,7 +255,8 @@ cr10x_automatch <- function(cfg, fsl_dir, set_logger_id = TRUE, progress = funct
         alt <- c(alt, paste0(vapply(cand[-best], `[[`, "", "name"), " for A", sig$id[j], ifelse(same, " (same labels)", " (different labels)")))
       }
       covered <- covered + sig$n[j]; picks <- c(picks, cand[[best]]$name)
-      file.copy(cand[[best]]$path, file.path(fdir, cand[[best]]$name), overwrite = TRUE)
+      to <- file.path(fdir, cand[[best]]$name)                            # already in config/fsl (matching from there): nothing to copy
+      if (!identical(normalizePath(cand[[best]]$path, mustWork = FALSE), normalizePath(to, mustWork = FALSE))) file.copy(cand[[best]]$path, to, overwrite = TRUE)
     }
     picks <- unique(picks)
     res[[r]] <- data.table(file = cx$file[r],

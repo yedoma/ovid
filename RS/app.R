@@ -115,7 +115,7 @@ server <- function(input, output, session, embedded = FALSE) {
     q <- tolower(trim(input$f_text %||% "")); if (nzchar(q)) f <- f[grepl(q, tolower(paste(name, site, project, folder, notes, sensor, aircraft)), fixed = TRUE)]
     f })
   # safe: the calibration table's editor reports a read problem
-  cal_rs <- reactive({ rv$tick; stamps(); tryCatch(load_configs(CFG)$calibration, error = function(e) NULL) })
+  cal_rs <- reactive({ rv$tick; stamps(); tryCatch(read_configs(CFG)$calibration, error = function(e) NULL) })
   fchk_raw <- reactive(flight_checks(fl(), cal_rs()))            # placed, corrected and the five checks of every flight
   decisions <- reactive({ p <- file.path(path.expand(CFG$project_dir), "config", REVIEW_FILE); rv$tick; live_stamp(p); review_read(p) })   # core config.R
   fchk <- reactive(checks_decided(fl(), fchk_raw(), decisions()))  # with the checks accepted as is in Needs you (pages/fct_needs.R)
@@ -146,7 +146,7 @@ server <- function(input, output, session, embedded = FALSE) {
   years_fp <- reactive({ if (!isTRUE(input$f_year_fp)) return(list()); x <- C(); if (is.null(x)) return(list())
     year_footprints(le_view(), x$footprints, fp_kinds(input$f_fp), fp_memo, fp_tab()) })
   fp_tab <- reactive({ rv$tick; live_stamp(cfg_path(CFG$project_dir, "footprint_colours"))   # the colours by drone, sensor and year (R/footprints.R)
-    tryCatch(load_configs(CFG)$footprint_colours, error = function(e) fp_colours_default()) })
+    tryCatch(read_configs(CFG)$footprint_colours, error = function(e) fp_colours_default()) })
   # the browser keeps every footprint and image position it has been sent (www/rs_map.js): each change of the view sends only
   # those it has not got; a new catalogue starts it afresh. A joined flight's outline is keyed on its parts.
   sent <- new.env(); sent$fp <- character(); sent$pt <- character(); sent$reset <- TRUE

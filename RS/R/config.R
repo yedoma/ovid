@@ -108,7 +108,7 @@ fp_colours_default <- function() data.table(family = c("DJI", "eBee", "Other"),
   year_step_deg = "16", note = c("DJI drones and Zenmuse cameras", "senseFly eBee and its cameras", "every other drone"))
 
 CONFIG_FILES <- list(
-  sources    = list(file = "sources.csv",    cols = SOURCE_COLS,    label = "Archive sources"),
+  sources    = list(file = "sources.csv",    cols = SOURCE_COLS,    label = "Archive sources", exact = "path"),   # a folder name may end in a space
   flights    = list(file = "flights.csv",    cols = FLIGHT_COLS,    label = "Flights"),
   sites      = list(file = "sites.csv",      cols = SITE_COLS,      label = "Sites"),
   site_names = list(file = "site_names.csv", cols = SITE_NAME_COLS, label = "Site names found"),

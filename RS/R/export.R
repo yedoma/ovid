@@ -14,7 +14,28 @@ thin_points <- function(images, per_flight = 150L) {
   p[i %in% unique(round(seq(1, n[1], length.out = min(n[1], per_flight)))), .(flight_id, lat, lon), by = n][, n := NULL][]
 }
 
-export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid RS archive", datasets = NULL, gis = NULL, fp_tab = fp_colours_default()) {
+# include_paths = FALSE (the default): the sources' folders on this computer (sources.csv root, any path column) are left out
+# of the CSVs and the page; folders and files are named relative to their source (source_id:rel). Everything the project
+# controls (names, notes, evidence, labels) is shown as text in the page, never read as HTML.
+SHARE_PATH_COLS <- c("path", "root", "abs_path", "full_path", "source_path")
+share_strip <- function(d, include_paths) { if (is.null(d) || include_paths || !nrow(d)) return(d); d <- copy(d); d[, intersect(SHARE_PATH_COLS, names(d)) := NULL]; d }
+# What a viewer folder (as zipped) holds, for a look before it is shared: each file with its rows and columns, the positions in
+# it (flight extents, image points, shapes), and every cell or page text that looks like a folder path on a computer.
+viewer_share_preview <- function(dir) {
+  f <- list.files(dir, pattern = "\\.csv$", full.names = TRUE)
+  tabs <- rbindlist(lapply(f, function(x) { d <- fread(file = x, colClasses = "character", na.strings = NULL)
+    data.table(file = basename(x), rows = nrow(d), columns = paste(names(d), collapse = ", ")) }), fill = TRUE)
+  absp <- "(^|[\\s\"'])(/(Users|home|Volumes|mnt|media|private|var)/|[A-Za-z]:[\\\\/])"
+  hits <- rbindlist(lapply(f, function(x) { d <- fread(file = x, colClasses = "character", na.strings = NULL)
+    rbindlist(lapply(names(d), function(k) { v <- unique(d[[k]][grepl(absp, d[[k]], perl = TRUE)]); if (length(v)) data.table(file = basename(x), column = k, example = v[1], n = length(v)) })) }), fill = TRUE)
+  page <- if (file.exists(file.path(dir, "index.html"))) paste(readLines(file.path(dir, "index.html"), warn = FALSE), collapse = "\n") else ""
+  fl <- if (file.exists(file.path(dir, "flights.csv"))) fread(file = file.path(dir, "flights.csv")) else data.table()
+  list(files = tabs, flights = nrow(fl), with_extent = if (nrow(fl) && "lat_min" %in% names(fl)) sum(is.finite(fl$lat_min)) else 0L,
+       page_points = length(gregexpr('"lat":', page, fixed = TRUE)[[1]][gregexpr('"lat":', page, fixed = TRUE)[[1]] > 0]),
+       local_paths = hits, page_has_local_paths = grepl(absp, page, perl = TRUE))
+}
+export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid RS archive", datasets = NULL, gis = NULL, fp_tab = fp_colours_default(), include_paths = FALSE) {
+  scanned <- share_strip(scanned, include_paths); datasets <- share_strip(datasets, include_paths); gis <- share_strip(gis, include_paths)
   unlink(dir, TRUE); dir.create(dir, recursive = TRUE)
   fl <- out[is.na(exclude_from_archive) | !tolower(exclude_from_archive) %in% c("true", "yes", "1", "x")]
   keep <- c("flight_id", "display_name", "year", "date", "start", "duration_min", "project", "site", "family", "aircraft", "sensor", "flight_no",
@@ -24,6 +45,7 @@ export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid R
   fl <- fl[, intersect(keep, names(fl)), with = FALSE][, dcol := fc$col]
   lk <- links[flight_id %in% fl$flight_id & state != "suggested", .(flight_id, file, role, state, evidence)]
   pts <- thin_points(images[flight_id %in% fl$flight_id])
+  geo <- geo[is.na(flight_id) | !nzchar(flight_id) | flight_id %in% fl$flight_id]   # one selection for the CSVs and the page: an excluded flight's shapes go nowhere
   fwrite(fl, file.path(dir, "flights.csv")); fwrite(lk, file.path(dir, "links.csv")); fwrite(scanned, file.path(dir, "sources.csv")); fwrite(geo, file.path(dir, "geometry.csv"))
   # satellite, aerial and LiDAR footprints and GIS features: one copy each, colours as in the app
   dcol <- c(satellite = PAL$blue, aerial = PAL$bone, lidar = PAL$green, raster = PAL$gray)
@@ -37,9 +59,10 @@ export_viewer <- function(out, links, images, scanned, geo, dir, title = "ovid R
     gs <- gs[, .(group = category, line, source = TRUE, col = unname(gcol[category]), type, label = paste0(category, " \u00b7 ", fifelse(is.na(feature), "", feature), " \u00b7 ", rel))] }
   extra <- rbind(ds, gs, fill = TRUE)
   data <- jsonlite::toJSON(list(title = title, extra = extra, made = format(Sys.time(), "%Y-%m-%d %H:%M"), app = paste("ovid RS", RS_VERSION),
-                                sources = scanned, flights = fl, links = lk, points = pts, colours = as.list(STATUS_COL), dkey = fp_colour_key(fc, fl), geometry = geo[is.na(flight_id) | flight_id %in% fl$flight_id & kind != "derived"], states = POSITIONING),
+                                sources = scanned, flights = fl, links = lk, points = pts, colours = as.list(STATUS_COL), dkey = fp_colour_key(fc, fl), geometry = geo[kind != "derived"], states = POSITIONING),
                            dataframe = "rows", na = "null", auto_unbox = TRUE, digits = NA)
-  page <- sub("__DATA__", gsub("</", "<\\\\/", data), VIEWER_HTML, fixed = TRUE)
+  data <- gsub("<", "\\u003c", gsub(">", "\\u003e", gsub("&", "\\u0026", data, fixed = TRUE), fixed = TRUE), fixed = TRUE)   # JSON escapes: no tag or comment can end the data block
+  page <- sub("__DATA__", data, VIEWER_HTML, fixed = TRUE)
   tools <- Filter(file.exists, file.path(c(get0("APP_DIR", ifnotfound = "."), get0("PIPELINE_DIR", ifnotfound = ".")), "www", "map_tools.js"))   # Legend on/off, 250 ppi PNG
   page <- sub("__MAPTOOLS__", if (length(tools)) paste(readLines(tools[1], warn = FALSE, encoding = "UTF-8"), collapse = "\n") else "", page, fixed = TRUE)
   writeLines(sub("__TITLE__", html_esc(title), page, fixed = TRUE), file.path(dir, "index.html"), useBytes = TRUE)
@@ -78,6 +101,7 @@ th{position:sticky;top:0;background:var(--panel);cursor:pointer}tr.sel{backgroun
 <script>__MAPTOOLS__</script>
 <script>
 const D=JSON.parse(document.getElementById('data').textContent),F=D.flights;
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));   // every project value is shown as text
 const COL=D.colours;
 document.getElementById('t').textContent=D.title;
 document.getElementById('sub').textContent=`${F.length} ${F.length===1?'flight':'flights'} from ${D.sources.length} ${D.sources.length===1?'source':'sources'} \u00b7 made ${D.made} with ${D.app}`;
@@ -87,21 +111,24 @@ const cols=[['date','Date'],['site','Site'],['aircraft','Aircraft'],['sensor','S
 let sortK='date',asc=true,sel=null;
 document.getElementById('hd').innerHTML=cols.map(c=>`<th data-k="${c[0]}">${c[1]}</th>`).join('');
 document.querySelectorAll('th').forEach(th=>th.onclick=()=>{asc=sortK===th.dataset.k?!asc:true;sortK=th.dataset.k;draw()});
-const map=L.map('map');L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri World Imagery'}).addTo(map);
-const lay=L.layerGroup().addTo(map),P={},G={},X={};
+// the table and details never wait for the map: with Leaflet not loaded (offline, or its CDN blocked) the map says so and the rest works
+const HAS_MAP=typeof L!=='undefined';let map=null,lay=null,leg=null;const P={},G={},X={},XC={};
+if(!HAS_MAP)document.getElementById('map').innerHTML='<p style="padding:16px">The map could not load here (no internet connection, or its map library was blocked). The table and the details work without it.</p>';
+if(HAS_MAP){map=L.map('map');L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri World Imagery'}).addTo(map);
+lay=L.layerGroup().addTo(map);
 // satellite / aerial / LiDAR footprints (solid: vendor corners, dashed: from headers) and GIS layers, each kind switchable
 (D.extra||[]).forEach(x=>{const ll=x.line.split(';').map(s=>s.split(' ').map(Number));const g=X[x.group]=X[x.group]||L.layerGroup().addTo(map);
  const m=x.type==='point'?L.circleMarker(ll[0],{radius:4,color:'#282c34',weight:1,fillColor:x.col,fillOpacity:1}):x.type==='line'?L.polyline(ll,{color:x.col,weight:2}):
-  L.polygon(ll,{color:x.col,weight:2,fillOpacity:.1,dashArray:x.source?null:'6 4'});m.bindTooltip(x.label.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).addTo(g)});
+  L.polygon(ll,{color:x.col,weight:2,fillOpacity:.1,dashArray:x.source?null:'6 4'});m.bindTooltip(E(x.label)).addTo(g)});
 if(Object.keys(X).length)L.control.layers(null,X,{collapsed:true}).addTo(map);
 // legend: positioning colours, then each switchable layer that is on; Legend button hides it, PNG saves the view at 250 ppi
-const XC={};(D.extra||[]).forEach(x=>XC[x.group]=XC[x.group]||x.col);const leg=L.control({position:'bottomright'});leg.onAdd=()=>L.DomUtil.create('div','map-legend');leg.addTo(map);
+(D.extra||[]).forEach(x=>XC[x.group]=XC[x.group]||x.col);leg=L.control({position:'bottomright'});leg.onAdd=()=>L.DomUtil.create('div','map-legend');leg.addTo(map);
 function legend(){const e=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),st=[...new Set(F.map(f=>f.positioning_status))].filter(k=>COL[k]),on=Object.keys(X).filter(g=>map.hasLayer(X[g]));
- leg.getContainer().innerHTML='<div class="lg-t">Flights by drone, sensor and year</div>'+(D.dkey||[]).map(([k,c])=>`<div><i style="border-color:${c}"></i>${e(k)}</div>`).join('')+(on.length?'<div class="lg-t">Layers</div>'+on.map(g=>`<div><i style="border-color:${XC[g]}"></i>${e(g)}</div>`).join(''):'')+'<div class="lg-n">dashed planned \u00b7 solid observed \u00b7 dotted derived</div>'}
+ leg.getContainer().innerHTML='<div class="lg-t">Flights by drone, sensor and year</div>'+(D.dkey||[]).map(([k,c])=>`<div><i style="border-color:${E(c)}"></i>${e(k)}</div>`).join('')+(on.length?'<div class="lg-t">Layers</div>'+on.map(g=>`<div><i style="border-color:${E(XC[g])}"></i>${e(g)}</div>`).join(''):'')+'<div class="lg-n">dashed planned \u00b7 solid observed \u00b7 dotted derived</div>'}
 legend();map.on('overlayadd overlayremove',legend);if(window.OvidMapTools)OvidMapTools(map,{legend:()=>leg.getContainer(),name:'viewer_map',key:'viewer'});D.points.forEach(p=>(P[p.flight_id]=P[p.flight_id]||[]).push([p.lat,p.lon]));
-(D.geometry||[]).forEach(g=>(G[g.flight_id||'']=G[g.flight_id||'']||[]).push(g));
+(D.geometry||[]).forEach(g=>(G[g.flight_id||'']=G[g.flight_id||'']||[]).push(g));}
 // planned: dashed line; observed: solid line or marker; derived: dotted outline
-function shape(g,c){const ll=g.line.split(';').map(s=>s.split(' ').map(Number));const tip=`${g.kind}: ${g.what}${g.ref?' \u00b7 '+g.ref:''}`;
+function shape(g,c){const ll=g.line.split(';').map(s=>s.split(' ').map(Number));const tip=E(`${g.kind}: ${g.what}${g.ref?' \u00b7 '+g.ref:''}`);
  if(ll.length===1)L.circleMarker(ll[0],{radius:6,color:c,weight:2,fill:false}).bindTooltip(tip).addTo(lay);
  else L.polyline(ll,{color:c,weight:g.kind==='planned'?1.5:2.2,dashArray:g.kind==='planned'?'8 6':null,opacity:.9}).bindTooltip(tip).addTo(lay)}
 function shown(){const y=fy.value,s=fs.value,a=fa.value,p=fp.value,q=document.getElementById('q').value.toLowerCase();
@@ -109,21 +136,21 @@ function shown(){const y=fy.value,s=fs.value,a=fa.value,p=fp.value,q=document.ge
 function draw(){const r=shown().sort((a,b)=>{const x=a[sortK],y=b[sortK];return (x>y?1:x<y?-1:0)*(asc?1:-1)});
  const n=r.reduce((s,f)=>s+(f.n_images||0),0),gb=r.reduce((s,f)=>s+(f.size_gb||0),0),c={};r.forEach(f=>c[f.positioning_status]=(c[f.positioning_status]||0)+1);
  document.getElementById('cards').innerHTML=`<div class="card"><b>${r.length}</b>flights</div><div class="card"><b>${n.toLocaleString()}</b>images</div><div class="card"><b>${gb.toFixed(1)}</b>GB</div>`+
-  Object.entries(c).map(([k,v])=>`<div class="card"><b>${v}</b><span class="dot" style="background:${COL[k]}"></span>${k}</div>`).join('');
- document.getElementById('bd').innerHTML=r.map(f=>`<tr data-id="${f.flight_id}" class="${f.flight_id===sel?'sel':''}">`+cols.map(([k])=>`<td>${k==='positioning_status'?`<span class="dot" style="background:${COL[f[k]]}"></span>`:''}${f[k]??''}</td>`).join('')+'</tr>').join('');
+  Object.entries(c).map(([k,v])=>`<div class="card"><b>${v}</b><span class="dot" style="background:${E(COL[k])}"></span>${E(k)}</div>`).join('');
+ document.getElementById('bd').innerHTML=r.map(f=>`<tr data-id="${E(f.flight_id)}" class="${f.flight_id===sel?'sel':''}">`+cols.map(([k])=>`<td>${k==='positioning_status'?`<span class="dot" style="background:${E(COL[f[k]])}"></span>`:''}${E(f[k])}</td>`).join('')+'</tr>').join('');
  document.querySelectorAll('#bd tr').forEach(tr=>tr.onclick=()=>pick(tr.dataset.id,true));
- lay.clearLayers();const b=[];
+ if(!HAS_MAP)return;lay.clearLayers();const b=[];
  r.forEach(f=>{const c=f.dcol||COL[f.positioning_status],pts=P[f.flight_id];
   if(f.lat_min!==null){const bb=[[f.lat_min,f.lon_min],[f.lat_max,f.lon_max]];b.push(...bb);
-   L.rectangle(bb,{color:c,weight:f.flight_id===sel?2.5:1,fill:false,dashArray:'1 4'}).bindTooltip(`${f.date} ${f.site||''} \u00b7 ${f.sensor||''} \u00b7 derived extent`).on('click',()=>pick(f.flight_id,false)).addTo(lay)}
+   L.rectangle(bb,{color:c,weight:f.flight_id===sel?2.5:1,fill:false,dashArray:'1 4'}).bindTooltip(E(`${f.date} ${f.site||''} \u00b7 ${f.sensor||''} \u00b7 derived extent`)).on('click',()=>pick(f.flight_id,false)).addTo(lay)}
   (pts||[]).forEach(p=>L.circleMarker(p,{radius:2,color:c,weight:1,fillOpacity:.9}).bindTooltip('observed image position').addTo(lay));
   (G[f.flight_id]||[]).forEach(g=>shape(g,c))});
  if(!fy.value&&!fs.value&&!fa.value&&!fp.value&&!document.getElementById('q').value)(G['']||[]).forEach(g=>shape(g,'#888'));
  if(b.length&&!draw.done){map.fitBounds(b,{padding:[20,20]});draw.done=1}if(!b.length)map.setView([0,0],2)}
 function pick(id,zoom){sel=id;const f=F.find(x=>x.flight_id===id);draw();
- if(zoom&&f.lat_min!==null)map.fitBounds([[f.lat_min,f.lon_min],[f.lat_max,f.lon_max]],{padding:[30,30]});
+ if(HAS_MAP&&zoom&&f.lat_min!==null)map.fitBounds([[f.lat_min,f.lon_min],[f.lat_max,f.lon_max]],{padding:[30,30]});
  const l=D.links.filter(x=>x.flight_id===id);
- document.getElementById('detail').innerHTML=`<b>${f.display_name||f.site||id}</b> \u00b7 ${f.date} \u00b7 ${f.aircraft||''} ${f.sensor||''}<br>${f.positioning_status}: ${f.positioning_evidence||''}<br>Folder: ${f.source_id}:${f.folder}${f.copies?'<br>Copies: '+f.copies:''}${f.qa_flags?'<br>QA: '+f.qa_flags:''}`+
-  (l.length?'<br><br>'+l.map(x=>`${x.role}: ${x.file} <span class="muted">(${x.state}; ${x.evidence})</span>`).join('<br>'):'')}
+ document.getElementById('detail').innerHTML=`<b>${E(f.display_name||f.site||id)}</b> \u00b7 ${E(f.date)} \u00b7 ${E(f.aircraft||'')} ${E(f.sensor||'')}<br>${E(f.positioning_status)}: ${E(f.positioning_evidence||'')}<br>Folder: ${E(f.source_id)}:${E(f.folder)}${f.copies?'<br>Copies: '+E(f.copies):''}${f.qa_flags?'<br>QA: '+E(f.qa_flags):''}`+
+  (l.length?'<br><br>'+l.map(x=>`${E(x.role)}: ${E(x.file)} <span class="muted">(${E(x.state)}; ${E(x.evidence)})</span>`).join('<br>'):'')}
 ['fy','fs','fa','fp','q'].forEach(i=>document.getElementById(i).oninput=draw);draw();
 </script></body></html>)---"

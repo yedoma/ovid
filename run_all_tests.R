@@ -6,6 +6,8 @@
 #   Rscript run_all_tests.R --changed     core plus only the apps with changes not yet on GitHub
 #                                         (every app if core changed)
 #   Rscript run_all_tests.R --one         one suite at a time (slower; for a clean timing of each suite)
+#   Rscript run_all_tests.R --release     a release check: a suite with nothing to check (a missing fixture) fails instead of
+#                                         being skipped, so every required check really ran
 # Exit status is 1 if any suite fails, so a GitHub check can use it as is.
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -57,7 +59,8 @@ suites[[length(suites) + 1]] <- suite("core simple", repo, "core/tests/test_simp
 
 # How many suites at once: the cores less one (forked, so macOS and Linux; Windows runs one at a time). Each suite's
 # own file reading (core util.R par_map) then gets a share of the cores, so the suites do not crowd each other out.
-cores <- max(1L, parallel::detectCores(logical = FALSE) - 1L)
+n_cores <- parallel::detectCores(logical = FALSE); if (is.na(n_cores)) n_cores <- parallel::detectCores()   # NA where the system does not say
+cores <- max(1L, (if (is.na(n_cores)) 1L else n_cores) - 1L)
 jobs <- if ("--one" %in% flags || .Platform$OS.type == "windows") 1L else min(cores, length(suites))
 # Set here for every suite (each inherits it): system2(env =) puts "NAME=value" before the command, which Windows cannot run.
 Sys.setenv(OVID_WORKERS = max(1L, cores %/% jobs))
@@ -84,7 +87,7 @@ run_one <- function(s) {
   n <- counts(readLines(log_file, warn = FALSE))
   ok <- identical(as.integer(status), 0L)
   # A suite that passed without checking anything (no data to check) shows as skipped, never as ok.
-  result <- if (!ok) "FAILED" else if (identical(n[1], 0L) && identical(n[2], 0L)) "skipped" else "ok"
+  result <- if (!ok) "FAILED" else if (identical(n[1], 0L) && identical(n[2], 0L)) (if ("--release" %in% flags) "FAILED" else "skipped") else "ok"
   cat(sprintf("  %-24s %s (%ds)\n", s$name, result, secs))
   data.frame(suite = s$name, result = result, passed = n[1], failed = n[2],
              seconds = secs, log = basename(log_file))
@@ -104,6 +107,8 @@ cat("\n")
 print(res, row.names = FALSE)
 cat(sprintf("\nTotal %ds. Logs: %s\n", total, log_dir))
 bad <- res$suite[res$result == "FAILED"]
+if ("--release" %in% flags) for (b in bad[res$passed[match(bad, res$suite)] %in% 0L & res$failed[match(bad, res$suite)] %in% 0L])
+  cat("Release check:", b, "checked nothing (its fixture is missing): a release needs every check to run.\n")
 if (length(bad)) {
   cat("Failed:", paste(bad, collapse = ", "), "\n")
   for (l in res$log[res$result == "FAILED"]) {

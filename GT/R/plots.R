@@ -268,6 +268,9 @@ plot_thaw_depth <- function(td, alt, title = "") {
     labs(title = title, subtitle = "Depth of the 0 \u00b0C line each day (interpolated between sensors); red points = active-layer thickness of the year", x = NULL, y = "Thaw depth (m)")
   a <- alt[!is.na(alt_m)]; if (nrow(a)) p <- p + geom_point(data = a, aes(date_alt, alt_m), colour = MI$red, size = 2.6) +
     geom_text(data = a, aes(date_alt, alt_m, label = sprintf("%.2f m", alt_m)), colour = MI$fg, vjust = -1, size = 3.4)
+  if ("alt_lower_m" %in% names(alt)) { b <- alt[!is.na(alt_lower_m) & !is.na(date_alt)]   # a lower bound: an open marker and "at least"
+    if (nrow(b)) p <- p + geom_point(data = b, aes(date_alt, alt_lower_m), colour = MI$red, shape = 25, size = 2.6) +
+      geom_text(data = b, aes(date_alt, alt_lower_m, label = sprintf("\u2265 %.2f m (thaw below the deepest sensor)", alt_lower_m)), colour = MI$fg, vjust = -1, size = 3.4) }
   p
 }
 

@@ -10,16 +10,18 @@
     footer = tagList(modalButton("Cancel"), actionButton("uz_go", "Use this zone and run", class = "btn-primary")), easyClose = FALSE))
   observeEvent(input$uz_go, { z <- if (identical(input$uz_choice, "other")) input$uz_other else as.numeric(input$uz_choice)
     removeModal(); if (is.null(z) || is.na(z)) return(); SETTINGS$unzoned_offset_h <<- z   # kept with the settings by the run (save_settings)
-    cfg <- current_cfg(); cfg$unzoned_offset_h <- z; do_run(cfg) })
+    x <- pending_run; pending_run <<- NULL                                          # the run that asked (a Rescan keeps its files and its message)
+    cfg <- if (!is.null(x)) x$cfg else current_cfg(); cfg$unzoned_offset_h <- z; do_run(cfg, if (!is.null(x)) x$after) })
+  pending_run <- NULL
   # Runs in the background (core runner.R): the app stays usable, the corner box shows progress and Cancel.
   do_run <- function(cfg, after = NULL) {
     if (run_busy()) return(note("A run is already going: wait for it, or cancel it in the box at the bottom right.", type = "warning"))
     save_settings(cfg); LOG$lines <- character()
     run_start(session, cfg, function(r) {
-      if (identical(r$status, "asked")) return(ask_zone(r$message))
+      if (identical(r$status, "asked")) { pending_run <<- list(cfg = cfg, after = after); return(ask_zone(r$message)) }
       LOG$lines <- c(r$lines, if (r$status == "failed") paste("STOPPED:", r$message))
       rv$log <- LOG$lines; rv$tick <- rv$tick + 1; rv$zoom <- NULL; rv$pf <- rv$pf + 1
-      if (identical(r$status, "cancelled")) return(note("Run cancelled. Files it had written are kept; the next run redoes what it did not finish.", type = "warning", duration = 10))
+      if (identical(r$status, "cancelled")) return(note(if (nzchar(r$restored %||% "")) r$restored else "Run cancelled.", type = "warning", duration = 10))   # what the recovery did, as it happened
       if (r$status == "failed") return(note("The pipeline stopped: ", r$message, ". The full log is under More > Overview, in Log of the last run.", type = "error", duration = NULL))
       rv$stale <- FALSE; o <- outs(); redone <- run_redone(cfg$project_dir)
       if (!is.null(o) && nrow(o$problems)) note("Finished, with ", nrow(o$problems), " problem(s) that did not stop the run. See the Set-up check.", redone, type = "warning", duration = 10)
@@ -44,16 +46,16 @@
   wl_files <- reactive({ outs(); f <- tryCatch(fread(file = file.path(pd(), "output", "audit", "files.csv"), colClasses = "character"), error = function(e) NULL)   # the logger list's grouping (core grouping.R)
     if (is.null(f) || !nrow(f)) NULL else f[nzchar(serial), .(serial, file = path, first = first_ts, last = last_ts)] })
   wl_deps <- reactive({ o <- outs(); if (is.null(o) || !nrow(o$summary)) NULL else o$summary[, .(serial = as.character(serial), from = fmt_ts(start), to = fmt_ts(end), name = site)] })
+  WL_LEVELS <- new.env()                                                         # site-file levels read this session (wl_level)
   wl_level <- function(serial) { f <- list.files(file.path(pd(), "output", "sites"), paste0("^", rx_escape(serial), "__.*\\.csv$"), full.names = TRUE)   # water above the sensor, for moves
     # safe: a file that cannot be read adds nothing to this preview
     if (!length(f)) return(NULL)
-    # each site file's level kept in cache/levels while the file is unchanged (reading every site file at each open took 8 s on 800 deployments)
-    cdir <- file.path(pd(), "cache", "levels"); dir.create(cdir, recursive = TRUE, showWarnings = FALSE)
-    one <- function(x) { cf <- file.path(cdir, paste0(safe_name(basename(x)), "__", substr(hash_of(c(file.size(x), as.numeric(file.mtime(x)))), 1, 12), ".rds"))
-      if (file.exists(cf)) return(tryCatch(readRDS(cf), error = function(e) NULL))
+    # each site file's level kept in memory for the session while the file is unchanged (reading every site file at each open
+    # took 8 s on 800 deployments); the preview only reads: nothing is written or removed in the project
+    one <- function(x) { k <- paste(x, file.size(x), as.numeric(file.mtime(x)))
+      if (!is.null(v <- WL_LEVELS[[k]])) return(v)
       v <- tryCatch(fread(file = x, select = c("TIMESTAMP", "depth_m")), error = function(e) NULL)
-      if (!is.null(v)) { old <- list.files(cdir, paste0("^", rx_escape(safe_name(basename(x))), "__"), full.names = TRUE); unlink(old); saveRDS(v, cf, compress = FALSE) }
-      v }
+      if (!is.null(v)) assign(k, v, envir = WL_LEVELS); v }
     d <- rbindlist(lapply(f, one), fill = TRUE)
     if (!nrow(d)) NULL else d[, .(t = if (inherits(TIMESTAMP, "POSIXct")) TIMESTAMP else parse_dt(TIMESTAMP), v = depth_m)] }   # fread reads the times already (parse_dt again took 90 s on 822 deployments)
   gb <- group_by_server("gb", wl_files, pd, wl_deps, level = wl_level, jump_min = 0.05, unit = "m", open = function(r) { s <- wl_deps(); s <- if (!is.null(s)) s[serial == r$serial] else NULL

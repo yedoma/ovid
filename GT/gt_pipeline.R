@@ -31,7 +31,7 @@
 for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else c("C.UTF-8", "en_US.UTF-8", "UTF-8"))   # UTF-8 text ( deg C, uS/cm);
   if (nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", .l)))) break                               # macOS has no C.UTF-8
 
-GT_VERSION <- "1.8.0"
+GT_VERSION <- "1.9.0"
 
 OVID_APP <- "GT"                                          # its projects go in ~/Projects/Ovid/Projects/GT/ (core util.R)
 CFG <- list(
@@ -357,6 +357,7 @@ run_pipeline_steps <- function(cfg = CFG) {
   # back from the cache and its files are left as they are
   site_lids <- list(); for (lid in names(kept_sites)) for (sg in kept_sites[[lid]]) site_lids[[sg]] <- c(site_lids[[sg]], lid)
   sgs <- names(site_lids); sgs <- sgs[order(sgs != SITE_NONE, sgs, method = "radix")]       # the order a sort of all records by site gives
+  site_name_check(setdiff(sgs, SITE_NONE))                                       # two sites that would share output files: stop before any is written
   removed_qc <- if (length(AUDIT$stash)) rbindlist(AUDIT$stash, fill = TRUE) else data.table()
   dir.create(file.path(cdir, "site"), showWarnings = FALSE); parts <- list(); site_out <- list(); n_site_hit <- 0L; log6 <- list(); site_done <- list()
   kept_of <- function(lid) { if (is.null(kept[[lid]])) kept[[lid]] <<- gt_cache_load(kept_file[[lid]]); kept[[lid]] }
@@ -543,6 +544,17 @@ run_pipeline_steps <- function(cfg = CFG) {
 # =============================================================================
 #  Reading results back (used by the app and from R)
 # =============================================================================
+# Site files are named by safe_name(site) (letters, digits, _ and -). Two sites whose names give the same file name, also when
+# letter case is ignored (macOS and Windows disks), would overwrite each other's files: the run stops before writing and names
+# them. Existing projects keep their file names.
+site_name_check <- function(sites) {
+  k <- tolower(safe_name(sites)); d <- unique(k[duplicated(k)])
+  if (!length(d)) return(invisible(TRUE))
+  w <- vapply(d, function(x) paste(sQuote(sites[k == x], FALSE), collapse = " and "), "")
+  stop(structure(class = c("ovid_project_check", "error", "condition"), list(call = NULL, message = paste0(
+    "These sites would share output files: ", paste0(w, " (", d, ".csv)", collapse = "; "), ". Nothing was written for the sites. ",
+    "Rename one of each pair in sites.csv (Set-up tables) so the names differ in more than spaces, punctuation or capital letters, then run again."))))
+}
 load_site <- function(site, project_dir = CFG$project_dir) { f <- out_dir(project_dir, "sites", paste0(safe_name(site), ".rds")); if (file.exists(f)) readRDS(f) else NULL }
 load_removed <- function(site, project_dir = CFG$project_dir) { f <- out_dir(project_dir, "sites", paste0(safe_name(site), "__removed.rds")); if (file.exists(f)) readRDS(f) else NULL }
 load_soil <- function(site, project_dir = CFG$project_dir) { f <- out_dir(project_dir, "soil", paste0(safe_name(site), ".rds")); if (file.exists(f)) readRDS(f) else NULL }

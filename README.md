@@ -16,7 +16,9 @@ Raw files are never changed, and every removed or changed value is explained in 
 
 ## Opening an app
 
-Needs R 4.x (<https://cran.r-project.org>). The first run installs the R packages it needs, which takes a few minutes.
+**Installing, a first look with the sample data, upgrading and the output-size limit:** see [docs/INSTALL.md](docs/INSTALL.md).
+With the portable runtime nothing else is needed; otherwise R 4.x (<https://cran.r-project.org>), and the first run installs
+the R packages it needs, which takes a few minutes.
 
 - **Mac:** double-click `Open ovid.command`. A small window lists the five apps: pick one and press Open (or Enter, or Cmd 1–5).
   Each app opens in your browser and keeps running until you press Stop or quit the launcher. The first time, right-click >
@@ -97,7 +99,12 @@ Catalogues archived drone flights, imagery, LiDAR and GIS layers from file heade
 
 ## Versions and what changed
 
-Core 1.14.0, CS 1.10.0, WLR 0.10.0, GT 1.7.0, GS 0.4.0, RS 0.5.0 (6 October 2026). `CHANGELOG.md` summarises each release across
+| Bundle | Core | CS | WLR | GT | GS | RS |
+|---|---|---|---|---|---|---|
+| v1.1.0 candidate (not tagged; 3 November 2026) | 1.16.0 | 1.12.0 | 0.13.0 | 1.9.0 | 0.6.0 | 0.7.0 |
+| v1.0.0 (10 October 2026) | 1.15.0 | 1.11.0 | 0.12.0 | 1.8.0 | 0.5.0 (as ERT) | 0.6.0 |
+
+`CHANGELOG.md` summarises each release across
 the bundle; each app folder and `core/` has its own `CHANGELOG.md` with the detail, including whether results already produced
 would come out differently. The system overview is in `docs/overview.md` (.html, .pdf).
 

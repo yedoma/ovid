@@ -2,7 +2,7 @@
 # wbPanels): fold buttons, strips, resize handles, the float button and their labels.   Rscript core/tests/test_wb_panels.R
 suppressMessages({ library(data.table); library(shiny) })
 CORE_DIR <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) dirname(dirname(normalizePath(sub("^--file=", "", a[1])))) else "core" })
-for (.f in c("util", "theme", "shell", "projects", "workbench")) source(file.path(CORE_DIR, paste0(.f, ".R")))
+for (.f in c("util", "audit", "config", "cache", "manifest", "theme", "shell", "projects", "workbench")) source(file.path(CORE_DIR, paste0(.f, ".R")))
 RES <- new.env(); RES$ok <- 0L; RES$fail <- character()
 check <- function(what, cond) { if (isTRUE(cond)) { RES$ok <- RES$ok + 1L; cat("  ok   ", what, "\n") } else { RES$fail <- c(RES$fail, what); cat("  FAIL ", what, "\n") } }
 pal <- list(bg = "#222222", bg1 = "#2a2a2a", bg2 = "#333333", bg3 = "#444444", fg = "#dddddd", fg4 = "#aaaaaa", gray = "#888888", accent = "#e5c07b",

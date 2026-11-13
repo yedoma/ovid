@@ -146,7 +146,7 @@ simple_server <- function(input, output, session, std) {
   steps <- simple_steps_server(session, function() c(import = !is.null(cat_s()) && nrow(cat_s()) > 0))
   if (isTRUE(nrow(isolate(cat_s())) > 0)) steps$go("view")
   observeEvent(input$sp_area, { p <- path.expand(pd()); if (!dir.exists(p)) return()
-    s <- project_settings_read(p); if (!identical(s$area, input$sp_area)) { s$area <- input$sp_area; project_settings_save(p, s) } }, ignoreInit = TRUE)
+    s <- project_settings_read(p); if (!identical(s$area, input$sp_area)) { s$area <- input$sp_area; tryCatch(project_settings_save(p, s), error = function(e) showNotification(paste("Not saved:", conditionMessage(e)), type = "warning")) } }, ignoreInit = TRUE)
   go_step <- function(k) sprintf("document.querySelector('.sp-step[data-step=\"%s\"]').click()", k)
   to_std <- function(page, label, extra = list()) tags$a(href = simple_std_href(page, extra), label)
   x_all <- reactive({ std$rv$tick; sp_gs_surveys(cat_s()) })

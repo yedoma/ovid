@@ -31,7 +31,7 @@
   le_fl_proxy <- dataTableProxy("flights")
   observeEvent(le_flights_tbl(), replaceData(le_fl_proxy, le_flights_tbl(), rownames = FALSE, resetPaging = FALSE, clearSelection = "none"), ignoreInit = TRUE)
   observeEvent(input$flights_rows_selected, { i <- input$flights_rows_selected; x <- le_list(); if (length(i) && i[length(i)] <= nrow(x)) sel(x$flight_id[i[length(i)]]) })
-  observe({ f <- fl(); s <- tryCatch(load_configs(CFG)$sites, error = function(e) NULL); stamps()     # the dropdowns: known sites first, then values in use
+  observe({ f <- fl(); s <- tryCatch(read_configs(CFG)$sites, error = function(e) NULL); stamps()     # the dropdowns: known sites first, then values in use
     updateSelectizeInput(session, "ed_site", choices = edit_choices(f, "site", s), selected = "", server = FALSE)
     updateSelectizeInput(session, "ed_project", choices = edit_choices(f, "project"), selected = "", server = FALSE) })
   le_need_rows <- function(n = 1L) { ids <- le_sel_ids(); if (length(ids) < n) { showNotification(if (n > 1) "Select two or more flights in the list first." else "Select flights in the list first.", type = "warning"); NULL } else ids }
@@ -86,7 +86,7 @@
   observeEvent(input$gd_suggested, { g <- le_geo(); s0 <- le_step(); if (nrow(g)) le_geo_st(rbind(le_geo_st(), g[, .(source_id, folder, kind, decision = suggest, step = s0)])) })
 
   # ---- Site names found in folder names (the Timeline page) ----
-  le_cfg <- reactive({ rv$tick; stamps(); tryCatch(load_configs(CFG), error = function(e) NULL) })
+  le_cfg <- reactive({ rv$tick; stamps(); tryCatch(read_configs(CFG), error = function(e) NULL) })
   le_sn_all <- reactive({ cf <- le_cfg(); s <- site_suggest(fl(), cf$sites, cf$site_names)
     n <- le_last(le_names(), "found"); if (nrow(n)) s[n, on = "found", mapped := paste0(fifelse(nzchar(i.site), i.site, "(not a site)"), " (not saved)")]
     s })

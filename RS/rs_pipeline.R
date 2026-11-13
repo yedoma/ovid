@@ -20,7 +20,7 @@
 for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else c("C.UTF-8", "en_US.UTF-8", "UTF-8"))   # UTF-8 text (degC, uS/cm);
   if (nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", .l)))) break                               # macOS has no C.UTF-8
 
-RS_VERSION <- "0.6.0"
+RS_VERSION <- "0.7.0"
 plural_n <- function(n, word, words = paste0(word, "s")) paste(num(n), if (isTRUE(n == 1)) word else words)   # "1 flight", "2 flights" in the run log
 
 OVID_APP <- "RS"                                          # its projects go in ~/Projects/Ovid/Projects/RS/ (core util.R)
@@ -101,18 +101,50 @@ drop_inner <- function(A, inner) {
 # holds, with their links and shapes). The source's own files are never touched; its scan cache is kept, so scanning the
 # folder again adds it back quickly. A rebuild then finds any of its flights that also have a copy in another source.
 remove_source <- function(project_dir, source_id) {
-  sid <- source_id; cfg <- modifyList(CFG, list(project_dir = project_dir)); s <- load_configs(cfg)$sources
+  cfg <- modifyList(CFG, list(project_dir = project_dir)); cfg$protect_dirs <- rs_protected(cfg)   # checked and locked as a run (core project_mutate)
+  project_mutate(cfg, function() remove_source_steps(cfg, project_dir, source_id))
+}
+# All in one step, or resumed: every changed table (sources.csv and each catalogue CSV) is first written in full beside its
+# place (<file>.removing); only when all are written does a journal (cache/remove_source.txt) list them, and they are renamed
+# into place. A failure while writing them changes nothing; one while renaming is finished by rs_remove_resume(), run before
+# the next removal or scan (both checked and locked).
+REMOVE_JOURNAL <- file.path("cache", "remove_source.txt")
+rs_remove_resume <- function(project_dir) {
+  jf <- file.path(path.expand(project_dir), REMOVE_JOURNAL); if (!file.exists(jf)) return(invisible(FALSE))
+  fin <- readLines(jf, warn = FALSE); fin <- fin[nzchar(fin)]
+  for (f in fin) { tmp <- paste0(f, ".removing"); if (file.exists(tmp) && !file.rename(tmp, f)) stop("Removing a source was not finished: ", tilde(f), " could not be replaced. Run again.") }
+  unlink(jf); invisible(TRUE)
+}
+remove_source_steps <- function(cfg, project_dir, source_id) {
+  rs_remove_resume(project_dir)                                                  # an earlier removal stopped while renaming: finished first
+  sid <- source_id; s <- load_configs(cfg)$sources
   if (!sid %in% s$source_id) return(invisible(NULL))
-  write_cfg(s[s$source_id != sid], project_dir, "sources", who = "Sources page")
-  catd <- file.path(path.expand(project_dir), "output", "catalogue"); rd <- function(f) fread(file = file.path(catd, f), colClasses = "character")
+  catd <- file.path(path.expand(project_dir), "output", "catalogue"); rd <- function(f) fread(file = file.path(catd, f), colClasses = "character", strip.white = FALSE)
   gone <- if (file.exists(file.path(catd, "flights.csv"))) { f <- rd("flights.csv"); if ("source_id" %in% names(f)) f[source_id == sid, flight_id] else character() } else character()
-  n <- 0L
-  for (f in list.files(catd, "\\.csv$")) { x <- rd(f); drop <- rep(FALSE, nrow(x))
-    if ("source_id" %in% names(x)) drop <- drop | x$source_id %in% sid
-    if ("flight_id" %in% names(x)) drop <- drop | x$flight_id %in% gone
-    if (any(drop)) { n <- n + sum(drop); fwrite(x[!drop], file.path(catd, f)) } }
+  sp <- cfg_path(project_dir, "sources"); new_s <- s[s$source_id != sid]
+  staged <- list(); n <- 0L
+  stage <- function(d, f) { tmp <- paste0(f, ".removing"); fwrite(d, tmp); staged[[f]] <<- tmp }
+  ok <- tryCatch({ stage(new_s, sp)
+    for (f in list.files(catd, "\\.csv$")) { x <- rd(f); drop <- rep(FALSE, nrow(x))
+      if ("source_id" %in% names(x)) drop <- drop | x$source_id %in% sid
+      if ("flight_id" %in% names(x)) drop <- drop | x$flight_id %in% gone
+      if (any(drop)) { n <- n + sum(drop); stage(x[!drop], file.path(catd, f)) } }
+    TRUE }, error = function(e) { unlink(unlist(staged)); stop("Source ", sid, " was not removed: ", conditionMessage(e), ". Nothing was changed.") })
+  backup_cfg(sp, new_s, "Sources page")                                          # the sources table's earlier version, as every set-up change
+  dir.create(file.path(path.expand(project_dir), "cache"), showWarnings = FALSE)
+  if (!write_new(file.path(path.expand(project_dir), REMOVE_JOURNAL), names(staged))) { unlink(unlist(staged)); stop("Source ", sid, " was not removed: its journal could not be written. Nothing was changed.") }
+  rs_remove_resume(project_dir)
   say("Source ", sid, " removed: ", plural_n(length(gone), "flight"), ", ", plural_n(n, "catalogue row"), "; no file was touched")
   invisible(list(flights = length(gone), rows = n))
+}
+
+# Archive folders a run must never write (core protected_roots): every saved source (config/sources.csv, read as it is: no
+# file is made), the folders a scan is given and the first-run folders, plugged in or not.
+rs_protected <- function(cfg, scan = NULL) {
+  f <- file.path(path.expand(cfg$project_dir %||% ""), "config", "sources.csv")
+  # safe: an unreadable sources.csv stops the run later with its own message; here its paths are only protected
+  s <- if (file.exists(f)) tryCatch(fread(file = f, colClasses = "character", na.strings = NULL, strip.white = FALSE)$path, error = function(e) character()) else character()
+  p <- c(s, as.character(unlist(scan)), as.character(unlist(cfg$raw_dirs))); unique(p[!is.na(p) & nzchar(trimws(p))])
 }
 
 # scan: the sources to scan now (paths; NULL = every source in config/sources.csv that is plugged in, or CFG$raw_dirs at first).
@@ -125,6 +157,9 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   for (d in c(catd, file.path(od, "audit"))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
   audit_reset(file.path(od, "audit"))
 
+  rs_remove_resume(cfg$project_dir)                                              # a source removal stopped part way: finished first
+  for (sd in list.dirs(file.path(path.expand(cfg$project_dir), "cache", "sources"), recursive = FALSE))   # a scan stopped part way: its unfinished file,
+    if (file.exists(file.path(sd, "scan.rds.part"))) remove_within(file.path(sd, "scan.rds.part"), cache_root())   # cleared inside this checked, locked run
   say("[1/5] Reading the set-up", col = "accent")
   cfgs <- load_configs(cfg); cfgs$flights <- ensure_cols(cfgs$flights, FLIGHT_COLS)
   if (!nrow(cfgs$sources) && is.null(scan) && length(cfg$raw_dirs)) scan <- cfg$raw_dirs[dir.exists(path.expand(cfg$raw_dirs))]   # one not plugged in is never a source
@@ -280,7 +315,7 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
   if (!is.null(st)) say("  STAC catalogue: ", plural_n(st$collections, "collection"), ", ", plural_n(st$items, "item"), " (output/stac/catalog.json)")
   viewer <- NULL
   if (isTRUE(export)) { say("  writing the viewer", col = "accent")
-    viewer <- export_viewer(out, links, b$images, A$scanned, geo, file.path(od, "viewer", "Ovid_RS_viewer"), cfg$viewer_title %||% "ovid RS archive", datasets = ds, gis = gf, fp_tab = cfgs$footprint_colours) }
+    viewer <- export_viewer(out, links, b$images, A$scanned, geo, file.path(od, "viewer", "Ovid_RS_viewer"), cfg$viewer_title %||% "ovid RS archive", include_paths = isTRUE(cfg$viewer_paths), datasets = ds, gis = gf, fp_tab = cfgs$footprint_colours) }
   probs <- rbindlist(AUDIT$problems); pf <- file.path(od, "audit", "problems.csv")
   if (nrow(probs)) fwrite(probs, pf) else unlink(pf)          # a clean run leaves no problems from an earlier one
   write_run_manifest(cfg, t0, list(sources = nrow(A$scanned), files = nrow(A$files), images = nrow(A$images), flights = nrow(fl), links = nrow(links)),
@@ -294,7 +329,12 @@ run_pipeline_steps <- function(cfg = CFG, scan = NULL, source_id = "", export = 
 #        rs_pipeline.R gnss <out.csv> <file>...  stitch GNSS survey CSVs (Emlid Reach, DJI RTK, Leica, generic) into one CSV
 #        rs_pipeline.R build                 rebuild from earlier scans only
 #        rs_pipeline.R export                rebuild and write the shareable viewer (output/viewer/Ovid_RS_viewer.zip)
-run_pipeline <- function(cfg = CFG, ...) { cfg$project_dir <- ovid_project_dir(cfg$project_dir); run_project(cfg, function() run_pipeline_steps(cfg, ...), need_raw = FALSE) }   # folders checked, project locked, run logged (core manifest.R)   # every run leaves output/logs/<start>.log (core manifest.R)
+# A change made from a page: the saved sources and any folder it is about to add (extra) protected, then the run's checks and
+# lock (core project_mutate) before any set-up table is made or written.
+rs_mutate <- function(cfg, fun, extra = character()) { cfg$protect_dirs <- unique(c(rs_protected(cfg), extra)); project_mutate(cfg, fun) }
+app_protect_dirs <- function(cfg) rs_protected(cfg)            # core protected_roots(): also used by recovery when the app starts
+run_pipeline <- function(cfg = CFG, scan = NULL, ...) { cfg$project_dir <- ovid_project_dir(cfg$project_dir); cfg$protect_dirs <- rs_protected(cfg, scan)   # scan named or second: one value
+  run_project(cfg, function() run_pipeline_steps(cfg, scan = scan, ...), need_raw = FALSE) }   # folders checked, project locked, run logged (core manifest.R)   # every run leaves output/logs/<start>.log (core manifest.R)
 FILE_AUDIT_KEY <- code_fingerprint("rs_file_audit", env = environment())   # the file audit is made again only when its inputs or code change
 FOOTPRINT_KEY <- code_fingerprint("flight_footprint", env = environment())   # each flight's footprint is cached (R/footprints.R)
 IMAGE_RAW_KEY <- code_fingerprint("read_image_raw", env = environment())   # the photo cache: only reading the files counts (R/catalogue.R)

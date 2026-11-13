@@ -70,13 +70,22 @@ suggest_baro <- function(year, deps, baros, bmeta, agreement = baro_agreement) {
   list(groups = groups[, BARO_GROUP_COLS, with = FALSE], members = members[, BARO_MEMBER_COLS, with = FALSE], scores = scores)
 }
 
+# Each barologger's median absolute departure from the median of all of them, compared at the top of each hour (as before)
+# or, when no hour has two of them (loggers recording at :15, say), at every time any of them recorded. Each value at a
+# compared time is interpolated within max_gap_s of its own records (baro_at, the gap rule used for compensation); a time
+# where fewer than two have a value is not compared. agreement says "no usable overlap" when a logger shares no time.
 baro_agreement <- function(baros, max_gap_s = 6 * 3600) {
-  if (length(baros) < 2) return(data.table(serial = names(baros), departure_kpa = NA_real_))
-  t <- sort(unique(unlist(lapply(baros, function(x) as.numeric(x$TIMESTAMP[as.numeric(x$TIMESTAMP) %% 3600 == 0])))))
-  M <- sapply(baros, function(x) baro_at(x$TIMESTAMP, x$baro_kpa, t, max_gap_s))
-  if (is.null(dim(M))) M <- matrix(M, nrow = 1)
-  med <- apply(M, 1, stats::median, na.rm = TRUE)
-  data.table(serial = names(baros), departure_kpa = round(apply(abs(M - med), 2, stats::median, na.rm = TRUE), 3))
+  none <- function(why) data.table(serial = names(baros), departure_kpa = NA_real_, compared = 0L, agreement = why)
+  if (length(baros) < 2) return(none("only one barologger"))
+  at <- function(t) { M <- vapply(baros, function(x) baro_at(x$TIMESTAMP, x$baro_kpa, t, max_gap_s), numeric(length(t)))
+    if (is.null(dim(M))) M <- matrix(M, nrow = length(t)); M[rowSums(!is.na(M)) >= 2, , drop = FALSE] }
+  all_t <- sort(unique(unlist(lapply(baros, function(x) as.numeric(x$TIMESTAMP)))))
+  M <- at(all_t[all_t %% 3600 == 0])
+  if (!nrow(M)) M <- at(all_t)                                                    # off-hour or staggered loggers: their own record times
+  if (!nrow(M)) return(none("no usable overlap"))
+  med <- apply(M, 1, stats::median, na.rm = TRUE); n <- colSums(!is.na(M))
+  data.table(serial = names(baros), departure_kpa = round(vapply(seq_len(ncol(M)), function(k) if (n[k]) stats::median(abs(M[, k] - med), na.rm = TRUE) else NA_real_, 1), 3),
+             compared = as.integer(n), agreement = ifelse(n > 0, "compared", "no usable overlap"))
 }
 
 # Pairs of barologgers compared over time (daily medians of the difference) for the Barometric page.

@@ -29,9 +29,10 @@
               opts = list(dom = "tip")) })
   # st, not state: inside x$links[...] the name state is the column, so the table kept saying "auto"
   set_link <- function(st) { l <- lk_cur(); i <- input$links_rows_selected; if (!length(i) || !nrow(l)) return(showNotification("Select a link first", type = "warning"))
-    lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == l$flight_id[i] & file == l$file[i])]
-    lc <- rbind(lc, data.table(flight_id = l$flight_id[i], file = l$file[i], state = st, reason = trim(input$l_reason), author = WHO, date = format(Sys.Date())), fill = TRUE)
-    write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO)
+    ok <- tryCatch(rs_mutate(CFG, function() { lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == l$flight_id[i] & file == l$file[i])]   # checked and locked first
+      lc <- rbind(lc, data.table(flight_id = l$flight_id[i], file = l$file[i], state = st, reason = trim(input$l_reason), author = WHO, date = format(Sys.Date())), fill = TRUE)
+      write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO); TRUE }), error = function(e) { showNotification(paste("Not changed:", conditionMessage(e)), type = "error", duration = NULL); FALSE })
+    if (!ok) return()
     x <- C(); x$links <- copy(x$links); x$links[flight_id == l$flight_id[i] & file == l$file[i], `:=`(state = st, evidence = paste0(st, " by ", WHO, if (nzchar(trim(input$l_reason))) paste0(": ", trim(input$l_reason)) else ""))]
     C(x); updateTextInput(session, "l_reason", value = "")   # a reason belongs to one decision
     showNotification(paste("Link", st, "(statuses update on the next rebuild)"), type = "message") }
@@ -42,8 +43,10 @@
   output$log_cands <- renderDT({ l <- lc_cur(); if (!nrow(l)) return(ovid_dt(data.table(` ` = "None: no log without a flight from this aircraft near this time (rebuild if the catalogue predates the logs list)"), opts = list(dom = "t")))
     ovid_dt(l[, .(Log = paste0(source_id, ":", rel), `Start (UTC)` = start_utc, `Photo tags` = photos, Decoded = log_decoded)], selection = "single", page = 8, opts = list(dom = "tip")) })
   observeEvent(input$lc_link, { l <- lc_cur(); i <- input$log_cands_rows_selected; f <- cur(); if (!length(i) || !nrow(l)) return(showNotification("Select a log first", type = "warning"))
-    fref <- paste0(l$source_id[i], ":", l$rel[i]); lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == f$flight_id & file == fref)]
-    lc <- rbind(lc, data.table(flight_id = f$flight_id, file = fref, state = "confirmed", reason = "picked from the logs no flight has", author = WHO, date = format(Sys.Date())), fill = TRUE)
-    write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO)
+    fref <- paste0(l$source_id[i], ":", l$rel[i])
+    ok <- tryCatch(rs_mutate(CFG, function() { lc <- load_configs(CFG)$links; lc <- lc[!(flight_id == f$flight_id & file == fref)]   # checked and locked first
+      lc <- rbind(lc, data.table(flight_id = f$flight_id, file = fref, state = "confirmed", reason = "picked from the logs no flight has", author = WHO, date = format(Sys.Date())), fill = TRUE)
+      write_cfg(lc[, ..LINK_COLS], CFG$project_dir, "links", who = WHO); TRUE }), error = function(e) { showNotification(paste("Not changed:", conditionMessage(e)), type = "error", duration = NULL); FALSE })
+    if (!ok) return()
     x <- C(); x$logs <- copy(x$logs)[, flight_id := as.character(flight_id)]; x$logs[source_id == l$source_id[i] & rel == l$rel[i], flight_id := f$flight_id]; C(x)
     showNotification("Log linked (the flight takes its time, track and photo tags on the next rebuild)", type = "message") })

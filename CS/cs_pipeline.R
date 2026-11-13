@@ -91,7 +91,7 @@ PIPELINE_DIR <- local({ f <- NULL
   if (is.null(f)) getwd() else dirname(normalizePath(f)) })
 if (!dir.exists(file.path(PIPELINE_DIR, "R"))) stop("The R/ folder that belongs beside cs_pipeline.R was not found in ", PIPELINE_DIR)
 APP_NAME <- "ovid // CS"
-APP_VERSION <- PIPELINE_VERSION <- "1.11.0"          # bump when a change alters the output
+APP_VERSION <- PIPELINE_VERSION <- "1.12.0"          # bump when a change alters the output
 
 # The shared Ovid Core files (audit trail, helpers, set-up tables, run manifest, set-up check): from OVID_CORE if
 # set, else core/ beside this file (a portable copy), else ../core (the Ovid_Apps bundle).
@@ -537,10 +537,10 @@ run_pipeline_steps <- function(cfg = CFG) {
   for (i in stale) { cand <- if (is.null(found)) NULL else found[gauge_type == gz$gauge_type[i] & bucket_col == gz$bucket_col[i] & !paste(station, stream) %in% paste(gz$station, gz$stream)]
     if (!is.null(cand) && nrow(cand)) { say("  precip_gauges.csv: ", gz$station[i], " / ", gz$stream[i], " is now ", cand$station[1], " / ", cand$stream[1], col = "yellow")
       set(gz, i, "station", cand$station[1]); set(gz, i, "stream", cand$stream[1]); changed <- TRUE } }
-  if (changed) fwrite_safe(gz, cfgs$gauges_file)
+  if (changed) { backup_cfg(cfgs$gauges_file, gz, "pipeline", "gauge followed its station"); fwrite_safe(gz, cfgs$gauges_file) }
   if (!is.null(found)) { new <- found[!paste(station, stream) %in% paste(gz$station, gz$stream)]
     if (nrow(new)) { new[, enabled := "yes"]; gz <- ensure_cols(rbind(gz, new, fill = TRUE), PRECIP_COLS)[, PRECIP_COLS, with = FALSE]
-      fwrite_safe(gz, cfgs$gauges_file); say("  precip_gauges.csv: added ", nrow(new), " gauge(s) recognised from their columns", col = "yellow") } }
+      backup_cfg(cfgs$gauges_file, gz, "pipeline", "gauges recognised from their columns"); fwrite_safe(gz, cfgs$gauges_file); say("  precip_gauges.csv: added ", nrow(new), " gauge(s) recognised from their columns", col = "yellow") } }
   if (nrow(gz)) { say("  precipitation gauges", col = "fg4"); tryCatch(process_precip(cfg, gz, cfgs$field_log), error = function(e) problem("precipitation gauges", conditionMessage(e))) }
   else fwrite(data.table(station = character(), stream = character()), file.path(adir, "precip_summary.csv"))
   # one row per logger and header name: what the Stations page of the app lists (set-aside loggers too, so they can be brought back)

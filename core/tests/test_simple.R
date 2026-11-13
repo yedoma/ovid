@@ -2,7 +2,7 @@
 # steps, the Edit step's planned changes, the report.   Rscript core/tests/test_simple.R
 suppressMessages({ library(data.table); library(shiny) })
 CORE_DIR <- local({ a <- grep("^--file=", commandArgs(FALSE), value = TRUE); if (length(a)) dirname(dirname(normalizePath(sub("^--file=", "", a[1])))) else "core" })
-for (.f in c("util", "audit", "theme", "config", "shell", "projects", "workbench", "report", "simple")) source(file.path(CORE_DIR, paste0(.f, ".R")))
+for (.f in c("util", "audit", "theme", "config", "cache", "manifest", "shell", "projects", "workbench", "report", "simple")) source(file.path(CORE_DIR, paste0(.f, ".R")))
 APP_NAME <- "Ovid Core // XX"; APP_VERSION <- "0.0.1"; if (!exists("CORE_VERSION")) CORE_VERSION <- "0"
 RES <- new.env(); RES$ok <- 0L; RES$fail <- character()
 check <- function(what, cond) { cond <- tryCatch(cond, error = function(e) { cat("        error:", conditionMessage(e), "\n"); FALSE })

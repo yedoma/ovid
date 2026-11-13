@@ -61,7 +61,7 @@ run_start <- function(session, cfg, on_done, label = "Running pipeline", ask = "
                 error = function(e) e)
   if (inherits(p, "error")) { unlink(d, recursive = TRUE); showNotification(paste("The run could not start:", conditionMessage(p)), type = "error", duration = NULL); return(invisible(FALSE)) }
   RUNNER$job <- list(proc = p, dir = d, out = out, cancel = cancel, label = label, t0 = Sys.time(), on_done = on_done,
-                     session = session, cancelled_at = NULL, project_dir = cfg$project_dir)
+                     session = session, cancelled_at = NULL, project_dir = cfg$project_dir, cfg = cfg)
   RUNNER$tick <- (RUNNER$tick %||% 0) + 1
   invisible(TRUE)
 }
@@ -96,7 +96,7 @@ run_finish <- function() {
   r$lines <- lines[!startsWith(lines, "@@ ")]; r$seconds <- as.numeric(difftime(Sys.time(), j$t0, units = "secs"))
   RUNNER$job <- NULL; RUNNER$tick <- RUNNER$tick + 1; unlink(j$dir, recursive = TRUE)
   if (!identical(r$status, "finished")) {                                                         # core manifest.R: the output kept before the run
-    rec <- tryCatch(output_recover(j$project_dir), error = function(e) "")                        # a process that was killed did not put it back itself
+    rec <- tryCatch(output_recover(j$project_dir, j$cfg %||% list()), error = function(e) "")                        # a process that was killed did not put it back itself
     if (!is.null(j$cancelled_at)) rec <- sub("did not finish (the app or computer stopped)", "was cancelled", rec, fixed = TRUE)   # stopped by Cancel, not a crash
     # safe: the note about restored output is extra
     r$restored <- if (nzchar(rec)) rec else tryCatch(run_restored(j$project_dir), error = function(e) "")
@@ -148,8 +148,11 @@ run_server <- function(input, output, session, busy_ids = "run") {
         actionButton("ovid_run_cancel", if (stopping) "Stopping" else "Cancel", class = "btn-sm", disabled = if (stopping) NA else NULL)))
   })
   observeEvent(input$ovid_run_cancel, run_cancel())
-  pd0 <- get0("CFG")$project_dir; rec <- if (is.null(RUNNER$job)) tryCatch(output_recover(pd0), error = function(e) "") else ""   # core manifest.R
+  pd0 <- get0("CFG")$project_dir; rec <- if (is.null(RUNNER$job)) tryCatch(output_recover(pd0, get0("CFG") %||% list()), error = function(e) "") else ""   # core manifest.R
   if (nzchar(rec)) showNotification(rec, type = "warning", duration = NULL)
+  lr <- tryCatch(run_result(pd0), error = function(e) list())                      # the last run's result, kept with the project
+  if (!nzchar(rec) && length(lr$status) && !lr$status %in% c("finished", ""))
+    showNotification(paste0("Last run (", lr$time %||% "", "): ", lr$status, ". ", lr$note %||% "", if (nzchar(lr$log %||% "")) paste0(" Its log: ", tilde(lr$log), ".")), type = "warning", duration = NULL)
   # safe: a note about an unfinished run is extra
   inc <- tryCatch(run_incomplete(pd0), error = function(e) "")
   if (nzchar(inc)) showNotification(paste0("The last run on this project did not finish (", inc, "). Some outputs may be from before it: run again to bring them all up to date."),

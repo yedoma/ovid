@@ -100,7 +100,8 @@ server <- function(input, output, session, embedded = FALSE) {
     new <- pd_typed(); old <- pd_open(); if (identical(path_norm(new), path_norm(old))) return()
     pd_open(new); s <- project_settings_read(new); if (!length(s)) return()
     cfg <- current_cfg()
-    if (dir.exists(path.expand(old))) project_settings_save(old, utils::modifyList(SETTINGS, c(cfg[intersect(SET_KEYS, names(cfg))], list(project_dir = old))))
+    if (dir.exists(path.expand(old))) tryCatch(project_settings_save(old, utils::modifyList(SETTINGS, c(cfg[intersect(SET_KEYS, names(cfg))], list(project_dir = old)))),
+                                                 error = function(e) showNotification(paste("The settings of the project left were not saved:", conditionMessage(e)), type = "warning", duration = NULL))
     s <- s[intersect(names(s), setdiff(c(SET_KEYS, CORR_KEYS), "project_dir"))]
     settings_save(SETTINGS_FILE, s); SETTINGS[names(s)] <<- s; live_touch()
     projects_inputs(session, s, names(s))

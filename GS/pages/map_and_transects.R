@@ -83,7 +83,7 @@
   observeEvent(input$cat_import, {
     nm <- safe_name(sub("\\.zip$", "", input$cat_import$name, ignore.case = TRUE)); if (!nzchar(gsub("[._]", "", nm))) nm <- format(Sys.time(), "import_%Y%m%d_%H%M%S")   # never the imports folder itself
     dest <- file.path(dirname(path.expand(HOME_PROJECT)), "GS_imports", nm)
-    ok <- tryCatch({ import_catalogue(input$cat_import$datapath, dest); TRUE }, error = function(e) { showNotification(conditionMessage(e), type = "error", duration = NULL); FALSE })
+    ok <- tryCatch({ dest <- import_catalogue(input$cat_import$datapath, dest); TRUE }, error = function(e) { showNotification(conditionMessage(e), type = "error", duration = NULL); FALSE })
     if (ok) { switch_project(dest); nav_select("nav", "Archive")
       showNotification(paste0("Opened ", input$cat_import$name, ". It is kept in ", dest, "; changes are saved in that copy."), type = "message", duration = 8) } })
   observeEvent(input$back_home, switch_project(HOME_PROJECT))

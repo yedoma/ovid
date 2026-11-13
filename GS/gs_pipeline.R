@@ -19,7 +19,7 @@
 for (.l in if (.Platform$OS.type == "windows") "English_United States.utf8" else c("C.UTF-8", "en_US.UTF-8", "UTF-8"))   # UTF-8 text ( deg C, uS/cm);
   if (nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", .l)))) break                               # macOS has no C.UTF-8
 
-GS_VERSION <- "0.5.0"
+GS_VERSION <- "0.6.0"
 
 OVID_APP <- "GS"                                          # its projects go in ~/Projects/Ovid/Projects/GS/ (core util.R)
 CFG <- list(

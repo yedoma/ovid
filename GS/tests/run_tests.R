@@ -466,4 +466,20 @@ local({                                                               # one way 
 local({ g <- paste(readLines(file.path(here, "pages", "mod_gpr_flow.R"), warn = FALSE), collapse = "\n")
   check(grepl("@media (max-width:1100px){.gpr-cols,.gpr-cols.wb{grid-template-columns:minmax(0,1fr)}}", g, fixed = TRUE) && !grepl("grid-template-columns:minmax(260px,320px) 1fr", g, fixed = TRUE),
         "GPR processing folds from three columns to two and one as the window narrows (it scrolled sideways by up to 431 px)") })
+local({                                          # a catalogue opened again never replaces the copy already there (or its edits)
+  z <- file.path(tmp, "cat.zip"); export_archive(z, file.path(tmp, "project")); imp <- file.path(tmp, "imports"); dest <- file.path(imp, "cat")
+  d1 <- import_catalogue(z, dest); writeLines("my edit", file.path(d1, "config", "edit.txt"))
+  d2 <- import_catalogue(z, dest)
+  check(identical(d1, dest) && identical(d2, paste0(dest, "_2")) && readLines(file.path(d1, "config", "edit.txt")) == "my edit" &&
+        file.exists(file.path(d2, "output", "catalogue", "surveys.csv")), "importing the same catalogue twice opens a second copy; the first keeps its edits")
+  junk <- file.path(tmp, "junk.zip"); writeLines("not a zip", junk)
+  nozip <- file.path(tmp, "other.zip"); od <- file.path(tmp, "other"); dir.create(od); writeLines("x", file.path(od, "a.txt")); owd <- setwd(tmp); utils::zip(nozip, "other", flags = "-rq"); setwd(owd)
+  e1 <- tryCatch(import_catalogue(junk, dest), error = function(e) e); e2 <- tryCatch(import_catalogue(nozip, dest), error = function(e) e)
+  real_copy <- base::file.copy; n <- 0L
+  assign("file.copy", function(...) { n <<- n + 1L; if (n == 2L) FALSE else real_copy(...) }, envir = globalenv())   # a copy failing part way through staging
+  e3 <- tryCatch(import_catalogue(z, dest), error = function(e) e); rm("file.copy", envir = globalenv())
+  left <- list.files(imp, all.files = TRUE, no.. = TRUE)
+  check(inherits(e1, "error") && inherits(e2, "error") && inherits(e3, "error") && readLines(file.path(d1, "config", "edit.txt")) == "my edit" &&
+        setequal(left, c("cat", "cat_2")), "a malformed zip, one that is not a catalogue and a failure while staging: refused, the copies already there unchanged, no staging left")
+})
 if (fails) { say(fails, " test(s) failed", col = "red"); quit(status = 1) } else say("all tests passed", col = "green")

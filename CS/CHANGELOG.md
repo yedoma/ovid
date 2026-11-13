@@ -5,6 +5,47 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: program elements that cannot be read are not guessed; Logger programs writes nothing when browsed (2026-11-03).**
+Sample(1, X(INT(1))) no longer becomes X(1): the field is listed as unknown (X(?)), and repetitions past the end of an
+array are cut at its end and marked; the program's notes on the Logger programs page list what was not read, and
+program_matches.csv gains unresolved_fields (the How column says the match is uncertain). Browsing the page reads the
+programs' cache without writing it; CR10X Match saves the table's edits inside the same checks and lock as the matching.
+**Output changes:** program_matches.csv gains a column; inventories of all 549 real programs are unchanged.
+
+**Version (2026-11-03): CS 1.12.0** for the safety fixes above (program files read without running code, imports and
+matching checked). **Output changes:** none to values; a run redoes cached steps once after the upgrade.
+
+**Fixed: browsing Logger programs writes nothing; CR10X Match saves inside the check (2026-11-03).** The Logger programs
+page reads cached program results and parses new ones in memory without writing cache/programs.rds; runs and the checked
+page actions still save it. CR10X Match saves the table's pending edits inside the same checks and lock as the matching,
+so a refused match leaves the table as it was; matching from config/fsl itself no longer tries to copy a file onto
+itself. **Output changes:** none.
+
+**Fixed: Logger programs imports are checked (2026-11-03).** Adding program and .fsl files, Copy and match, and matching
+FSLs on the CR10X page now run under the same folder checks and lock as a run, so a config folder linked into a raw
+folder is never written; an uploaded .fsl replaces the old one by a new file renamed into place. **Output changes:** none.
+
+**Fixed: program counts and sizes are checked (2026-11-03).** A count, array size or index in a CRBasic program must be
+a whole number in range before fields are made: 1/0, 0/0, fractions, a count or array over 20,000 fields, and an index
+outside its array are named on the problem list and that instruction or array is not expanded, so a crafted program can
+no longer make the reader allocate millions of fields; the rest of the program is read. **Output changes:** none (all
+549 programs in the CS project give the same inventory).
+
+**Recorded: gauge set-up changes made by a run (2026-11-03).** When a run adds a recognised weighing gauge to
+precip_gauges.csv, or moves a gauge row to its station's new name, the earlier table is now kept in config/history like
+any other change, and a run that stops part way names the set-up tables it changed. **Output changes:** none to results;
+config/history gains a copy when a run changes precip_gauges.csv.
+
+**Security fix: logger program files can no longer run code (2026-11-03).** A constant or interval in a CRBasic program
+was worked out by running it as R code, so a crafted .CR1X could run any R function (for example create or delete files)
+when it was read or matched. It is now read by a small parser that knows only numbers, the program's numeric constants
+(any case), + - * /, unary signs and brackets, with limits on length (200 characters) and nesting (20). A call such as
+INT() or Ceiling(), an assignment, an array element or an unknown name is left unknown as before, and the run's problem
+list now names the program and the field it could not interpret; the rest of the program is still read. Numbers written
+with an exponent (5.67E-8) are now read. **Output changes:** none to columns, units or intervals: the inventories of all
+549 programs in the CS project are identical before and after. Programs with unread values (37 of 549, mostly INT() or
+Ceiling() in buffer sizes) now add one problem line each per run.
+
 **Fixed: CR10X logger from its folder on Windows (2026-11-02).** The station folder a CR10X file is filed in was
 never matched to the raw folder on Windows (paths written with \\ against /), so the guessed logger could be wrong.
 **Output changes:** on Windows, such files now get the same logger as on macOS and Linux.

@@ -438,6 +438,119 @@ check("the column dictionary says how a column was measured and how often it was
 e <- parse_fsl(file.path(pdir, "ST01_240.CSI"))
 check("an Edlog .CSI gives the labels Edlog writes in an .FSL", identical(e[["101"]], c("101", "Year_RTM", "Day_RTM", "Hour_Minute_RTM", "Batt_Volt_AVG", "AirTemp_AVG", "AirTemp_MAX", "AirTemp_Hr_Min_MAX")))
 check("the program signature is computed as in a TOA5 header", is.numeric(cs_signature(charToRaw("x"))) && cs_signature(raw(0)) == 0xAAAA)
+local({                                          # program expressions are read by a small parser, never run as R code
+  k <- list(n = 4, scan_ms = 250, off = NA_real_)
+  check("program arithmetic: literals, signs, precedence, brackets and nested brackets",
+        cb_num("2+3*4", k) == 14 && cb_num("(2+3)*4", k) == 20 && cb_num("-2*-3", k) == 6 && cb_num("+.5", k) == 0.5 &&
+          cb_num("1.5e3/((2))", k) == 750 && cb_num("10-4-3", k) == 3 && cb_num("8/4/2", k) == 1 && cb_num("((1+(2*(3+4))))", k) == 15)
+  check("program arithmetic: constants in any case, a constant with no number stays unknown",
+        cb_num("N*2", k) == 8 && cb_num("1000 / Scan_MS", k) == 4 && is.na(cb_num("off+1", k)) && cb_num("\"60\"", k) == 60)
+  why <- character(); h <- function(e) why <<- c(why, conditionMessage(e))
+  rej <- c("INT(1000/scan_ms)", "n = 5", "n(1)", "q()", "x+1", "2+", "(2", "2)", "2 3", "1.2.3", "2^3", "a$b", "`n`", "n;1",
+           strrep("(", 30), paste0(strrep("-", 30), "1"), paste(rep("1", 150), collapse = "+"))
+  v <- withCallingHandlers(vapply(rej, cb_num, 1, consts = k, field = "test field"), cb_unread = h)
+  check("calls, assignments, indexing, unknown names, malformed text, deep nesting and long text are not read, each reported with its field",
+        all(is.na(v)) && length(why) == length(rej) && all(startsWith(why, "test field: ")))
+  why <- character(); v <- withCallingHandlers(c(cb_num("TRUE", k), cb_num("_60Hz", k), cb_num("\"Station #1\"", k)), cb_unread = h)
+  check("a bare name or a quoted string is unknown without a report", all(is.na(v)) && !length(why))
+})
+local({                                          # a hostile program: under eval() it would create a file named 424242
+  d <- file.path(root, "hostile"); dir.create(d); old <- setwd(d); on.exit(setwd(old))
+  pay <- c("Const file = 1", "Const create = 1", "Const as = 1", "Const character = 1", "Const q = 1", "Const NREP = 2",
+           "Const Hit = file.create(as.character(424242))", "Const Bye = q()", "Public AirTC(NREP), RH", "Units AirTC = Deg C",
+           "DataTable(Table1, True, -1)", "  DataInterval(0, file.create(as.character(424242)), Min, 10)",
+           "  Average(NREP, AirTC(1), FP2, False)", "  Sample(1, RH, FP2)", "EndTable", "BeginProg", "  Scan(10, Sec, 0, 0)",
+           "    VoltSe(AirTC(), 2, mV2500, 1, 0, 0, _60Hz, 0.1, -40)", "    CallTable Table1", "  NextScan", "EndProg")
+  writeLines(pay, file.path(d, "hostile.CR1X"))
+  p <- read_program(file.path(d, "hostile.CR1X"))
+  check("a hostile .CR1X runs nothing (no sentinel file) and its other metadata is still read",
+        !file.exists(file.path(d, "424242")) && identical(p$columns[table == "Table1", column], c("AirTC_Avg(1)", "AirTC_Avg(2)", "RH")) &&
+          all(p$columns[table == "Table1", units][1:2] == "Deg C"))
+  check("the hostile expressions are reported by field", any(grepl("^Const Hit: ", p$unread)) && any(grepl("^Const Bye: ", p$unread)) &&
+          any(grepl("^DataInterval of Table1: ", p$unread)) && is.na(p$columns[table == "Table1", interval_seconds][1]))
+  pj <- file.path(root, "p_hostile"); rw <- file.path(root, "raw_hostile"); dir.create(rw)
+  add_programs(list(project_dir = pj), file.path(d, "hostile.CR1X"))
+  toa5(file.path(rw, "h.dat"), "99111", vapply(1:3, function(i) row(hr(i), i, "1.5", "1.6", 50), ""), program = "CPU:hostile.CR1X",
+       cols = c("AirTC_Avg(1)", "AirTC_Avg(2)", "RH"))
+  r <- run(rw, pj); pm <- fread(file.path(pj, "output", "audit", "program_matches.csv"))
+  check("importing and matching a hostile program runs nothing, matches its file and names the field it could not read",
+        !file.exists(file.path(d, "424242")) && !file.exists(file.path(.app, "424242")) && !file.exists(file.path(pj, "424242")) &&
+          pm[basename(path) == "h.dat", status == "matched"] && any(r$problems$where == "hostile.CR1X" & grepl("Const Hit", r$problems$problem)))
+})
+local({                                          # the Logger programs page's imports are checked and locked as a run is
+  ir <- file.path(root, "imp_raw"); dir.create(file.path(ir, "progs"), recursive = TRUE); dir.create(file.path(ir, "labels"))
+  writeLines("sentinel", file.path(ir, "labels", "ST01.fsl")); writeLines(prog, file.path(ir, "progs", "keep.CR1"))
+  up <- file.path(root, "imp_up"); dir.create(up); writeLines(prog, file.path(up, "new.CR1")); writeLines("label v2", file.path(up, "ST01.fsl"))
+  tr <- function() { f <- sort(list.files(ir, recursive = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f))) }; t0 <- tr()
+  for (lnk in c("programs", "fsl")) {
+    ip <- file.path(root, paste0("imp_proj_", lnk)); dir.create(file.path(ip, "config"), recursive = TRUE)
+    file.symlink(file.path(ir, if (lnk == "programs") "progs" else "labels"), file.path(ip, "config", lnk))
+    e <- tryCatch(import_programs(list(project_dir = ip, raw_dirs = ir), file.path(up, c("new.CR1", "ST01.fsl"))), error = function(e) e)
+    check(paste0("program import with config/", lnk, " linked into a raw folder is refused; the raw .fsl and program keep their bytes"), inherits(e, "ovid_project_check") && identical(tr(), t0)) }
+  ip <- file.path(root, "imp_ok"); got <- import_programs(list(project_dir = ip, raw_dirs = ir), file.path(up, c("new.CR1", "ST01.fsl")))
+  again <- import_programs(list(project_dir = ip, raw_dirs = ir), file.path(up, "new.CR1"))
+  check("a normal import adds the program and the .fsl, and a duplicate is not added twice",
+        setequal(got, c("new.CR1", "ST01.fsl")) && readLines(file.path(ip, "config", "fsl", "ST01.fsl")) == "label v2" && !length(again))
+})
+local({                                          # Logger programs browsing writes nothing; CR10X Match saves its edits inside the checked match
+  br <- file.path(root, "browse_raw"); dir.create(br); writeLines("raw rds", file.path(br, "programs.rds"))
+  bp <- file.path(root, "browse_proj"); dir.create(file.path(bp, "config", "programs"), recursive = TRUE); writeLines(prog, file.path(bp, "config", "programs", "p.CR1"))
+  file.symlink(br, file.path(bp, "cache")); tr <- function(d) { f <- sort(list.files(d, all.files = TRUE, no.. = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f))) }; t0 <- tr(br)
+  src <- readLines(file.path(.app, "pages", "logger_programs.R"), warn = FALSE)
+  pg <- grep("load_programs(", src, fixed = TRUE, value = TRUE)
+  got <- eval(parse(text = sub("^.*tryCatch\\((load_programs\\(list\\(project_dir = )pd\\(\\)(.*?\\)), error.*$", "\\1bp\\2", pg[1])))   # the page's own call
+  check("opening Logger programs (its program list) with cache/ linked into a raw folder writes nothing there; the raw programs.rds keeps its bytes",
+        length(pg) == 1 && length(got) == 1 && identical(tr(br), t0))
+  cr <- file.path(root, "cx_raw"); dir.create(cr); writeLines("serial,file", file.path(cr, "cr10x.csv")); c0 <- tr(cr)
+  cp <- file.path(root, "cx_proj"); dir.create(cp); file.symlink(cr, file.path(cp, "config")); saved <- FALSE
+  e <- tryCatch(cr10x_automatch_checked(list(project_dir = cp, raw_dirs = cr), cr, TRUE, before = function() { saved <<- TRUE; writeLines("edited", file.path(cp, "config", "cr10x.csv")) }),
+                error = function(e) e)
+  pgx <- paste(readLines(file.path(.app, "pages", "cr10x.R"), warn = FALSE), collapse = "\n")
+  check("CR10X Match with a pending edit and config/ linked into a raw folder: refused before the edit is saved; the raw cr10x.csv keeps its bytes",
+        inherits(e, "ovid_project_check") && !saved && identical(tr(cr), c0) && grepl("before = function() m_cx$save(quiet = TRUE)", pgx, fixed = TRUE) &&
+          !grepl("\n\\s*m_cx\\$save\\(quiet = TRUE\\); save_settings", pgx))
+  r8 <- file.path(root, "raw8"); p8 <- file.path(root, "p8"); ed <- read_cfg(file.path(p8, "config", "cr10x.csv")); ed[, note := "edited"]
+  m <- cr10x_automatch_checked(list(project_dir = p8, raw_dirs = r8), file.path(p8, "config", "fsl"), FALSE, before = function() fwrite(ed, file.path(p8, "config", "cr10x.csv")))
+  check("... and in a normal project the edit is saved and the files are matched", any(m$matches$status == "matched") && "edited" %in% read_cfg(file.path(p8, "config", "cr10x.csv"))$note)
+})
+local({                                          # counts, sizes and indexes are checked before any field is made
+  pr <- c("Const BIG = 1000000000", "Public A, B, C(2, 3, 4), H(1000000, 1000000), P(200, 200), F(2.5), Z(0/0)",
+          "DataTable(T1, True, -1)", "  DataInterval(0, 10, Min, 10)", "  Sample(1/0, B, FP2)", "  Sample(0/0, B, FP2)", "  Sample(2.5, B, FP2)",
+          "  Sample(BIG, B, FP2)", "  Sample(1, A, FP2)", "  Sample(24, C(1,1,1), FP2)", "  Sample(2, C(3,1,1), FP2)", "EndTable")
+  f <- file.path(root, "bounds.CR1"); writeLines(pr, f); t0 <- Sys.time(); p <- read_program(f); secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  cl <- p$columns[table == "T1"]; u <- p$unread
+  check("Sample(1/0,...), Sample(0/0,...), a fractional and a huge count are each reported for their instruction and not expanded",
+        any(grepl("^Sample\\(1/0, B\\) in T1: .*not a finite number", u)) && any(grepl("^Sample\\(0/0, B\\) in T1: .*not a finite number", u)) &&
+          any(grepl("^Sample\\(2.5, B\\) in T1: 2.5 is not a whole number", u)) && any(grepl("^Sample\\(BIG, B\\) in T1: 1e\\+09 is not a whole number", u)) && !"B" %in% cl$column)
+  check("... without making the fields (a billion-field count read in under 5 s), while the valid instructions are read: A and a 2x3x4 array element by element",
+        secs < 5 && identical(cl$column, c("A", paste0("C(", rep(1:2, each = 12), ",", rep(rep(1:3, each = 4), 2), ",", rep(1:4, 6), ")"))))
+  check("array sizes: too many elements, a fractional size and 0/0 are reported and the array is not expanded; an index outside the array is reported",
+        any(grepl("^size of H: 1e\\+06 is not a whole number", u)) && any(grepl("^size of P: 40,000 elements is more than 20,000", u)) && any(grepl("^size of F: 2.5 is not a whole", u)) && any(grepl("^size of Z", u)) &&
+          any(grepl("C\\(3,1,1\\) is outside C\\(2,3,4\\)", u)) && !any(grepl("^[HP]\\(", p$columns$column)))
+})
+local({                                          # an element that cannot be read is not guessed; repetitions past the end are marked
+  pr <- c("Const N = 4", "Public X(N), Y", "DataTable(T2, True, -1)", "  DataInterval(0, 10, Min, 10)", "  Sample(1, X(INT(1)), FP2)", "  Sample(3, X(3), FP2)",
+          "  Sample(1, Y, FP2)", "EndTable")
+  f <- file.path(root, "unread_idx.CR1"); writeLines(pr, f); p <- read_program(f); cl <- p$columns[table == "T2"]
+  check("Sample(1, X(INT(1))): not taken as X(1); the field is listed as unknown, with why",
+        !"X(1)" %in% cl$column && "X(?)" %in% cl$column && cl[column == "X(?)", unresolved] && any(grepl("X\\(INT\\(1\\)\\) could not be read", p$unread)))
+  check("three repetitions from X(3) of X(4): the two that exist, marked uncertain, and reported", identical(cl[source %in% c("X(3)", "X(4)"), column], c("X(3)", "X(4)")) &&
+          all(cl[source %in% c("X(3)", "X(4)"), unresolved]) && any(grepl("run past the end of X\\(4\\)", p$unread)) && !cl[column == "Y", unresolved])
+  m <- match_programs(data.table(path = "t.dat", status = "ok", format = "TOA5", program = "CPU:unread_idx.CR1", table = "T2", logger_id = "1", signature = NA,
+                                 columns = list(c("TIMESTAMP", "RECORD", "X(1)", "X(3)", "X(4)", "Y"))), list(p))
+  check("the match carries the uncertainty: how many program fields were not read, said in How", m$unresolved_fields == 3 && grepl("uncertain", m$how))
+  f2 <- file.path(root, "all_read.CR1"); writeLines(c("Public X(2)", "DataTable(T3, True, -1)", "  Sample(2, X(1), FP2)", "EndTable"), f2); ok <- read_program(f2)
+  check("a program with every value read has no unknown field", !any(ok$columns$unresolved) && !length(ok$unread))
+})
+local({                                          # array sizes and intervals from constant arithmetic
+  pr <- c("Const NS = 2", "Const NT = ns*2 - 1", "Const OUT = (60 / 4) * 2", "Public T(NS, NT), WS",
+          "DataTable(Hrly, True, -1)", "  DataInterval(0, OUT, Min, 10)", "  Sample(NT, T(2,1), FP2)", "  Maximum(1, WS, FP2, False, True)",
+          "EndTable", "BeginProg", "  Scan(OUT / 30, Sec, 0, 0)", "  NextScan", "EndProg")
+  f <- file.path(root, "sizes.CR1"); writeLines(pr, f); cl <- read_program(f)$columns[table == "Hrly"]
+  check("CRBasic inventory: array sizes, element names and intervals from constant arithmetic",
+        identical(cl$column, c("T(2,1)", "T(2,2)", "T(2,3)", "WS_Max", "WS_TMx")) && cl$interval[1] == "30 min" && cl$scan[1] == "1 s" &&
+          !length(read_program(f)$unread))
+})
 
 group("13. Corrupt timestamps, paired sensors and sensor swaps")
 raw13 <- file.path(root, "raw13"); dir.create(raw13); p13 <- file.path(root, "p13")
@@ -796,6 +909,44 @@ if (requireNamespace("callr", quietly = TRUE)) local({                  # a run 
   check("Cancel stops the run between steps: it is reported as cancelled (not as a failure or a problem) and its log says so",
     b$status == "cancelled" && grepl("^Run cancelled by the user", utils::tail(b$log, 1)) && !any(grepl("^ERROR", b$log))) })
 group("6b. Guardrails before and during a run (core)")
+local({                                          # an output file hard-linked to a raw file: the run stops before writing it
+  hraw <- file.path(root, "hl_raw"); dir.create(hraw); hp <- file.path(root, "hl_proj")
+  toa5(file.path(hraw, "H1.dat"), "99701", vapply(1:6, function(i) row(hr(i), i, "1.0", 50), ""))
+  run(hraw, hp); af <- file.path(hp, "output", "audit", "file_audit.csv")
+  writeLines("site,value", file.path(hraw, "notes.csv")); unlink(af); file.link(file.path(hraw, "notes.csv"), af)
+  h0 <- tools::md5sum(list.files(hraw, full.names = TRUE))
+  e <- tryCatch(run(hraw, hp), error = function(e) e)
+  check("an output file hard-linked to a raw file stops the run before it is written; the raw files keep their bytes",
+        inherits(e, "ovid_project_check") && grepl("file_audit.csv shares its data", conditionMessage(e)) && identical(tools::md5sum(list.files(hraw, full.names = TRUE)), h0))
+  orig <- hard_links_check; on.exit(hard_links_check <<- orig, add = TRUE)
+  hard_links_check <<- function(dirs, pd) invisible()      # without the check, the same run writes through the link
+  tryCatch(run(hraw, hp), error = function(e) NULL)
+  check("... (without the check the run's in-place write changes the raw file: the failure the check prevents)", !identical(tools::md5sum(list.files(hraw, full.names = TRUE)), h0))
+})
+local({                                          # a run killed part way (real process), put back, then an incremental run
+  rs <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+  kraw <- file.path(root, "kill_raw"); dir.create(kraw)
+  toa5(file.path(kraw, "K1.dat"), "99601", vapply(1:12, function(i) row(hr(i), i, sprintf("%.1f", i / 2), 50 + i), ""))
+  ch <- file.path(root, "kill_child.R")
+  writeLines(c("a <- commandArgs(TRUE); Sys.setenv(CS_NO_RUN = '1', OVID_RUN_SYNC = '1', OVID_TEST_KILL_AT = a[4], OVID_TEST_KILL_MARK = a[5]); setwd(a[1]); suppressMessages(source('cs_pipeline.R'))",
+               "say <- function(...) invisible(NULL); cfg <- CFG; cfg$raw_dirs <- a[2]; cfg$project_dir <- a[3]; cfg$make_plots <- FALSE; cfg$write_stitched <- FALSE",
+               "invisible(capture.output(run_pipeline(cfg)))"), ch)
+  mark <- file.path(root, "kill_reached")              # written by the child at the checkpoint: a launch error is not taken for a crash
+  go <- function(pd, at = "") { unlink(mark); system2(rs, c("--vanilla", shQuote(ch), shQuote(.app), shQuote(kraw), shQuote(pd), shQuote(if (nzchar(at)) at else "none"), shQuote(mark)),
+                                                      stdout = FALSE, stderr = FALSE); !nzchar(at) || identical(readLines(mark, warn = FALSE)[1], at) }
+  st <- function(pd) { f <- sort(list.files(file.path(pd, "output", "stations"), full.names = TRUE)); setNames(unname(tools::md5sum(f)), basename(f)) }
+  ref <- file.path(root, "kill_ref"); kp <- file.path(root, "kill_proj")
+  go(ref); go(kp); first <- st(kp)
+  toa5(file.path(kraw, "K2.dat"), "99601", vapply(13:20, function(i) row(hr(i), i, sprintf("%.1f", i / 2), 50 + i), ""))
+  go(ref); reached <- go(kp, "outputs_done")
+  killed <- reached && identical(journal_read(kp)$phase, "verified")
+  note <- output_recover(kp, list(raw_dirs = kraw))
+  check("a CS run killed in its own process after writing its outputs is put back to the last finished run's outputs",
+        killed && grepl("put back", note) && identical(st(kp), first))
+  go(kp)
+  check("... and the next incremental run gives byte for byte what runs with no interruption gave", identical(st(kp), st(ref)) && !identical(st(kp), first) &&
+        !any(file.exists(file.path(kp, c(".output_before_run", ".ovid_run", ".ovid_lock")))))
+})
 local({
   sf <- file.path(root, "g_settings.json"); settings_save(sf, list(project_dir = "a", ui = "workbench")); settings_save(sf, list(project_dir = "b"))
   s1 <- settings_read(sf); writeBin(as.raw(1:20), sf); s2 <- settings_read(sf)

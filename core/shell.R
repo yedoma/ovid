@@ -172,7 +172,7 @@ ovid_areas_server <- function(counts, project_dir, session = shiny::getDefaultRe
   observe({ n <- counts(); p <- pd()
     session$sendCustomMessage("ovid-areas", list(counts = as.list(n), project = p, area = ovid_area_start(n, if (nzchar(p)) project_settings_read(p)$area))) })
   observeEvent(session$input$d_area, { p <- pd(); a <- session$input$d_area; if (!nzchar(p) || !dir.exists(p)) return()
-    s <- project_settings_read(p); if (!identical(s$area, a)) { s$area <- a; project_settings_save(p, s) } }, ignoreInit = TRUE)
+    s <- project_settings_read(p); if (!identical(s$area, a)) { s$area <- a; tryCatch(project_settings_save(p, s), error = function(e) showNotification(paste("Not saved:", conditionMessage(e)), type = "warning")) } }, ignoreInit = TRUE)
 }
 
 # Each app's icon (docs/icons/pixel/ovid_<app>.png at 64 px), shown beside "ovid // <app>" and as the browser tab

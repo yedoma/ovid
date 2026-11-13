@@ -5,6 +5,23 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Changed: the active layer's evidence (2026-11-03).** date_alt is the day of the evidence for the value given (for a lower
+bound from a day thawed below the deepest sensor, that day), and alt_evidence says which evidence it is. A permafrost
+year with only below-sensor days now gives that lower bound instead of "no thaw found". **Output changes:** active_layer.csv
+gains alt_evidence; the golden sample's rows are all incomplete years, so its values are unchanged (the new columns are
+empty). The accepted golden file still needs updating by hand (see the review report).
+
+**Changed: active-layer thickness when thaw went below the deepest sensor (2026-11-03; GT 1.9.0).** A year with a thaw
+depth between sensors and also a day when every sensor reading was above 0 C is no longer given an exact ALT: the result is
+"ALT lower bound", alt_m is blank and the new column alt_lower_m gives the depth it is at least (the deepest sensor
+reading that day, or the deepest thaw between sensors if deeper); the plot marks it "at least". Sites whose names give the
+same file name (North 1 / North_1, or names differing only in capital letters) stop the run before any site file is
+written, naming both. **Output changes:** active_layer.csv gains alt_lower_m; years with thaw below the deepest sensor
+change from an exact ALT to a lower bound. Example (the synthetic regression case in tests/run_tests.R): site P in 2020, thaw 0.60 m between sensors on 1 August
+and, on 1 September, every reading down to the deepest one that day (0.80 m) above 0 C: before, alt_m 0.60 and result
+"ALT"; now alt_m blank, alt_lower_m 0.80, result "ALT lower bound...". The golden sample has no such year (its file only
+gains the empty column). Rerun GT projects whose deepest sensors thaw in some summers.
+
 **Added (HOBO .hobo files read directly, 2026-11-02).** A HOBO U12-008 (thermistor probes) or TidbiT .hobo with no HOBOware
 export is now read (core hobo.R hobo_decode_more): times and values identical to HOBOware's export on 40 U12 files. A probe
 reading outside -55 to 85 C (open or shorted probe) is left missing with that reason. When a HOBOware .csv of the same download

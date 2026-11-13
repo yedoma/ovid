@@ -18,9 +18,10 @@
     fd <- path.expand(trim(input$prog_dir %||% ""))                     # the programs folder (Logger programs); else the files added there
     if (nzchar(fd) && !dir.exists(fd)) return(note("The programs folder on Logger programs was not found. Check the path.", type = "warning"))
     if (!nzchar(fd)) fd <- fsl_dir()
-    m_cx$save(quiet = TRUE); save_settings(cfg)
-    res <- withProgress(message = "Matching FSLs", value = 0, safely(
-      cr10x_automatch(cfg, fd, isTRUE(input$cx_setid), function(i, n) setProgress(i / n, detail = paste(i, "of", n, "files"))), "Matching stopped"))
+    save_settings(cfg)
+    res <- withProgress(message = "Matching FSLs", value = 0, safely(                # the pending edits are saved inside the checked, locked matching
+      cr10x_automatch_checked(cfg, fd, isTRUE(input$cx_setid), function(i, n) setProgress(i / n, detail = paste(i, "of", n, "files")), before = function() m_cx$save(quiet = TRUE)),
+      "Matching stopped"))
     if (is.null(res)) return()
     rv$cx_info <- res[c("fsl_found", "fsl_blank", "fsl_copies")]
     rv$tick <- rv$tick + 1; rv$stale <- TRUE

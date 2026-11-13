@@ -21,7 +21,7 @@
   output$flight_title <- renderUI({ f <- cur(); if (is.null(f) || !nrow(f)) p(class = "muted", "Pick a flight on the Map page first.") else h3(paste(f$date, f$name, "\u00b7", f$sensor)) })
   e_shown <- reactiveVal(NULL)                                   # the flight's saved row as the form last showed it
   observeEvent(list(cur(), live_stamp(cfg_path(CFG$project_dir, "flights"))), { f <- cur(); if (is.null(f) || !nrow(f)) return()   # a change saved on any page shows here
-    cf <- load_configs(CFG)$flights[flight_id == f$flight_id]; if (identical(list(f$flight_id, cf), e_shown())) return(); e_shown(list(f$flight_id, cf))
+    cf <- read_configs(CFG)$flights[flight_id == f$flight_id]; if (identical(list(f$flight_id, cf), e_shown())) return(); e_shown(list(f$flight_id, cf))
     rs_flight_form_update(session, "e_", if (nrow(cf)) as.list(cf[1]) else list()) })   # the form shared with the Workbench (pages/ui.R)
   observeEvent(input$e_save, { f <- cur(); if (is.null(f) || !nrow(f)) return(showNotification("Select a flight first.", type = "warning"))
     if (save_flight(f$flight_id, rs_flight_form_read(input, "e_"))) showNotification("Saved", type = "message") })
@@ -52,7 +52,7 @@
     set(x$flights, which(r), "name", fifelse(nzchar(trim(v$display_name %||% "")), trim(v$display_name %||% ""), x$flights$name[r]))
     C(x) }
   # flights.csv saved on any page (the Set-up tables, the Workbench, another window): every flight's edits shown at once
-  observeEvent(live_stamp(cfg_path(CFG$project_dir, "flights")), { cf <- tryCatch(ensure_cols(load_configs(CFG)$flights, FLIGHT_COLS), error = function(e) NULL)
+  observeEvent(live_stamp(cfg_path(CFG$project_dir, "flights")), { cf <- tryCatch(ensure_cols(read_configs(CFG)$flights, FLIGHT_COLS), error = function(e) NULL)
     if (is.null(cf) || is.null(isolate(C()))) return()
     for (i in seq_len(nrow(cf))) { v <- as.list(cf[i]); for (k in c("site", "positioning_status")) if (!nzchar(v[[k]] %||% "")) v[k] <- list(NA_character_)
       show_edit(cf$flight_id[i], v) } }, ignoreInit = TRUE)

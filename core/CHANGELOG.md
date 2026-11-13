@@ -5,6 +5,98 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed: review round of 2026-11-03 (core 1.16.0).** Delete outputs never follows a link: the plan refuses a linked or
+unsafe item (outside the project, in or around a raw folder) and is worked out again under the project lock, where a
+change since the dialog opened stops it. Project settings and set-up tables saved from a page go through the run's checks
+and lock (project_guarded(); settings written as a new file renamed into place); a refused save keeps the edits on screen
+and says why, and success is shown only after the save. Restoring after a stopped run: logs the last finished run left
+unchanged are not copied again, every final and temporary log name is reserved first (letter case ignored), and the
+journal stays until .output_failed is really gone, so a failed clean-up is finished on the next start or run; the note
+says where the output and the stopped run's log are. Each run's result is kept with the project (.ovid_last_run:
+finished, failed, cancelled, a first run left incomplete, or pending recovery, with the log) and shown when the app opens.
+The troubleshooting zip leaves out any file that leads outside the project folder (named under Left out);
+troubleshooting_inventory() lists what it would hold. Editors keep columns marked exact (a folder path) untrimmed.
+**Output changes:** none.
+
+**Release candidate fixes (2026-11-03; core 1.16.0).** The journal's record of the stopped run's logs is checked before it
+is used (plain unique .log names, as many names, targets and MD5 digests) and every copy or removal is checked to stay in
+its logs folder; a malformed record moves nothing. A stopped run with no log removes nothing, and a log whose name the
+copy already holds is kept beside it (name_stopped_run.log). A copy recorded by the earlier version (listing the status
+note) is still checked file by file. run_all_tests.R --release fails a suite that checked nothing (a missing fixture),
+and finds the number of cores where the system does not say. The raw-folder-only checks use each app's checked-in sample
+(tests/golden/raw), so all five run everywhere. build/check_release.R checks a candidate's five apps end to end.
+**Output changes:** none.
+
+**Fixed: gate 1, fifth pass (2026-11-03).** read_configs() reads the set-up tables without making, migrating or writing
+anything, for pages and checks to show. Clean-up after putting back the output records in the journal, before it starts,
+which logs it will add (names and md5s): an earlier attempt's log or its .part file never counts as a change to the copy,
+even after .output_failed is gone; the whole log is checked before its original goes; a .part file is removed. The notes
+in output/ (.run_restored, .run_incomplete) are status and no longer part of a copy's record. A journal key may hold
+digits. **Output changes:** none.
+
+**Fixed: gate 1, fourth pass (2026-11-03).** The restored copy is checked against its record on every clean-up attempt,
+with the files a restore adds itself (the stopped run's logs, the note) tracked apart; a change found on a retry keeps both
+copies and the log. A journal with a repeated key (two phases, two run ids) or a malformed line moves nothing, and a
+committed or backup journal never removes a copy made by another run. Protected folders are kept exactly as written (a
+folder name may end in a space), and read_cfg() can keep chosen columns untrimmed. **Output changes:** none.
+
+**Fixed: gate 1, third pass (2026-11-03).** Start-up recovery checks the project against every protected folder before it
+takes the lock or writes the project marker, and again under the lock. A link in the project to a file that is itself a
+hard link (perhaps of a raw file) stops the run. The run journal and the project marker are written as new files in a
+folder made for them and renamed into place, so no existing path (a link included) is opened for writing. App actions
+outside a run go through project_mutate() (the run's checks and lock, no output copy). A restore checks the bytes of the
+copy it published before removing anything, and a mismatch keeps both copies and is reported, not called put back; the
+clean-up phase is journalled. A journal without a known phase or a valid run id moves nothing: the copy is kept for
+review. The stopped run's log is copied and checked before .output_failed is removed; a failed copy keeps it there and is
+retried. **Output changes:** none.
+
+**Fixed: gate 1 follow-up, raw folders and recovery (2026-11-03).** A project folder set through a link is scanned at its
+real place (a linked root hid the links inside it); links leading to linked folders more than 8 deep stop the run. A file
+in the project that shares its data with another file (a hard link, perhaps to a raw file) stops the run before it is
+written. An app can name more folders to protect (app_protect_dirs(), RS: its saved sources). Recovery when the app starts
+and after a failed background job now gets the app's settings and checks the project against every protected folder
+before changing anything. Cached files are removed only inside a checked, locked run. Putting back the output is
+resumable: a process killed after either rename is finished on the next try, an unrelated .output_failed is kept for
+review, and a state that is not this restore's keeps every copy and says which. The kept copy records each file's content
+hash (xxHash64) and is checked when made and before it is put back, so a same-size change is found; output/ holding links
+to files elsewhere stops the run (a copy could not undo a change through them). When no copy can be made, the message
+tells the size limit for a full copy (2 GB, on a drive that cannot clone) apart from too little free space, with the size,
+the limit or the space needed and an action for each. Crash tests pass their checkpoint to the child process as an
+argument and check it was reached. **Output changes:** none.
+
+**Fixed: run recovery is safe across interruptions (2026-11-03).** A run killed while copying the output left a partial copy
+that the next start put back over the full output, and a run killed after it finished but before the copy was removed had
+its results replaced by the older copy. Each run now has an id and a journal (<project>/.ovid_run: backup, verified,
+committed). The copy is made under another name, checked file by file (names and sizes) and only then becomes
+.output_before_run; a copy is put back only when it is verified, belongs to the interrupted run and that run did not
+commit; a committed run's copy is just removed; a partial copy is never used. When putting back fails, both copies are
+kept and it is tried again before the next run. A copy left by an older version (no journal) is not put back: it is kept
+as .output_to_review_<time> and the note says to compare them. Recovery when the app starts and before a run happens under
+the project lock. Set-up tables a stopped run changed are named in the note (kept as they are; earlier versions in
+config/history). **Changed:** when output/ holds a finished run's results and no copy can be made (too large to copy on a
+disk that cannot clone, not enough space, a failed copy), the run no longer goes ahead in place: it stops before changing
+anything and says why. **Output changes:** none.
+
+**Fixed: two runs could both take a project's lock (2026-11-03).** The lock folder was made first and its owner written
+after, so a second run starting in between saw a lock with no owner, took it over and both ran; two runs taking over the
+same stale lock could both win; a lock over a day old was taken from a run still going; and a run that had lost its lock
+removed the new owner's lock when it ended. The lock is now written in full and renamed into place (one process wins), a
+takeover happens one at a time and only of the lock judged gone, a lock is judged gone only when its process on this
+computer has ended (start time compared, so a reused pid does not count), a live run keeps its lock however long it runs,
+a lock from another computer or one that cannot be read is never taken over (the message says how to clear it), and only
+the run holding the lock (its token) releases it. Putting back a kept output when the app starts now takes the lock too.
+**Output changes:** none.
+
+**Fixed: a run can no longer write into a raw folder through a link (2026-11-03).** The project folder was checked against
+the raw folders, but a link inside it was not: with output/ or output/stations linked into a raw folder, a run (pruning old
+outputs, putting back the kept output, clearing the cache) removed and overwrote raw files. Before a run, every link and
+Windows junction in the project folder (output/, cache/, config/, the kept copies, an app's own folders, and links inside a
+linked folder elsewhere) is now followed through link chains; one that points into or around a raw folder, or whose target
+cannot be found, stops the run before anything is written, naming the link, where it resolves and the raw folder. Each
+removal (output pruning, cache pruning and reset, putting back the kept output) is checked again where it happens
+(remove_within()). Messages show a path as set and where it resolves when they differ. **Output changes:** none; a project
+with such a link now stops with that message.
+
 **Fixed: "variable names are limited to 10000 bytes" (2026-11-02).** The Needs you ids (review_hash) kept each text
 for the session as a variable name, and R allows names up to 10000 bytes, so one longer review text stopped every page
 (seen in WLR). Longer texts are now hashed each time and not kept. **Output changes:** none (the same ids).

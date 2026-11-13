@@ -3,6 +3,14 @@
 # variables (input, output, session, rv, C, sel, E, reload, ...). Keep the order in app.R: later pages may use earlier ones.
 
   # ---- Sources and the viewer ----
+  # Showing the page reads the set-up as it is (core read_configs: nothing made or written). Every change it makes goes through
+  # the same checks and lock as a scan (core project_mutate); a refusal is shown and nothing is changed.
+  # A folder typed in the form: exactly as typed when that folder exists (a name may end in a space); trimmed only when the
+  # exact one does not exist and the trimmed one does (stray spaces from a paste). "" when neither exists.
+  typed_dir <- function(x) { x <- x %||% ""; if (nzchar(x) && dir.exists(path.expand(x))) return(x)
+    t <- trim(x); if (nzchar(t) && dir.exists(path.expand(t))) t else "" }
+  rs_checked <- function(fun, extra = character()) {
+    tryCatch(rs_mutate(CFG, fun, extra), error = function(e) { showNotification(paste("Not changed:", conditionMessage(e)), type = "error", duration = NULL); FALSE }) }
   # which of dirs the folder x is inside (none when there are no dirs: paste0(character(), "/") is "/", which every path starts with)
   in_dirs <- function(x, dirs) if (length(dirs)) startsWith(x, paste0(dirs, "/")) else logical()
   # each source with its status, drone photos and flights, and Remove with a confirm in its row (the folder is never touched)
@@ -18,7 +26,7 @@
     r <- tryCatch(remove_source(CFG$project_dir, sid), error = function(e) { showNotification(paste("Not removed:", conditionMessage(e)), type = "error"); NULL })
     if (!is.null(r)) { reload(); showNotification(sprintf("Source %s removed%s; its files are as they were", sid, if (!r$flights) "" else if (r$flights == 1) ": 1 flight left the catalogue" else paste0(": ", r$flights, " flights left the catalogue")), type = "message") } })
   # safe: the sources table's editor reports a read problem
-  output$src_list <- renderUI({ live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
+  output$src_list <- renderUI({ live_stamp(cfg_path(CFG$project_dir, "sources")); s <- tryCatch(read_configs(CFG)$sources, error = function(e) data.table())
     if (!nrow(s)) return(p(class = "muted", "No source yet: add a folder or drive below and scan it."))
     sc <- if (is.null(C())) data.table() else C()$sources; fl <- if (is.null(C())) data.table() else C()$flights; k <- src_counts()$photos
     js <- function(id, sid) sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'})", id, jsonlite::toJSON(sid, auto_unbox = TRUE))
@@ -57,7 +65,6 @@
   # which stops the scan at its next folder. A stopped scan leaves each source its last good scan.
   # done: the message when it finishes; then(r): anything more to do after a finished run (the viewer's download).
   scan_done <- function(what, done = paste(what, "done"), then = NULL) function(r) {
-    for (sdir in Sys.glob(file.path(path.expand(CFG$project_dir), "cache", "sources", "*"))) unlink(file.path(sdir, "scan.rds.part"))
     if (isTRUE(session$isClosed())) return(invisible())                       # the page was closed or reloaded during the run: the page open now reloads (below)
     reload(); session$userData$run_seen <- RUNNER$tick
     if (r$status == "finished") { showNotification(done, type = "message"); if (is.function(then)) then(r) }
@@ -81,9 +88,9 @@
   # a folder inside a source, or holding one, is said so before it is scanned (each file then belongs to the innermost source)
   scan_new <- function(p) { start_scan(paste("Scanning", basename(p)), list(scan = p, source_id = trim(input$s_id))); updateTextInput(session, "s_id", value = "") }
   scan_pending <- reactiveVal(NULL)
-  observeEvent(input$s_scan, { p <- trim(input$s_path); if (!nzchar(p) || !dir.exists(path.expand(p))) return(showNotification("That folder was not found", type = "error"))
+  observeEvent(input$s_scan, { p <- typed_dir(input$s_path); if (!nzchar(p)) return(showNotification("That folder was not found", type = "error"))
     # safe: the sources table's editor reports a read problem
-    p <- normalizePath(path.expand(p), winslash = "/"); s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())
+    p <- normalizePath(path.expand(p), winslash = "/"); s <- tryCatch(read_configs(CFG)$sources, error = function(e) data.table())
     np <- if (nrow(s)) normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE) else character()
     if (p %in% np) return(scan_new(p))
     inn <- s$source_id[in_dirs(p, np)]; has <- s$source_id[startsWith(np, paste0(p, "/"))]
@@ -97,31 +104,31 @@
   observeEvent(input$s_scan_go, { removeModal(); p <- scan_pending(); scan_pending(NULL); if (!is.null(p)) scan_new(p) })
   # ---- which other geodata to catalogue (calibration options geodata_gis_layers, geodata_imagery; R/geodata.R), set on Sources
   # and on Simple's Import; it applies on the next scan or rebuild, from the scans already made
-  gd_on <- function(v) { cal <- tryCatch(load_configs(CFG)$calibration, error = function(e) NULL); n <- if (is.null(cal)) NA_real_ else cal_num(cal, v); !is.finite(n) || n != 0 }
+  gd_on <- function(v) { cal <- tryCatch(read_configs(CFG)$calibration, error = function(e) NULL); n <- if (is.null(cal)) NA_real_ else cal_num(cal, v); !is.finite(n) || n != 0 }
   observe({ src_cfg(); live_config(CFG$project_dir); for (k in list(c("s_gd_gis", "geodata_gis_layers"), c("s_gd_img", "geodata_imagery"), c("sp_gd_gis", "geodata_gis_layers"), c("sp_gd_img", "geodata_imagery")))
     if (!identical(isolate(input[[k[1]]]), gd_on(k[2]))) updateCheckboxInput(session, k[1], value = gd_on(k[2])) })
   gd_set <- function(v, on) { if (is.null(on) || identical(on, gd_on(v))) return()
-    cal <- load_configs(CFG)$calibration; i <- which(cal$value == v & cal$applies_to %in% c("*", ""))
+    ok <- rs_checked(function() { cal <- load_configs(CFG)$calibration; i <- which(cal$value == v & cal$applies_to %in% c("*", ""))
     if (length(i)) { set(cal, i, "choice", "custom"); set(cal, i, "number", if (on) "1" else "0") }
     else cal <- rbind(cal, data.table(app = "RS", value = v, applies_to = "*", choice = "custom", number = if (on) "1" else "0", source = "set on the Sources page", notes = ""), fill = TRUE)
-    write_cfg(cal, CFG$project_dir, "calibration", who = "Sources")
-    showNotification(paste0(if (on) "On" else "Off", ": applies on the next scan or rebuild."), type = "message") }
+    write_cfg(cal, CFG$project_dir, "calibration", who = "Sources") })
+    if (!isFALSE(ok)) showNotification(paste0(if (on) "On" else "Off", ": applies on the next scan or rebuild."), type = "message") }
   for (k in list(c("s_gd_gis", "geodata_gis_layers"), c("s_gd_img", "geodata_imagery"), c("sp_gd_gis", "geodata_gis_layers"), c("sp_gd_img", "geodata_imagery"))) local({ k <- k
     observeEvent(input[[k[1]]], gd_set(k[2], input[[k[1]]]), ignoreInit = TRUE) })
   # ---- the list of folders to scan: added one by one (rows in sources.csv, so they stay when the page is reloaded), then scanned
   # together in one run. A source with no scan in cache/sources is waiting; it is renamed or removed freely, as nothing was read yet.
   src_bump <- reactiveVal(0)
   src_cfg <- reactive({ src_bump(); rv$tick; live_stamp(cfg_path(CFG$project_dir, "sources"))
-    tryCatch(load_configs(CFG)$sources, error = function(e) data.table(source_id = character(), path = character(), label = character(), notes = character())) })
+    tryCatch(read_configs(CFG)$sources, error = function(e) data.table(source_id = character(), path = character(), label = character(), notes = character())) })
   src_scanned <- function(sid) vapply(sid, function(k) file.exists(file.path(source_dir(CFG, k), "scan.rds")), NA)
   queued <- reactive({ s <- src_cfg(); if (nrow(s)) s[!src_scanned(source_id)] else s })
-  add_to_list <- function(p, sid = "") { p <- trim(p %||% "")
-    if (!nzchar(p) || !dir.exists(path.expand(p))) return(showNotification("That folder was not found", type = "error"))
+  add_to_list <- function(p, sid = "") { p <- typed_dir(p)
+    if (!nzchar(p)) return(showNotification("That folder was not found", type = "error"))
     p <- normalizePath(path.expand(p), winslash = "/"); s <- src_cfg()
     if (p %in% normalizePath(path.expand(s$path), winslash = "/", mustWork = FALSE)) return(showNotification("That folder is already in the list.", type = "message"))
     if (startsWith(paste0(normalizePath(path.expand(CFG$project_dir), winslash = "/", mustWork = FALSE), "/"), paste0(p, "/")))
       return(showNotification("The project folder is inside that folder: choose the folder that holds the flights.", type = "error"))
-    r <- tryCatch(add_source(load_configs(CFG), CFG, p, trim(sid %||% "")), error = function(e) { showNotification(conditionMessage(e), type = "error"); NULL })
+    r <- rs_checked(function() add_source(load_configs(CFG), CFG, p, trim(sid %||% "")), extra = p); if (isFALSE(r)) r <- NULL   # the new folder protected too
     if (!is.null(r)) src_bump(src_bump() + 1)
     !is.null(r) }
   scan_queued <- function() { q <- queued(); if (!nrow(q)) return(showNotification("No new folder in the list: add one first.", type = "warning"))
@@ -136,7 +143,7 @@
     if (!nzchar(new) || identical(new, old) || !old %in% s$source_id) return(src_bump(src_bump() + 1))
     if (src_scanned(old)) return(showNotification("A scanned source keeps its name.", type = "warning"))
     if (new %in% s$source_id) { src_bump(src_bump() + 1); return(showNotification(paste0("There is already a source called ", new, "."), type = "warning")) }
-    s[source_id == old, source_id := new]; write_cfg(s, CFG$project_dir, "sources", who = "Import"); src_bump(src_bump() + 1) })
+    s[source_id == old, source_id := new]; rs_checked(function() write_cfg(s, CFG$project_dir, "sources", who = "Import")); src_bump(src_bump() + 1) })
   # Remove from the Simple list: a waiting folder at once; a scanned one after a question (its flights leave the catalogue)
   sp_rm_id <- reactiveVal("")
   observeEvent(input$sp_rm, { sid <- input$sp_rm; if (run_busy()) return(showNotification("Wait for the scan or cancel it", type = "warning"))
@@ -148,7 +155,7 @@
   observeEvent(input$sp_rm_ok, { removeModal(); sid <- sp_rm_id(); sp_rm_id(""); if (!nzchar(sid)) return()
     r <- tryCatch(remove_source(CFG$project_dir, sid), error = function(e) { showNotification(paste("Not removed:", conditionMessage(e)), type = "error"); NULL })
     if (!is.null(r)) { reload(); src_bump(src_bump() + 1) } })
-  no_source <- function() { s <- tryCatch(load_configs(CFG)$sources, error = function(e) data.table())   # nothing to rescan or rebuild from yet
+  no_source <- function() { s <- tryCatch(read_configs(CFG)$sources, error = function(e) data.table())   # nothing to rescan or rebuild from yet
     if (nrow(s)) return(FALSE); showNotification("No source yet: add a drive or folder and scan it first.", type = "warning"); TRUE }
   observeEvent(input$s_rescan, if (!no_source()) start_scan("Rescanning drives", list()))
   observeEvent(input$s_build, if (!no_source()) start_scan("Rebuilding", list(scan = character()), done = "Catalogue rebuilt from the sources' last scans; no source was read.", verb = "Rebuild"))

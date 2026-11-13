@@ -113,4 +113,93 @@ testServer(ae$server, {
                  error = function(e) { cat(conditionMessage(e), "\n"); FALSE })
   check(ok && is.null(C()) && nrow(fl()) == 0, "first start with no catalogue: every page draws")
 })
+# ---- Add protects the folder it is adding; Missions link edits are checked first
+local({ tree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE, include.dirs = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f[!dir.exists(f)]))) }
+  notes <- character(); ae$showNotification <- function(ui, ...) { notes <<- c(notes, paste(as.character(ui), collapse = " ")); invisible() }
+  on.exit(rm("showNotification", envir = ae), add = TRUE)
+  U <- file.path(td, "add_unreg"); dir.create(U); writeLines("sentinel", file.path(U, "keep.txt")); u0 <- tree(U)
+  pa <- file.path(td, "add_linked"); dir.create(pa); file.symlink(U, file.path(pa, "config")); ae$CFG$project_dir <- pa
+  testServer(ae$server, { session$setInputs(s_path = U, s_id = "U"); session$setInputs(s_add = 1) })
+  check(identical(tree(U), u0) && any(grepl("Not changed", notes)), "Add with config/ linked into the folder being added: refused, the folder's files and hashes unchanged")
+  pc <- file.path(td, "miss_copy"); dir.create(pc); file.copy(list.files(proj, full.names = TRUE), pc, recursive = TRUE)
+  S <- file.path(td, "miss_arch"); file.rename(file.path(pc, "config"), S); file.symlink(S, file.path(pc, "config"))
+  sc <- fread(file = file.path(S, "sources.csv"), colClasses = "character"); sc <- rbind(sc, data.table(source_id = "self", path = normalizePath(S, winslash = "/")), fill = TRUE)
+  fwrite(sc, file.path(S, "sources.csv")); s0 <- tree(S); ae$CFG$project_dir <- pc; notes <- character()
+  had <- FALSE
+  testServer(ae$server, { id <- C()$links$flight_id[1]; session$setInputs(map_pick = id, `timeline-pick` = id); session$flushReact()
+    had <<- nrow(lk_cur()) > 0; session$setInputs(links_rows_selected = 1, l_reason = "x", l_confirm = 1) })
+  check(had && identical(tree(S), s0) && any(grepl("Not changed", notes)), "Missions Confirm with config/ linked into a saved source: refused, links.csv there keeps its bytes")
+})
+# ---- the Set-up table editor and the GNSS download write nothing they should not
+local({ tree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE, include.dirs = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f[!dir.exists(f)]))) }
+  notes <- character(); ae$showNotification <- function(ui, ...) { notes <<- c(notes, paste(as.character(ui), collapse = " ")); invisible() }
+  on.exit(rm("showNotification", envir = ae), add = TRUE)
+  pe <- file.path(td, "edit_copy"); dir.create(pe); file.copy(list.files(proj, full.names = TRUE), pe, recursive = TRUE)
+  Z <- file.path(td, "edit_arch"); file.rename(file.path(pe, "config"), Z); file.symlink(Z, file.path(pe, "config"))
+  sc <- fread(file = file.path(Z, "sources.csv"), colClasses = "character"); fwrite(rbind(sc, data.table(source_id = "self", path = normalizePath(Z, winslash = "/")), fill = TRUE), file.path(Z, "sources.csv"))
+  z0 <- tree(Z); ae$CFG$project_dir <- pe; f <- file.path(pe, "config", "sites.csv"); if (!file.exists(f)) fwrite(data.table(site = "A"), f); z0 <- tree(Z)
+  dirty_after <- NA
+  testServer(ae$editServer, args = list(id = "t", path = reactive(f), reload = reactive(0)), {
+    session$flushReact(); session$setInputs(tbl_cell_edit = list(row = 1, col = 0, value = "edited")); save(); dirty_after <<- dirty() })
+  check(identical(tree(Z), z0) && isTRUE(dirty_after) && any(grepl("Not saved", notes)) && !any(grepl("^Saved", notes)),
+        "Set-up table editor with config/ linked into a saved source: refused, the archive keeps its bytes, the edit stays unsaved, no success shown")
+  pg <- file.path(td, "gnss_proj"); dir.create(pg); file.copy(list.files(proj, full.names = TRUE), pg, recursive = TRUE); ae$CFG$project_dir <- pg
+  g0 <- tree(file.path(pg, "output")); dl <- NULL
+  testServer(ae$server, { dl <<- output$g_dl })
+  check(!is.null(dl) && identical(tree(file.path(pg, "output")), g0), "the GNSS download writes only the file downloaded: nothing in the project")
+})
+# ---- a folder named with a trailing space next to one without: Add and Scan take the one typed
+local({ Sys.setenv(OVID_RUN_SYNC = "1"); on.exit(Sys.setenv(OVID_RUN_SYNC = ""))
+  A <- file.path(td, "rs_test", "T7"); base <- file.path(td, "spaced"); dir.create(base)
+  for (n in c("archive", "archive ")) { d <- file.path(base, n); dir.create(d); file.copy(list.files(A, full.names = TRUE), d, recursive = TRUE)
+    writeLines(n, file.path(d, if (endsWith(n, " ")) "with_space.txt" else "without_space.txt")) }
+  spaced <- file.path(base, "archive "); exact <- normalizePath(spaced, winslash = "/")
+  pa <- file.path(td, "spaced_add"); ae$CFG$project_dir <- pa
+  testServer(ae$server, { session$setInputs(s_path = spaced, s_id = "SP"); session$setInputs(s_add = 1) })
+  sv <- ae$read_configs(ae$CFG)$sources$path
+  check(identical(sv, exact) && endsWith(sv, " "), "Add with a folder whose name ends in a space saves that folder exactly, not its unspaced sibling")
+  ps <- file.path(td, "spaced_scan"); ae$CFG$project_dir <- ps
+  testServer(ae$server, { session$setInputs(s_path = spaced, s_id = "SP"); session$setInputs(s_scan = 1); ended(session) })
+  sc <- readRDS(file.path(ps, "cache", "sources", "SP", "scan.rds")); sv <- ae$read_configs(ae$CFG)$sources$path
+  check(identical(sc$root, exact) && "with_space.txt" %in% basename(sc$files$rel) && !"without_space.txt" %in% basename(sc$files$rel) && identical(sv, exact),
+        "Scan with that folder reads it (its own file, not the sibling's) and the saved source reloads with the trailing space")
+  sf <- file.path(ps, "config", "sources.csv"); b0 <- readLines(sf, warn = FALSE)
+  testServer(ae$editServer, args = list(id = "t", path = reactive(sf), reload = reactive(0)), {
+    session$flushReact(); j <- which(names(data()) == "label") - 1L; session$setInputs(tbl_cell_edit = list(row = 1, col = j, value = "Spaced archive")); save(quiet = TRUE) })
+  sv <- ae$read_configs(ae$CFG)$sources; plugged <- NA; status <- ""
+  testServer(ae$server, { session$flushReact(); plugged <<- ae$sp_rs_plugged(C()$sources[source_id == "SP"]); session$setInputs(s_rescan = 1); ended(session) })
+  sc <- readRDS(file.path(ps, "cache", "sources", "SP", "scan.rds"))
+  check(identical(sv$path, exact) && sv$label == "Spaced archive" && grepl(paste0(basename(exact), ","), paste(readLines(sf, warn = FALSE), collapse = "\n"), fixed = TRUE) &&
+          isTRUE(plugged) && identical(sc$root, exact) && "with_space.txt" %in% basename(sc$files$rel),
+        "the label changed in the Set-up editor keeps the path byte for byte; Simple shows the source plugged in; a rescan reads the spaced folder, not its sibling")
+  pn <- file.path(td, "plain_add"); ae$CFG$project_dir <- pn
+  testServer(ae$server, { session$setInputs(s_path = paste0(file.path(base, "archive"), "  "), s_id = "P"); session$setInputs(s_add = 1) })
+  check(identical(ae$read_configs(ae$CFG)$sources$path, normalizePath(file.path(base, "archive"), winslash = "/")),
+        "an ordinary path pasted with stray spaces (no folder of that exact name) is still found")
+})
+# ---- the Sources page writes nothing when shown; a refused scan's callback removes nothing; a scan clears only its own staging
+local({ Sys.setenv(OVID_RUN_SYNC = "1"); on.exit(Sys.setenv(OVID_RUN_SYNC = ""))
+  A <- file.path(td, "rs_test", "T7"); tree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.files = TRUE, include.dirs = TRUE, full.names = TRUE)); c(f, unname(tools::md5sum(f[!dir.exists(f)]))) }
+  notes <- character(); ae$showNotification <- function(ui, ...) { notes <<- c(notes, paste(as.character(ui), collapse = " ")); invisible() }
+  on.exit(rm("showNotification", envir = ae), add = TRUE)
+  arch <- file.path(td, "guard_page_arch"); dir.create(arch); writeLines("sentinel", file.path(arch, "keep.txt")); t0 <- tree(arch)
+  pg <- file.path(td, "guard_page_proj"); dir.create(pg); file.symlink(arch, file.path(pg, "config")); ae$CFG$project_dir <- pg
+  testServer(ae$server, { session$flushReact(); for (o in c("src_list", "src_scan")) try(output[[o]], silent = TRUE); session$flushReact() })
+  check(identical(tree(arch), t0), "opening Sources with config/ linked into an archive writes nothing there (file list and hashes the same)")
+  S <- file.path(td, "guard_cb_src"); dir.create(S); file.copy(list.files(A, full.names = TRUE), S, recursive = TRUE)
+  pq <- file.path(td, "guard_cb_proj"); ae$CFG$project_dir <- pq; invisible(capture.output(ae$run_pipeline(ae$CFG, scan = S, source_id = "field")))
+  dir.create(file.path(S, "sources", "field"), recursive = TRUE); writeLines("partial", file.path(S, "sources", "field", "scan.rds.part")); p0 <- tools::md5sum(file.path(S, "sources", "field", "scan.rds.part"))
+  file.rename(file.path(pq, "cache"), file.path(pq, "cache_real")); file.symlink(S, file.path(pq, "cache")); notes <- character()
+  testServer(ae$server, { session$setInputs(s_rescan = 1); ended(session) })
+  check(identical(tools::md5sum(file.path(S, "sources", "field", "scan.rds.part")), p0) && any(grepl("failed", notes) & grepl("raw folder", notes)),
+        "a scan refused (cache/ linked into a saved source): the completion leaves scan.rds.part in the archive byte for byte, and the refusal is shown")
+  unlink(file.path(pq, "cache")); file.rename(file.path(pq, "cache_real"), file.path(pq, "cache")); unlink(file.path(S, "sources"), recursive = TRUE)
+  sd <- file.path(pq, "cache", "sources", "field"); good <- tools::md5sum(file.path(sd, "scan.rds")); writeLines("stale", file.path(sd, "scan.rds.part"))
+  testServer(ae$server, { scan_done("Scanning")(list(status = "cancelled", message = "")) })
+  check(file.exists(file.path(sd, "scan.rds.part")) && identical(tools::md5sum(file.path(sd, "scan.rds")), good),
+        "a cancelled scan's completion sweeps nothing: the last good scan and the staging file are as they were")
+  notes <- character(); testServer(ae$server, { session$setInputs(s_rescan = 1); ended(session) })
+  check(!file.exists(file.path(sd, "scan.rds.part")) && file.exists(file.path(sd, "scan.rds")) && any(grepl("done", notes)),
+        "the next scan, checked and locked, clears its stale staging file and keeps a good scan")
+})
 if (fails) { cat(fails, "test(s) failed\n"); quit(status = 1) } else cat("all app tests passed\n")
