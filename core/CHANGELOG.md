@@ -5,6 +5,12 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (2026-11-12, found by the first GitHub run on Linux).** Delete outputs now knows each folder by its creation time as well
+as its inode: on Linux a folder made just after another was removed can get the same inode, so a folder replaced while the
+Delete dialog was open was not noticed. Where a file system keeps no creation time, the time of the last change stands in.
+Tests: the raw-folder-only runs set their variables in the test's own process (`system2(env =)` cannot work on Windows), and
+the tests that start a second R process show what it printed when it fails. **Output changes:** none.
+
 **Fixed: review round of 2026-11-03 (core 1.16.0).** Delete outputs never follows a link: the plan refuses a linked or
 unsafe item (outside the project, in or around a raw folder) and is worked out again under the project lock, where a
 change since the dialog opened stops it. Project settings and set-up tables saved from a page go through the run's checks

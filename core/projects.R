@@ -174,7 +174,12 @@ project_delete_plan <- function(path, what = c("outputs", "project"), cfg = NULL
     for (r in roots) for (i in items) if (!nzchar(why) && path_overlap(i, r)) why <- paste0(tilde(i), " is in or around the raw folder ", tilde(r), ", so nothing is deleted.")
     if (!nzchar(why)) why <- tryCatch({ raw_boundary_check(q, roots); "" }, ovid_project_check = function(e) paste("Nothing is deleted:", conditionMessage(e)))
   }
-  sig <- paste(items, vapply(items, function(x) paste(fs::file_info(x)$inode, fs::file_info(x)$type), ""), collapse = "|")
+  # Each item by its inode, type and creation time: Linux (ext4) gives a folder made just after another was removed the
+  # same inode, so the inode alone does not show that a folder was replaced. Where no creation time is kept, the time of
+  # the last change stands in (a change since the list was shown then also stops the deletion, which is the safe side).
+  stamp <- function(x) { fi <- fs::file_info(x); t <- if (is.na(fi$birth_time)) fi$change_time else fi$birth_time
+    paste(fi$inode, fi$type, sprintf("%.6f", as.numeric(t))) }
+  sig <- paste(items, vapply(items, stamp, ""), collapse = "|")
   list(items = items, size = sum(vapply(items, function(i) if (dir.exists(i)) dir_bytes(i) else file.size(i) %|% 0, 0)), why = why, sig = sig)
 }
 # Deletes what the plan shows, under the project lock: the plan is worked out again there and must be the one the person saw

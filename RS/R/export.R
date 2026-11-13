@@ -25,7 +25,8 @@ viewer_share_preview <- function(dir) {
   f <- list.files(dir, pattern = "\\.csv$", full.names = TRUE)
   tabs <- rbindlist(lapply(f, function(x) { d <- fread(file = x, colClasses = "character", na.strings = NULL)
     data.table(file = basename(x), rows = nrow(d), columns = paste(names(d), collapse = ", ")) }), fill = TRUE)
-  absp <- "(^|[\\s\"'])(/(Users|home|Volumes|mnt|media|private|var)/|[A-Za-z]:[\\\\/])"
+  # the usual top folders of macOS and Linux (/tmp and /opt among them: Linux keeps temporary folders in /tmp), or a drive letter
+  absp <- "(^|[\\s\"'])(/(Users|home|Volumes|mnt|media|private|var|tmp|opt|srv|data|root|run|usr|net|scratch)/|[A-Za-z]:[\\\\/])"
   hits <- rbindlist(lapply(f, function(x) { d <- fread(file = x, colClasses = "character", na.strings = NULL)
     rbindlist(lapply(names(d), function(k) { v <- unique(d[[k]][grepl(absp, d[[k]], perl = TRUE)]); if (length(v)) data.table(file = basename(x), column = k, example = v[1], n = length(v)) })) }), fill = TRUE)
   page <- if (file.exists(file.path(dir, "index.html"))) paste(readLines(file.path(dir, "index.html"), warn = FALSE), collapse = "\n") else ""

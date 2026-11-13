@@ -23,9 +23,14 @@ for (app in apps) {
   if (!dir.exists(raw)) { skipped <- c(skipped, app); cat("  skip  ", app, ": no raw data (set OVID_TEST_RAW_", app, ")\n", sep = ""); next }
   home <- tempfile("ovid_home_"); dir.create(file.path(home, "Desktop"), recursive = TRUE)
   pipe <- list.files(file.path(here, app), "_pipeline\\.R$", full.names = TRUE)[1]
-  env <- c(paste0("HOME=", home), paste0(app, "_RAW_DIRS=", raw), paste0(app, "_NO_RUN=1"), paste0(app, "_PROJECT_DIR="), paste0(app, "_METADATA_DIR="))
+  # Set in this process and inherited by the child, then put back: system2(env =) puts "NAME=value" before the command,
+  # which Windows cannot run (as in run_all_tests.R). On Windows R finds "~" through R_USER, so that is set as well.
+  env <- setNames(c(home, raw, "1", "", ""), c("HOME", paste0(app, c("_RAW_DIRS", "_NO_RUN", "_PROJECT_DIR", "_METADATA_DIR"))))
+  if (.Platform$OS.type == "windows") env <- c(env, R_USER = home)
+  old <- Sys.getenv(names(env), unset = NA); do.call(Sys.setenv, as.list(env))
   out <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), c("-e", shQuote(sprintf("setwd(%s); source(%s); r <- tryCatch({ run_pipeline(); 'OK' }, error = function(e) paste('ERROR', conditionMessage(e))); cat('\\nRESULT', r, '\\n')",
-    deparse(dirname(pipe)), deparse(basename(pipe))))), stdout = TRUE, stderr = TRUE, env = env))
+    deparse(dirname(pipe)), deparse(basename(pipe))))), stdout = TRUE, stderr = TRUE))
+  for (k in names(old)) if (is.na(old[[k]])) Sys.unsetenv(k) else do.call(Sys.setenv, setNames(list(old[[k]]), k))
   res <- sub("^RESULT ", "", grep("^RESULT", out, value = TRUE)[1] %||% "no result")
   proj <- file.path(home, "Projects", "Ovid", "Projects", app, "project")
   check(sprintf("%s runs with only a raw folder (no metadata, no project folder): %s", app, trimws(res)), identical(trimws(res), "OK"))

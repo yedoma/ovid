@@ -7,6 +7,10 @@ for (.f in c("util", "convert", "audit", "config", "calibration", "table_rules",
 SERIAL_KEEP <- "alnum"; RES <- new.env(); RES$ok <- 0L; RES$fail <- character()
 check <- function(what, cond) { if (isTRUE(cond)) { RES$ok <- RES$ok + 1L; cat("  ok   ", what, "\n") } else { RES$fail <- c(RES$fail, what); cat("  FAIL ", what, "\n") } }
 t <- function(x) as.POSIXct(x, tz = "UTC")
+# What a child process printed (its stdout and stderr files), shown when it did not do what a test waited for, so a failure on
+# another system (GitHub's Windows runner) says why. The last 15 lines of each file that has any.
+show_child_output <- function(files) for (f in files[file.exists(files)]) { x <- readLines(f, warn = FALSE)
+  if (length(x)) cat("    ", basename(f), ":\n", paste0("      ", utils::tail(x, 15), "\n"), sep = "") }
 
 cat("deployment sheet: cleaning\n")
 ex <- fread(file.path(CORE_DIR, "templates", "metadata_example.csv"), colClasses = "character", na.strings = NULL)
@@ -174,12 +178,15 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
                "cat('leave', ok, '\\n', file = file.path(a[3], paste0('out_', Sys.getpid())), append = TRUE)"), child)
   race <- function(pd, n = 4, hold = 3) {             # n processes released at once; returns what each wrote
     sig <- file.path(base, basename(tempfile("sig"))); dir.create(sig)
-    for (i in seq_len(n)) system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(sig), hold), wait = FALSE, stdout = FALSE, stderr = FALSE)
+    for (i in seq_len(n)) system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(sig), hold), wait = FALSE,
+                                  stdout = file.path(sig, paste0("log_", i, ".txt")), stderr = file.path(sig, paste0("err_", i, ".txt")))
     t0 <- Sys.time(); while (length(list.files(sig, "^ready_")) < n && difftime(Sys.time(), t0, units = "secs") < 60) Sys.sleep(0.05)
     writeLines("", file.path(sig, "go"))
     t0 <- Sys.time(); while ((length(list.files(sig, "^out_")) < n || any(vapply(list.files(sig, "^out_", full.names = TRUE), function(f) { x <- readLines(f, warn = FALSE); x[1] != "refused" && length(x) < 2 }, NA))) &&
                              difftime(Sys.time(), t0, units = "secs") < 60) Sys.sleep(0.1)
-    vapply(list.files(sig, "^out_", full.names = TRUE), function(f) paste(readLines(f, warn = FALSE), collapse = " | "), "") }
+    out <- vapply(list.files(sig, "^out_", full.names = TRUE), function(f) paste(readLines(f, warn = FALSE), collapse = " | "), "")
+    if (length(out) < n) show_child_output(list.files(sig, "^(log|err)_", full.names = TRUE))   # a child that never answered: what it printed
+    out }
   pd1 <- file.path(base, "p1"); dir.create(pd1); r1 <- race(pd1)
   check("four processes asking for a free lock at once: exactly one enters, the others are refused, and the lock is gone after",
         length(r1) == 4 && sum(startsWith(r1, "enter")) == 1 && sum(r1 == "refused") == 3 && grepl("leave TRUE", r1[startsWith(r1, "enter")]) && !dir.exists(file.path(pd1, PROJECT_LOCK)))
@@ -225,10 +232,12 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
                "  writeLines('new A', file.path(o, 'A.csv')); writeLines('new B', file.path(o, 'B.csv')); writeLines('new', file.path(a[2], 'cache', 'run.rds'))",
                "  run_checkpoint('processing'); writeLines('new C', file.path(o, 'C.csv')) })"), child)
   mark <- file.path(base, "reached")                  # written by the child at the checkpoint, just before it is killed
-  run_child <- function(pd, at = "", what = "run") { unlink(mark)
-    system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(raw), shQuote(if (nzchar(at)) at else "none"), shQuote(mark), what),
-            stdout = FALSE, stderr = FALSE)
-    !nzchar(at) || identical(tryCatch(readLines(mark, warn = FALSE)[1], error = function(e) ""), at) }   # TRUE: the child reached the point (a launch error is not a crash)
+  run_child <- function(pd, at = "", what = "run") { unlink(mark); lg <- file.path(base, "child_out.txt"); le <- file.path(base, "child_err.txt")
+    st <- system2(rs, c("--vanilla", shQuote(child), shQuote(CORE_DIR), shQuote(pd), shQuote(raw), shQuote(if (nzchar(at)) at else "none"), shQuote(mark), what),
+                  stdout = lg, stderr = le)
+    ok <- !nzchar(at) || identical(tryCatch(readLines(mark, warn = FALSE)[1], error = function(e) ""), at)   # TRUE: the child reached the point (a launch error is not a crash)
+    if (!ok || (!nzchar(at) && !identical(as.integer(st), 0L))) show_child_output(c(lg, le))                 # it never got there, or a full run failed: what it printed
+    ok }
   inv <- function(pd) { d <- file.path(pd, "output"); f <- sort(list.files(d, recursive = TRUE, all.files = TRUE)); f <- f[!grepl("^logs/|^\\.run_", f)]
     setNames(unname(tools::md5sum(file.path(d, f))), f) }
   fresh <- function(name) { pd <- file.path(base, name); dir.create(file.path(pd, "output", "stations"), recursive = TRUE); dir.create(file.path(pd, "cache"))

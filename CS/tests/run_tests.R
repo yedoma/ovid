@@ -932,8 +932,12 @@ local({                                          # a run killed part way (real p
                "say <- function(...) invisible(NULL); cfg <- CFG; cfg$raw_dirs <- a[2]; cfg$project_dir <- a[3]; cfg$make_plots <- FALSE; cfg$write_stitched <- FALSE",
                "invisible(capture.output(run_pipeline(cfg)))"), ch)
   mark <- file.path(root, "kill_reached")              # written by the child at the checkpoint: a launch error is not taken for a crash
-  go <- function(pd, at = "") { unlink(mark); system2(rs, c("--vanilla", shQuote(ch), shQuote(.app), shQuote(kraw), shQuote(pd), shQuote(if (nzchar(at)) at else "none"), shQuote(mark)),
-                                                      stdout = FALSE, stderr = FALSE); !nzchar(at) || identical(readLines(mark, warn = FALSE)[1], at) }
+  go <- function(pd, at = "") { unlink(mark); lg <- file.path(root, "kill_out.txt"); le <- file.path(root, "kill_err.txt")
+    s <- system2(rs, c("--vanilla", shQuote(ch), shQuote(.app), shQuote(kraw), shQuote(pd), shQuote(if (nzchar(at)) at else "none"), shQuote(mark)), stdout = lg, stderr = le)
+    ok <- !nzchar(at) || identical(tryCatch(readLines(mark, warn = FALSE)[1], error = function(e) ""), at)
+    if (!ok || (!nzchar(at) && !identical(as.integer(s), 0L)))      # the child never got there, or a full run failed: what it printed (for another system's log)
+      for (f in c(lg, le)) { x <- if (file.exists(f)) readLines(f, warn = FALSE) else character(); if (length(x)) cat("    ", basename(f), ":\n", paste0("      ", utils::tail(x, 15), "\n"), sep = "") }
+    ok }
   st <- function(pd) { f <- sort(list.files(file.path(pd, "output", "stations"), full.names = TRUE)); setNames(unname(tools::md5sum(f)), basename(f)) }
   ref <- file.path(root, "kill_ref"); kp <- file.path(root, "kill_proj")
   go(ref); go(kp); first <- st(kp)

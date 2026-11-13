@@ -5,6 +5,10 @@ has would come out differently, and why. Entries before October 2026 are taken f
 
 ## Unreleased
 
+**Fixed (2026-11-12, found by the first GitHub run on Linux).** The share preview also finds paths under `/tmp`, `/opt`, `/srv`,
+`/data`, `/root`, `/run`, `/usr`, `/net` and `/scratch`; before, a Linux path in `/tmp` was not reported. **Output changes:**
+none (the preview only reports).
+
 **Fixed: review round of 2026-11-03.** Source paths are kept exactly in the Set-up editor, the catalogue and Simple's
 source status (a folder name may end in a space). Removing a source writes every changed table beside its place first
 and renames them in one journalled step, finished by the next removal or scan if stopped. The viewer's zip and page come
