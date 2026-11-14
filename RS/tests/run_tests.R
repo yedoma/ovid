@@ -759,7 +759,7 @@ local({                                         # saved sources, scan folders an
   dir.create(file.path(q2, "output"), recursive = TRUE); file.symlink(N, file.path(q2, "output", "audit"))
   e <- tryCatch(run_pipeline(list(project_dir = q2), scan = N), error = function(e) e)
   check(inherits(e, "ovid_project_check") && readLines(file.path(N, "setup_check.csv")) == "sentinel", "... and so does a newly selected source")
-  unlink(file.path(q, "output", "audit")); file.rename(S, paste0(S, "_away"))
+  link_unlink(file.path(q, "output", "audit")); file.rename(S, paste0(S, "_away"))
   r <- tryCatch(run_pipeline(list(project_dir = q), scan = character()), error = function(e) e)
   check(!inherits(r, "error") && nrow(r$flights) > 0, "with the saved source unplugged, the catalogue is still rebuilt from its last scan")
   file.rename(paste0(S, "_away"), S)
@@ -785,7 +785,7 @@ local({                                         # saved sources, scan folders an
   e <- tryCatch(remove_source(q, "G"), error = function(e) e)
   check(inherits(e, "ovid_project_check") && identical(tools::md5sum(file.path(S, "flights.csv")), f0) && identical(tools::md5sum(file.path(q, "config", "sources.csv")), s0),
         "Remove source with output/catalogue linked into the saved source: refused; flights.csv in the archive and sources.csv keep their bytes")
-  unlink(catd); file.rename(paste0(catd, "_real"), catd); unlink(file.path(S, "flights.csv"))
+  link_unlink(catd); file.rename(paste0(catd, "_real"), catd); unlink(file.path(S, "flights.csv"))
   r <- remove_source(q, "G")
   check(!"G" %in% fread(file = file.path(q, "config", "sources.csv"), colClasses = "character")$source_id && r$flights > 0, "... and a normal removal still works") })
 local({                                         # removing a source: all tables or none, or finished on the next try

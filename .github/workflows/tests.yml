@@ -57,4 +57,15 @@ jobs:
         shell: Rscript {0}
 
       - name: Run all tests
+        env:
+          OVID_TEST_LOGS: ${{ runner.temp }}
         run: Rscript run_all_tests.R
+
+      # every suite's whole log, child processes' output included (the summary above shows only the FAIL lines)
+      - name: Keep the test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}
+          path: ${{ runner.temp }}/ovid_tests_*/
+          if-no-files-found: ignore

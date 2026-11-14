@@ -253,6 +253,32 @@ settings_save <- function(file, x) {
   invisible(s)
 }
 
+# ---- renames and folder links on Windows ---------------------------------------------------------------------------------------
+# Windows refuses to rename a file, or a folder holding one, while another program has it open, and the virus scanner and the
+# search indexer open each new file for a moment just after it is written. file_move() tries again, for up to about 2.5 s,
+# but only while the source is still there and the target is not: a target that exists is a real refusal (a lock someone else
+# holds), answered at once as before. Elsewhere it is one plain file.rename(). TRUE when renamed.
+file_move <- function(from, to, tries = if (.Platform$OS.type == "windows") 8L else 1L) {
+  for (k in seq_len(tries)) {
+    if (isTRUE(suppressWarnings(file.rename(from, to)))) return(TRUE)
+    if (k == tries || !file.exists(from) || file.exists(to)) return(FALSE)
+    Sys.sleep(0.02 * 2^(k - 1))
+  }
+  FALSE
+}
+# Windows: R's unlink() removes a folder link made as a junction but not one made as a symbolic link ("cannot delete reparse
+# point"). rmdir removes either kind and never what it points to (on a real folder that is not empty it does nothing).
+# Elsewhere a plain unlink(), which removes the link itself. TRUE when the link is gone.
+link_unlink <- function(path) {
+  if (.Platform$OS.type == "windows" && dir.exists(path))
+    suppressWarnings(system2("cmd", c("/c", "rmdir", shQuote(gsub("/", "\\\\", path), type = "cmd")), stdout = FALSE, stderr = FALSE))
+  else unlink(path)
+  invisible(!file.exists(path))
+}
+# TRUE for a folder that is itself a link or junction (Windows), judged as path_links() in manifest.R judges one
+dir_link <- function(path) dir.exists(path) && tolower(normalizePath(path, winslash = "/", mustWork = FALSE)) !=
+  tolower(file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE), basename(path)))
+
 # ---- a run in the background (core runner.R) -------------------------------------------------------------------------------
 # A run started from an app goes on in its own R process; Cancel there leaves a flag file (option ovid.cancel_file). The run
 # looks for it at each message (say) and each item (run_tick), so it stops between steps, never in the middle of writing a

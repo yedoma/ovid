@@ -33,7 +33,7 @@ if ("--changed" %in% flags) {
 
 rscript <- file.path(R.home("bin"), "Rscript")
 # In the system temp folder, not R's own tempdir(), which R deletes on exit and would take the logs with it.
-log_dir <- file.path(dirname(tempdir()), paste0("ovid_tests_", format(Sys.time(), "%Y%m%d_%H%M%S")))
+log_dir <- file.path(Sys.getenv("OVID_TEST_LOGS", dirname(tempdir())), paste0("ovid_tests_", format(Sys.time(), "%Y%m%d_%H%M%S")))   # OVID_TEST_LOGS: GitHub keeps them
 dir.create(log_dir, recursive = TRUE)
 
 # One row per suite: where it runs from, which script, and its arguments. Each app's tests start in the app folder.
