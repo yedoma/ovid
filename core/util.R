@@ -253,18 +253,18 @@ settings_save <- function(file, x) {
   invisible(s)
 }
 
-# ---- renames and folder links on Windows ---------------------------------------------------------------------------------------
-# Windows refuses to rename a file, or a folder holding one, while another program has it open, and the virus scanner and the
-# search indexer open each new file for a moment just after it is written. file_move() tries again, for up to about 2.5 s,
-# but only while the source is still there and the target is not: a target that exists is a real refusal (a lock someone else
-# holds), answered at once as before. Elsewhere it is one plain file.rename(). TRUE when renamed.
-file_move <- function(from, to, tries = if (.Platform$OS.type == "windows") 8L else 1L) {
-  for (k in seq_len(tries)) {
-    if (isTRUE(suppressWarnings(file.rename(from, to)))) return(TRUE)
-    if (k == tries || !file.exists(from) || file.exists(to)) return(FALSE)
-    Sys.sleep(0.02 * 2^(k - 1))
-  }
-  FALSE
+# ---- links on Windows -----------------------------------------------------------------------------------------------------------
+# A link or junction at path (vectorised). R on Windows has no Sys.readlink() (it always answers ""), so there a path is a link
+# when it resolves somewhere other than its own folder plus its name, or when its folder lists it but it does not exist (a link
+# whose target is gone). Elsewhere Sys.readlink() says.
+is_link <- function(path) {
+  if (!length(path)) return(logical())
+  if (.Platform$OS.type != "windows") { r <- Sys.readlink(path); return(!is.na(r) & nzchar(r)) }
+  there <- file.exists(path); out <- logical(length(path))
+  own <- file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE), basename(path))
+  out[there] <- tolower(normalizePath(path[there], winslash = "/", mustWork = FALSE)) != tolower(own[there])
+  gone <- which(!there); out[gone] <- vapply(path[gone], function(p) basename(p) %in% list.files(dirname(p), all.files = TRUE, no.. = TRUE), NA, USE.NAMES = FALSE)
+  out
 }
 # Windows: R's unlink() removes a folder link made as a junction but not one made as a symbolic link ("cannot delete reparse
 # point"). rmdir removes either kind and never what it points to (on a real folder that is not empty it does nothing).
@@ -275,9 +275,6 @@ link_unlink <- function(path) {
   else unlink(path)
   invisible(!file.exists(path))
 }
-# TRUE for a folder that is itself a link or junction (Windows), judged as path_links() in manifest.R judges one
-dir_link <- function(path) dir.exists(path) && tolower(normalizePath(path, winslash = "/", mustWork = FALSE)) !=
-  tolower(file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE), basename(path)))
 
 # ---- a run in the background (core runner.R) -------------------------------------------------------------------------------
 # A run started from an app goes on in its own R process; Cancel there leaves a flag file (option ovid.cancel_file). The run

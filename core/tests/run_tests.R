@@ -328,9 +328,9 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
         grepl("belongs to another run", n1) && length(rv) == 1 && readLines(file.path(pd, rv, "stations", "A.csv")) == "old A" &&
           readLines(file.path(pd, "output", "stations", "A.csv")) == "new A")
   pd <- fresh("logrename"); before <- inv(pd); run_child(pd, "processing")       # the log's temporary file written, its rename refused
-  real_move <- file_move; file_move <- function(from, to, ...) if (endsWith(to, ".log") && endsWith(from, ".log.part")) FALSE else real_move(from, to, ...)
+  real_rename <- file.rename; file.rename <- function(from, to) if (endsWith(to, ".log") && endsWith(from, ".log.part")) FALSE else real_rename(from, to)
   n1 <- output_recover(pd, list(raw_dirs = raw)); part <- list.files(file.path(pd, "output", "logs"), "\\.part$"); lgf <- list.files(file.path(pd, OUTPUT_FAILED, "logs"), full.names = TRUE)
-  m0 <- unname(tools::md5sum(lgf)); rm(file_move)
+  m0 <- unname(tools::md5sum(lgf)); rm(file.rename)
   n2 <- output_recover(pd, list(raw_dirs = raw)); n3 <- output_recover(pd, list(raw_dirs = raw))
   check("a log rename refused after its temporary file was written: the retry publishes the whole log, removes the temporary file and finishes (no false mismatch)",
         grepl("log could not be copied", n1) && length(part) == 1 && grepl("put back", n2) && !grepl("does not match", n2) && !nzchar(n3) && identical(inv(pd), before) &&
@@ -426,10 +426,10 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
   check("output/ holding a link to a file elsewhere: the run does not start (a copy could not undo a same-size edit through it); the file is unchanged",
         grepl("holds links to files elsewhere", r) && grepl("stations/E.csv", r) && readLines(ext) == "ext 1" && !leftovers(pd))
   pd <- fresh("k4"); before <- inv(pd); run_child(pd, "processing")
-  real_move <- file_move; n <- 0L                                                 # every rename in a restore goes through file_move()
-  file_move <- function(from, to, ...) { if (basename(to) == OUTPUT_FAILED) { n <<- n + 1L; return(FALSE) }; real_move(from, to, ...) }
+  real_rename <- file.rename; n <- 0L
+  file.rename <- function(from, to) { if (basename(to) == OUTPUT_FAILED) { n <<- n + 1L; return(FALSE) }; real_rename(from, to) }
   note <- output_recover(pd); kept_ok <- dir.exists(file.path(pd, OUTPUT_KEPT)) && identical(journal_read(pd)$phase, "restoring") && grepl("held open", note)
-  rm(file_move); note2 <- output_recover(pd)
+  rm(file.rename); note2 <- output_recover(pd)
   check("putting back fails (a file held open): both copies stay and say so; the next try puts it back",
         n == 1 && grepl("could not be put back yet", note) && kept_ok && grepl("put back", note2) && identical(inv(pd), before) && !leftovers(pd))
   pd <- fresh("legacy"); dir.create(file.path(pd, OUTPUT_KEPT)); file.copy(file.path(pd, "output", "stations"), file.path(pd, OUTPUT_KEPT), recursive = TRUE)

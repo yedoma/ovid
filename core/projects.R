@@ -128,8 +128,8 @@ project_duplicate <- function(path, name, others = character(), dest = NULL, set
 # One folder or file to the Trash: a Mac's own disk to ~/.Trash, another drive through the Finder, Windows to the Recycle Bin,
 # Linux through gio. TRUE when it went; otherwise nothing is deleted.
 to_trash <- function(path) {                                       # the item itself, never what a link at that place points to
-  p <- file.path(path_norm(dirname(path)), basename(sub("[/\\\\]+$", "", path))); if (!file.exists(p) && !nzchar(Sys.readlink(p) %|% "")) return(TRUE)
-  if (nzchar(Sys.readlink(p) %|% "")) return(FALSE)                                # a link: refused (the plan says so first)
+  p <- file.path(path_norm(dirname(path)), basename(sub("[/\\\\]+$", "", path))); if (!file.exists(p) && !is_link(p)) return(TRUE)
+  if (is_link(p)) return(FALSE)                                # a link: refused (the plan says so first)
   td <- getOption("ovid.trash_dir"); if (!is.null(td)) { dir.create(td, showWarnings = FALSE)            # tests: a folder of their own
     return(file.rename(p, file.path(td, paste0(basename(p), "_", as.integer(runif(1, 1, 1e9)))))) }
   os <- Sys.info()[["sysname"]]
@@ -162,8 +162,8 @@ project_delete_plan <- function(path, what = c("outputs", "project"), cfg = NULL
     if (!nzchar(why) && length(other)) why <- paste0("The folder also holds things Ovid did not make (", paste(utils::head(other, 3), collapse = ", "), "): delete them yourself first, or delete only the outputs.")
     items <- q }
   else items <- file.path(q, c("output", "cache", OUTPUT_KEPT, OUTPUT_FAILED))
-  linked <- function(x) nzchar(Sys.readlink(x) %|% "") || (dir.exists(x) && tolower(path_norm(x)) != tolower(file.path(path_norm(dirname(x)), basename(x))))
-  items <- items[file.exists(items) | vapply(items, function(x) nzchar(Sys.readlink(x) %|% ""), NA)]
+  linked <- function(x) is_link(x) || (dir.exists(x) && tolower(path_norm(x)) != tolower(file.path(path_norm(dirname(x)), basename(x))))
+  items <- items[file.exists(items) | is_link(items)]
   if (!nzchar(why)) {
     lk <- items[vapply(items, linked, NA)]
     if (length(lk)) why <- paste0(paste(tilde(lk), collapse = ", "), if (length(lk) == 1) " is a link" else " are links", " to ", paste(tilde(vapply(lk, path_norm, "")), collapse = ", "),
