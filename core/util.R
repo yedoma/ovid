@@ -254,16 +254,26 @@ settings_save <- function(file, x) {
 }
 
 # ---- links on Windows -----------------------------------------------------------------------------------------------------------
-# A link or junction at path (vectorised). R on Windows has no Sys.readlink() (it always answers ""), so there a path is a link
-# when it resolves somewhere other than its own folder plus its name, or when its folder lists it but it does not exist (a link
-# whose target is gone). Elsewhere Sys.readlink() says.
+# A link or junction at path (vectorised). R on Windows has no Sys.readlink() (it always answers ""), and neither file.exists()
+# nor normalizePath() can tell a link whose target is gone from a file, so there Windows itself is asked: `dir /a:l` lists every
+# reparse point (symbolic links and junctions, to files or folders, their targets there or not), one call per folder. A path
+# that resolves somewhere other than its own folder plus its name counts too. Both can only find more links, never fewer.
+# Elsewhere Sys.readlink() says.
+win_links <- function(dir, recursive = FALSE) {                      # Windows: the reparse points in dir (full paths, "/"), or under it
+  if (!dir.exists(dir)) return(character())
+  w <- gsub("/", "\\\\", sub("[/\\\\]+$", "", dir))
+  out <- suppressWarnings(system2("cmd", c("/c", paste0("chcp 65001 >nul & dir /b /a:l", if (recursive) " /s", " ", shQuote(w, type = "cmd"))), stdout = TRUE, stderr = FALSE))
+  out <- out[nzchar(out)]; Encoding(out) <- "UTF-8"
+  if (!length(out)) return(character())
+  gsub("\\\\", "/", if (recursive) out else file.path(w, out))
+}
 is_link <- function(path) {
   if (!length(path)) return(logical())
   if (.Platform$OS.type != "windows") { r <- Sys.readlink(path); return(!is.na(r) & nzchar(r)) }
-  there <- file.exists(path); out <- logical(length(path))
-  own <- file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE), basename(path))
-  out[there] <- tolower(normalizePath(path[there], winslash = "/", mustWork = FALSE)) != tolower(own[there])
-  gone <- which(!there); out[gone] <- vapply(path[gone], function(p) basename(p) %in% list.files(dirname(p), all.files = TRUE, no.. = TRUE), NA, USE.NAMES = FALSE)
+  d <- dirname(path); out <- logical(length(path))
+  for (u in unique(d)) { i <- which(d == u); out[i] <- tolower(basename(path[i])) %in% tolower(basename(win_links(u))) }
+  there <- file.exists(path); own <- file.path(normalizePath(d, winslash = "/", mustWork = FALSE), basename(path))
+  out[there] <- out[there] | tolower(normalizePath(path[there], winslash = "/", mustWork = FALSE)) != tolower(own[there])
   out
 }
 # Windows: R's unlink() removes a folder link made as a junction but not one made as a symbolic link ("cannot delete reparse

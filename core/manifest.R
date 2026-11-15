@@ -213,9 +213,9 @@ RAW_LINKS_MAX <- 2000L; RAW_LINK_DEPTH <- 8L
 path_links <- function(dir) {                                        # links and junctions under dir (not followed): link -> resolved target ("" if unresolved)
   if (!dir.exists(dir)) return(character())
   if (.Platform$OS.type == "windows") {
-    d <- list.dirs(dir, recursive = TRUE, full.names = TRUE)[-1]; f <- list.files(dir, recursive = TRUE, full.names = TRUE, all.files = TRUE)
+    d <- list.dirs(dir, recursive = TRUE, full.names = TRUE)[-1]
     own <- file.path(normalizePath(dirname(d), winslash = "/", mustWork = FALSE), basename(d))
-    lk <- c(d[tolower(normalizePath(d, winslash = "/", mustWork = FALSE)) != tolower(own)], f[is_link(f)])
+    lk <- unique(c(d[tolower(normalizePath(d, winslash = "/", mustWork = FALSE)) != tolower(own)], win_links(dir, recursive = TRUE)))   # one dir /s for every file and folder link
   } else {
     lk <- suppressWarnings(system2("find", c("-P", shQuote(path.expand(dir)), "-type", "l"), stdout = TRUE, stderr = FALSE))
     if (!is.null(attr(lk, "status"))) project_stop("The links in ", tilde(path_norm(dir)), " could not be listed, so the run cannot check that it stays out of the raw folders. Nothing was changed.")

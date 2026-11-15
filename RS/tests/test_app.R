@@ -149,6 +149,7 @@ local({ tree <- function(d) { f <- sort(list.files(d, recursive = TRUE, all.file
   check(!is.null(dl) && identical(tree(file.path(pg, "output")), g0), "the GNSS download writes only the file downloaded: nothing in the project")
 })
 # ---- a folder named with a trailing space next to one without: Add and Scan take the one typed
+if (.Platform$OS.type == "windows") cat("skip  folders named with a trailing space next to one without: Windows drops the space, so the two cannot both exist\n") else
 local({ Sys.setenv(OVID_RUN_SYNC = "1"); on.exit(Sys.setenv(OVID_RUN_SYNC = ""))
   A <- file.path(td, "rs_test", "T7"); base <- file.path(td, "spaced"); dir.create(base)
   for (n in c("archive", "archive ")) { d <- file.path(base, n); dir.create(d); file.copy(list.files(A, full.names = TRUE), d, recursive = TRUE)
