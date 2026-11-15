@@ -458,6 +458,8 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
   pd <- fresh("danglingmark"); run_child(pd, "processing"); unlink(file.path(pd, PROJECT_MARK)); file.symlink(file.path(raw2, "nothere.txt"), file.path(pd, PROJECT_MARK))
   t0 <- rtree(raw2); k0 <- rtree(file.path(pd, OUTPUT_KEPT))
   note <- output_recover(pd, list(raw_dirs = raw2))
+  if (!grepl("was not put back", note) || file.exists(file.path(raw2, "nothere.txt")))
+    cat("    recovery said:", note, "\n    marker is a link:", is_link(file.path(pd, PROJECT_MARK)), " links found:", names(path_links(pd)), "\n    raw folder holds:", list.files(raw2, all.files = TRUE, no.. = TRUE), "\n")
   check("start-up recovery with .ovid_project linked to a missing file in a raw folder refuses; nothing is made in the raw folder; the copies stay",
         grepl("was not put back", note) && identical(rtree(raw2), t0) && !file.exists(file.path(raw2, "nothere.txt")) && identical(rtree(file.path(pd, OUTPUT_KEPT)), k0))
   rawcsv <- file.path(raw2, "a.csv"); extf <- file.path(base, "ext_hard.csv"); file.link(rawcsv, extf); h0 <- tools::md5sum(rawcsv)

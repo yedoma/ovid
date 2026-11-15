@@ -810,7 +810,7 @@ local({                                         # removing a source: all tables 
           !sid %in% fl$source_id && all(lk$flight_id %in% fl$flight_id), "a rename stopped part way is finished by the next scan: no source, flight or link of it is left dangling")
 })
 local({                                         # the shareable viewer shows project values as text and leaves local folders out by default
-  hs <- file.path(tmp, "share_<i>src"); dir.create(hs); file.copy(list.files(A, full.names = TRUE), hs, recursive = TRUE)
+  hs <- file.path(tmp, if (.Platform$OS.type == "windows") "share_&src" else "share_<i>src"); dir.create(hs); file.copy(list.files(A, full.names = TRUE), hs, recursive = TRUE)   # Windows forbids < and > in names
   qv <- file.path(tmp, "share_proj"); invisible(capture.output(r0 <- run_pipeline(list(project_dir = qv), scan = hs, source_id = "H")))
   cf <- read_cfg(file.path(qv, "config", "flights.csv")); r0$links <- fread(file = file.path(qv, "output", "catalogue", "links.csv"), colClasses = "character")
   id <- r0$flights$flight_id[1]; evil <- "<img src=x onerror=\"window.PWN=1\">"
