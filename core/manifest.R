@@ -221,7 +221,10 @@ path_links <- function(dir) {                                        # links and
     if (!is.null(attr(lk, "status"))) project_stop("The links in ", tilde(path_norm(dir)), " could not be listed, so the run cannot check that it stays out of the raw folders. Nothing was changed.")
   }
   if (length(lk) > RAW_LINKS_MAX) project_stop("The folder ", tilde(path_norm(dir)), " holds more than ", RAW_LINKS_MAX, " links; the run does not check that many. Nothing was changed.")
-  setNames(ifelse(file.exists(lk), normalizePath(lk, winslash = "/", mustWork = FALSE), ""), lk)
+  tg <- ifelse(file.exists(lk), normalizePath(lk, winslash = "/", mustWork = FALSE), "")
+  if (.Platform$OS.type == "windows" && length(lk)) {                # a link that "resolves" to its own place did not resolve: its target is gone
+    own <- file.path(normalizePath(dirname(lk), winslash = "/", mustWork = FALSE), basename(lk)); tg[tolower(tg) == tolower(own)] <- "" }
+  setNames(tg, lk)
 }
 raw_boundary_check <- function(project_dir, raw) {
   pd <- path_norm(project_dir); raw <- raw[nzchar(raw)]; todo <- pd; seen <- tolower(pd); depth <- 0L; scanned <- pd   # the real folder: a linked project root is scanned too

@@ -194,7 +194,7 @@ local({ Sys.setenv(OVID_RUN_SYNC = "1"); on.exit(Sys.setenv(OVID_RUN_SYNC = ""))
   testServer(ae$server, { session$setInputs(s_rescan = 1); ended(session) })
   check(identical(tools::md5sum(file.path(S, "sources", "field", "scan.rds.part")), p0) && any(grepl("failed", notes) & grepl("raw folder", notes)),
         "a scan refused (cache/ linked into a saved source): the completion leaves scan.rds.part in the archive byte for byte, and the refusal is shown")
-  unlink(file.path(pq, "cache")); file.rename(file.path(pq, "cache_real"), file.path(pq, "cache")); unlink(file.path(S, "sources"), recursive = TRUE)
+  ae$link_unlink(file.path(pq, "cache")); file.rename(file.path(pq, "cache_real"), file.path(pq, "cache")); unlink(file.path(S, "sources"), recursive = TRUE)
   sd <- file.path(pq, "cache", "sources", "field"); good <- tools::md5sum(file.path(sd, "scan.rds")); writeLines("stale", file.path(sd, "scan.rds.part"))
   testServer(ae$server, { scan_done("Scanning")(list(status = "cancelled", message = "")) })
   check(file.exists(file.path(sd, "scan.rds.part")) && identical(tools::md5sum(file.path(sd, "scan.rds")), good),
