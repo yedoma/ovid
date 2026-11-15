@@ -611,7 +611,7 @@ local({ for (.f in c("cache", "manifest", "projects")) source(file.path(CORE_DIR
   file.rename(file.path(pr, "output"), file.path(pr, "output_old")); file.symlink(arch, file.path(pr, "output")); n0 <- trash_n()   # changed after the dialog opened
   e <- tryCatch(project_delete(pr, "outputs", expect = pl$sig), error = function(e) e)
   check("a link put in place after the dialog opened: the deletion under the lock sees it and deletes nothing", ok_before && inherits(e, "ovid_project_check") && identical(inv(), a0) && trash_n() == n0)
-  unlink(file.path(pr, "output")); file.rename(file.path(pr, "output_old"), file.path(pr, "output")); pl <- project_delete_plan(pr, "outputs")
+  link_unlink(file.path(pr, "output")); file.rename(file.path(pr, "output_old"), file.path(pr, "output")); pl <- project_delete_plan(pr, "outputs")
   pr2 <- file.path(root, "del_swap"); dir.create(file.path(pr2, "output"), recursive = TRUE); writeLines("app: TEST", file.path(pr2, PROJECT_MARK)); pl2 <- project_delete_plan(pr2, "outputs")
   unlink(file.path(pr2, "output"), recursive = TRUE); dir.create(file.path(pr2, "output")); e2 <- tryCatch(project_delete(pr2, "outputs", expect = pl2$sig), error = function(e) e)
   project_delete(pr, "outputs", expect = pl$sig)
