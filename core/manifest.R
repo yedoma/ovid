@@ -498,7 +498,7 @@ disk_check <- function(project_dir) {
 # next start makes of it; OVID_TEST_KILL_MARK names a file written first, so the test knows the point was reached.
 run_checkpoint <- function(name) if (identical(Sys.getenv("OVID_TEST_KILL_AT"), name)) {
   mk <- Sys.getenv("OVID_TEST_KILL_MARK"); if (nzchar(mk)) writeLines(name, mk)
-  tools::pskill(Sys.getpid(), tools::SIGKILL) }
+  tools::pskill(Sys.getpid(), if (is.na(tools::SIGKILL)) tools::SIGTERM else tools::SIGKILL) }   # Windows has no SIGKILL (NA, which kills nothing); its SIGTERM is TerminateProcess
 journal_read <- function(pd) { f <- file.path(pd, RUN_JOURNAL); if (!file.exists(f)) return(NULL)
   # safe: a journal that cannot be read is treated as missing (the copy, if any, is then kept for review)
   x <- tryCatch(readLines(f, warn = FALSE), error = function(e) character()); if (!length(x)) return(NULL)

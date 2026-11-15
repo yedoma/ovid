@@ -187,13 +187,15 @@ local({ for (.f in c("cache", "manifest")) source(file.path(CORE_DIR, paste0(.f,
     out <- vapply(list.files(sig, "^out_", full.names = TRUE), function(f) paste(readLines(f, warn = FALSE), collapse = " | "), "")
     if (length(out) < n) show_child_output(list.files(sig, "^(log|err)_", full.names = TRUE))   # a child that never answered: what it printed
     out }
+  said <- function(r, pd) cat("    each process said:", if (length(r)) paste0("[", r, "]") else "(nothing)", "\n    left in the project:", list.files(pd, all.files = TRUE, no.. = TRUE), "\n")
   pd1 <- file.path(base, "p1"); dir.create(pd1); r1 <- race(pd1)
+  if (!(length(r1) == 4 && sum(startsWith(r1, "enter")) == 1 && sum(r1 == "refused") == 3)) said(r1, pd1)
   check("four processes asking for a free lock at once: exactly one enters, the others are refused, and the lock is gone after",
         length(r1) == 4 && sum(startsWith(r1, "enter")) == 1 && sum(r1 == "refused") == 3 && grepl("leave TRUE", r1[startsWith(r1, "enter")]) && !dir.exists(file.path(pd1, PROJECT_LOCK)))
   dead <- as.integer(system2(rs, c("--vanilla", "-e", shQuote("cat(Sys.getpid())")), stdout = TRUE))
   pd2 <- file.path(base, "p2"); dir.create(file.path(pd2, PROJECT_LOCK), recursive = TRUE)
   writeLines(c(paste0("pid: ", dead), paste0("host: ", Sys.info()[["nodename"]]), "started: earlier", "token: old"), file.path(pd2, PROJECT_LOCK, "run.txt"))
-  r2 <- race(pd2)
+  r2 <- race(pd2); if (!(length(r2) == 4 && sum(startsWith(r2, "enter")) == 1 && sum(r2 == "refused") == 3)) said(r2, pd2)
   check("four processes taking over a lock whose process has ended: exactly one enters", length(r2) == 4 && sum(startsWith(r2, "enter")) == 1 && sum(r2 == "refused") == 3)
   pd3 <- file.path(base, "p3"); dir.create(pd3)
   a <- project_lock(list(project_dir = pd3))

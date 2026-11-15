@@ -774,12 +774,15 @@ local({                                         # saved sources, scan folders an
     q4 <- file.path(tmp, paste0("guard_space_", how)); dir.create(q4); file.symlink(sp, file.path(q4, "config"))
     e <- tryCatch(if (how == "positional") run_pipeline(list(project_dir = q4), sp) else run_pipeline(list(project_dir = q4), scan = sp), error = function(e) e)
     check(inherits(e, "ovid_project_check") && identical(tree(sp), t0), paste0("a ", how, " scan of a folder named with a trailing space, config/ linked into it: refused, nothing written there")) }
-  sp <- file.path(tmp, "archive_ok "); dir.create(sp); file.copy(list.files(A, full.names = TRUE), sp, recursive = TRUE); q5 <- file.path(tmp, "guard_space_ok")
-  invisible(capture.output(run_pipeline(list(project_dir = q5), scan = sp, source_id = "SP")))
-  saved <- load_configs(modifyList(CFG, list(project_dir = q5)))$sources$path
-  file.rename(sp, paste0(tmp, "/archive_away")); r5 <- tryCatch(run_pipeline(list(project_dir = q5), scan = character()), error = function(e) e); file.rename(paste0(tmp, "/archive_away"), sp)
-  check(identical(saved, normalizePath(sp, winslash = "/", mustWork = FALSE)) && endsWith(saved, " ") && !inherits(r5, "error") && nrow(r5$flights) > 0,
-        "a source whose folder name ends in a space is saved and reloaded exactly, and rebuilt from its last scan while unplugged")
+  if (.Platform$OS.type == "windows") say("skip  a source folder named with a trailing space: Windows drops the space from folder names, so there is no such folder to save", col = "fg4")
+  else {
+    sp <- file.path(tmp, "archive_ok "); dir.create(sp); file.copy(list.files(A, full.names = TRUE), sp, recursive = TRUE); q5 <- file.path(tmp, "guard_space_ok")
+    invisible(capture.output(run_pipeline(list(project_dir = q5), scan = sp, source_id = "SP")))
+    saved <- load_configs(modifyList(CFG, list(project_dir = q5)))$sources$path
+    file.rename(sp, paste0(tmp, "/archive_away")); r5 <- tryCatch(run_pipeline(list(project_dir = q5), scan = character()), error = function(e) e); file.rename(paste0(tmp, "/archive_away"), sp)
+    check(identical(saved, normalizePath(sp, winslash = "/", mustWork = FALSE)) && endsWith(saved, " ") && !inherits(r5, "error") && nrow(r5$flights) > 0,
+          "a source whose folder name ends in a space is saved and reloaded exactly, and rebuilt from its last scan while unplugged")
+  }
   catd <- file.path(q, "output", "catalogue"); file.rename(catd, paste0(catd, "_real")); file.copy(file.path(paste0(catd, "_real"), "flights.csv"), file.path(S, "flights.csv"))
   file.symlink(S, catd); f0 <- tools::md5sum(file.path(S, "flights.csv")); s0 <- tools::md5sum(file.path(q, "config", "sources.csv"))
   e <- tryCatch(remove_source(q, "G"), error = function(e) e)
